@@ -1,0 +1,17 @@
+PROJECT (FEM)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+
+FILE(GLOB LIB_SRC "src/*.cpp")
+if(UNIX)
+  ADD_DEFINITIONS(--std=c++0x)
+endif (UNIX)
+if(WIN32)
+  ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
+endif(WIN32)
+
+ADD_LIBRARY (FEMRunTime ${LIB_SRC})
+INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/include")
+INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/include/vecmath")
+add_subdirectory (extern/vecmath) 
+
+SET(LIB_TYPE STATIC)	#set the lib type
