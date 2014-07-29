@@ -5,7 +5,7 @@ Element::defGrad(Vector3f p, const std::vector<Vector3f> & x,
   const std::vector<Vector3f> & X) const
 {
   Matrix3f F;
-  for(int ii = 0; ii<nDof(); ii++){
+  for(int ii = 0; ii<nV(); ii++){
     int vi = at(ii);
     Vector3f gradN = ShapeFunGrad(ii,p,X);
     //outer product
@@ -24,7 +24,7 @@ Element::GetEdges()
   return edges;
 }
 
-int Element::nDof()const
+int Element::nV()const
 {
   return (int)n.size();
 }

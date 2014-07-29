@@ -121,7 +121,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -142,6 +142,7 @@
     <ClInclude Include="..\..\femlib\include\ElementRegGrid.hpp" />
     <ClInclude Include="..\..\femLib\include\Material.hpp" />
     <ClInclude Include="..\..\femlib\include\MaterialNeo.hpp" />
+    <ClInclude Include="..\..\femlib\include\MatrixXd.hpp" />
     <ClInclude Include="..\..\femlib\include\util.h" />
     <ClInclude Include="..\..\femlib\include\World.hpp" />
   </ItemGroup>
@@ -155,6 +156,7 @@
     <ClCompile Include="..\..\femLib\src\Element.cpp" />
     <ClCompile Include="..\..\femlib\src\ElementHex.cpp" />
     <ClCompile Include="..\..\femLib\src\ElementMesh.cpp" />
+    <ClCompile Include="..\..\femlib\src\ElementMeshStiffness.cpp" />
     <ClCompile Include="..\..\femlib\src\ElementRegGrid.cpp" />
     <ClCompile Include="..\..\femLib\src\Material.cpp" />
     <ClCompile Include="..\..\femlib\src\MaterialNeo.cpp" />

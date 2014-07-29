@@ -1,5 +1,6 @@
 #include "ElementMesh.hpp"
 #include "Material.hpp"
+#include "Element.hpp"
 #include <iostream>
 int ElementMesh::check()
 {
@@ -44,7 +45,7 @@ float ElementMesh::getEnergy()
   }
   //energy from external forces
   for(unsigned int ii = 0;ii<fe.size();ii++){
-    ene += Vector3f::dot(fe[ii], x[ii]);
+    ene -= Vector3f::dot(fe[ii], x[ii]);
   }
   return ene;
 }
@@ -52,6 +53,26 @@ float ElementMesh::getEnergy()
 float ElementMesh::getEnergy(int eIdx)
 {
   return m[me[eIdx]]->getEnergy(e[eIdx], this);
+}
+
+std::vector<Vector3f> ElementMesh::getForce(int eIdx)
+{
+  return m[me[eIdx]]->getForce(e[eIdx], this);
+}
+
+std::vector<Vector3f> ElementMesh::getForce()
+{
+  std::vector<Vector3f> force(x.size());
+  for(unsigned int ii = 0;ii<e.size();ii++){
+    std::vector<Vector3f> fele = getForce(ii);
+    for(int jj = 0; jj<e[ii]->nV(); jj++){
+      force[ e[ii]->at(jj) ] += fele[jj];
+    }
+  }
+  for(unsigned int ii= 0;ii<fe.size();ii++){
+    force[ii] += fe[ii];
+  }
+  return force;
 }
 
 ElementMesh::ElementMesh()

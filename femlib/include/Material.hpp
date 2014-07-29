@@ -4,14 +4,17 @@
 #include <vector>
 class Element;
 class ElementMesh;
+struct MatrixXd;
 class Material
 {
 public:
   Material();
   virtual float getEnergy(Element* ele, ElementMesh * mesh)=0;
-  virtual Matrix3f getForce(Element* ele, ElementMesh * mesh)=0;
-  virtual float getPK1(Element* ele, ElementMesh * mesh)=0;
+  virtual std::vector<Vector3f> getForce(Element* ele, ElementMesh * mesh)=0;
+  virtual MatrixXd getStiffness(Element* ele, ElementMesh * mesh);
   virtual ~Material();
+
+  std::vector<float> param;
 };
 
 #endif

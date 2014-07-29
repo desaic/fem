@@ -78,7 +78,7 @@ ElementRegGrid::rmEmptyVert()
   for(unsigned int ii = 0;ii<e.size(); ii++){
     Element * ele = e[ii];
     
-    for(int jj = 0;jj<ele->nDof();jj++){
+    for(int jj = 0;jj<ele->nV();jj++){
       int vi = ele->at(jj);
       if(vertIdx[vi]<0){
         newNodes.push_back(x[vi]);

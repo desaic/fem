@@ -6,6 +6,8 @@
 
 class Element;
 class Material;
+struct MatrixXd;
+
 class ElementMesh{
 public:
   std::vector<Element*>e;
@@ -24,5 +26,13 @@ public:
 
   float getEnergy();
   float getEnergy(int eIdx);
+
+  ///@brief computes internal forces only
+  std::vector<Vector3f> getForce(int eIdx);
+  std::vector<Vector3f> getForce();
+
+  MatrixXd getStiffness(int eIdx);
+  MatrixXd getStiffness();
+
 };
 #endif

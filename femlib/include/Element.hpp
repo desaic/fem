@@ -10,7 +10,8 @@ class Element
 {
 public:
   Element(int _n=0);
-  int nDof() const;
+  ///@brief number of vertices
+  int nV() const;
   int & operator[](int idx);
   int operator[](int idx)const;
   int at(int idx)const;

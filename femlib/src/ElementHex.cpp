@@ -33,7 +33,7 @@ std::vector<float>
 ElementHex::ShapeFun(const Vector3f & p)const
 {
   std::vector<float> weights(8);
-  for(int ii = 0;ii<nDof();ii++){
+  for(int ii = 0;ii<nV();ii++){
     weights[ii] = (1.0f/8) * (1+sw[ii][0]*p[0])
       *(1+sw[ii][1]*p[1]) *(1+sw[ii][2]*p[2]) ;
   }
