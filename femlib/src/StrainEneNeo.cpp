@@ -1,13 +1,13 @@
-#include "MaterialNeo.hpp"
+#include "StrainEneNeo.hpp"
 
-MaterialNeo::MaterialNeo()
+StrainEneNeo::StrainEneNeo()
 {
   param.resize(2);
   param[0] =1;
   param[1] =10;
 }
 
-float MaterialNeo::getEnergy(const Matrix3f & F)
+float StrainEneNeo::getEnergy(const Matrix3f & F)
 {
   float I1 = (F.transposed()*F).trace();
   float JJ = std::log(F.determinant());
@@ -16,7 +16,7 @@ float MaterialNeo::getEnergy(const Matrix3f & F)
   return (float)Psi;
 }
 
-Matrix3f MaterialNeo::getPK1(const Matrix3f & F)
+Matrix3f StrainEneNeo::getPK1(const Matrix3f & F)
 {
   float JJ = std::log(F.determinant());
   Matrix3f Finv = F.inverse();
@@ -26,7 +26,7 @@ Matrix3f MaterialNeo::getPK1(const Matrix3f & F)
   return PP;
 }
 
-Matrix3f MaterialNeo::getdPdx(const Matrix3f & F,const Matrix3f & dF)
+Matrix3f StrainEneNeo::getdPdx(const Matrix3f & F,const Matrix3f & dF)
 {
   Matrix3f dP = Matrix3f();
   float JJ = std::log(F.determinant());
