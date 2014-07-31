@@ -12,6 +12,8 @@ class ElementMesh{
 public:
   std::vector<Element*>e;
   std::vector<Vector3f>x;
+  ///@brief vertex positions at rest pose.
+  std::vector<Vector3f>X;
   std::vector<Material*>m;
   ///@brief material for each element
   std::vector<int>me;

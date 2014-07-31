@@ -71,7 +71,7 @@ ElementRegGrid::GetEleInd_clamp(const Vector3f & p)
 void
 ElementRegGrid::rmEmptyVert()
 {
-  vertIdx.resize(x.size());
+  vertIdx.resize(X.size());
   std::fill(vertIdx.begin(), vertIdx.end(), -1);
   std::vector<Vector3f> newNodes;
   int vCnt =0;
@@ -81,7 +81,7 @@ ElementRegGrid::rmEmptyVert()
     for(int jj = 0;jj<ele->nV();jj++){
       int vi = ele->at(jj);
       if(vertIdx[vi]<0){
-        newNodes.push_back(x[vi]);
+        newNodes.push_back(X[vi]);
         vertIdx[vi]=vCnt;
         vCnt++;
       }
@@ -89,7 +89,8 @@ ElementRegGrid::rmEmptyVert()
       (*ele)[jj] = vi;
     }
   }
-  x=newNodes;
+  X=newNodes;
+  x=X;
 }
 
 void
@@ -106,7 +107,7 @@ void ElementRegGrid::allocate()
     delete e[ii];
   }
   e.clear();
-  x.clear();
+  X.clear();
   int maxn = std::max(nx, ny);
   maxn = std::max(maxn, nz);
   dx = 1.0f / maxn;
@@ -116,7 +117,7 @@ void ElementRegGrid::allocate()
   for (int ii = 0; ii <= nx; ii++) {
     for (int jj = 0; jj <= ny; jj++) {
       for (int kk = 0; kk <= nz; kk++) {
-        x.push_back(dx * Vector3f((float)ii, (float)jj, (float)kk));
+        X.push_back(dx * Vector3f((float)ii, (float)jj, (float)kk));
       }
     }
   }
@@ -134,6 +135,7 @@ void ElementRegGrid::allocate()
       }
     }
   }
+  x=X;
 }
 
 ElementRegGrid::ElementRegGrid(int _nx , int _ny , int _nz )

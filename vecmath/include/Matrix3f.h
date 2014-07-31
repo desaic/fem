@@ -48,6 +48,8 @@ public:
 	// TODO: invert in place as well
 	Matrix3f inverse( bool* pbIsSingular = NULL, float epsilon = 0.f ) const;
 
+  float trace()const;
+
 	void transpose();
 	Matrix3f transposed() const;
 
@@ -86,6 +88,6 @@ Vector3f operator * ( const Matrix3f& m, const Vector3f& v );
 Matrix3f operator * ( const Matrix3f& x, const Matrix3f& y );
 
 Matrix3f operator + ( const Matrix3f& x, const Matrix3f& y );
-
+Matrix3f operator - ( const Matrix3f& x, const Matrix3f& y );
 Matrix3f outerProd(const Vector3f & a, const Vector3f & b);
 #endif // MATRIX3F_H

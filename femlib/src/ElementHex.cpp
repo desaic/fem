@@ -30,7 +30,7 @@ int sw[8][3] =
 };
 
 std::vector<float>
-ElementHex::ShapeFun(const Vector3f & p)const
+ElementHex::shapeFun(const Vector3f & p)const
 {
   std::vector<float> weights(8);
   for(int ii = 0;ii<nV();ii++){
@@ -41,7 +41,7 @@ ElementHex::ShapeFun(const Vector3f & p)const
 }
 
 Vector3f
-ElementHex::ShapeFunGrad(int ii, const Vector3f & xx,
+ElementHex::shapeFunGrad(int ii, const Vector3f & xx,
                                  const std::vector<Vector3f> & X) const
 {
   Vector3f size=4*(X[7] - X[0]);
@@ -58,7 +58,7 @@ ElementHex::ShapeFunGrad(int ii, const Vector3f & xx,
 }
 
 std::vector<std::array<int,2> >
-ElementHex::GetEdges()
+ElementHex::getEdges()
 {
   int nEdge = 12;
   std::vector<std::array<int,2> >  edges(nEdge);
@@ -67,6 +67,12 @@ ElementHex::GetEdges()
     edges[ii][1] = cubeEdges[ii][1];
   }
   return edges;
+}
+
+float ElementHex::getVol(const std::vector<Vector3f> & X)
+{
+  Vector3f size = X[at(7)] - X[at(0)];
+  return size[0] * size[1] * size[2];
 }
 
 ElementHex::ElementHex():Element(8)

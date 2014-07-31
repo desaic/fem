@@ -243,6 +243,11 @@ Matrix3f Matrix3f::transposed() const
 	return out;
 }
 
+float Matrix3f::trace()const
+{
+  return m_elements[0] + m_elements[4] + m_elements[8];
+}
+
 Matrix3f::operator float* ()
 {
 	return m_elements;
@@ -450,6 +455,17 @@ Matrix3f operator + ( const Matrix3f& x, const Matrix3f& y )
     }
   }
   return sum;
+}
+
+Matrix3f operator - ( const Matrix3f& x, const Matrix3f& y )
+{
+  Matrix3f diff;
+  for(int i = 0;i<3;i++){
+    for(int j=0;j<3;j++){
+      diff(i,j) = x(i,j) - y(i,j);
+    }
+  }
+  return diff;
 }
 
 Matrix3f outerProd(const Vector3f & a, const Vector3f & b)

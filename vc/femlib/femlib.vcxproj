@@ -143,6 +143,7 @@
     <ClInclude Include="..\..\femLib\include\Material.hpp" />
     <ClInclude Include="..\..\femlib\include\MaterialNeo.hpp" />
     <ClInclude Include="..\..\femlib\include\MatrixXd.hpp" />
+    <ClInclude Include="..\..\femlib\include\Quadrature.hpp" />
     <ClInclude Include="..\..\femlib\include\util.h" />
     <ClInclude Include="..\..\femlib\include\World.hpp" />
   </ItemGroup>
@@ -160,6 +161,7 @@
     <ClCompile Include="..\..\femlib\src\ElementRegGrid.cpp" />
     <ClCompile Include="..\..\femLib\src\Material.cpp" />
     <ClCompile Include="..\..\femlib\src\MaterialNeo.cpp" />
+    <ClCompile Include="..\..\femlib\src\Quadrature.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

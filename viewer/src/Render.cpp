@@ -143,7 +143,7 @@ void mousePosFun(GLFWwindow *window , double xpos, double ypos)
 
 void Render::drawEle(Element * ele, const std::vector<Vector3f> & x)
 {
-  std::vector<std::array<int , 2> > edges = ele->GetEdges();
+  std::vector<std::array<int , 2> > edges = ele->getEdges();
   glColor3f(0.9f, 0.8f, 0.7f);
   glDisable(GL_LIGHTING);
   glBegin(GL_LINES);
@@ -215,6 +215,16 @@ int Render::loop()
   exit(EXIT_SUCCESS);
 }
 
+void window_size(GLFWwindow* window, int width, int height)
+{
+  float ratio;
+  ratio = width / (float) height;
+  glViewport(0, 0, width, height);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(40.0, ratio, 0.1, 20.0);
+}
+
 void
 Render::init(World * _world)
 {
@@ -237,6 +247,7 @@ Render::init(World * _world)
   glfwSetKeyCallback(window, key_callback);
   glfwSetCursorPosCallback( window,mousePosFun );
   glfwSetMouseButtonCallback( window,mouseButtonFun );
+  glfwSetWindowSizeCallback(window, window_size);
 
   float ratio;
   int width, height;

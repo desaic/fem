@@ -1,13 +1,17 @@
 #include "Element.hpp"
+float Element::getVol(const std::vector<Vector3f> & X)
+{
+  return 0;
+}
 
 Matrix3f
-Element::defGrad(Vector3f p, const std::vector<Vector3f> & x,
-  const std::vector<Vector3f> & X) const
+Element::defGrad(Vector3f p, const std::vector<Vector3f> & X,
+  const std::vector<Vector3f> & x) const
 {
   Matrix3f F;
   for(int ii = 0; ii<nV(); ii++){
     int vi = at(ii);
-    Vector3f gradN = ShapeFunGrad(ii,p,X);
+    Vector3f gradN = shapeFunGrad(ii,p,X);
     //outer product
     F += outerProd((x[vi] - X[vi]) , gradN);
   }
@@ -18,7 +22,7 @@ Element::Element(int _n):n(_n)
 {}
 
 std::vector<std::array<int,2> >
-Element::GetEdges()
+Element::getEdges()
 {
   std::vector<std::array<int,2> >edges;
   return edges;
