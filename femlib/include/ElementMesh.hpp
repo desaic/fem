@@ -19,8 +19,7 @@ public:
   std::vector<int>me;
   ///@brief external forces applied to each dof.
   std::vector<Vector3f>fe;
-  ///@brief vertex bounds.
-  std::vector<BoundVec3>bd;
+  std::vector<int> fixed;
   ElementMesh();
   
   ///@brief for debug, check the size of members.
@@ -35,6 +34,5 @@ public:
 
   MatrixXd getStiffness(int eIdx);
   MatrixXd getStiffness();
-
 };
 #endif

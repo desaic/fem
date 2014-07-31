@@ -9,9 +9,9 @@ const float Gauss2Pt[2]=
 Quadrature makeGauss2();
 Quadrature makeUniform4();
 
-static const Quadrature Gauss2=makeGauss2();
+const Quadrature Quadrature::Gauss2=makeGauss2();
 
-static const Quadrature Uniform4=makeUniform4();
+const Quadrature Quadrature::Uniform4=makeUniform4();
 
 Quadrature makeGauss2()
 {
@@ -44,6 +44,7 @@ Quadrature makeUniform4()
       }
     }
   }
+  return q;
 }
 
 Quadrature::Quadrature()

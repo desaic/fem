@@ -8,7 +8,7 @@
 #include <Eigen/Dense>
 
 ///@brief helper for computing stiffness contribution of one quadrature point
-Eigen::MatrixXf stiffness(int qi, const MaterialQuad* mat, Element* ele, ElementMesh * mesh);
+Eigen::MatrixXf stiffness(int qi, const MaterialQuad * mat, Element* ele, ElementMesh * mesh);
 
 MaterialQuad::MaterialQuad(StrainEne * ene, Quadrature * _q ):q(_q)
 {
@@ -70,7 +70,7 @@ MatrixXd MaterialQuad::getStiffness(Element* ele, ElementMesh * mesh)
   return Kret;
 }
 
-Eigen::MatrixXf getStiffness(int qi, const MaterialQuad * mat, Element* ele, ElementMesh * mesh)
+Eigen::MatrixXf stiffness(int qi, const MaterialQuad * mat, Element* ele, ElementMesh * mesh)
 {
   int nquad = (int)mat->q->x.size();
   int ndof = 3*ele->nV();

@@ -8,7 +8,7 @@ Matrix3f
 Element::defGrad(Vector3f p, const std::vector<Vector3f> & X,
   const std::vector<Vector3f> & x) const
 {
-  Matrix3f F;
+  Matrix3f F=Matrix3f::identity();
   for(int ii = 0; ii<nV(); ii++){
     int vi = at(ii);
     Vector3f gradN = shapeFunGrad(ii,p,X);

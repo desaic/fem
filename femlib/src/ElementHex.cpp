@@ -44,7 +44,7 @@ Vector3f
 ElementHex::shapeFunGrad(int ii, const Vector3f & xx,
                                  const std::vector<Vector3f> & X) const
 {
-  Vector3f size=4*(X[7] - X[0]);
+  Vector3f size=4*(X[at(7)] - X[at(0)]);
 	Vector3f grad;
 	size[0] = 1.0f/(size[0]);
 	size[1] = 1.0f/(size[1]);

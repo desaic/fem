@@ -88,7 +88,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -141,6 +141,8 @@
     <ClInclude Include="..\..\femlib\include\ElementMesh.hpp" />
     <ClInclude Include="..\..\femlib\include\ElementRegGrid.hpp" />
     <ClInclude Include="..\..\femLib\include\Material.hpp" />
+    <ClInclude Include="..\..\femlib\include\Stepper.hpp" />
+    <ClInclude Include="..\..\femlib\include\StepperGrad.hpp" />
     <ClInclude Include="..\..\femlib\include\StrainEneNeo.hpp" />
     <ClInclude Include="..\..\femlib\include\MaterialQuad.hpp" />
     <ClInclude Include="..\..\femlib\include\MatrixXd.hpp" />
@@ -162,6 +164,8 @@
     <ClCompile Include="..\..\femlib\src\ElementMeshStiffness.cpp" />
     <ClCompile Include="..\..\femlib\src\ElementRegGrid.cpp" />
     <ClCompile Include="..\..\femLib\src\Material.cpp" />
+    <ClCompile Include="..\..\femlib\src\Stepper.cpp" />
+    <ClCompile Include="..\..\femlib\src\StepperGrad.cpp" />
     <ClCompile Include="..\..\femlib\src\StrainEneNeo.cpp" />
     <ClCompile Include="..\..\femlib\src\MaterialQuad.cpp" />
     <ClCompile Include="..\..\femlib\src\Quadrature.cpp" />

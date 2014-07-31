@@ -19,20 +19,10 @@ int ElementMesh::check()
       return -1;
     }
   }
-
-  if(bd.size()!=x.size()){
-    std::cout<<"number of bounds and num dof differ\n";
+    
+  if(fixed.size() != x.size()){
+    std::cout<<"fixed array differ in size to vertex array \n";
     return -1;
-  }
-  for(unsigned int ii = 0;ii<bd.size();ii++){
-    for(unsigned int jj =0;jj<3;jj++){
-      if(bd[ii].u[jj]<x[ii][jj]
-      ||bd[ii].l[jj]>x[ii][jj]){
-        std::cout<<"Initial configurature violates bounds\n";
-        std::cout<<"vert: "<<ii<<", dim:"<<jj<<"\n";
-        return -1;
-      }
-    }
   }
   return 0;
 }

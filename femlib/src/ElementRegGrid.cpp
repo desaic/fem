@@ -136,6 +136,7 @@ void ElementRegGrid::allocate()
     }
   }
   x=X;
+  fixed.resize(x.size());
 }
 
 ElementRegGrid::ElementRegGrid(int _nx , int _ny , int _nz )
