@@ -14,6 +14,8 @@ struct MatrixXd
 {
   MatrixXd():M(0),mm(0),nn(0){}
   
+  MatrixXd(int _m, int _n){allocate(_m,_n);}
+
   MatrixXd(const MatrixXd & ma):mm(ma.mm),nn(ma.nn){
     allocate(mm,nn);
     copyArray(ma.M, M, mm*nn);
@@ -90,6 +92,16 @@ void copySubMat(const T1 & src, T2 & dst, int si1, int sj1, int si2, int sj2,
   for(int ii = 0;ii<m;ii++){
     for(int jj = 0;jj<n;jj++){
       dst(si2 + ii, sj2 + jj) = src(si1+ii, sj1+jj);
+    }
+  }
+}
+
+template<typename T1, typename T2>
+void copyMat(const T1 & src, T2& dst, int m, int n)
+{
+  for(int ii = 0;ii<m;ii++){
+    for(int jj = 0;jj<n;jj++){
+      dst(ii,jj) = src(ii,jj);
     }
   }
 }

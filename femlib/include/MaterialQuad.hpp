@@ -18,8 +18,6 @@ public:
   std::vector<Vector3f> getForce(Element* ele, ElementMesh * mesh);
   
   MatrixXd getStiffness(Element* ele, ElementMesh * mesh);
-  ///@brief helper for computing stiffness contribution of one quadrature point
-  MatrixXd getStiffness(int qi, Element* ele, ElementMesh * mesh);
 
   std::vector<StrainEne*> e;
   const Quadrature * q;
