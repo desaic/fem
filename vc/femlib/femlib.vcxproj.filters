@@ -54,6 +54,9 @@
     <ClInclude Include="..\..\femlib\include\Quadrature.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\femlib\include\MaterialQuad.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\femLib\src\Element.cpp">
@@ -81,6 +84,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\femlib\src\Quadrature.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\femlib\src\MaterialQuad.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
