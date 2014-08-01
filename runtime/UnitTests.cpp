@@ -1,30 +1,11 @@
-#include "Render.hpp"
-#include "World.hpp"
+#include "UnitTests.hpp"
 #include "Element.hpp"
 #include "ElementRegGrid.hpp"
-#include "StepperGrad.hpp"
-#include <thread>
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
-
-#include "UnitTests.hpp"
-
-void runSim(ElementMesh * m, Stepper * stepper)
+#include <iostream>
+void forceTest()
 {
-  stepper->step(m);
-}
-
-void runTest()
-{
-  forceTest();
-  system("pause");
-}
-
-int main(int argc, char* argv[])
-{
-//  if(argv[1][0] =='t'){
-    runTest();
-  //}
   int nx = 1,ny=1,nz=1;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
@@ -43,23 +24,28 @@ int main(int argc, char* argv[])
       int bb[4] = {2,3,6,7};
       for(int kk = 0;kk<4;kk++){
         int vidx =em->e[eidx]->at(aa[kk]);
-        em->fixed[vidx] = 1;
+  //      em->fixed[vidx] = 1;
         vidx = em->e[eidx]->at(bb[kk]);
-        em->fe[vidx] = ff;
+//        em->fe[vidx] = ff;
       }
     }
   }
   em->check();
 
-  World * world = new World();
-  world->em.push_back(em);
-  
-  StepperGrad stepper;
-
-  std::thread simt(runSim, em, &stepper);
-  Render render;
-  render.init(world);
-  render.loop();
-  simt.join();
-	return 0;
+  em->x[0][0] += 0.2f;
+  em->x[1][2] -= 0.3f;
+  float h = 0.0001f;
+    std::vector<Vector3f>force = em->getForce();
+  for(size_t ii = 0;ii<em->x.size();ii++){
+    for(int jj = 0; jj<3; jj++){
+      em->x[ii][jj] -= h;
+      double Eminus = em->getEnergy();
+      em->x[ii][jj] += 2*h;
+      double Eplus = em->getEnergy();
+      std::cout<<"Energy diff: "<<Eplus-Eminus<<"\n";
+      double numF = (Eplus - Eminus )/(2*h);
+      std::cout<<"Analytic derivative:\n"<<-force[ii][jj];
+      std::cout<<"\nCentral diff:\n"<<numF<<"\n--------\n";
+    }
+  }
 }

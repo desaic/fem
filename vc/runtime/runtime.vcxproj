@@ -160,6 +160,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\runtime\runtime.cpp" />
+    <ClCompile Include="..\..\runtime\UnitTests.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\runtime\UnitTests.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

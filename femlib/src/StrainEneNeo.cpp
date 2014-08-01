@@ -39,4 +39,3 @@ Matrix3f StrainEneNeo::getdPdx(const Matrix3f & F,const Matrix3f & dF)
   dP += lambda*(Finv*dF).trace()*FinvT;
   return dP;
 }
-

@@ -1,4 +1,6 @@
 #include "Element.hpp"
+#include "femError.hpp"
+
 float Element::getVol(const std::vector<Vector3f> & X)
 {
   return 0;
@@ -14,6 +16,9 @@ Element::defGrad(Vector3f p, const std::vector<Vector3f> & X,
     Vector3f gradN = shapeFunGrad(ii,p,X);
     //outer product
     F += outerProd((x[vi] - X[vi]) , gradN);
+  }
+  if(F.determinant()<0){
+    fem_error = FEM_ERROR_INVERT;    
   }
   return F;
 }

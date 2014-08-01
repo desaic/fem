@@ -1,7 +1,9 @@
 #include "StepperGrad.hpp"
 #include "ElementMesh.hpp"
-#include <vector>
+#include "femError.hpp"
 #include "ArrayUtil.hpp"
+
+#include <vector>
 #include <iostream>
 StepperGrad::StepperGrad():h(0.01f),force_L2tol(1e-4f) {}
 
@@ -28,12 +30,14 @@ float StepperGrad::oneStep(ElementMesh * m)
     m->x = mul(h, force);
     add(m->x, x0);
     float E1 = m->getEnergy();
-    if(E1<E){
-      h=1.1f*h;
-      break;
-    }else{
+
+    if(E1>E || fem_error){
+      fem_error = 0;
       h = 0.5f* h;
       std::cout<<"h "<<h<<"\n";
+    }else{
+      h=1.1f*h;
+      break;
     }
   }
   return E;
@@ -42,6 +46,7 @@ float StepperGrad::oneStep(ElementMesh * m)
 void StepperGrad::step(ElementMesh * m)
 {
   for(int ii = 0;ii<nSteps;ii++){
-    oneStep(m);
+    float E = oneStep(m);
+    std::cout<<"E "<<E<<"\n";
   }
 }
