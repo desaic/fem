@@ -13,7 +13,7 @@ class Matrix3f
 public:
 
     // Fill a 3x3 matrix with "fill", default to 0.
-	Matrix3f( float fill = 0.f );
+	Matrix3f( );
 	Matrix3f( float m00, float m01, float m02,
 		float m10, float m11, float m12,
 		float m20, float m21, float m22 );
@@ -80,6 +80,7 @@ private:
 
 };
 
+Matrix3f operator * ( float f, const Matrix3f& m );
 // Matrix-Vector multiplication
 // 3x3 * 3x1 ==> 3x1
 Vector3f operator * ( const Matrix3f& m, const Vector3f& v );

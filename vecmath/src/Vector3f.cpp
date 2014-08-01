@@ -21,11 +21,11 @@ const Vector3f Vector3f::RIGHT = Vector3f( 1, 0, 0 );
 // static
 const Vector3f Vector3f::FORWARD = Vector3f( 0, 0, -1 );
 
-Vector3f::Vector3f( float f )
+Vector3f::Vector3f()
 {
-    m_elements[0] = f;
-    m_elements[1] = f;
-    m_elements[2] = f;
+    m_elements[0] = 0;
+    m_elements[1] = 0;
+    m_elements[2] = 0;
 }
 
 Vector3f::Vector3f(float * f)

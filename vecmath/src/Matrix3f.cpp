@@ -9,11 +9,11 @@
 #include "Quat4f.h"
 #include "Vector3f.h"
 
-Matrix3f::Matrix3f( float fill )
+Matrix3f::Matrix3f( )
 {
 	for( int i = 0; i < 9; ++i )
 	{
-		m_elements[ i ] = fill;
+		m_elements[ i ] = 0;
 	}
 }
 
@@ -466,6 +466,17 @@ Matrix3f operator - ( const Matrix3f& x, const Matrix3f& y )
     }
   }
   return diff;
+}
+
+Matrix3f operator * ( float f, const Matrix3f& m )
+{
+  Matrix3f prod;
+  for(int i = 0;i<3;i++){
+    for(int j=0;j<3;j++){
+      prod(i,j) = f*m(i,j);
+    }
+  }
+  return prod;
 }
 
 Matrix3f outerProd(const Vector3f & a, const Vector3f & b)

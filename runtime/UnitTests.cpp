@@ -9,8 +9,8 @@ void forceTest()
   int nx = 1,ny=1,nz=1;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
-  ene.param[0] = 34400;
-  ene.param[1] = 310000;
+  ene.param[0] = 1000;
+  ene.param[1] = 10000;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
   em->me.resize(em->e.size(),0);
@@ -33,7 +33,7 @@ void forceTest()
   em->check();
 
   em->x[0][0] += 0.2f;
-  em->x[1][2] -= 0.3f;
+ // em->x[1][2] -= 0.3f;
   float h = 0.0001f;
     std::vector<Vector3f>force = em->getForce();
   for(size_t ii = 0;ii<em->x.size();ii++){
