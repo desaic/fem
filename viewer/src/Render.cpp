@@ -148,7 +148,11 @@ void Render::drawEle(Element * ele, const std::vector<Vector3f> & x)
   glDisable(GL_LIGHTING);
   glBegin(GL_LINES);
   for(unsigned int ii = 0;ii<edges.size();ii++){
-    Vector3f v = x[(*ele)[edges[ii][0]]];
+    int vidx = (*ele)[edges[ii][0]];
+    if(vidx>=x.size()){
+      std::cout<<x.size()<<"\n";
+    }
+    Vector3f v = x[vidx];
     glVertex3f(v[0],v[1],v[2]);
     v = x[(*ele)[edges[ii][1]]];
     glVertex3f(v[0],v[1],v[2]);

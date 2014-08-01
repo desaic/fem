@@ -27,8 +27,8 @@ float StepperGrad::oneStep(ElementMesh * m)
 
   std::vector<Vector3f> x0 = m->x;
   while(1){
-    m->x = mul(h, force);
-    add(m->x, x0);
+    m->x=x0;
+    addmul(m->x, h, force);
     float E1 = m->getEnergy();
 
     if(E1>E || fem_error){

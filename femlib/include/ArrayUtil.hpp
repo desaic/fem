@@ -23,4 +23,12 @@ std::vector<T> mul(float f, const std::vector<T> & src)
   }
   return prod;
 }
+
+template<typename T>
+void addmul(std::vector<T> & dst, float f, const std::vector<T> & src)
+{
+  for(unsigned int ii = 0;ii<src.size();ii++){
+    dst[ii] += f*src[ii];
+  }
+}
 #endif // ARRAYUTIL_HPP

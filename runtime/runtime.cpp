@@ -24,9 +24,9 @@ void runTest()
 int main(int argc, char* argv[])
 {
 //  if(argv[1][0] =='t'){
-    runTest();
+   // runTest();
   //}
-  int nx = 1,ny=1,nz=1;
+  int nx = 4,ny=16,nz=4;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
   ene.param[0] = 34400;
@@ -36,16 +36,20 @@ int main(int argc, char* argv[])
   em->me.resize(em->e.size(),0);
   em->fe.resize(em->x.size());
   em->fixed.resize(em->x.size());
-  Vector3f ff(0,10000,0);
+  Vector3f ff(1,-5,0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
       int aa[4] = {0,1,4,5};
-      int bb[4] = {2,3,6,7};
       for(int kk = 0;kk<4;kk++){
         int vidx =em->e[eidx]->at(aa[kk]);
         em->fixed[vidx] = 1;
-        vidx = em->e[eidx]->at(bb[kk]);
+      }
+
+      eidx= em->GetEleInd(ii,ny-1,jj);
+      int bb[4] = {2,3,6,7};
+      for(int kk = 0;kk<4;kk++){
+        int vidx = em->e[eidx]->at(bb[kk]);
         em->fe[vidx] = ff;
       }
     }
@@ -56,7 +60,7 @@ int main(int argc, char* argv[])
   world->em.push_back(em);
   
   StepperGrad stepper;
-
+  stepper.nSteps = 100000;
   std::thread simt(runSim, em, &stepper);
   Render render;
   render.init(world);
