@@ -104,7 +104,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)\..\..\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;glu32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libopenblas.dll.a;glfw3.lib;opengl32.lib;glu32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -133,7 +133,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;$(ProjectDir)\..\..\viewer\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\StepperCPU\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;$(ProjectDir)\..\..\viewer\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -150,6 +150,9 @@
   <ItemGroup>
     <ProjectReference Include="..\femlib\femlib.vcxproj">
       <Project>{d1978a3f-b8d3-4e09-951e-e08c52d73048}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\StepperCPU\StepperCPU.vcxproj">
+      <Project>{04525bfa-b9be-4342-8b71-e9b14782d568}</Project>
     </ProjectReference>
     <ProjectReference Include="..\vecmath\vecmath.vcxproj">
       <Project>{a4162f91-2b0a-404f-b506-ed482931444f}</Project>

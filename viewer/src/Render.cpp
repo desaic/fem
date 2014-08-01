@@ -144,7 +144,7 @@ void mousePosFun(GLFWwindow *window , double xpos, double ypos)
 void Render::drawEle(Element * ele, const std::vector<Vector3f> & x)
 {
   std::vector<std::array<int , 2> > edges = ele->getEdges();
-  glColor3f(0.9f, 0.8f, 0.7f);
+  glColor3f(0.4f, 0.5f, 0.9f);
   glDisable(GL_LIGHTING);
   glBegin(GL_LINES);
   for(unsigned int ii = 0;ii<edges.size();ii++){

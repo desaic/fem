@@ -3,6 +3,7 @@
 #include "Element.hpp"
 #include "ElementRegGrid.hpp"
 #include "StepperGrad.hpp"
+#include "StepperNewton.hpp"
 #include <thread>
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
@@ -24,9 +25,7 @@ void runTest()
 
 int main(int argc, char* argv[])
 {
-//  if(argv[1][0] =='t'){
-    runTest();
-  //}
+  //  runTest();
   int nx = 4,ny=16,nz=4;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
@@ -58,6 +57,7 @@ int main(int argc, char* argv[])
   world->em.push_back(em);
   
   StepperGrad stepper;
+  StepperNewton *stepNewton = new StepperNewton();
   stepper.nSteps = 100000;
   std::thread simt(runSim, em, &stepper);
   Render render;
