@@ -22,6 +22,9 @@ public:
   std::vector<int> fixed;
   ElementMesh();
   
+  ///@brief utility. call after initializing or changing X and e 
+  ///X is copied to x;
+  void initArrays();
   ///@brief for debug, check the size of members.
   int check();
 

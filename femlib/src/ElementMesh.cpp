@@ -2,6 +2,15 @@
 #include "Material.hpp"
 #include "Element.hpp"
 #include <iostream>
+
+void ElementMesh::initArrays()
+{
+  x=X;
+  fe.resize(X.size());
+  fixed.resize(X.size());
+  me.resize(e.size());
+}
+
 int ElementMesh::check()
 {
   if(fe.size()!=x.size()){

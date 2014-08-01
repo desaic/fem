@@ -14,13 +14,20 @@ struct MatrixXd
 {
   MatrixXd():M(0),mm(0),nn(0){}
   
-  MatrixXd(int _m, int _n){allocate(_m,_n);}
+  MatrixXd(int _m, int _n):M(0){allocate(_m,_n);}
 
-  MatrixXd(const MatrixXd & ma):mm(ma.mm),nn(ma.nn){
+  MatrixXd(const MatrixXd & ma):M(0),mm(ma.mm),nn(ma.nn){
     allocate(mm,nn);
     copyArray(ma.M, M, mm*nn);
   }
   
+  void fill(double val){
+    int nEntry=mm*nn;
+    for(int ii = 0; ii<nEntry; ii++){
+      M[ii] = val;
+    }
+  }
+
   MatrixXd&operator=(const MatrixXd & ma){
     if( mm * nn != ma.mm * ma.nn && M!=0 ){
       delete[]M;
@@ -32,6 +39,7 @@ struct MatrixXd
     mm=ma.mm;
     nn=ma.nn;
     copyArray(ma.M,M,mm*nn);
+    return *this;
   }
 
   ///@brief array of matrix entries
@@ -86,12 +94,12 @@ struct MatrixXd
 };
 
 template<typename T1, typename T2>
-void copySubMat(const T1 & src, T2 & dst, int si1, int sj1, int si2, int sj2,
+void addSubMat(const T1 & src, T2 & dst, int si1, int sj1, int si2, int sj2,
                 int m, int n)
 {
   for(int ii = 0;ii<m;ii++){
     for(int jj = 0;jj<n;jj++){
-      dst(si2 + ii, sj2 + jj) = src(si1+ii, sj1+jj);
+      dst(si2 + ii, sj2 + jj) += src(si1+ii, sj1+jj);
     }
   }
 }
