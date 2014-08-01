@@ -154,6 +154,9 @@
     <ProjectReference Include="..\StepperCPU\StepperCPU.vcxproj">
       <Project>{04525bfa-b9be-4342-8b71-e9b14782d568}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\StepperCuda\StepperCuda.vcxproj">
+      <Project>{1ebf2816-187f-4bc7-86a4-8f207154dd8e}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\vecmath\vecmath.vcxproj">
       <Project>{a4162f91-2b0a-404f-b506-ed482931444f}</Project>
     </ProjectReference>

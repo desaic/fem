@@ -17,5 +17,16 @@
     <ClInclude Include="..\..\StepperCuda\include\helper_cuda.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\ConjugateGradientCuda.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\NewtonCuda.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\StepperCuda\NewtonCuda.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

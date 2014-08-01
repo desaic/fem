@@ -27,11 +27,17 @@
 #include "helper_cuda.h"
 #include "ConjugateGradientCuda.hpp"
 
-ConjugateGradientCuda::ConjugateGradientCuda():tol(1e-5f),devID(0)
+ConjugateGradientCuda::ConjugateGradientCuda():tol(1e-5f),max_iter(100),devID(0),
+  cublasHandle(0), cusparseHandle(0),descr(0),N(0),nz(0),
+  d_col(0), d_row(0), d_val(0), d_x(0), d_r(0), d_p(0), d_Ax(0)
 {}
 
-int ConjugateGradientCuda::initCuda()
+int ConjugateGradientCuda::initCuda(int _N, int _nz, int * _I, int * _J)
 {
+  N=_N;
+  nz=_nz;
+  I=_I;
+  J=_J;
   // This will pick the best possible CUDA capable device
   devID = findCudaDevice();
   //cudaDeviceProp deviceProp;
@@ -43,50 +49,46 @@ int ConjugateGradientCuda::initCuda()
   }
 
   /* Get handle to the CUBLAS context */
-  cublasHandle_t cublasHandle = 0;
   cublasStatus_t cublasStatus;
   cublasStatus = cublasCreate(&cublasHandle);
 
   checkCudaErrors(cublasStatus);
 
   /* Get handle to the CUSPARSE context */
-  cusparseHandle_t cusparseHandle = 0;
+  
   cusparseStatus_t cusparseStatus;
   cusparseStatus = cusparseCreate(&cusparseHandle);
 
   checkCudaErrors(cusparseStatus);
 
-  cusparseMatDescr_t descr = 0;
   cusparseStatus = cusparseCreateMatDescr(&descr);
 
   checkCudaErrors(cusparseStatus);
 
   cusparseSetMatType(descr,CUSPARSE_MATRIX_TYPE_GENERAL);
   cusparseSetMatIndexBase(descr,CUSPARSE_INDEX_BASE_ZERO);
+
+  checkCudaErrors(cudaMalloc((void **)&d_col, nz*sizeof(int)));
+  checkCudaErrors(cudaMalloc((void **)&d_row, (N+1)*sizeof(int)));
+  checkCudaErrors(cudaMalloc((void **)&d_val, nz*sizeof(float)));
+  checkCudaErrors(cudaMalloc((void **)&d_x, N*sizeof(float)));
+  checkCudaErrors(cudaMalloc((void **)&d_r, N*sizeof(float)));
+  checkCudaErrors(cudaMalloc((void **)&d_p, N*sizeof(float)));
+  checkCudaErrors(cudaMalloc((void **)&d_Ax, N*sizeof(float)));
+
+  cudaMemcpy(d_col, J, nz*sizeof(int), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_row, I, (N+1)*sizeof(int), cudaMemcpyHostToDevice);
+  return 0;
 }
 
-int ConjugateGradientCuda::solve(int N, int nz , int * I, int * J, float * val,
-                          float * x, float * rhs)
+int ConjugateGradientCuda::solve(float * val, float * x, float * rhs)
 {
-    
-    const int max_iter = 10000;
-    float a, b, na, r0, r1;
-    int *d_col, *d_row;
-    float *d_val, *d_x, dot;
-    float *d_r, *d_p, *d_Ax;
+    float a, b, na, r0, r1,dot;
     int k;
     float alpha, beta, alpham1;
-    
-    checkCudaErrors(cudaMalloc((void **)&d_col, nz*sizeof(int)));
-    checkCudaErrors(cudaMalloc((void **)&d_row, (N+1)*sizeof(int)));
-    checkCudaErrors(cudaMalloc((void **)&d_val, nz*sizeof(float)));
-    checkCudaErrors(cudaMalloc((void **)&d_x, N*sizeof(float)));
-    checkCudaErrors(cudaMalloc((void **)&d_r, N*sizeof(float)));
-    checkCudaErrors(cudaMalloc((void **)&d_p, N*sizeof(float)));
-    checkCudaErrors(cudaMalloc((void **)&d_Ax, N*sizeof(float)));
 
-    cudaMemcpy(d_col, J, nz*sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_row, I, (N+1)*sizeof(int), cudaMemcpyHostToDevice);
+    cublasStatus_t cublasStatus;
+    
     cudaMemcpy(d_val, val, nz*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_x, x, N*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_r, rhs, N*sizeof(float), cudaMemcpyHostToDevice);
@@ -127,7 +129,7 @@ int ConjugateGradientCuda::solve(int N, int nz , int * I, int * J, float * val,
         r0 = r1;
         cublasStatus = cublasSdot(cublasHandle, N, d_r, 1, d_r, 1, &r1);
         cudaThreadSynchronize();
-        printf("iteration = %3d, residual = %e\n", k, sqrt(r1));
+        //printf("iteration = %3d, residual = %e\n", k, sqrt(r1));
         k++;
     }
 
@@ -152,29 +154,28 @@ int ConjugateGradientCuda::solve(int N, int nz , int * I, int * J, float * val,
         }
     }
 
-    cusparseDestroy(cusparseHandle);
-    cublasDestroy(cublasHandle);
+//    printf("Test Summary:  Error amount = %f\n", err);
+    return 0;
+}
 
-    free(I);
-    free(J);
-    free(val);
-    free(x);
-    free(rhs);
-    cudaFree(d_col);
-    cudaFree(d_row);
-    cudaFree(d_val);
-    cudaFree(d_x);
-    cudaFree(d_r);
-    cudaFree(d_p);
-    cudaFree(d_Ax);
+int ConjugateGradientCuda::clearCuda()
+{
+  cusparseDestroy(cusparseHandle);
+  cublasDestroy(cublasHandle);
 
-    // cudaDeviceReset causes the driver to clean up all state. While
-    // not mandatory in normal operation, it is good practice.  It is also
-    // needed to ensure correct operation when the application is being
-    // profiled. Calling cudaDeviceReset causes all profile data to be
-    // flushed before the application exits
-    cudaDeviceReset();
+  cudaFree(d_col);
+  cudaFree(d_row);
+  cudaFree(d_val);
+  cudaFree(d_x);
+  cudaFree(d_r);
+  cudaFree(d_p);
+  cudaFree(d_Ax);
 
-    printf("Test Summary:  Error amount = %f\n", err);
-    exit((k <= max_iter) ? 0 : 1);
+  // cudaDeviceReset causes the driver to clean up all state. While
+  // not mandatory in normal operation, it is good practice.  It is also
+  // needed to ensure correct operation when the application is being
+  // profiled. Calling cudaDeviceReset causes all profile data to be
+  // flushed before the application exits
+  cudaDeviceReset();
+  return 0;
 }

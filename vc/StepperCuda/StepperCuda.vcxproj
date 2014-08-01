@@ -22,7 +22,12 @@
     <CudaCompile Include="..\..\StepperCuda\conjugateGradient.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\StepperCuda\include\ConjugateGradientCuda.hpp" />
     <ClInclude Include="..\..\StepperCuda\include\helper_cuda.h" />
+    <ClInclude Include="..\..\StepperCuda\include\NewtonCuda.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\StepperCuda\NewtonCuda.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{1EBF2816-187F-4BC7-86A4-8F207154DD8E}</ProjectGuid>
@@ -80,7 +85,7 @@
     <IncludePath>C:\Users\desaic\Documents\GitHub\fem\StepperCuda\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\desaic\Documents\GitHub\fem\StepperCuda\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;$(ProjectDir)\..\..\StepperCuda\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
