@@ -4,7 +4,49 @@
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
 #include "MatrixXd.hpp"
+#include "ConjugateGradientCuda.hpp"
 #include <iostream>
+
+void cudaLinTest()
+{
+  //make a poisson problem
+  int N = 10000;
+  int nz = 3*N-4;
+  std::vector<int> I(N+1),J(nz);
+  std::vector<float> val, x(N,0), rhs(N,1);
+  I[0] = 0;
+  J[0] = 0;
+  val.push_back(1);
+  int nEntry=1;
+  for(int ii = 1;ii<N-1;ii++){
+    
+    I[ii] = nEntry;
+    J[nEntry]=ii-1;
+    J[nEntry+1]=ii;
+    J[nEntry+2]=ii+1;
+
+    val.push_back(-1);
+    val.push_back(2.15);
+    val.push_back(-1);
+
+    nEntry+=3;
+  }
+  I[N-1]=nEntry;
+  J[nEntry] = N-1;
+  val.push_back(1);
+  val[1] = 0;
+  val[nEntry-1] = 0;
+  I[N] = nEntry+1;
+  
+  ConjugateGradientCuda * linSolver = new ConjugateGradientCuda();
+  linSolver->initCuda(N,nz, &(I[0]), &(J[0]));
+  linSolver->solve(&(val[0]), &(x[0]), &(rhs[0]));
+  linSolver->clearCuda();
+
+  for(unsigned int ii = 0;ii<rhs.size();ii++){
+  //  std::cout<<x[ii]<<"\n";
+  }
+}
 
 void stiffnessTest()
 {

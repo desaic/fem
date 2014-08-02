@@ -129,7 +129,7 @@ int ConjugateGradientCuda::solve(float * val, float * x, float * rhs)
         r0 = r1;
         cublasStatus = cublasSdot(cublasHandle, N, d_r, 1, d_r, 1, &r1);
         cudaThreadSynchronize();
-        //printf("iteration = %3d, residual = %e\n", k, sqrt(r1));
+        printf("iteration = %3d, residual = %e\n", k, sqrt(r1));
         k++;
     }
 

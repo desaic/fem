@@ -5,6 +5,10 @@ NewtonCuda::NewtonCuda():solver(0),m(0)
   solver = new ConjugateGradientCuda();
 }
 
+void NewtonCuda::step(ElementMesh * )
+{
+}
+
 int NewtonCuda::initCuda(ElementMesh * _m)
 {
   m=_m;
