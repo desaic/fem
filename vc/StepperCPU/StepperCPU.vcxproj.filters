@@ -18,9 +18,15 @@
     <ClCompile Include="..\..\StepperCPU\src\StepperNewton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\StepperCPU\src\AdmmCPU.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\StepperCPU\include\StepperNewton.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCPU\include\AdmmCPU.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

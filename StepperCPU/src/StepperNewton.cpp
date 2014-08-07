@@ -67,10 +67,11 @@ float StepperNewton::oneStepDense(ElementMesh * m)
 
   //line search
   std::vector<Vector3f> x0 = m->x;
+  float E1;
   while(1){
     m->x=x0;
     addmul(m->x, h, force);
-    float E1 = m->getEnergy();
+    E1 = m->getEnergy();
 
     if(E1>E || fem_error){
       fem_error = 0;
@@ -81,14 +82,14 @@ float StepperNewton::oneStepDense(ElementMesh * m)
       break;
     }
   }
-  return E;
+  return E1;
 }
 
 void StepperNewton::step(ElementMesh * m)
 {
   int ndof = 3*(int)m->x.size();
   bb = new double[ndof];
-
+  float E0 = m->getEnergy();
   for(int ii = 0;ii<nSteps;ii++){
     float E =0;
     if(dense){
@@ -96,7 +97,11 @@ void StepperNewton::step(ElementMesh * m)
     }else{
       E = oneStepSparse(m);
     }
+    if(std::abs(E0-E)<1e-3f){
+      break;
+    }
     std::cout<<E<<"\n";
+    E0=E;
   }
   
   delete bb;
