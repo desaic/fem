@@ -164,6 +164,7 @@
     <ClCompile Include="..\..\femLib\src\ElementMesh.cpp" />
     <ClCompile Include="..\..\femlib\src\ElementMeshStiffness.cpp" />
     <ClCompile Include="..\..\femlib\src\ElementRegGrid.cpp" />
+    <ClCompile Include="..\..\femlib\src\EMeshStiffnessSparse.cpp" />
     <ClCompile Include="..\..\femlib\src\femError.cpp" />
     <ClCompile Include="..\..\femLib\src\Material.cpp" />
     <ClCompile Include="..\..\femlib\src\Stepper.cpp" />

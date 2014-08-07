@@ -14,11 +14,11 @@
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
+#include <time.h>
 const float epsilon = 0.01f;
 Render * render;
 //mouse state
 bool captureMouse = false;
-
 static void error_callback(int error, const char* description)
 {
     fputs(description, stderr);
@@ -74,39 +74,40 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   }
 }
 
-void Render::moveCamera()
+void Render::moveCamera(float dt)
 {
   Vector3f viewDir = camera.at - render->camera.eye;
   Vector3f up = camera.up;
   Vector3f right = Vector3f::cross(viewDir,up);
   right[1] = 0;
   viewDir[1] = 0;
+
   if(camera.keyhold[0]){
-    camera.eye += viewDir * 0.001f;
-    camera.at  += viewDir * 0.001f;
+    camera.eye += viewDir * dt * camSpeed;
+    camera.at  += viewDir * dt * camSpeed;
   }
   if(camera.keyhold[1]){
-    camera.eye -= viewDir * 0.001f;
-    camera.at  -= viewDir * 0.001f;
+    camera.eye -= viewDir * dt * camSpeed;
+    camera.at  -= viewDir * dt * camSpeed;
   }
   if(camera.keyhold[2]){
-    camera.eye -= right * 0.001f;
-    camera.at  -= right * 0.001f;
+    camera.eye -= right * dt * camSpeed;
+    camera.at  -= right * dt * camSpeed;
   }
   if(camera.keyhold[3]){
-    camera.eye += right * 0.001f;
-    camera.at  += right * 0.001f;
+    camera.eye += right * dt * camSpeed;
+    camera.at  += right * dt * camSpeed;
   }
   if(camera.keyhold[4]){
     if(camera.eye[1]<2){
-      camera.eye[1] += 0.001f;
-      camera.at[1]  += 0.001f;
+      camera.eye[1] += dt * camSpeed;
+      camera.at[1]  += dt * camSpeed;
     }
   }
   if(camera.keyhold[5]){
     if(camera.eye[1]>0){
-      camera.eye[1] -= 0.001f;
-      camera.at[1]  -= 0.001f;
+      camera.eye[1] -= dt * camSpeed;
+      camera.at[1]  -= dt * camSpeed;
     }
   }
 }
@@ -208,11 +209,15 @@ void Render::draw()
 
 int Render::loop()
 {
+  clock_t t0 = clock();
   while (!glfwWindowShouldClose(window))
   {
+    clock_t t1 = clock();
+    float dt = (float)(t1-t0)/(CLOCKS_PER_SEC/1000.0f);
+    t0 = t1;
     draw();
     glfwPollEvents();
-    moveCamera();
+    moveCamera(dt);
   }
   glfwDestroyWindow(window);
   glfwTerminate();
@@ -278,7 +283,7 @@ Render::init(World * _world)
 }
 
 Render::Render():world(0),anim(false),xRotSpeed(0.01f),
-  yRotSpeed(0.01f)
+  yRotSpeed(0.01f),camSpeed(0.001f)
 {}
 
 Render::~Render()

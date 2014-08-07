@@ -9,5 +9,9 @@ public:
   float oneStepDense(ElementMesh * m);
   float oneStepSparse(ElementMesh * m);
   bool dense;
+
+  double * bb ;
+  float force_L2tol;
+  float h;
 };
 #endif

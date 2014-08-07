@@ -10,6 +10,8 @@ MatrixXd ElementMesh::getStiffness(int eIdx)
   return K;
 }
 
+
+
 MatrixXd ElementMesh::getStiffness()
 {
   int matSize = 3 * (int)x.size();

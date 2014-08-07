@@ -110,7 +110,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\include;$(ProjectDir)\..\..\femlib\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\StepperCPU\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\include;$(ProjectDir)\..\..\femlib\include;$(ProjectDir)\..\..\StepperCPU\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

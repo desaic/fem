@@ -24,7 +24,7 @@ public:
   void draw();
   void drawEle(Element * ele, const std::vector<Vector3f> & x);
   void drawEleMesh(ElementMesh * eMesh);
-  void moveCamera();
+  void moveCamera(float dt);
   virtual ~Render();
   bool anim;
   Camera camera;
@@ -34,6 +34,7 @@ public:
 
   //how fast to rotate in x and y axis
   float xRotSpeed, yRotSpeed;
+  float camSpeed;
 private:
   ///@brief Render does not own this pointer.
   World * world;

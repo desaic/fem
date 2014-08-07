@@ -17,23 +17,22 @@ void runSim(ElementMesh * m, Stepper * stepper)
 
 void runTest()
 {
-  
-  cudaLinTest();
+  stiffnessTest();
   system("pause");
   exit(0);
 }
 
 int main(int argc, char* argv[])
 {
-  runTest();
-  int nx = 4,ny=16,nz=4;
+  //runTest();
+  int nx = 2,ny=8,nz=2;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
   ene.param[0] = 34400;
   ene.param[1] = 310000;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
-  Vector3f ff(1,-5,0);
+  Vector3f ff(1,-20,0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
@@ -56,10 +55,9 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  StepperGrad stepper;
-  StepperNewton *stepNewton = new StepperNewton();
-  stepper.nSteps = 100000;
-  std::thread simt(runSim, em, &stepper);
+  StepperNewton *stepper= new StepperNewton();
+  stepper->nSteps = 100000;
+  std::thread simt(runSim, em, stepper);
   Render render;
   render.init(world);
   render.loop();

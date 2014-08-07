@@ -51,7 +51,7 @@ void cudaLinTest()
 void stiffnessTest()
 {
   float h = 0.001f;
-  ElementRegGrid * grid = new ElementRegGrid(1, 1, 1);
+  ElementRegGrid * grid = new ElementRegGrid(2, 2, 2);
 
   StrainEneNeo* ene=new StrainEneNeo();
   ene->param[1]= 1000;

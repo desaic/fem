@@ -33,11 +33,11 @@ struct MatrixXd
       delete[]M;
       M=0;
     }
+    mm=ma.mm;
+    nn=ma.nn;
     if(M==0){
       M=new double[mm*nn];
     }
-    mm=ma.mm;
-    nn=ma.nn;
     copyArray(ma.M,M,mm*nn);
     return *this;
   }
@@ -57,11 +57,11 @@ struct MatrixXd
       delete[]M;
       M=0;
     }
+    nn = _n;
+    mm = _m;
     if(M==0){
       M=new double[mm*nn];
     }
-    nn = _n;
-    mm = _m;
   }
   
   virtual int get1dIndex(int ii, int jj)const{
@@ -79,7 +79,9 @@ struct MatrixXd
   }
 
   ~MatrixXd(){
-    if(M!=0){delete []M;}
+    if(M!=0){
+      delete []M;
+    }
   }
 
   void print(std::ostream & stream){
