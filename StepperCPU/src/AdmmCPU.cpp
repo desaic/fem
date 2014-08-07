@@ -2,132 +2,78 @@
 #include "Element.hpp"
 #include "ElementHex.hpp"
 #include "ElementMesh.hpp"
+#include "MatrixXd.hpp"
+
 #include <time.h>
 #include <fstream>
 
 float
-ADMMStepper::getEnergy(ElementMesh * eMesh, Element * ele,
-                       int eIdx)
+AdmmCPU::getEnergy(ElementMesh * eMesh, int eIdx)
 {
-  float E = ele->GetEnergy(eMesh);
-  for(int ii = 0;ii<ele->getNumNodes();ii++){
-    Eigen::Vector3f diff = eMesh->x[ele->At(ii)]-Z[ele->At(ii)]+l[eIdx][ii];
-    E += 0.5* ro * diff.dot(diff);
+  Element * e = eMesh->e[eIdx];
+  float E = eMesh->getEnergy(eIdx);
+  for(int ii = 0; ii<e->nV(); ii++){
+    Vector3f diff = eMesh->x[e->at(ii)]-Z[e->at(ii)] + y[eIdx][ii];
+    E += 0.5f * ro[eIdx] * Vector3f::dot(diff,diff);
+    E += Vector3f::dot(y[eIdx][ii], diff);
   }
   return E;
 }
 
-std::vector<Eigen::Vector3f>
-ADMMStepper::getForces(ElementMesh * eMesh, Element * ele,
-                       int eIdx)
+std::vector<Vector3f>
+AdmmCPU::getForces(ElementMesh * eMesh, int eIdx)
 {
-  std::vector<Eigen::Vector3f> force = ele->GetNodalForces(eMesh);
-  for(size_t ii = 0;ii<force.size();ii++){
-    Eigen::Vector3f diff = eMesh->x[ele->At(ii)] -Z[ele->At(ii)]+l[eIdx][ii];
-    //when minimizing force is negative gradient
-    force[ii] -= ro * diff;
+  Element * ele = eMesh->e[eIdx];
+  std::vector<Vector3f> ff = eMesh->getForce(eIdx);
+  for(unsigned int ii = 0;ii<ff.size();ii++){
+    Vector3f diff = eMesh->x[ele->at(ii)] -Z[ele->at(ii)]+y[eIdx][ii];
+    ff[ii] -= ro[eIdx] * diff;
+    ff[ii] -= y[eIdx][ii];
   }
-
-  return force;
+  return ff;
 }
 
-Eigen::MatrixXf
-ADMMStepper::stiffness(ElementMesh *mesh, Element *ele, int eIdx)
+MatrixXd
+AdmmCPU::stiffness(ElementMesh *mesh, int eIdx)
 {
-  Eigen::MatrixXf K = ((ElementHex*)ele)->Stiffness(mesh);
-  for(int ii = 0;ii<K.rows();ii++){
-    K(ii,ii) += ro;
+  MatrixXd K = mesh->getStiffness(eIdx);
+  for(int ii = 0;ii<K.mm;ii++){
+    K(ii,ii) += ro[eIdx];
   }
   return K;
 }
 
-void ADMMStepper::testStiff(ElementMesh * mesh, Element * ele,
-                            int eIdx)
-{
-  float E = getEnergy(mesh,ele,eIdx);
-  float h = 0.0001;
-  std::vector<Eigen::Vector3f>force = getForces(mesh,ele,eIdx);
-  for(auto ii = 0;ii<ele->getNumNodes();ii++){
-    for(int jj = 0; jj<3; jj++){
-      mesh->x[ele->At(ii)][jj] -= h;
-      double Eminus = getEnergy(mesh,ele,eIdx);
-      mesh->x[ele->At(ii)][jj] += 2*h;
-      double Eplus = getEnergy(mesh,ele,eIdx);
-      std::cout<<"Energy diff: "<<Eplus-Eminus<<"\n";
-      double numF = (Eplus - Eminus )/(2*h);
-      std::cout<<"Analytic derivative:\n"<<-force[ii][jj];
-      std::cout<<"\nCentral diff:\n"<<numF<<"\n--------\n";
-    }
-  }
-
-  Eigen::MatrixXf KAna = stiffness(mesh,ele,eIdx);
-  int nVar = ele->getNumNodes();
-  Eigen::MatrixXf K = Eigen::MatrixXf::Zero(3*nVar,3*nVar);
-  for(auto ii = 0; ii<ele->getNumNodes(); ii++){
-    for(int jj = 0; jj<3; jj++){
-      mesh->x[ele->At(ii)][jj] -= h;
-      std::vector<Eigen::Vector3f>fminus = getForces(mesh,ele,eIdx);
-      mesh->x[ele->At(ii)][jj] += 2*h;
-      std::vector<Eigen::Vector3f>fplus = getForces(mesh,ele,eIdx);
-      mesh->x[ele->At(ii)][jj] -=h;
-      for(size_t kk = 0; kk<fminus.size(); kk++){
-        fplus[kk] -= fminus[kk];
-        fplus[kk] /= 2*h;
-        for(int ll = 0;ll<3;ll++){
-          K(3*kk+ll,3*ii+jj)=-fplus[kk][ll];
-        }
-      }
-    }
-  }
-  Eigen::MatrixXf diff = K - KAna;
-  std::cout<<"Num K:\n"<<KAna<<"\n";
-  float maxErr = 0;
-  for(int k=0; k<diff.outerSize(); ++k){
-    for(auto ii = 0;ii<K.rows();ii++){
-      for(auto jj = 0;jj<K.cols();jj++){
-        float error = std::abs(diff(ii,jj));
-        if(error>maxErr){
-          maxErr = error;
-        }
-      }
-    }
-  }
-  std::cout<<"max err "<<maxErr<<"\n";
-}
-
-std::vector<Eigen::Vector3f>
+std::vector<Vector3f>
 getEleX(ElementMesh * mesh, Element * ele)
 {
-  std::vector<Eigen::Vector3f> xx(ele->getNumNodes());
-  for(int ii = 0;ii<ele->getNumNodes();ii++){
-    xx[ii] = mesh->x[ele->At(ii)];
+  std::vector<Vector3f> xx(ele->at);
+  for(int ii = 0; ii<ele->nV(); ii++){
+    xx[ii] = mesh->x[ele->at(ii)];
   }
   return xx;
 }
 
-std::vector<Eigen::Vector3f>
-setEleX(ElementMesh * mesh, Element * ele, const std::vector<Eigen::Vector3f> & xx)
+std::vector<Vector3f>
+setEleX(ElementMesh * mesh, Element * ele, const std::vector<Vector3f> & xx)
 {
-  for(int ii = 0;ii<ele->getNumNodes();ii++){
-    mesh->x[ele->At(ii)] = xx[ii];
+  for(int ii = 0;ii<ele->nV();ii++){
+    mesh->x[ele->at(ii)] = xx[ii];
   }
 }
 
 void
-ADMMStepper::minimizeElement(ElementMesh * mesh, Element * ele,
+AdmmCPU::minimizeElement(ElementMesh * mesh, Element * ele,
                              int eIdx)
 {
- // testStiff(mesh,ele,eIdx);
-
   float E = 0;
   int ii = 0;
   float localh = 1;
   int NSteps = 100;
 
   for(ii = 0;ii<NSteps;ii++){
-    E = getEnergy(mesh,ele,eIdx);
-    std::vector<Eigen::Vector3f> nodalForces = getForces(mesh,ele,eIdx);
-    std::vector<Eigen::Vector3f> x0(ele->getNumNodes());
+    E = getEnergy(mesh,eIdx);
+    std::vector<Vector3f> nodalForces = getForces(mesh,eIdx);
+    std::vector<Vector3f> x0(ele->nV());
     for(int ii= 0;ii<ele->getNumNodes();ii++){
       x0[ii] = mesh->x[ele->At(ii)];
     }
@@ -154,19 +100,7 @@ ADMMStepper::minimizeElement(ElementMesh * mesh, Element * ele,
       }
       change *= localh;
       float ene =getEnergy(mesh,ele,eIdx);
-//      for(auto ii = 0;ii<mesh->x.size();ii++){
-//        for(int jj = 0; jj<3; jj++){
-//          std::cout<<mesh->x[ii][jj]<<" ";
-//        }
-//        std::cout<<"\n";
-//      }
-//      for(auto ii = 0;ii<mesh->x.size();ii++){
-//        for(int jj = 0; jj<3; jj++){
-//          std::cout<<Z[ii][jj]<<" ";
-//        }
-//        std::cout<<"\n";
-//      }
-      if(std::isnan(ene) || ene>=E){
+      if(|| ene>=E){
         localh/=2;
 //        std::cout<<"Step size:" <<localh<<" Energy: "<<ene<<" change: "<<change<<"\n";
         if(localh<0.00001 || change<xtol){
@@ -328,38 +262,7 @@ void ADMMStepper::Step(ElementMesh * e)
     std::cout<<"Energy in iteration "<<iter<<": "<<E<<"\n";
     std::cout<<"rho: "<<ro<<" r: "<<rr<<" s "<<ss<<"\n";
 
-    //r = Ax+Bz-c primal residual
-    //s = ro A^TB(z^{k+1} - z^k)  dual residual
-    //a simple scheme that often workds well is
-    //ro^{k+1} = tau * ro^k  if ||r^k||>mu||s^k||
-    //ro^{k+1} = ro^k/tau  if   ||s^k||>mu||r^k||
-    //typical choice mu=10,  tau = 2.
-    //here r = \sum(x-z)^2 , s = \sum C_k(z^{k+1}-z^k)^2, where C_z is the
-    //count of how many times z_k appears in constraints.
-    float mu = 10, tau= 2;
-//    ss *= ro;
-//    if(rr > mu*ss/1000 || std::isnan(E)){
-//      ro *= tau;
-//      for(size_t ii = 0;ii<l.size();ii++){
-//        Element * ele = e->elements[ii];
-//        for(size_t jj = 0;jj<ele->getNumNodes();jj++){
-//          l[ii][jj] /= tau;
-//        }
-//      }
-//      for(auto ii = 0;ii<cl.size();ii++){
-//        cl[ii] /= tau;
-//      }
-//    }
-//    if(mu*rr < ss/1000){
-//      ro /= tau;
-//      for(size_t ii = 0;ii<l.size();ii++){
-//        Element * ele = e->elements[ii];
-//        for(size_t jj = 0;jj<ele->getNumNodes();jj++){
-//          l[ii][jj] *= tau;
-//        }
-//      }
-//    }
-
+ 
     if(std::abs(prevE-E) < tol){
       break;
     }
@@ -373,7 +276,7 @@ void ADMMStepper::Step(ElementMesh * e)
   }
 }
 
-void ADMMStepper::Step(World * world)
+void ADMMStepper::Step(ElementMesh * mesh)
 {
 
   for(size_t ii = 0;ii<world->element.size();ii++){

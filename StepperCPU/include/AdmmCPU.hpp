@@ -1,6 +1,10 @@
 #ifndef ADMMCPU_HPP
 #define ADMMCPU_HPP
 #include "Stepper.hpp"
+#include <vector>
+#include "vecmath.h"
+class Element;
+struct MatrixXd;
 class AdmmCPU:public Stepper
 {
 public:
@@ -24,12 +28,11 @@ public:
   float xtol;
   void minimizeElement(ElementMesh * mesh, Element * ele, int eIdx);
 
-  float getEnergy(ElementMesh *eMesh, Element * ele, int eIdx);
+  float getEnergy(ElementMesh * eMesh, int eIdx);
   
-  std::vector<Vector3f>getForces(ElementMesh * mesh, Element * ele,
-                         int eIdx);
+  std::vector<Vector3f> getForces(ElementMesh * eMesh, int eIdx);
   
-  MatrixXd stiffness(ElementMesh *mesh, Element * ele, int eIdx);
+  MatrixXd AdmmCPU::stiffness(ElementMesh *mesh, int eIdx);
     
 private:
   void initVar(ElementMesh * e);
