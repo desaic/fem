@@ -20,6 +20,8 @@ public:
   ///@brief external forces applied to each dof.
   std::vector<Vector3f>fe;
   std::vector<int> fixed;
+
+  std::vector<std::vector<Vector3f> > * u;
   ElementMesh();
   
   ///@brief utility. call after initializing or changing X and e 

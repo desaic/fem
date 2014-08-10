@@ -33,7 +33,7 @@ public:
   std::vector<Vector3f> getForces(ElementMesh * eMesh, int eIdx);
   
   MatrixXd AdmmCPU::stiffness(ElementMesh *mesh, int eIdx);
-    
+
 private:
   void initVar(ElementMesh * e);
 };

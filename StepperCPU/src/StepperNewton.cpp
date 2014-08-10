@@ -1,22 +1,10 @@
 #include "StepperNewton.hpp"
 #include "ElementMesh.hpp"
 #include "MatrixXd.hpp"
-#include <complex>
-#define lapack_complex_float std::complex<float>
-#define lapack_complex_double std::complex<double>
-#include "lapacke.h"
 #include "ArrayUtil.hpp"
 #include "femError.hpp"
 
-void linSolve(MatrixXd & AA, double * bb)
-{
-  int N = AA.mm;
-  int info;
-  info = LAPACKE_dgels(LAPACK_ROW_MAJOR, 'N', N, N, 1, AA.M, N, bb, 1);
-  if(info != 0){
-    std::cout<<"Lapack solve error: "<<info<<"\n";
-  }
-}
+#include "LinSolve.hpp"
 
 StepperNewton::StepperNewton():dense(true),bb(0),force_L2tol(1e-1f),h(1.0f)
 {}
@@ -29,7 +17,6 @@ float StepperNewton::oneStepSparse(ElementMesh * m)
 float StepperNewton::oneStepDense(ElementMesh * m)
 {
   std::vector<Vector3f> force = m->getForce();
-  std::vector<Vector3f> f = m->getForce();
   float E = m->getEnergy();
   float totalMag = 0;
   for(unsigned int ii = 0;ii<force.size();ii++){
@@ -53,7 +40,7 @@ float StepperNewton::oneStepDense(ElementMesh * m)
           K(row,row) = 1;
         }
       }else{
-        bb[ row ] = f[ii][jj];
+        bb[ row ] = force[ii][jj];
       }
     }
   }

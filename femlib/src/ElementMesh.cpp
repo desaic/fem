@@ -74,5 +74,5 @@ std::vector<Vector3f> ElementMesh::getForce()
   return force;
 }
 
-ElementMesh::ElementMesh()
+ElementMesh::ElementMesh():u(0)
 {}
