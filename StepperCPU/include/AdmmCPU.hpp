@@ -8,8 +8,13 @@ struct MatrixXd;
 class AdmmCPU:public Stepper
 {
 public:
+  
   void step(ElementMesh * m);
+  
   AdmmCPU();
+
+  ~AdmmCPU();
+  
   ///@brief a copy of vertex positions for each element.
   ///Vertices are ordered to the individual element
   std::vector<std::vector<Vector3f> > u;
@@ -19,13 +24,25 @@ public:
   
   ///@brief magic
   std::vector<float> ro;
-  ///@brief number of elements sharing vertex i.
-  std::vector<int> N;
+  
   ///@brief concensus variables
   std::vector<Vector3f> Z;
+  
+  ///@temporary array for lin solve
+  double * bb ;
+
+  ///@brief maximum distance allowed between x and z
+  float maxDist;
+
+  float ro0;
+
+  float roMult;
+
   float tol;
+  
   ///@brief tolerance for x variables.
   float xtol;
+  
   void minimizeElement(ElementMesh * mesh, Element * ele, int eIdx);
 
   float getEnergy(ElementMesh * eMesh, int eIdx);

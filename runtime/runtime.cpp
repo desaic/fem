@@ -4,6 +4,7 @@
 #include "ElementRegGrid.hpp"
 #include "StepperGrad.hpp"
 #include "StepperNewton.hpp"
+#include "AdmmCPU.hpp"
 #include <thread>
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
@@ -55,7 +56,8 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  StepperNewton *stepper= new StepperNewton();
+//  StepperNewton *stepper= new StepperNewton();
+  AdmmCPU *stepper= new AdmmCPU();
   stepper->nSteps = 100000;
   std::thread simt(runSim, em, stepper);
   Render render;

@@ -15,7 +15,7 @@ float AdmmCPU::getEnergy(ElementMesh * eMesh, int eIdx)
   Element * e = eMesh->e[eIdx];
   float E = eMesh->getEnergy(eIdx);
   for(int ii = 0; ii<e->nV(); ii++){
-    Vector3f diff = eMesh->x[e->at(ii)]-Z[e->at(ii)] + y[eIdx][ii];
+    Vector3f diff = eMesh->x[e->at(ii)]-Z[e->at(ii)];
     E += 0.5f * ro[eIdx] * Vector3f::dot(diff,diff);
     E += Vector3f::dot(y[eIdx][ii], diff);
   }
@@ -28,7 +28,7 @@ std::vector<Vector3f>
   Element * ele = eMesh->e[eIdx];
   std::vector<Vector3f> ff = eMesh->getForce(eIdx);
   for(unsigned int ii = 0;ii<ff.size();ii++){
-    Vector3f diff = eMesh->x[ele->at(ii)] -Z[ele->at(ii)]+y[eIdx][ii];
+    Vector3f diff = eMesh->x[ele->at(ii)] -Z[ele->at(ii)];
     ff[ii] -= ro[eIdx] * diff;
     ff[ii] -= y[eIdx][ii];
   }
@@ -55,7 +55,7 @@ std::vector<Vector3f>
   return xx;
 }
 
-std::vector<Vector3f>
+void
   setEleX(ElementMesh * mesh, Element * ele, const std::vector<Vector3f> & xx)
 {
   for(int ii = 0;ii<ele->nV();ii++){
@@ -67,15 +67,13 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
                               int eIdx)
 {
   float E = 0;
-  int ii = 0;
   float h = 1;
   int NSteps = 100;
   int ndof = 3*ele->nV();
-  double * bb = new double[ndof];
-
-  for(ii = 0;ii<NSteps;ii++){
-    std::vector<Vector3f> force = m->getForce();
-    float E = m->getEnergy();
+  
+  for(int iter = 0; iter<NSteps; iter++){
+    std::vector<Vector3f> force = getForces(m,eIdx);
+    float E = getEnergy(m,eIdx);
     float totalMag = 0;
     for(unsigned int ii = 0;ii<force.size();ii++){
       totalMag += force[ii].absSquared();  
@@ -84,10 +82,10 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
       return ;
     }
 
-    MatrixXd K = m->getStiffness();
+    MatrixXd K = stiffness(m,eIdx);
 
     int ndof = 3*(int)m->x.size();
-    for(unsigned int ii = 0;ii<m->x.size(); ii++){
+    for(int ii = 0; ii<ele->nV(); ii++){
       for(int jj = 0;jj<3;jj++){
         int row = 3*ii + jj;
         K(row,row) += 100;
@@ -104,7 +102,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
     }
     linSolve(K,bb);
 
-    for(unsigned int ii = 0;ii<m->x.size(); ii++){
+    for(int ii = 0; ii<ele->nV(); ii++){
       for(int jj = 0;jj<3;jj++){
         force[ii][jj] = (float)bb[3*ii+jj];
       }
@@ -116,7 +114,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
     while(1){
       m->x=x0;
       addmul(m->x, h, force);
-      E1 = m->getEnergy();
+      E1 = getEnergy(m,eIdx);
 
       if(E1>E || fem_error){
         fem_error = 0;
@@ -131,84 +129,121 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
 
 void AdmmCPU::initVar(ElementMesh *e)
 {
+  if(bb!=0){
+    delete[] bb;
+  }
+  bb = new double[3*e->x.size()];
   u.resize(e->e.size());
   y.resize(u.size());
-  N.assign(e->X.size(),0);
+  ro.resize(e->e.size(),ro0);
   for(size_t ii= 0; ii<e->e.size();ii++){
     Element * ele = e->e[ii];
     u[ii].resize(ele->nV());
     y[ii].resize(u[ii].size());
     for(int jj = 0;jj<ele->nV();jj++){
       u[ii][jj] = e->X[ele->at(jj)];
-      N[ele->at(jj)] ++;
     }
   }
-  e->x = e->X;
   Z = e->x;
 }
 
-void AdmmCPU::step(ElementMesh * e)
+void AdmmCPU::step(ElementMesh * m)
 {
-  initVar(e);
-  float E = e->getEnergy();
-  float prevE = E;
-
+  initVar(m);
+  
   std::ofstream out("converge.txt");
   clock_t tt,tt0 ;
   tt0 = clock();
 
-  std::vector<Vector3f> Z_k = e->x;
+  std::vector<Vector3f> x0 = m->x;
 
   bool pause = true;
-  e->u = &u;
+  m->u = &u;
+  float prevE = m->getEnergy();
+  
   for(int iter = 0;iter<nSteps;iter++){
-    //objective. Augmentedd lagrangian
-    float obj = 0;
-    //update u locally
-    for(unsigned int ii = 0;ii<e->e.size();ii++){
-      Element * ele = e->e[ii];
-      for(int jj = 0;jj<ele->nV();jj++){
-        e->x[ele->at(jj)] = u[ii][jj]; //Z[ele->At(jj)]
+    float maxRo = 0;
+    float maxDiff=0;
+    //adjust ro
+    for(unsigned int ii = 0;ii<m->e.size();ii++){
+      Element * ele = m->e[ii];
+      float eleSize = m->X[ele->at(1)][2] - m->X[ele->at(0)][2];
+      for(int jj = 0; jj<ele->nV(); jj++){
+        int vidx = ele->at(jj);
+        Vector3f zz = Z[vidx];
+        Vector3f xx = u[ii][jj];
+        float diff = (xx-zz).abs();
+        if(diff>maxDiff){
+          maxDiff = diff;
+        }
+        if(ro[ii] > maxRo){
+          maxRo = ro[ii];
+        }
+        if( diff > maxDist*eleSize){
+          ro[ii] *= roMult;
+          break;
+        }
       }
-      minimizeElement(e,ele, ii);
+    }
+    std::cout<<"maxro "<<maxRo<<"\n";
+    std::cout<<"maxdiff "<<maxDiff<<"\n";
+
+    
+    //update u locally
+    for(unsigned int ii = 0;ii<m->e.size();ii++){
+      Element * ele = m->e[ii];
+      for(int jj = 0;jj<ele->nV();jj++){
+        m->x[ele->at(jj)] = u[ii][jj];
+      }
+      minimizeElement(m,ele, ii);
 
       for(int jj = 0;jj<ele->nV();jj++){
-        u[ii][jj] = e->x[ele->at(jj)];
+        u[ii][jj] = m->x[ele->at(jj)];
       }
     }
 
     //update z closed form
-    for(unsigned int ii = 0;ii<e->X.size();ii++){
+    for(unsigned int ii = 0;ii<m->X.size();ii++){
       Z[ii] = Vector3f(0,0,0);
     }
 
+    std::vector<float> roSum(Z.size(),0.0f);
+
     //add per element variables and multipliers
     for(unsigned int ii = 0;ii<u.size();ii++){
-      Element * ele = e->e[ii];
+      Element * ele = m->e[ii];
       for(int jj = 0;jj<ele->nV();jj++){
-        Z[ele->at(jj)] += u[ii][jj]+y[ii][jj];
+        int vIdx = ele->at(jj);
+        Z[vIdx] += ro[ii] * u[ii][jj]+y[ii][jj];
+        roSum[vIdx] += ro[ii];
       }
     }
 
-    //fix constraints
-    for(unsigned int ii = 0;ii<e->fixed.size();ii++){
+    for(unsigned int ii = 0; ii< m->fe.size();ii++){
+      Vector3f force = m->fe[ii];
+      Z[ii] += force;
+    }
+    
+    for(size_t ii = 0;ii<m->x.size();ii++){
+      Z[ii] /= roSum[ii];
     }
 
-    //divide
-    for(size_t ii = 0;ii<e->x.size();ii++){
-      Z[ii] /= (float)N[ii];
+    //fix constraints
+    for(unsigned int ii = 0;ii<m->fixed.size();ii++){
+      if(m->fixed[ii]){
+        Z[ii] = x0[ii];
+      }
     }
 
     //update multiplier for elements
     for(unsigned int ii = 0;ii<u.size();ii++){
-      Element * ele = e->e[ii];
+      Element * ele = m->e[ii];
       for(int jj = 0;jj<ele->nV();jj++){
         y[ii][jj] +=  u[ii][jj] - Z[ele->at(jj)];
       }
     }
-    Z_k = Z;
-    e->x = Z;
-    E = e->getEnergy();
+    m->x = Z;
+    float E = m->getEnergy();
     std::cout<<"Energy in iteration "<<iter<<": "<<E<<"\n";
     
     if(std::abs(prevE-E) < tol){
@@ -218,11 +253,19 @@ void AdmmCPU::step(ElementMesh * e)
 
     tt = clock();
     out<<(tt-tt0)/(CLOCKS_PER_SEC/1000.0);
-    float ene = e->getEnergy();
+    float ene = m->getEnergy();
     out<<" "<<ene<<"\n";
   }
 }
 
-AdmmCPU::AdmmCPU():tol(0.001f),xtol(0.001f)
+AdmmCPU::~AdmmCPU()
+{
+  if(bb!=0){
+    delete bb;
+  }
+}
+
+AdmmCPU::AdmmCPU():bb(0),maxDist(0.05f),ro0(1000.0f),
+  roMult(1.5f),tol(0.001f),xtol(0.001f)
 {
 }
