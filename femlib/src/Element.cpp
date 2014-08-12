@@ -17,6 +17,7 @@ Element::defGrad(Vector3f p, const std::vector<Vector3f> & X,
     //outer product
     F += outerProd((x[vi] - X[vi]) , gradN);
   }
+  fem_error = FEM_OK;
   if(F.determinant()<0){
     fem_error = FEM_ERROR_INVERT;    
   }

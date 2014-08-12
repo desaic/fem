@@ -76,6 +76,10 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
     float E = getEnergy(m,eIdx);
     float totalMag = 0;
     for(unsigned int ii = 0;ii<force.size();ii++){
+      int vidx = ele->at(ii);
+      if(m->fixed[vidx]){
+        force[ii] = Vector3f(0,0,0);
+      }
       totalMag += force[ii].absSquared();  
     }
     if(totalMag<xtol){
@@ -115,7 +119,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
       m->x=x0;
       addmul(m->x, h, force);
       E1 = getEnergy(m,eIdx);
-
+      std::cout<<h<<" "<<E1<<"\n";
       if(E1>E || fem_error){
         fem_error = 0;
         h = 0.5f* h;
@@ -239,22 +243,43 @@ void AdmmCPU::step(ElementMesh * m)
     for(unsigned int ii = 0;ii<u.size();ii++){
       Element * ele = m->e[ii];
       for(int jj = 0;jj<ele->nV();jj++){
-        y[ii][jj] +=  u[ii][jj] - Z[ele->at(jj)];
+        y[ii][jj] +=  ro[ii] * (u[ii][jj] - Z[ele->at(jj)]);
       }
     }
-    m->x = Z;
     float E = m->getEnergy();
     std::cout<<"Energy in iteration "<<iter<<": "<<E<<"\n";
     
-    if(std::abs(prevE-E) < tol){
+    //x in the previous iteraiton.
+    std::vector<Vector3f> xk_1=m->x;
+
+    float ene1=E;
+    for(unsigned int ii =0;ii<Z.size();ii++){
+      Z[ii] = Z[ii] - m->x[ii];
+    }
+    float hh = 1.0f;
+    while(1){
+      m->x=xk_1;
+      addmul(m->x,hh,Z);
+      ene1 = m->getEnergy();
+      if(ene1<E && fem_error==0){
+        m->x = Z;
+        break;
+      }else{
+        hh=hh/2;
+        if(hh<1e-15){
+          break;
+        }
+      }
+    }
+    std::cout<<"hh "<<hh<<"\n";    
+    if(std::abs(prevE-ene1) < tol){
       break;
     }
     prevE = E;
 
     tt = clock();
     out<<(tt-tt0)/(CLOCKS_PER_SEC/1000.0);
-    float ene = m->getEnergy();
-    out<<" "<<ene<<"\n";
+
   }
 }
 

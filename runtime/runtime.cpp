@@ -26,14 +26,14 @@ void runTest()
 int main(int argc, char* argv[])
 {
   //runTest();
-  int nx = 2,ny=8,nz=2;
+  int nx = 1, ny=1, nz=1;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
   ene.param[0] = 34400;
   ene.param[1] = 310000;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
-  Vector3f ff(1,-20,0);
+  Vector3f ff(1,-1000,0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
@@ -59,6 +59,7 @@ int main(int argc, char* argv[])
 //  StepperNewton *stepper= new StepperNewton();
   AdmmCPU *stepper= new AdmmCPU();
   stepper->nSteps = 100000;
+  stepper->ro0 = 1000;
   std::thread simt(runSim, em, stepper);
   Render render;
   render.init(world);
