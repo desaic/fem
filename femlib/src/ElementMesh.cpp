@@ -1,6 +1,7 @@
 #include "ElementMesh.hpp"
 #include "Material.hpp"
 #include "Element.hpp"
+#include "femError.hpp"
 #include <iostream>
 
 void ElementMesh::initArrays()
@@ -41,6 +42,9 @@ float ElementMesh::getEnergy()
   float ene = 0;
   for(unsigned int ii = 0;ii<e.size();ii++){
     ene += getEnergy(ii);
+    if(fem_error){
+      return -1;
+    }
   }
   //energy from external forces
   for(unsigned int ii = 0;ii<fe.size();ii++){

@@ -28,7 +28,7 @@ std::vector<Vector3f>
   Element * ele = eMesh->e[eIdx];
   std::vector<Vector3f> ff = eMesh->getForce(eIdx);
   for(unsigned int ii = 0;ii<ff.size();ii++){
-    Vector3f diff = eMesh->x[ele->at(ii)] -Z[ele->at(ii)];
+    Vector3f diff = eMesh->x[ele->at(ii)] - Z[ele->at(ii)];
     ff[ii] -= ro[eIdx] * diff;
     ff[ii] -= y[eIdx][ii];
   }
@@ -73,34 +73,23 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
   
   for(int iter = 0; iter<NSteps; iter++){
     std::vector<Vector3f> force = getForces(m,eIdx);
-    float E = getEnergy(m,eIdx);
-    float totalMag = 0;
-    for(unsigned int ii = 0;ii<force.size();ii++){
-      int vidx = ele->at(ii);
-      if(m->fixed[vidx]){
-        force[ii] = Vector3f(0,0,0);
-      }
-      totalMag += force[ii].absSquared();  
-    }
-    if(totalMag<xtol){
-      return ;
-    }
-
     MatrixXd K = stiffness(m,eIdx);
 
     int ndof = 3*(int)m->x.size();
     for(int ii = 0; ii<ele->nV(); ii++){
+      int vidx = ele->at(ii);
+      if(m->fixed[vidx]){
+        force[ii] = Vector3f(0,0,0);
+      }
       for(int jj = 0;jj<3;jj++){
         int row = 3*ii + jj;
         K(row,row) += 100;
+        bb[ row ] = force[ii][jj];
         if(m->fixed[ii]){
-          bb[ row ] = 0;
           for(int kk = 0;kk<ndof;kk++){
             K(row,kk) = 0;
             K(row,row) = 1;
           }
-        }else{
-          bb[ row ] = force[ii][jj];
         }
       }
     }
@@ -112,6 +101,19 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
       }
     }
 
+    float totalMag = 0;
+    for(unsigned int ii = 0;ii<force.size();ii++){
+      int vidx = ele->at(ii);
+      for(int jj =0 ;jj<3;jj++){
+        totalMag += std::abs(force[ii][jj]);
+      }
+    }
+    if(totalMag<xtol){
+      return ;
+    }
+
+    float E = getEnergy(m,eIdx);
+    
     //line search
     std::vector<Vector3f> x0 = m->x;
     float E1;
@@ -192,7 +194,9 @@ void AdmmCPU::step(ElementMesh * m)
     std::cout<<"maxro "<<maxRo<<"\n";
     std::cout<<"maxdiff "<<maxDiff<<"\n";
 
-    
+    //Z in the previous iteraiton.
+    std::vector<Vector3f> Zk_1=Z;
+
     //update u locally
     for(unsigned int ii = 0;ii<m->e.size();ii++){
       Element * ele = m->e[ii];
@@ -249,24 +253,23 @@ void AdmmCPU::step(ElementMesh * m)
     float E = m->getEnergy();
     std::cout<<"Energy in iteration "<<iter<<": "<<E<<"\n";
     
-    //x in the previous iteraiton.
-    std::vector<Vector3f> xk_1=m->x;
-
     float ene1=E;
     for(unsigned int ii =0;ii<Z.size();ii++){
-      Z[ii] = Z[ii] - m->x[ii];
+      Z[ii] = Z[ii] - Zk_1[ii];
     }
     float hh = 1.0f;
     while(1){
-      m->x=xk_1;
+      m->x=Zk_1;
       addmul(m->x,hh,Z);
       ene1 = m->getEnergy();
       if(ene1<E && fem_error==0){
-        m->x = Z;
+        Z=m->x;
         break;
       }else{
         hh=hh/2;
         if(hh<1e-15){
+          m->x = Zk_1;
+          Z=Zk_1;
           break;
         }
       }

@@ -56,10 +56,10 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-//  StepperNewton *stepper= new StepperNewton();
-  AdmmCPU *stepper= new AdmmCPU();
+  StepperNewton *stepper= new StepperNewton();
+//  AdmmCPU *stepper= new AdmmCPU();
+//  stepper->ro0 = 1000;
   stepper->nSteps = 100000;
-  stepper->ro0 = 1000;
   std::thread simt(runSim, em, stepper);
   Render render;
   render.init(world);
