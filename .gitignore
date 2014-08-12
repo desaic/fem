@@ -219,3 +219,4 @@ pip-log.txt
 ##############
 include/Eigen/*
 vc/femlib/femlib.v11.suo
+*.suo
