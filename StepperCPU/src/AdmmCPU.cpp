@@ -45,24 +45,6 @@ MatrixXd
   return K;
 }
 
-std::vector<Vector3f>
-  getEleX(ElementMesh * mesh, Element * ele)
-{
-  std::vector<Vector3f> xx(ele->nV());
-  for(int ii = 0; ii<ele->nV(); ii++){
-    xx[ii] = mesh->x[ele->at(ii)];
-  }
-  return xx;
-}
-
-void
-  setEleX(ElementMesh * mesh, Element * ele, const std::vector<Vector3f> & xx)
-{
-  for(int ii = 0;ii<ele->nV();ii++){
-    mesh->x[ele->at(ii)] = xx[ii];
-  }
-}
-
 void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
                               int eIdx)
 {
@@ -74,8 +56,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
   for(int iter = 0; iter<NSteps; iter++){
     std::vector<Vector3f> force = getForces(m,eIdx);
     MatrixXd K = stiffness(m,eIdx);
-
-    int ndof = 3*(int)m->x.size();
+    K.print(std::cout);
     for(int ii = 0; ii<ele->nV(); ii++){
       int vidx = ele->at(ii);
       if(m->fixed[vidx]){
@@ -104,7 +85,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
     float totalMag = 0;
     for(unsigned int ii = 0;ii<force.size();ii++){
       int vidx = ele->at(ii);
-      for(int jj =0 ;jj<3;jj++){
+      for(int jj =0 ; jj<3; jj++){
         totalMag += std::abs(force[ii][jj]);
       }
     }
@@ -275,7 +256,7 @@ void AdmmCPU::step(ElementMesh * m)
       }
     }
     std::cout<<"hh "<<hh<<"\n";    
-    if(std::abs(prevE-ene1) < tol){
+    if(prevE-ene1 < tol){
       break;
     }
     prevE = E;

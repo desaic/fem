@@ -25,15 +25,15 @@ void runTest()
 
 int main(int argc, char* argv[])
 {
-  //runTest();
-  int nx = 1, ny=1, nz=1;
+//  runTest();
+  int nx = 1, ny=2, nz=1;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
   ene.param[0] = 34400;
   ene.param[1] = 310000;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
-  Vector3f ff(1,-1000,0);
+  Vector3f ff(1,-500,0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
@@ -56,14 +56,14 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  StepperNewton *stepper= new StepperNewton();
-//  AdmmCPU *stepper= new AdmmCPU();
-//  stepper->ro0 = 1000;
+  //StepperNewton *stepper= new StepperNewton();
+  AdmmCPU *stepper= new AdmmCPU();
+  stepper->ro0 = 1000;
   stepper->nSteps = 100000;
   std::thread simt(runSim, em, stepper);
   Render render;
   render.init(world);
-  render.loop();
+  //render.loop();
   simt.join();
 	return 0;
 }
