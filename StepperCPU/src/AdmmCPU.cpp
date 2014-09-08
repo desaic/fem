@@ -45,6 +45,23 @@ MatrixXd
   return K;
 }
 
+void getEleX(int ii, const ElementMesh * m, std::vector<Vector3f> &x)
+{
+  Element * ele = m->e[ii];
+  x.resize(ele->nV());
+  for(int jj = 0; jj<ele->nV(); jj++){
+    x[jj] = m->x[ele->at(jj)];
+  }
+}
+
+void setEleX(int ii, ElementMesh * m, const std::vector<Vector3f> &x)
+{
+  Element * ele = m->e[ii];
+  for(int jj = 0; jj<ele->nV(); jj++){
+    m->x[ele->at(jj)] = x[jj];
+  }
+}
+
 void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
                               int eIdx)
 {
@@ -52,11 +69,10 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
   float h = 1;
   int NSteps = 100;
   int ndof = 3*ele->nV();
-  
+  std::ofstream out("stiffness.txt");
   for(int iter = 0; iter<NSteps; iter++){
     std::vector<Vector3f> force = getForces(m,eIdx);
     MatrixXd K = stiffness(m,eIdx);
-    K.print(std::cout);
     for(int ii = 0; ii<ele->nV(); ii++){
       int vidx = ele->at(ii);
       if(m->fixed[vidx]){
@@ -66,13 +82,20 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
         int row = 3*ii + jj;
         K(row,row) += 100;
         bb[ row ] = force[ii][jj];
-        if(m->fixed[ii]){
+        if(m->fixed[vidx]){
           for(int kk = 0;kk<ndof;kk++){
             K(row,kk) = 0;
             K(row,row) = 1;
           }
         }
       }
+      K.print(out);
+      for(unsigned int ii = 0; ii<force.size(); ii++){
+        for(int jj = 0;jj<3;jj++){
+          out<<force[ii][jj]<<" ";
+        }
+      }
+      out<<std::endl;
     }
     linSolve(K,bb);
 
@@ -96,11 +119,13 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
     float E = getEnergy(m,eIdx);
     
     //line search
-    std::vector<Vector3f> x0 = m->x;
+    std::vector<Vector3f> x0,x;
+    getEleX(eIdx, m, x0);
     float E1;
     while(1){
-      m->x=x0;
-      addmul(m->x, h, force);
+      x=x0;
+      addmul(x, h, force);
+      setEleX(eIdx, m, x);
       E1 = getEnergy(m,eIdx);
       std::cout<<h<<" "<<E1<<"\n";
       if(E1>E || fem_error){

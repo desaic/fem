@@ -25,7 +25,6 @@ void runTest()
 
 int main(int argc, char* argv[])
 {
-//  runTest();
   int nx = 1, ny=2, nz=1;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
