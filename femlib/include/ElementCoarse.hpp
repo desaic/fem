@@ -17,6 +17,8 @@ public:
 
   ///@param p natural coordinates
   Vector3f getDisp(Vector3f p);
+
+
 };
 
 #endif

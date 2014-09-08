@@ -7,6 +7,10 @@
 #include "ConjugateGradientCuda.hpp"
 #include <iostream>
 
+void ElementCoarseTest()
+{
+}
+
 void cudaLinTest()
 {
   //make a poisson problem

@@ -137,6 +137,7 @@
     <ClInclude Include="..\..\femlib\include\ArrayUtil.hpp" />
     <ClInclude Include="..\..\femlib\include\BoundVec3.hpp" />
     <ClInclude Include="..\..\femlib\include\Element.hpp" />
+    <ClInclude Include="..\..\femlib\include\ElementCoarse.hpp" />
     <ClInclude Include="..\..\femlib\include\ElementHex.hpp" />
     <ClInclude Include="..\..\femlib\include\ElementMesh.hpp" />
     <ClInclude Include="..\..\femlib\include\ElementRegGrid.hpp" />
@@ -160,6 +161,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\femlib\src\ArrayUtil.cpp" />
     <ClCompile Include="..\..\femLib\src\Element.cpp" />
+    <ClCompile Include="..\..\femlib\src\ElementCoarse.cpp" />
     <ClCompile Include="..\..\femlib\src\ElementHex.cpp" />
     <ClCompile Include="..\..\femLib\src\ElementMesh.cpp" />
     <ClCompile Include="..\..\femlib\src\ElementMeshStiffness.cpp" />

@@ -10,15 +10,23 @@ struct MatrixXd;
 
 class ElementMesh{
 public:
+  ///@brief elements will be deleted by destructor. Do not put same pointer in different meshes.
+  ///Make copies if needed.
   std::vector<Element*>e;
+
   std::vector<Vector3f>x;
+  
   ///@brief vertex positions at rest pose.
   std::vector<Vector3f>X;
+  
   std::vector<Material*>m;
+  
   ///@brief material for each element
   std::vector<int>me;
+  
   ///@brief external forces applied to each dof.
   std::vector<Vector3f>fe;
+  
   std::vector<int> fixed;
 
   std::vector<std::vector<Vector3f> > * u;
@@ -27,6 +35,7 @@ public:
   ///@brief utility. call after initializing or changing X and e 
   ///X is copied to x;
   void initArrays();
+  
   ///@brief for debug, check the size of members.
   int check();
 
@@ -38,9 +47,11 @@ public:
   std::vector<Vector3f> getForce();
 
   MatrixXd getStiffness(int eIdx);
-  void getStiffnessSparse(std::vector<int> & I, std::vector<int> & J, std::vector<float>
-    &val);
+  void getStiffnessSparse(std::vector<int> & I, std::vector<int> & J, 
+    std::vector<float> &val);
 
   MatrixXd getStiffness();
+
+  virtual ~ElementMesh();
 };
 #endif

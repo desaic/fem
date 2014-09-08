@@ -3,4 +3,5 @@
 void forceTest();
 void stiffnessTest();
 void cudaLinTest();
+void ElementCoarseTest();
 #endif

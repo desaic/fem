@@ -80,3 +80,10 @@ std::vector<Vector3f> ElementMesh::getForce()
 
 ElementMesh::ElementMesh():u(0)
 {}
+
+ElementMesh::~ElementMesh()
+{
+  for(unsigned int ii = 0; ii<e.size();ii++){
+    delete e[ii];
+  }
+}

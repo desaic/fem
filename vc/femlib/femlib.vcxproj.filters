@@ -69,6 +69,9 @@
     <ClInclude Include="..\..\femlib\include\femError.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\femlib\include\ElementCoarse.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\femLib\src\Element.cpp">
@@ -114,6 +117,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\femlib\src\EMeshStiffnessSparse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\femlib\src\ElementCoarse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
