@@ -69,7 +69,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
   float h = 1;
   int NSteps = 100;
   int ndof = 3*ele->nV();
-  std::ofstream out("stiffness.txt");
+  
   for(int iter = 0; iter<NSteps; iter++){
     std::vector<Vector3f> force = getForces(m,eIdx);
     MatrixXd K = stiffness(m,eIdx);
@@ -89,13 +89,6 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
           }
         }
       }
-      K.print(out);
-      for(unsigned int ii = 0; ii<force.size(); ii++){
-        for(int jj = 0;jj<3;jj++){
-          out<<force[ii][jj]<<" ";
-        }
-      }
-      out<<std::endl;
     }
     linSolve(K,bb);
 
@@ -127,7 +120,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
       addmul(x, h, force);
       setEleX(eIdx, m, x);
       E1 = getEnergy(m,eIdx);
-      std::cout<<h<<" "<<E1<<"\n";
+     // std::cout<<h<<" "<<E1<<"\n";
       if(E1>E || fem_error){
         fem_error = 0;
         h = 0.5f* h;
@@ -206,15 +199,13 @@ void AdmmCPU::step(ElementMesh * m)
     //update u locally
     for(unsigned int ii = 0;ii<m->e.size();ii++){
       Element * ele = m->e[ii];
-      for(int jj = 0;jj<ele->nV();jj++){
-        m->x[ele->at(jj)] = u[ii][jj];
-      }
+      setEleX(ii,m,u[ii]);
       minimizeElement(m,ele, ii);
-
-      for(int jj = 0;jj<ele->nV();jj++){
-        u[ii][jj] = m->x[ele->at(jj)];
-      }
+      getEleX(ii,m,u[ii]);
     }
+
+    //restore x to consensus
+    m->x=Z;
 
     //update z closed form
     for(unsigned int ii = 0;ii<m->X.size();ii++){
@@ -288,7 +279,6 @@ void AdmmCPU::step(ElementMesh * m)
 
     tt = clock();
     out<<(tt-tt0)/(CLOCKS_PER_SEC/1000.0);
-
   }
 }
 
