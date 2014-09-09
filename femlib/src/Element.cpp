@@ -6,6 +6,17 @@ float Element::getVol(const std::vector<Vector3f> & X)
   return 0;
 }
 
+Vector3f Element::getDisp(const Vector3f & p, const std::vector<Vector3f> & X,
+    const std::vector<Vector3f>x)
+{
+  std::vector<float> w = shapeFun(p);
+  Vector3f u(0,0,0);
+  for(unsigned int ii = 0; ii<w.size(); ii++){
+    u += w[ii]*(x[ii] - X[ii]);
+  }
+  return u;
+}
+
 Matrix3f
 Element::defGrad(Vector3f p, const std::vector<Vector3f> & X,
   const std::vector<Vector3f> & x) const

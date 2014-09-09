@@ -9,7 +9,9 @@
 class Element
 {
 public:
+  
   Element(int _n=0);
+  
   ///@brief number of vertices
   int nV() const;
   int & operator[](int idx);
@@ -20,7 +22,7 @@ public:
   ///@param X Reference vertex positions.
   ///@param x global array of Deformed vertex positions.
   Matrix3f defGrad(Vector3f p,
-    const std::vector<Vector3f> & x, const std::vector<Vector3f> & X) const;
+    const std::vector<Vector3f> & X, const std::vector<Vector3f> & x) const;
 
   ///@param p natural coordinates.
   ///@return interpolation weight for each dof.
@@ -33,8 +35,13 @@ public:
     const std::vector<Vector3f> & X) const=0;
 
   virtual std::vector<std::array<int,2> > getEdges();
+  
   virtual float getVol(const std::vector<Vector3f> & X);
+
+  virtual Vector3f getDisp(const Vector3f & p, const std::vector<Vector3f> & X,
+    const std::vector<Vector3f>x);
 private:
+
   ///@brief nodal indices
   std::vector<int> n;
 

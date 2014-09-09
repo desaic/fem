@@ -8,6 +8,42 @@ std::vector<Vector3f> makeXfine();
 std::vector<Vector3f> ElementCoarse::Xfine = makeXfine();
 std::vector<std::vector<int> > ElementCoarse::vifine = makevifine();
 
+extern int oneEleV [8][3];
+
+std::vector<ElementCoarse *> coarsen(const ElementRegGrid & grid)
+{
+  int nx = grid.nx/2;
+  int ny = grid.ny/2;
+  int nz = grid.nz/2;
+  int idx = 0;
+  std::vector<ElementCoarse *> elts(nx*ny*nz,0);
+  for(int ii = 0; ii<nx; ii++){
+    for(int jj = 0; jj<ny; jj++){
+      for(int kk = 0; kk<nz; kk++){
+        ElementCoarse * ec = new ElementCoarse();
+        for(int ll = 0; ll<8; ll++){
+          ec->fineEle[ll] = grid.GetEleInd(2*ii+oneEleV[ll][0], 
+            2*jj+oneEleV[ll][1], 2*kk+oneEleV[ll][2]);
+        }
+        elts[idx] = ec;
+        idx++;
+      }
+    }
+  }
+
+  return elts;
+}
+
+Vector3f ElementCoarse::getDisp(Vector3f p)
+{
+  Vector3f u;
+
+  return u;
+}
+
+ElementCoarse::ElementCoarse():fineEle(8,0)
+{}
+
 std::vector<Vector3f> makeXfine()
 {
   //27 fine vertices in a coarse element.
@@ -36,4 +72,5 @@ std::vector<std::vector<int> > makevifine()
       vifine[ii][jj] = e->at(jj);
     }
   }
+  return vifine;
 }

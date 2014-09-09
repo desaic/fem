@@ -1,11 +1,17 @@
 #ifndef ELEMENT_COARSE_HPP
 #define ELEMENT_COARSE_HPP
-#include "Element.hpp"
+
+#include "ElementHex.hpp"
 #include <vector>
-class ElementCoarse:public Element
+
+class ElementRegGrid;
+
+class ElementCoarse:public ElementHex
 {
 public:
   
+  ElementCoarse();
+
   ///@brief Natural coordinates of 27 fine vertices
   static std::vector<Vector3f> Xfine;
 
@@ -18,7 +24,10 @@ public:
   ///@param p natural coordinates
   Vector3f getDisp(Vector3f p);
 
-
+  
 };
+
+///@bug grid assumed to have even dimensions for the moment.
+std::vector<ElementCoarse *> coarsen(const ElementRegGrid & grid);
 
 #endif

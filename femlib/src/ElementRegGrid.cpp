@@ -35,7 +35,7 @@ int ElementRegGrid::GetVertInd(int ii , int jj, int kk)
 }
 
 int
-ElementRegGrid::GetEleInd(int ii , int jj, int kk)
+ElementRegGrid::GetEleInd(int ii , int jj, int kk)const
 {
   if(eleIdx.size()==0){
     return toArrInd(ii,jj,kk);

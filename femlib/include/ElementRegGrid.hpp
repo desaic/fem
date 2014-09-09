@@ -19,11 +19,14 @@ public:
 
   ///@brief remove unused vertices
   void rmEmptyVert();
+  
   int GetEleInd(const Vector3f & p);
-  int GetEleInd(int ii , int jj, int kk);
+
+  ///@brief 
+  int GetEleInd(int ii , int jj, int kk)const;
   int GetEleInd_clamp(const Vector3f & p);
   int GetVertInd(int ii , int jj, int kk);
-  int toArrInd(int ii , int jj, int kk){return ii * ny * nz + jj * nz + kk;}
+  int toArrInd(int ii , int jj, int kk)const{return ii * ny * nz + jj * nz + kk;}
 
   virtual ~ElementRegGrid();
   std::vector<int> eleIdx;

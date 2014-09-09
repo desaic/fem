@@ -1,6 +1,7 @@
 #include "UnitTests.hpp"
 #include "Element.hpp"
 #include "ElementRegGrid.hpp"
+#include "ElementCoarse.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
 #include "MatrixXd.hpp"
@@ -9,6 +10,13 @@
 
 void ElementCoarseTest()
 {
+  ElementRegGrid grid (2,2,2);
+  std::vector<ElementCoarse*> ce;
+  ce = coarsen(grid);
+  for(int ii = 0;ii<8;ii++){
+    std::cout<<ce[0]->fineEle[ii];
+  }
+
 }
 
 void cudaLinTest()
@@ -30,7 +38,7 @@ void cudaLinTest()
     J[nEntry+2]=ii+1;
 
     val.push_back(-1);
-    val.push_back(2.15);
+    val.push_back(2.15f);
     val.push_back(-1);
 
     nEntry+=3;

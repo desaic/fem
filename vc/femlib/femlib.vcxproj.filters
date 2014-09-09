@@ -72,6 +72,9 @@
     <ClInclude Include="..\..\femlib\include\ElementCoarse.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\femlib\include\MeshMulti.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\femLib\src\Element.cpp">
@@ -120,6 +123,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\femlib\src\ElementCoarse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\femlib\src\MeshMulti.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
