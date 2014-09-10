@@ -5,7 +5,7 @@
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
 #include "MatrixXd.hpp"
-#include "ConjugateGradientCuda.hpp"
+//#include "ConjugateGradientCuda.hpp"
 #include <iostream>
 
 void ElementCoarseTest()
@@ -50,10 +50,10 @@ void cudaLinTest()
   val[nEntry-1] = 0;
   I[N] = nEntry+1;
   
-  ConjugateGradientCuda * linSolver = new ConjugateGradientCuda();
-  linSolver->initCuda(N,nz, &(I[0]), &(J[0]));
-  linSolver->solve(&(val[0]), &(x[0]), &(rhs[0]));
-  linSolver->clearCuda();
+  //ConjugateGradientCuda * linSolver = new ConjugateGradientCuda();
+  //linSolver->initCuda(N,nz, &(I[0]), &(J[0]));
+  //linSolver->solve(&(val[0]), &(x[0]), &(rhs[0]));
+  //linSolver->clearCuda();
 
   for(unsigned int ii = 0;ii<rhs.size();ii++){
   //  std::cout<<x[ii]<<"\n";

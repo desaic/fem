@@ -1,4 +1,3 @@
-
 #include "Element.hpp"
 #include "ElementMesh.hpp"
 #include "Material.hpp"
@@ -9,8 +8,6 @@ MatrixXd ElementMesh::getStiffness(int eIdx)
   MatrixXd K = m[me[eIdx]]->getStiffness(e[eIdx],this);
   return K;
 }
-
-
 
 MatrixXd ElementMesh::getStiffness()
 {

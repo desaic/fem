@@ -19,13 +19,13 @@ void runSim(ElementMesh * m, Stepper * stepper)
 void runTest()
 {
   ElementCoarseTest();
-  system("pause");
+//  system("pause");
   exit(0);
 }
 
 int main(int argc, char* argv[])
 {
-  runTest();
+//  runTest();
   int nx = 2, ny=8, nz=2;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;

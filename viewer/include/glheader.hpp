@@ -15,6 +15,7 @@
 #include <GL/glu.h>
 #include <GL/glext.h>
 #include <GL/freeglut.h>
+#include <glfw3.h>
 #elif _WIN32
 #define NOMINMAX //Stop errors with std::max
 #include<windows.h>

@@ -1,5 +1,5 @@
 #include "ElementMesh.hpp"
-#include "Eigen/sparse"
+#include "Eigen/Sparse"
 #include "MatrixXd.hpp"
 void ElementMesh::getStiffnessSparse(std::vector<int> & I, std::vector<int> & J, 
                                      std::vector<float> &val)
