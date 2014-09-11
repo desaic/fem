@@ -30,8 +30,8 @@ int main(int argc, char* argv[])
   int nx = 2, ny=8, nz=2;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
-  ene.param[0] = 34400;
-  ene.param[1] = 310000;
+  ene.param[0] = 34482;
+  ene.param[1] = 310334;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
   Vector3f ff(5,-30,0);
