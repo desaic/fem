@@ -1,7 +1,6 @@
-#include "TimeStepper/IpoptInterface.hpp"
-#include "Element/ElementMesh.hpp"
+#include "IpoptInterface.hpp"
+#include "ElementMesh.hpp"
 #include "Eigen/Dense"
-#include "World/ConstraintVertBd.hpp"
 
 #include <time.h>
 #include <fstream>
@@ -10,6 +9,7 @@
 
 using namespace Ipopt;
 int frameCnt =0;
+
 bool IpoptInterface::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
                             Index& nnz_h_lag,
                             IndexStyleEnum& index_style)
@@ -21,9 +21,11 @@ bool IpoptInterface::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
   m = 0;
   nnz_jac_g = 0;
 
+  std::vector<int> I,J;
+  ele->stiffnessPattern(I,J);
   // the Hessian's number of nonzeros
   //This matrix is symmetric - specify the lower diagonal only
-  nnz_h_lag = ele->stiffness_pattern().nonZeros();
+  nnz_h_lag = I.size();
   //std::cout<<"nnz "<<nnz_h_lag<<"\n";
   //zero based
   index_style = TNLP::C_STYLE;
@@ -47,13 +49,16 @@ IpoptInterface::get_bounds_info(Index n, Number* x_l, Number* x_u,
     x_u[3*ii] = 10;
     x_u[3*ii+1] = 10;
     x_u[3*ii+2] = 10;
-  }
 
-  for(size_t ii = 0 ; ii<ele->vertConst.size();ii++){
-    ConstraintVertBd & cc = ele->vertConst[ii];
-    for(int jj = 0;jj<3;jj++){
-      x_l[ 3*cc.vertIdx + jj ] = cc.l[jj];
-      x_u[ 3*cc.vertIdx + jj ] = cc.u[jj];
+    if(ele->fixed[ii]){
+      x_l[3*ii]   = ele->x[ii][0];
+      x_l[3*ii+1] = ele->x[ii][1];
+      x_l[3*ii+2] = ele->x[ii][2];
+
+      //all variables upper bound 10 (arbitrary)
+      x_u[3*ii]   = ele->x[ii][0];
+      x_u[3*ii+1] = ele->x[ii][1];
+      x_u[3*ii+2] = ele->x[ii][2];
     }
   }
 
@@ -105,7 +110,7 @@ IpoptInterface::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f
     }
   }
 
-  std::vector<Eigen::Vector3f> forces = ele->GetForces();
+  std::vector<Vector3f> forces = ele->getForce();
   assert((int)3*forces.size() == n);
 
   for(size_t ii = 0;ii<forces.size();ii++){
@@ -154,37 +159,26 @@ IpoptInterface::eval_h(Index n, const Number* x, bool new_x,
   tt = clock();
   timeSeq.push_back(tt/(CLOCKS_PER_SEC/1000.0));
   if(values==NULL){
-    int cnt = 0;
-    Eigen::SparseMatrix<float> mat = ele->stiffness_pattern();
-    for (int k=0; k<mat.outerSize(); ++k){
-      for (Eigen::SparseMatrix<float>::InnerIterator it(mat,k); it; ++it){
-        iRow[cnt] = it.row();
-        jCol[cnt] = it.col();
-//        std::cout<<iRow[cnt] <<" "<<jCol[cnt]<<"\n";
-        cnt++;
-      }
+    std::vector<int> I,J;
+    ele->stiffnessPattern(I,J);
+    for(unsigned int ii = 0;ii<I.size();ii++){
+      iRow[ii] = I[ii];
+      jCol[ii] = J[ii];
     }
-
-    assert(cnt == nele_hess);
   }else{
-    ele->saveObj(frameCnt);
-    frameCnt ++ ;
-    int cnt=0;
-    Eigen::SparseMatrix<float> mat = ele->stiffness();
-    std::cout<<"nnz "<<mat.nonZeros()<<"\n";
-    for (int k=0; k<mat.outerSize(); ++k){
-      for (Eigen::SparseMatrix<float>::InnerIterator it(mat,k); it; ++it){
-        values[cnt] = obj_factor*it.value();
-        cnt++;
-      }
+    std::vector<int> I,J;
+    std::vector<float> val;
+    ele->getStiffnessSparse(I,J,val);
+    for (unsigned int k=0; k<val.size(); k++){
+      values[k] = obj_factor*val[k];
     }
     
     for (size_t ii=0; ii<ele->x.size(); ii++) {
-    for(int jj = 0;jj<3;jj++){
-      ele->x[ii][jj] = x[3*ii+jj];
+      for(int jj = 0;jj<3;jj++){
+        ele->x[ii][jj] = x[3*ii+jj];
+      }
     }
-    }
-    
+
   }
   return true;
 }
@@ -208,10 +202,6 @@ IpoptInterface::finalize_solution(SolverReturn status,
       ele->x[ii][jj] = x[3*ii+jj];
     }
   }
-  ele->saveObj(frameCnt);
-  frameCnt ++ ;
-
-
   clock_t tt;
   eneSeq.push_back(ele->getEnergy());
   tt = clock();

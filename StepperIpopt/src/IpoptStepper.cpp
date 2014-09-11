@@ -1,11 +1,14 @@
-#include "TimeStepper/IpoptStepper.hpp"
-#include "TimeStepper/IpoptInterface.hpp"
-#include "World/World.hpp"
+#include "Stepper.hpp"
+#include "IpoptStepper.hpp"
+#include "IpoptInterface.hpp"
+#include "ElementMesh.hpp"
 #include "IpIpoptApplication.hpp"
 #include <iostream>
+
 class ElementMesh;
 using namespace Ipopt;
-void IpoptStepper::Step(World * world)
+
+void IpoptStepper::step(ElementMesh * mesh)
 {
   SmartPtr<IpoptInterface> problem = new IpoptInterface();
   
@@ -15,12 +18,11 @@ void IpoptStepper::Step(World * world)
 //  app->Options()->SetStringValue("hessian_approximation","limited-memory");
   app->Options()->SetIntegerValue("max_iter", NSteps);
 //steps each mesh separately
-  for(size_t ii =0 ;ii<world->element.size();ii++){
+
  //   char outfile[32];
 //    snprintf(outfile,32,"out%lu",ii);
  //   app->Options()->SetStringValue("output_file", outfile);
-    ElementMesh * ele = world->element[ii];
-    problem->ele = ele;
+    problem->ele = mesh;
     ApplicationReturnStatus status;
     status = app->Initialize();
     if (status != Solve_Succeeded) {
@@ -31,12 +33,12 @@ void IpoptStepper::Step(World * world)
     status = app->OptimizeTNLP(problem);
 
     if (status == Solve_Succeeded) {
-      std::cout << std::endl << std::endl << ii << ": *** The problem solved!" << std::endl;
+      std::cout << std::endl << std::endl << ": *** The problem solved!" << std::endl;
     }
     else {
-      std::cout << std::endl << std::endl << ii << ":*** The problem FAILED!" << std::endl;
+      std::cout << std::endl << std::endl << ":*** The problem FAILED!" << std::endl;
     }
-  }
+
 
 }
 

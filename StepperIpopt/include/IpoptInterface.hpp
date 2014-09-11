@@ -1,16 +1,18 @@
 #ifndef IPOPTINTERFACE_HPP
 #define IPOPTINTERFACE_HPP
+
 #include "IpTNLP.hpp"
-#include "TimeStepper.hpp"
-class World;
+#include "Stepper.hpp"
+
 class ElementMesh;
+
 class IpoptInterface: public Ipopt::TNLP
 {
 public:
   IpoptInterface();
   virtual ~IpoptInterface();
 
-  void Step(World * world);
+  void Step(ElementMesh * mesh);
 
   virtual bool get_nlp_info(Ipopt::Index& n, Ipopt::Index& m, Ipopt::Index& nnz_jac_g,
                             Ipopt::Index& nnz_h_lag,

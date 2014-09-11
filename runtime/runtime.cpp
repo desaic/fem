@@ -5,6 +5,7 @@
 #include "StepperGrad.hpp"
 #include "StepperNewton.hpp"
 #include "AdmmCPU.hpp"
+#include "IpoptStepper.hpp"
 #include <thread>
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
@@ -56,7 +57,8 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  StepperNewton *stepper= new StepperNewton();
+//  StepperNewton *stepper= new StepperNewton();
+  IpoptStepper * stepper = new IpoptStepper();
   //AdmmCPU *stepper= new AdmmCPU();
   //stepper->ro0 = 1000;
   stepper->nSteps = 100000;
