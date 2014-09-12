@@ -33,6 +33,10 @@ struct MatrixXd
   ///@param _m number of rows.
   ///@param _n number of columns.
   void allocate(int _m, int _n);
+
+  ///@brief preserves values if possible.
+  ///Add 0s if necessary.
+  void resize(int _m, int _n);
   
   virtual int get1dIndex(int ii, int jj)const;
 

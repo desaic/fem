@@ -1,5 +1,5 @@
 #include "MatTable.hpp"
-#include "Util/FileUtil.hpp"
+#include "FileUtil.hpp"
 #include <stdio.h>
 #include <string>
 #include <sstream>
@@ -82,7 +82,7 @@ void MatTable::coarse2Fine(int * fineMats, int coarseCtr, int lvl) const
 }
 
 void
-MatTable::coarse2FineMat(int * fineMats, int * coarseMats, int lvl)const
+MatTable::coarse2Fine(int * fineMats, int * coarseMats, int lvl)const
 {
   //in x y z order
   int axis = (lvl+2)%3;

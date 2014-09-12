@@ -42,6 +42,32 @@ void MatrixXd::allocate(int _m, int _n){
   }
 }
 
+void MatrixXd::resize(int _m, int _n)
+{
+  if(M==0){
+    allocate(_m,_n);
+    return;
+  }
+  if(mm==_m && nn==_n){
+    return;
+  }
+
+  double * Mold = M;
+  M = new double[ _m*_n ];
+  for(int ii = 0; ii<_m; ii++){
+    for(int jj= 0; jj<_n; jj++){
+      if(ii<mm && jj<nn){
+        M[ii*_n + jj] = Mold[ii*nn + jj];
+      }else{
+        M[ii*_n + jj] = 0;
+      }
+    }
+  }
+  mm=_m;
+  nn=_n;
+  delete [] Mold;
+}
+
 int MatrixXd::get1dIndex(int ii, int jj)const{
   return ii*nn + jj;
 }

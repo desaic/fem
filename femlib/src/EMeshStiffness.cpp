@@ -16,7 +16,6 @@ MatrixXd ElementMesh::getStiffness()
   Kglobal.fill(0);
   for(unsigned int ii = 0;ii<e.size();ii++){
     MatrixXd K = getStiffness(ii);
-    int nDof = 3* e[ii]->nV();
     for(int jj = 0; jj<e[ii]->nV(); jj++){
       int vj = e[ii]->at(jj);
       for(int kk = 0; kk<e[ii]->nV(); kk++){

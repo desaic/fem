@@ -10,8 +10,8 @@ public:
   float oneStepSparse(ElementMesh * m);
   bool dense;
 
-  double * bb ;
-  float force_L2tol;
+  float dx_tol;
   float h;
+  bool rmRigid;
 };
 #endif
