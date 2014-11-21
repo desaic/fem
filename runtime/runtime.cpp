@@ -25,8 +25,8 @@ void runTest()
 
 int main(int argc, char* argv[])
 {
-  runTest();
-  int nx = 2, ny=8, nz=2;
+//  runTest();
+  int nx = 4, ny=16, nz=4;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   StrainEneNeo ene;
   ene.param[0] = 34400;
@@ -56,9 +56,9 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  StepperNewton *stepper= new StepperNewton();
-  //AdmmCPU *stepper= new AdmmCPU();
-  //stepper->ro0 = 1000;
+  //StepperNewton *stepper= new StepperNewton();
+  AdmmCPU *stepper= new AdmmCPU();
+  stepper->ro0 = 1000;
   stepper->nSteps = 100000;
   std::thread simt(runSim, em, stepper);
   Render render;

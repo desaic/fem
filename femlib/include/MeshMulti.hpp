@@ -1,8 +1,7 @@
 #ifndef MESHMULTI_HPP
 #define MESHMULTI_HPP
-
-#include "ElementRegGrid.hpp"
-
+#include <vector>
+#include "vecmath.h"
 class ElementHex;
 
 ///@brief index of an element in a heirarchy.
@@ -29,6 +28,10 @@ public:
   }
 
   Vector3f getDisp(const HIndex & ind, const Vector3f & p);
+
+  Matrix3f defGrad(const HIndex & ind, const Vector3f & p);
+
+  std::vector<Vector3f> getForce(const HIndex & ind);
 };
 
 #endif
