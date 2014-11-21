@@ -47,8 +47,11 @@ public:
   std::vector<Vector3f> getForce();
 
   MatrixXd getStiffness(int eIdx);
-  void getStiffnessSparse(std::vector<int> & I, std::vector<int> & J, 
+
+  void getStiffnessSparse(std::vector<int> & I, std::vector<int> & J,
     std::vector<float> &val);
+
+  void stiffnessPattern(std::vector<int> & I, std::vector<int> & J);
 
   MatrixXd getStiffness();
 

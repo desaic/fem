@@ -12,35 +12,15 @@ void copyArray(const T* src, T*dst, int size)
 
 struct MatrixXd
 {
-  MatrixXd():M(0),mm(0),nn(0){}
+  MatrixXd();
   
-  MatrixXd(int _m, int _n):M(0){allocate(_m,_n);}
+  MatrixXd(int _m, int _n);
 
-  MatrixXd(const MatrixXd & ma):M(0),mm(ma.mm),nn(ma.nn){
-    allocate(mm,nn);
-    copyArray(ma.M, M, mm*nn);
-  }
+  MatrixXd(const MatrixXd & ma);
   
-  void fill(double val){
-    int nEntry=mm*nn;
-    for(int ii = 0; ii<nEntry; ii++){
-      M[ii] = val;
-    }
-  }
+  void fill(double val);
 
-  MatrixXd&operator=(const MatrixXd & ma){
-    if( mm * nn != ma.mm * ma.nn && M!=0 ){
-      delete[]M;
-      M=0;
-    }
-    mm=ma.mm;
-    nn=ma.nn;
-    if(M==0){
-      M=new double[mm*nn];
-    }
-    copyArray(ma.M,M,mm*nn);
-    return *this;
-  }
+  MatrixXd&operator=(const MatrixXd & ma);
 
   ///@brief array of matrix entries
   double * M;
@@ -52,47 +32,23 @@ struct MatrixXd
   
   ///@param _m number of rows.
   ///@param _n number of columns.
-  void allocate(int _m, int _n){
-    if( mm * nn != _m * _n && M!=0){
-      delete[]M;
-      M=0;
-    }
-    nn = _n;
-    mm = _m;
-    if(M==0){
-      M=new double[mm*nn];
-    }
-  }
+  void allocate(int _m, int _n);
+
+  ///@brief preserves values if possible.
+  ///Add 0s if necessary.
+  void resize(int _m, int _n);
   
-  virtual int get1dIndex(int ii, int jj)const{
-    return ii*nn + jj;
-  }
+  virtual int get1dIndex(int ii, int jj)const;
 
   ///@param ii row number
   ///@param jj column number
-  double & operator()(int ii , int jj){
-    return  M[get1dIndex(ii,jj)];
-  }
+  double & operator()(int ii , int jj);
   
-  double operator()(int ii , int jj)const{
-    return  M[get1dIndex(ii,jj)];
-  }
+  double operator()(int ii , int jj)const;
 
-  ~MatrixXd(){
-    if(M!=0){
-      delete []M;
-    }
-  }
+  ~MatrixXd();
 
-  void print(std::ostream & stream){
-    for(int ii = 0;ii<mm;ii++){
-      for(int jj = 0;jj<nn;jj++){
-        stream<<operator ()(ii,jj)<<" ";
-      }
-      stream<<"\n";
-    }
-    stream<<"\n";
-  }
+  void print(std::ostream & stream);
 };
 
 template<typename T1, typename T2>
