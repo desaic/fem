@@ -283,7 +283,7 @@ Render::init(World * _world)
 }
 
 Render::Render():world(0),anim(false),xRotSpeed(0.004f),
-  yRotSpeed(0.004f),camSpeed(0.05f)
+  yRotSpeed(0.004f),camSpeed(0.005f)
 {}
 
 Render::~Render()

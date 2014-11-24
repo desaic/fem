@@ -4,6 +4,9 @@
 #include <string>
 #include <sstream>
 
+#ifdef _MSC_VER
+#define snprintf sprintf_s
+#endif
 const int bufSize=64;
 
 MatTable::MatTable()
@@ -154,7 +157,7 @@ MatTable::paramFileName(int lvl, int * mats)
 
 void MatTable::loadTable(int lvl, std::istream & in)
 {
-  int nComb=std::pow(l[lvl].nMat, l[lvl].nVox);
+  int nComb= (int)std::pow(l[lvl].nMat, l[lvl].nVox);
   int nLines;
   in>>nLines;
   in>>l[lvl].nCenter;

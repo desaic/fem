@@ -5,6 +5,7 @@ std::istream & operator>> (std::istream  & in, Eigen::Vector3f & v)
   for(int ii= 0; ii<3; ii++){
     in>>v[ii];
   }
+  return in;
 }
 
 void

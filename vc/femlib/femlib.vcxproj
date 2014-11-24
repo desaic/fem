@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -19,36 +19,29 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{D1978A3F-B8D3-4E09-951E-E08C52D73048}</ProjectGuid>
+    <ProjectGuid>{39DFF430-E911-4FD1-A4ED-D6E678FED79D}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>femlib</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v110</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -66,72 +59,99 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Users\desaic\Documents\workspace\PaintMat4\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <Optimization>MaxSpeed</Optimization>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
+    <ClCompile Include="..\..\femlib\src\ArrayUtil.cpp" />
+    <ClCompile Include="..\..\femlib\src\Element.cpp" />
+    <ClCompile Include="..\..\femlib\src\ElementCoarse.cpp" />
+    <ClCompile Include="..\..\femlib\src\ElementHex.cpp" />
+    <ClCompile Include="..\..\femlib\src\ElementMesh.cpp" />
+    <ClCompile Include="..\..\femlib\src\ElementRegGrid.cpp" />
+    <ClCompile Include="..\..\femlib\src\EMeshStiffness.cpp" />
+    <ClCompile Include="..\..\femlib\src\EMeshStiffnessSparse.cpp" />
+    <ClCompile Include="..\..\femlib\src\femError.cpp" />
+    <ClCompile Include="..\..\femlib\src\FileUtil.cpp" />
+    <ClCompile Include="..\..\femlib\src\Material.cpp" />
+    <ClCompile Include="..\..\femlib\src\MaterialQuad.cpp" />
+    <ClCompile Include="..\..\femlib\src\MatrixXd.cpp" />
+    <ClCompile Include="..\..\femlib\src\MatTable.cpp" />
+    <ClCompile Include="..\..\femlib\src\MeshMulti.cpp" />
+    <ClCompile Include="..\..\femlib\src\Quadrature.cpp" />
+    <ClCompile Include="..\..\femlib\src\Stepper.cpp" />
+    <ClCompile Include="..\..\femlib\src\StepperGrad.cpp" />
+    <ClCompile Include="..\..\femlib\src\StrainEne.cpp" />
+    <ClCompile Include="..\..\femlib\src\StrainEneNeo.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\femlib\include\ArrayUtil.hpp" />
@@ -142,41 +162,19 @@
     <ClInclude Include="..\..\femlib\include\ElementMesh.hpp" />
     <ClInclude Include="..\..\femlib\include\ElementRegGrid.hpp" />
     <ClInclude Include="..\..\femlib\include\femError.hpp" />
-    <ClInclude Include="..\..\femLib\include\Material.hpp" />
-    <ClInclude Include="..\..\femlib\include\MeshMulti.hpp" />
-    <ClInclude Include="..\..\femlib\include\Stepper.hpp" />
-    <ClInclude Include="..\..\femlib\include\StepperGrad.hpp" />
-    <ClInclude Include="..\..\femlib\include\StrainEneNeo.hpp" />
+    <ClInclude Include="..\..\femlib\include\FileUtil.hpp" />
+    <ClInclude Include="..\..\femlib\include\Material.hpp" />
     <ClInclude Include="..\..\femlib\include\MaterialQuad.hpp" />
     <ClInclude Include="..\..\femlib\include\MatrixXd.hpp" />
+    <ClInclude Include="..\..\femlib\include\MatTable.hpp" />
+    <ClInclude Include="..\..\femlib\include\MeshMulti.hpp" />
     <ClInclude Include="..\..\femlib\include\Quadrature.hpp" />
+    <ClInclude Include="..\..\femlib\include\Stepper.hpp" />
+    <ClInclude Include="..\..\femlib\include\StepperGrad.hpp" />
     <ClInclude Include="..\..\femlib\include\StrainEne.hpp" />
+    <ClInclude Include="..\..\femlib\include\StrainEneNeo.hpp" />
     <ClInclude Include="..\..\femlib\include\util.h" />
     <ClInclude Include="..\..\femlib\include\World.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\vecmath\vecmath.vcxproj">
-      <Project>{a4162f91-2b0a-404f-b506-ed482931444f}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\femlib\src\ArrayUtil.cpp" />
-    <ClCompile Include="..\..\femLib\src\Element.cpp" />
-    <ClCompile Include="..\..\femlib\src\ElementCoarse.cpp" />
-    <ClCompile Include="..\..\femlib\src\ElementHex.cpp" />
-    <ClCompile Include="..\..\femLib\src\ElementMesh.cpp" />
-    <ClCompile Include="..\..\femlib\src\ElementMeshStiffness.cpp" />
-    <ClCompile Include="..\..\femlib\src\ElementRegGrid.cpp" />
-    <ClCompile Include="..\..\femlib\src\EMeshStiffnessSparse.cpp" />
-    <ClCompile Include="..\..\femlib\src\femError.cpp" />
-    <ClCompile Include="..\..\femLib\src\Material.cpp" />
-    <ClCompile Include="..\..\femlib\src\MeshMulti.cpp" />
-    <ClCompile Include="..\..\femlib\src\Stepper.cpp" />
-    <ClCompile Include="..\..\femlib\src\StepperGrad.cpp" />
-    <ClCompile Include="..\..\femlib\src\StrainEneNeo.cpp" />
-    <ClCompile Include="..\..\femlib\src\MaterialQuad.cpp" />
-    <ClCompile Include="..\..\femlib\src\Quadrature.cpp" />
-    <ClCompile Include="..\..\femlib\src\StrainEne.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

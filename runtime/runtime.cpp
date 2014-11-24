@@ -5,7 +5,7 @@
 #include "StepperGrad.hpp"
 #include "StepperNewton.hpp"
 #include "AdmmCPU.hpp"
-#include "IpoptStepper.hpp"
+//#include "IpoptStepper.hpp"
 #include <thread>
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
