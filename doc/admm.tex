@@ -1,0 +1,27 @@
+\documentclass{article}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\begin{document}
+\section{Continuous}
+	\[\varepsilon(u,x) = \frac{1}{2}(\nabla u + \nabla u^T)\]
+	\[\int_{\Omega} v^T\nabla\cdot C:\varepsilon(u) = -\int_{\Omega}f^Tv\]
+	\begin{align}
+	\int_{\Omega} v^T\nabla\cdot C:\varepsilon(u) &= \int_{\partial \Omega} v^TC:\varepsilon(u)n- \int_{\Omega} \nabla v:C:\varepsilon(u) \\
+	&= \int_{\partial \Omega} v^TC:\varepsilon(z)n - \int_{\partial \Omega} v^TC:\varepsilon(u)n + \int_{\Omega} v:\nabla\cdot C:\varepsilon(u)
+	\end{align}
+	\[\int_{\Omega} v^T\nabla\cdot C:\varepsilon(u) =  \int_{\partial \Omega} v^TC:(\varepsilon(u)-\varepsilon(z))n - \int_{\Omega}f^Tv\]
+	
+\section{Discrete}
+	\[u(x)=\sum_{i=1}^{8}N_i(x)U_i = H(x)U\]
+	\[\varepsilon(u,x) = \begin{pmatrix}
+	  \frac{\partial \mathbf{N}}{\partial x_1} & 0 & 0\\
+	  0 & \frac{\partial \mathbf{N}}{\partial x_2} & 0\\
+	  0 & 0 & \frac{\partial \mathbf{N}}{\partial x_2}\\
+ 	  \frac{\partial \mathbf{N}}{\partial x_2} & \frac{\partial \mathbf{N}}{\partial x_1} & 0\\
+  	  0 & \frac{\partial \mathbf{N}}{\partial x_3} & \frac{\partial \mathbf{N}}{\partial x_2}\\
+  	  \frac{\partial \mathbf{N}}{\partial x_3} & 0 & \frac{\partial \mathbf{N}}{\partial x_1}
+	\end{pmatrix}U\]
+	\[\varepsilon(u,x) = B(x)U\]
+	\[V\int_{\Omega} \nabla\cdot C:\varepsilon(u) =  \int_{\partial \Omega} v^TC:(\varepsilon(u)-\varepsilon(z))n + \int_{\Omega}f^Tv\]
+	
+\end{document}
