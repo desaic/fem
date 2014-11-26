@@ -71,6 +71,7 @@ int MatTable::fine2Coarse(int * fineMats, int lvl)const
     int ctrIdx=l[lvl][matIdx];
     return ctrIdx;
   }
+  return 0;
 }
 
 void MatTable::coarse2Fine(int * fineMats, int coarseCtr, int lvl) const

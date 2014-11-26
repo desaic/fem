@@ -29,6 +29,15 @@ int sw[8][3] =
  { 1, 1, 1}
 };
 
+int faces[6][4]{
+		{ 0, 1, 3, 2 },
+		{ 4, 6, 7, 5 },
+		{ 0, 4, 5, 1 },
+		{ 2, 3, 7, 6 },
+		{ 1, 5, 7, 3 },
+		{ 0, 2, 6, 4 },
+};
+
 std::vector<float>
 ElementHex::shapeFun(const Vector3f & p)const
 {

@@ -34,14 +34,14 @@ int main(int argc, char* argv[])
   ene.param[1] = 310334;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
-  Vector3f ff(0,-1000,0);
-  for(int ii = 0;ii<nx/2;ii++){
-    for(int jj =0;jj<nz/2;jj++){
+  Vector3f ff(10,-60,0);
+  for(int ii = 0;ii<nx;ii++){
+    for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
       int aa[4] = {0,1,4,5};
       for(int kk = 0;kk<4;kk++){
         int vidx =em->e[eidx]->at(aa[kk]);
-//        em->fixed[vidx] = 1;
+        em->fixed[vidx] = 1;
       }
 
       eidx= em->GetEleInd(ii,ny-1,jj);
@@ -57,11 +57,11 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  StepperNewton *stepper= new StepperNewton();
-  stepper->rmRigid = true;
+  //StepperNewton *stepper= new StepperNewton();
+  //stepper->rmRigid = true;
 //  IpoptStepper * stepper = new IpoptStepper();
-  //AdmmCPU *stepper= new AdmmCPU();
-  //stepper->ro0 = 1000;
+  AdmmCPU *stepper= new AdmmCPU();
+  stepper->ro0 = 500;
   stepper->nSteps = 100000;
   std::thread simt(runSim, em, stepper);
   Render render;

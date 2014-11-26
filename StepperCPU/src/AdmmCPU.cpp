@@ -67,7 +67,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
 {
   float E = 0;
   float h = 1;
-  int NSteps = 100;
+  int NSteps = 5;
   int ndof = 3*ele->nV();
   
   for(int iter = 0; iter<NSteps; iter++){
