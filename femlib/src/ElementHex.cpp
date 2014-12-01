@@ -78,6 +78,28 @@ ElementHex::getEdges()
   return edges;
 }
 
+Eigen::MatrixXf ElementHex::BMatrix(const Vector3f & xx, const std::vector<Vector3f>X)
+{
+	Eigen::MatrixXf B(6, 3 * nV());
+	for (int ii = 0; ii < nV(); ii++){
+		int col = 3 * ii;
+		Vector3f dN = shapeFunGrad(ii, xx, X);
+		B(col  , 0) = dN[0];
+		B(col+1, 1) = dN[1];
+		B(col+2, 2) = dN[2];
+
+		B(col    , 0) = dN[1];
+		B(col + 1, 0) = dN[0];
+
+		B(col + 1, 1) = dN[2];
+		B(col + 2, 1) = dN[1];
+
+		B(col    , 2) = dN[2];
+		B(col + 2, 2) = dN[0];
+	}
+	return B;
+}
+
 float ElementHex::getVol(const std::vector<Vector3f> & X)
 {
   Vector3f size = X[at(7)] - X[at(0)];
