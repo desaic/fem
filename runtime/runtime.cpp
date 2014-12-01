@@ -9,7 +9,7 @@
 #include <thread>
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
-
+#include "StrainLin.hpp"
 #include "UnitTests.hpp"
 
 void runSim(ElementMesh * m, Stepper * stepper)
@@ -19,22 +19,25 @@ void runSim(ElementMesh * m, Stepper * stepper)
 
 void runTest()
 {
-  ElementCoarseTest();
-//  system("pause");
+  //ElementCoarseTest();
+  //stiffnessTest();
+	forceTest();
+  system("pause");
   exit(0);
 }
 
 int main(int argc, char* argv[])
 {
-//  runTest();
+  //runTest();
   int nx = 4, ny=16, nz=4;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
-  StrainEneNeo ene;
+  //StrainEneNeo ene;
+  StrainLin ene;
   ene.param[0] = 34482;
   ene.param[1] = 310334;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
-  Vector3f ff(10,-60,0);
+  Vector3f ff(0,-20,0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
@@ -57,11 +60,11 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  //StepperNewton *stepper= new StepperNewton();
+  StepperNewton *stepper= new StepperNewton();
   //stepper->rmRigid = true;
 //  IpoptStepper * stepper = new IpoptStepper();
-  AdmmCPU *stepper= new AdmmCPU();
-  stepper->ro0 = 500;
+  //AdmmCPU *stepper= new AdmmCPU();
+  //stepper->ro0 = 500;
   stepper->nSteps = 100000;
   std::thread simt(runSim, em, stepper);
   Render render;

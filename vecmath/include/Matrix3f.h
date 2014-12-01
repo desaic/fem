@@ -47,7 +47,7 @@ public:
 	float determinant() const;
 	// TODO: invert in place as well
 	Matrix3f inverse( bool* pbIsSingular = NULL, float epsilon = 0.f ) const;
-
+	float norm2()const;
   float trace()const;
 
 	void transpose();

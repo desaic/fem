@@ -152,6 +152,7 @@
     <ClCompile Include="..\..\femlib\src\StepperGrad.cpp" />
     <ClCompile Include="..\..\femlib\src\StrainEne.cpp" />
     <ClCompile Include="..\..\femlib\src\StrainEneNeo.cpp" />
+    <ClCompile Include="..\..\femlib\src\StrainLin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\femlib\include\ArrayUtil.hpp" />
@@ -173,6 +174,7 @@
     <ClInclude Include="..\..\femlib\include\StepperGrad.hpp" />
     <ClInclude Include="..\..\femlib\include\StrainEne.hpp" />
     <ClInclude Include="..\..\femlib\include\StrainEneNeo.hpp" />
+    <ClInclude Include="..\..\femlib\include\StrainLin.hpp" />
     <ClInclude Include="..\..\femlib\include\util.h" />
     <ClInclude Include="..\..\femlib\include\World.hpp" />
   </ItemGroup>

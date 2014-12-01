@@ -13,6 +13,9 @@
 	
 \section{Discrete}
 	\[u(x)=\sum_{i=1}^{8}N_i(x)U_i = H(x)U\]
+	\[H(x) = \begin{pmatrix}
+	
+	\end{pmatrix}U\]
 	\[\varepsilon(u,x) = \begin{pmatrix}
 	  \frac{\partial \mathbf{N}}{\partial x_1} & 0 & 0\\
 	  0 & \frac{\partial \mathbf{N}}{\partial x_2} & 0\\
@@ -22,6 +25,6 @@
   	  \frac{\partial \mathbf{N}}{\partial x_3} & 0 & \frac{\partial \mathbf{N}}{\partial x_1}
 	\end{pmatrix}U\]
 	\[\varepsilon(u,x) = B(x)U\]
-	\[V\int_{\Omega} \nabla\cdot C:\varepsilon(u) =  \int_{\partial \Omega} v^TC:(\varepsilon(u)-\varepsilon(z))n + \int_{\Omega}f^Tv\]
+	\[V\int_{\Omega}H(x) \nabla\cdot C:\varepsilon(u) =  V\int_{\partial \Omega} H(x)^TN^TCB(x)(u-z) + V\int_{\Omega}f^TH(x)\]
 	
 \end{document}

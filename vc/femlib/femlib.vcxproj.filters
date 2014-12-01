@@ -75,6 +75,9 @@
     <ClCompile Include="..\..\femlib\src\StrainEneNeo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\femlib\src\StrainLin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\femlib\include\ArrayUtil.hpp">
@@ -138,6 +141,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\femlib\include\World.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\femlib\include\StrainLin.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

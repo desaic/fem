@@ -4,6 +4,7 @@
 #include "ElementCoarse.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
+#include "StrainLin.hpp"
 #include "MatrixXd.hpp"
 //#include "ConjugateGradientCuda.hpp"
 #include <iostream>
@@ -65,13 +66,14 @@ void stiffnessTest()
   float h = 0.001f;
   ElementRegGrid * grid = new ElementRegGrid(1, 2, 1);
 
-  StrainEneNeo* ene=new StrainEneNeo();
+  //StrainEneNeo* ene=new StrainEneNeo();
+  StrainEne* ene = new StrainLin();
   ene->param[1]= 1000;
   ene->param[0] = 10000;
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
-  //  grid->x[1][2] +=0.01;
-  //  grid->x[3][1] +=0.01;
+    grid->x[1][2] +=0.1;
+    grid->x[3][1] +=0.2;
   MatrixXd KAna = grid->getStiffness();
   int nVar = (int)grid->X.size();
   MatrixXd K(3*nVar,3*nVar);
@@ -116,12 +118,13 @@ void forceTest()
 {
   int nx = 1,ny=1,nz=1;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
-  StrainEneNeo ene;
+  //StrainEneNeo ene;
+  StrainLin ene;
   ene.param[0] = 1000;
   ene.param[1] = 10000;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
-  Vector3f ff(0,10000,0);
+  
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);

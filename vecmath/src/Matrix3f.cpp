@@ -298,6 +298,15 @@ Matrix3f Matrix3f::identity()
 	return m;
 }
 
+float Matrix3f::norm2()const
+{
+	float norm = 0;
+	for (int i = 0; i < 9; ++i)
+	{
+		norm += m_elements[i] * m_elements[i];
+	}
+	return norm;
+}
 
 // static
 Matrix3f Matrix3f::rotateX( float radians )
