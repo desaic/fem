@@ -75,8 +75,8 @@ void stiffnessTest()
   ene->param[1] = 10000;
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
- //   grid->x[1][2] +=0.1;
-  //  grid->x[3][1] +=0.2;
+  grid->x[1][2] +=0.1;
+  grid->x[3][1] +=0.2;
   MatrixXd KAna = grid->getStiffness();
   int nVar = (int)grid->X.size();
   MatrixXd K(3*nVar,3*nVar);
@@ -122,12 +122,28 @@ void stiffnessTest()
   const Quadrature & q = Quadrature::Gauss2;
   Eigen::MatrixXf Ka = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
   Eigen::MatrixXf E = ene->EMatrix();
+  Eigen::VectorXf U = Eigen::VectorXf::Zero(3 * ele->nV());
+
+  for (unsigned int ii = 0; ii < ele->nV(); ii++){
+	  for (int jj = 0; jj < 3; jj++){
+		  U[3 * ii + jj] = grid->x[ii][jj] - grid->X[ii][jj];
+	  }
+  }
+
   for (unsigned int ii = 0; ii < q.x.size(); ii++){
 	  Eigen::MatrixXf B = ele->BMatrix(q.x[ii], grid->X);
+	  Eigen::MatrixXf ss = E*B*U;
+	  std::cout <<"sigma:\n"<< ss << "\n";
+	  
+	  Matrix3f F = ele->defGrad(q.x[ii], grid->X, grid->x);
+	  Matrix3f P = ene->getPK1(F);
+	  std::cout << "P:\n";
+	  P.print();
+
 	  Ka += q.w[ii] * B.transpose() * E * B;
 	  //std::cout << "B:\n" << B << "\n";
   }
-
+  
   std::cout << "E:\n" << E << "\n";
   
   std::cout << "alt K:\n";
