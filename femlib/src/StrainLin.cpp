@@ -37,9 +37,9 @@ Matrix3f StrainLin::getdPdx(const Matrix3f & F, const Matrix3f & dF)
 
 Eigen::MatrixXf StrainLin::EMatrix()
 {
-	Eigen::MatrixXf E(6,6);
-	float l = param[0];
-	float G = param[1];
+	Eigen::MatrixXf E=Eigen::MatrixXf::Zero(6,6);
+	float G = param[0];
+	float l = param[1];
 	float e = G*(3 * l + 2 * G) / (l + G);
 	float nu = l / (2 * (l + G));
 	float c = e / ((1 + nu)*(1 - 2 * nu));

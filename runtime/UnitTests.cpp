@@ -6,7 +6,10 @@
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
 #include "MatrixXd.hpp"
+#include "Quadrature.hpp"
 //#include "ConjugateGradientCuda.hpp"
+
+#include <Eigen\Dense>
 #include <iostream>
 
 void ElementCoarseTest()
@@ -64,16 +67,16 @@ void cudaLinTest()
 void stiffnessTest()
 {
   float h = 0.001f;
-  ElementRegGrid * grid = new ElementRegGrid(1, 2, 1);
+  ElementRegGrid * grid = new ElementRegGrid(1, 1, 1);
 
   //StrainEneNeo* ene=new StrainEneNeo();
-  StrainEne* ene = new StrainLin();
-  ene->param[1]= 1000;
-  ene->param[0] = 10000;
+  StrainLin* ene = new StrainLin();
+  ene->param[0]= 1000;
+  ene->param[1] = 10000;
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
-    grid->x[1][2] +=0.1;
-    grid->x[3][1] +=0.2;
+ //   grid->x[1][2] +=0.1;
+  //  grid->x[3][1] +=0.2;
   MatrixXd KAna = grid->getStiffness();
   int nVar = (int)grid->X.size();
   MatrixXd K(3*nVar,3*nVar);
@@ -94,6 +97,7 @@ void stiffnessTest()
       }
     }
   }
+
   std::cout<<"Ana K:\n";
   KAna.print(std::cout);
   std::cout<<"\n";
@@ -112,6 +116,34 @@ void stiffnessTest()
   }
 
   std::cout<<"max err "<<maxErr<<"\n";
+
+  //linear material stiffness
+  ElementHex * ele = (ElementHex*)grid->e[0];
+  const Quadrature & q = Quadrature::Gauss2;
+  Eigen::MatrixXf Ka = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
+  Eigen::MatrixXf E = ene->EMatrix();
+  for (unsigned int ii = 0; ii < q.x.size(); ii++){
+	  Eigen::MatrixXf B = ele->BMatrix(q.x[ii], grid->X);
+	  Ka += q.w[ii] * B.transpose() * E * B;
+	  //std::cout << "B:\n" << B << "\n";
+  }
+
+  std::cout << "E:\n" << E << "\n";
+  
+  std::cout << "alt K:\n";
+  std::cout << Ka << "\n";
+  maxErr = 0;
+  for (int ii = 0; ii<K.mm; ii++){
+	  for (int jj = 0; jj<K.nn; jj++){
+		  float err = (float)std::abs(Ka(ii, jj) - K(ii, jj));
+		  if (err>maxErr){
+			  maxErr = err;
+		  }
+	  }
+  }
+
+  std::cout << "max err " << maxErr << "\n";
+
 }
 
 void forceTest()

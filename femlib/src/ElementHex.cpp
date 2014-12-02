@@ -80,22 +80,22 @@ ElementHex::getEdges()
 
 Eigen::MatrixXf ElementHex::BMatrix(const Vector3f & xx, const std::vector<Vector3f>X)
 {
-	Eigen::MatrixXf B(6, 3 * nV());
+	Eigen::MatrixXf B = Eigen::MatrixXf::Zero(6, 3 * nV());
 	for (int ii = 0; ii < nV(); ii++){
 		int col = 3 * ii;
 		Vector3f dN = shapeFunGrad(ii, xx, X);
-		B(col  , 0) = dN[0];
-		B(col+1, 1) = dN[1];
-		B(col+2, 2) = dN[2];
+		B(0, col  ) = dN[0];
+		B(1, col+1) = dN[1];
+		B(2, col+2) = dN[2];
 
-		B(col    , 0) = dN[1];
-		B(col + 1, 0) = dN[0];
+		B(3, col    ) = dN[1];
+		B(3, col + 1) = dN[0];
 
-		B(col + 1, 1) = dN[2];
-		B(col + 2, 1) = dN[1];
+		B(4, col + 1) = dN[2];
+		B(4, col + 2) = dN[1];
 
-		B(col    , 2) = dN[2];
-		B(col + 2, 2) = dN[0];
+		B(5, col    ) = dN[2];
+		B(5, col + 2) = dN[0];
 	}
 	return B;
 }

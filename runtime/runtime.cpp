@@ -20,15 +20,15 @@ void runSim(ElementMesh * m, Stepper * stepper)
 void runTest()
 {
   //ElementCoarseTest();
-  //stiffnessTest();
-	forceTest();
+  stiffnessTest();
+	//forceTest();
   system("pause");
   exit(0);
 }
 
 int main(int argc, char* argv[])
 {
-  //runTest();
+  runTest();
   int nx = 4, ny=16, nz=4;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   //StrainEneNeo ene;
