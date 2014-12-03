@@ -1,35 +1,82 @@
 \documentclass{article}
 \usepackage{amsfonts}
 \usepackage{amsmath}
+\usepackage{hyperref}
 \begin{document}
 \section{Continuous}
-	\[\varepsilon(u,x) = \frac{1}{2}(\nabla u + \nabla u^T)\]
-	\[\int_{\Omega} v^T\nabla\cdot C:\varepsilon(u) = -\int_{\Omega}f^Tv\]
+	Solve
+	\[
+	-\nabla\sigma(u) = f,
+	\]
+	where $\sigma(x) = C:\varepsilon(u)$, 
+		  $\varepsilon(u,x) = \frac{1}{2}(\nabla u + \nabla u^T)$.
+	Auxiliary variable $\sigma = C\varepsilon(u)$.
+	Multiply by test functions $v$ and $\tau$ and integrate by parts in each element $K$,
 	\begin{align}
-	\int_{\Omega} v^T\nabla\cdot C:\varepsilon(u) &= \int_{\partial \Omega} v^TC:\varepsilon(u)n- \int_{\Omega} \nabla v:C:\varepsilon(u) \\
-	&= \int_{\partial \Omega} v^TC:\varepsilon(z)n - \int_{\partial \Omega} v^TC:\varepsilon(u)n + \int_{\Omega} v:\nabla\cdot C:\varepsilon(u)
+	\int_K \sigma \cdot \tau&=-\int_Ku\nabla\cdot \tau dx +\int_{\partial K}u n\cdot \tau ds\\
+	\int_K \sigma \cdot \nabla v&=\int_K fv dx +\int_{\partial K}\sigma \cdot n v ds.
 	\end{align}
-	\[\int_{\Omega} v^T\nabla\cdot C:\varepsilon(u) =  \int_{\partial \Omega} v^TC:(\varepsilon(u)-\varepsilon(z))n - \int_{\Omega}f^Tv\]
-	
+	Substitute in numerical fluxes $\hat{u}$ and $\hat{\sigma}$ for boundary integrals.
+	\begin{align}
+	\int_K \sigma \cdot \tau&=-\int_Ku\nabla\cdot \tau dx +\int_{\partial K}\hat{u} n\cdot \tau ds \label{eq:aux}\\
+	\int_K \sigma \cdot \nabla v&=\int_K fv dx +\int_{\partial K}\hat{\sigma} \cdot n v ds.
+		\label{eq:force}
+	\end{align}
+	Integration by parts second time for $\int_Ku\nabla\cdot \tau dx$ in \autoref{eq:aux}:
+	\begin{equation}
+	\int_Ku\nabla\cdot \tau dx=\int_{\partial K}u n\cdot \tau-\int_K\nabla u\cdot \tau.
+	\label{eq:ibp}
+	\end{equation}
+	Let $\tau=\nabla v$ and substitute \autoref{eq:ibp} into \autoref{eq:aux}:
+	\begin{equation}
+	\int_K \sigma \cdot \nabla v = -\int_{\partial K}u n\cdot \nabla v+\int_K\nabla u\cdot \nabla v +\int_{\partial K}\hat{u} n\cdot \nabla v ds 
+	\label{eq:stress}
+	\end{equation}
+	Substitute \autoref{eq:stress} into \autoref{eq:force} to get
+	\begin{equation}
+	\int_K fvdx + \int_{\partial K}\hat{\sigma}\cdot nvds 
+	= \int_{\partial K}(\hat{u}-u) n\cdot \nabla v+\int_K\nabla u\cdot \nabla v.
+	\end{equation}
+		
 \section{Discrete}
 	\[u(x)=\sum_{i=1}^{8}N_i(x)U_i = H(x)U\]
+	\[U = \begin{pmatrix}
+	u_{1,x} & u_{1,y} & u_{1,z} & u_{2,x} & u_{2,y} & u_{2,z} & ...\\
+	\end{pmatrix}^T(24\times 1)\]
 	\[H(x) = \begin{pmatrix}
-	
-	\end{pmatrix}U\]
-	\[\varepsilon(u,x) = \begin{pmatrix}
-	  \frac{\partial \mathbf{N}}{\partial x_1} & 0 & 0\\
-	  0 & \frac{\partial \mathbf{N}}{\partial x_2} & 0\\
-	  0 & 0 & \frac{\partial \mathbf{N}}{\partial x_2}\\
- 	  \frac{\partial \mathbf{N}}{\partial x_2} & \frac{\partial \mathbf{N}}{\partial x_1} & 0\\
-  	  0 & \frac{\partial \mathbf{N}}{\partial x_3} & \frac{\partial \mathbf{N}}{\partial x_2}\\
-  	  \frac{\partial \mathbf{N}}{\partial x_3} & 0 & \frac{\partial \mathbf{N}}{\partial x_1}
-	\end{pmatrix}U\]
+	  N_1 & 0   & 0   & N_2 & 0   & 0   & ...\\
+	  0   & N_1 & 0   & 0   & N_2 & 0   & ...\\
+	  0   & 0   & N_1 & 0   & 0   & N_2 & ...\\	  	  
+	\end{pmatrix}(3\times 24)\]
+	\[B(x) = \begin{pmatrix}
+	  \frac{\partial N_1}{\partial x_1} & 0 & 0& ...\\
+	  0 & \frac{\partial N_1}{\partial x_2} & 0& ...\\
+	  0 & 0 & \frac{\partial N_1}{\partial x_2}& ...\\
+ 	  \frac{\partial N_1}{\partial x_2} & \frac{\partial N_1}{\partial x_1} & 0& ...\\
+  	  0 & \frac{\partial N_1}{\partial x_3} & \frac{\partial N_1}{\partial x_2}& ...\\
+  	  \frac{\partial N_1}{\partial x_3} & 0 & \frac{\partial N_1}{\partial x_1}& ...
+	\end{pmatrix}(6\times 24)\]
 	\[\varepsilon(u,x) = B(x)U\]
-	\[V\int_{\Omega}H(x) \nabla\cdot C:\varepsilon(u) =  V\int_{\partial \Omega} H(x)^TN^TCB(x)(u-z) + V\int_{\Omega}f^TH(x)\]
-	In reference space
+	Choose $\hat{\sigma}=C\varepsilon(z)$, $\hat{u}=Z$.
+	\[V\int_K B(x)CB(x)U + V\int_{\partial K}B^T(x)C^TN^TH(x)(Z-U)
+	=V\int_K H^T(x)f+V\int_{\partial K}H(x)NCB(x)Z.\]
+	Remove $V$.
+	\[\int_K B(x)CB(x)U + \int_{\partial K}B^T(x)C^TN^TH(x)(Z-U)
+	=\int_K H^T(x)f + \int_{\partial K}H(x)NCB(x)Z.\]
+	
 	\[
-	\int_{\Omega}P(x)UB(x) = \int_{\partial\Omega}H(x)N^TP(x)U + \int_{\Omega}f^TH(x).
+	N = \begin{pmatrix}
+	n_x & 0   & 0   & 0   & n_z & n_y\\
+	0   & n_y & 0   & n_z & 0   & n_x\\
+	0   & 0   & n_z & n_y & n_z & 0  \\		
+	\end{pmatrix}(3\times 6)
 	\]
+	In reference space
+	\[KU + \int_{\partial K}P(x)N^TH(x)(Z-U)
+	=\int_K H^T(x)f + \int_{\partial K}H(x)NP(x)Z.\]
+	Let $T=\int_{\partial K}H(x)NP(x)$, $F = \int_K H^T(x)f$, rearrange
+	\[(K-T^T)U=F + (T-T^T)Z.\]
+	
 \section{Linear Material}
 	P(x) = E(x)B(x)
 \end{document}

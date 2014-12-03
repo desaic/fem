@@ -11,6 +11,7 @@
 
 #include <Eigen\Dense>
 #include <iostream>
+#include <fstream>
 
 void ElementCoarseTest()
 {
@@ -71,12 +72,12 @@ void stiffnessTest()
 
   //StrainEneNeo* ene=new StrainEneNeo();
   StrainLin* ene = new StrainLin();
-  ene->param[0]= 1000;
+  ene->param[0] = 1000;
   ene->param[1] = 10000;
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
-  grid->x[1][2] +=0.1;
-  grid->x[3][1] +=0.2;
+  grid->x[1][2] += 0.1f;
+  grid->x[3][1] += 0.2f;
   MatrixXd KAna = grid->getStiffness();
   int nVar = (int)grid->X.size();
   MatrixXd K(3*nVar,3*nVar);
@@ -124,7 +125,7 @@ void stiffnessTest()
   Eigen::MatrixXf E = ene->EMatrix();
   Eigen::VectorXf U = Eigen::VectorXf::Zero(3 * ele->nV());
 
-  for (unsigned int ii = 0; ii < ele->nV(); ii++){
+  for (int ii = 0; ii < ele->nV(); ii++){
 	  for (int jj = 0; jj < 3; jj++){
 		  U[3 * ii + jj] = grid->x[ii][jj] - grid->X[ii][jj];
 	  }
@@ -133,21 +134,20 @@ void stiffnessTest()
   for (unsigned int ii = 0; ii < q.x.size(); ii++){
 	  Eigen::MatrixXf B = ele->BMatrix(q.x[ii], grid->X);
 	  Eigen::MatrixXf ss = E*B*U;
-	  std::cout <<"sigma:\n"<< ss << "\n";
+	  //std::cout <<"sigma:\n"<< ss << "\n";
 	  
 	  Matrix3f F = ele->defGrad(q.x[ii], grid->X, grid->x);
 	  Matrix3f P = ene->getPK1(F);
-	  std::cout << "P:\n";
-	  P.print();
+	  //std::cout << "P:\n";
+	  //P.print();
 
 	  Ka += q.w[ii] * B.transpose() * E * B;
 	  //std::cout << "B:\n" << B << "\n";
   }
   
-  std::cout << "E:\n" << E << "\n";
-  
-  std::cout << "alt K:\n";
-  std::cout << Ka << "\n";
+  //std::cout << "E:\n" << E << "\n";
+  //std::cout << "alt K:\n";
+  //std::cout << Ka << "\n";
   maxErr = 0;
   for (int ii = 0; ii<K.mm; ii++){
 	  for (int jj = 0; jj<K.nn; jj++){
@@ -160,6 +160,27 @@ void stiffnessTest()
 
   std::cout << "max err " << maxErr << "\n";
 
+  //assemble boundary matrix HNEB
+  std::ofstream out("T.txt");
+
+  // 2 point quadrature is accurate enough
+  const Quadrature & q2d = Quadrature::Gauss2_2D;
+  Eigen::MatrixXf T = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
+  for (int ii = 0; ii < ele->nF(); ii++){
+	  Eigen::MatrixXf Tf = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
+	  Eigen::MatrixXf N = ele->NMatrix(ii);
+	  for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
+		  Vector3f quadp = ele->facePt(ii, q2d.x[jj]);
+		  Eigen::MatrixXf B = ele->BMatrix(quadp, grid->X);
+		  Eigen::MatrixXf H = ele->HMatrix(quadp);
+		  Tf += q2d.w[jj] * H.transpose() * N * E * B;
+	  }
+	  out << Tf << "\n\n";
+	  T += Tf;
+  }
+  out << T << "\n\n";
+  out << Ka << "\n";
+  out.close();
 }
 
 void forceTest()

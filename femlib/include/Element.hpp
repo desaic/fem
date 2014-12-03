@@ -13,7 +13,12 @@ public:
   Element(int _n=0);
   
   ///@brief number of vertices
-  int nV() const;
+  virtual int nV() const;
+
+  //@brief number of faces. Default returns 0 (not meaningful).
+  virtual int nF() const;
+
+
   int & operator[](int idx);
   int operator[](int idx)const;
   int at(int idx)const;

@@ -9,6 +9,9 @@ public:
   std::vector<float> w;
   Quadrature();
   
+  static const Quadrature Gauss2_2D;
+  static const Quadrature Gauss4_2D;
+
   static const Quadrature Gauss2;
   static const Quadrature Uniform4;
 };

@@ -50,6 +50,11 @@ int Element::nV()const
   return (int)n.size();
 }
 
+int Element::nF()const
+{
+	return 0;
+}
+
 int &
 Element::operator[](int idx)
 {

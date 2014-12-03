@@ -8,6 +8,10 @@ class ElementHex:public Element
 {
 public:
   ElementHex();
+  
+  int nV() const override{ return 8; }
+
+  int nF() const override{ return 6; }
 
   std::vector<float> shapeFun(const Vector3f & p)const;
 
@@ -17,7 +21,12 @@ public:
   std::vector<std::array<int,2> > getEdges();
   float getVol(const std::vector<Vector3f> & X);
 
-  //specific for linear strain (F+F^T)
+  Vector3f facePt(int fi, const Vector3f & x);
+  ///@param fi face index.
+  Eigen::MatrixXf NMatrix(int fi);
+  ///@brief shape function matrix.
+  Eigen::MatrixXf HMatrix(const Vector3f & xx);
+  //specific for linear strain (F+F^T).
   Eigen::MatrixXf BMatrix(const Vector3f & xx, const std::vector<Vector3f>X);
 };
 #endif
