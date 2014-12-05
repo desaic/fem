@@ -134,14 +134,14 @@ Eigen::MatrixXf ElementHex::NMatrix(int fi)
 	for (int ii = 0; ii < 3; ii++){
 		N(ii, ii) = (float)facen[fi][ii];
 	}
-	N(0, 4) = (float)facen[fi][2];
-	N(0, 5) = (float)facen[fi][1];
+	N(0, 3) = (float)facen[fi][1];
+	N(0, 5) = (float)facen[fi][2];
 
-	N(1, 3) = (float)facen[fi][2];
-	N(1, 5) = (float)facen[fi][0];
+	N(1, 3) = (float)facen[fi][0];
+	N(1, 4) = (float)facen[fi][2];
 
-	N(2, 3) = (float)facen[fi][1];
-	N(2, 4) = (float)facen[fi][0];
+	N(2, 4) = (float)facen[fi][1];
+	N(2, 5) = (float)facen[fi][0];
 	return N;
 }
 

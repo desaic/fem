@@ -76,8 +76,8 @@ void stiffnessTest()
   ene->param[1] = 10000;
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
-  grid->x[1][2] += 0.1f;
-  grid->x[3][1] += 0.2f;
+  grid->x[0][0] += 0.1f;
+  //grid->x[3][1] += 0.2f;
   MatrixXd KAna = grid->getStiffness();
   int nVar = (int)grid->X.size();
   MatrixXd K(3*nVar,3*nVar);
@@ -99,12 +99,12 @@ void stiffnessTest()
     }
   }
 
-  std::cout<<"Ana K:\n";
-  KAna.print(std::cout);
-  std::cout<<"\n";
-  std::cout<<"Num K:\n";
-  K.print(std::cout);
-  std::cout<<"\n";
+  //std::cout<<"Ana K:\n";
+  //KAna.print(std::cout);
+  //std::cout<<"\n";
+  //std::cout<<"Num K:\n";
+  //K.print(std::cout);
+  //std::cout<<"\n";
 
   float maxErr = 0;
   for(int ii = 0;ii<K.mm;ii++){
@@ -169,11 +169,22 @@ void stiffnessTest()
   for (int ii = 0; ii < ele->nF(); ii++){
 	  Eigen::MatrixXf Tf = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
 	  Eigen::MatrixXf N = ele->NMatrix(ii);
+    std::cout << "N:\n"<<N << "\n";
 	  for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
 		  Vector3f quadp = ele->facePt(ii, q2d.x[jj]);
 		  Eigen::MatrixXf B = ele->BMatrix(quadp, grid->X);
 		  Eigen::MatrixXf H = ele->HMatrix(quadp);
-		  Tf += q2d.w[jj] * H.transpose() * N * E * B;
+      //std::cout << "H:\n" << H.transpose() << "\n";
+      //std::cout << "B:\n" << B.transpose() << "\n";
+      std::cout << "NEB:\n" << (E * B*U).transpose() << "\n";
+      Tf += q2d.w[jj] * H.transpose() * N * E * B;
+      Eigen::Vector3f surfF = (N * E * B * U);
+      std::cout << surfF << "\n";
+      Matrix3f F = ele->defGrad(quadp, grid->X, grid->x);
+      Matrix3f P = ene->getPK1(F);
+      Vector3f surfF1 = P * Vector3f(0, -1, 0);
+      std::cout << surfF1[0] << " " << surfF1[1] << " " << surfF1[2] <<  "\n";
+      P.print();
 	  }
 	  out << Tf << "\n\n";
 	  T += Tf;
