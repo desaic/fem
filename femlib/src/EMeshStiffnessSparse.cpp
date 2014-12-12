@@ -15,7 +15,7 @@ void ElementMesh::getStiffnessSparse(std::vector<int> & I, std::vector<int> & J,
     Element * ele = e[ii];
     int nV = ele->nV();
     MatrixXd K  = getStiffness(ii);
-    for(unsigned int jj = 0; jj<nV; jj++){
+    for(int jj = 0; jj<nV; jj++){
       int vj = ele->at(jj);
       for(int kk = 0; kk<nV; kk++){
         int vk = ele->at(kk);
@@ -33,7 +33,7 @@ void ElementMesh::getStiffnessSparse(std::vector<int> & I, std::vector<int> & J,
   }
   Ksparse.setFromTriplets(coef.begin(), coef.end());
 
-  for(unsigned int ii = 0; ii<Ksparse.rows(); ii++){
+  for(int ii = 0; ii<Ksparse.rows(); ii++){
     for (Eigen::SparseMatrix<float>::InnerIterator it(Ksparse, ii); it; ++it){
      val.push_back(it.value());
      I.push_back(it.row());
@@ -69,7 +69,7 @@ void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J)
 
   Ksparse.setFromTriplets(coef.begin(), coef.end());
 
-  for(unsigned int ii = 0; ii<Ksparse.rows(); ii++){
+  for(int ii = 0; ii<Ksparse.rows(); ii++){
     for (Eigen::SparseMatrix<float>::InnerIterator it(Ksparse, ii); it; ++it){
      I.push_back(it.row());
      J.push_back(it.col());

@@ -120,11 +120,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\StepperCPU\src\AdmmCPU.cpp" />
+    <ClCompile Include="..\..\StepperCPU\src\ADMMNoSpring.cpp" />
     <ClCompile Include="..\..\StepperCPU\src\LinSolve.cpp" />
     <ClCompile Include="..\..\StepperCPU\src\StepperNewton.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\StepperCPU\include\AdmmCPU.hpp" />
+    <ClInclude Include="..\..\StepperCPU\include\ADMMNoSpring.hpp" />
     <ClInclude Include="..\..\StepperCPU\include\LinSolve.hpp" />
     <ClInclude Include="..\..\StepperCPU\include\StepperNewton.hpp" />
   </ItemGroup>

@@ -57,4 +57,10 @@ public:
 
   virtual ~ElementMesh();
 };
+
+
+void getEleX(int ii, const ElementMesh * m, std::vector<Vector3f> &x);
+
+void setEleX(int ii, ElementMesh * m, const std::vector<Vector3f> &x);
+
 #endif

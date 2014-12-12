@@ -27,3 +27,20 @@ MatrixXd ElementMesh::getStiffness()
   return Kglobal;
 }
 
+
+void getEleX(int ii, const ElementMesh * m, std::vector<Vector3f> &x)
+{
+  Element * ele = m->e[ii];
+  x.resize(ele->nV());
+  for (int jj = 0; jj<ele->nV(); jj++){
+    x[jj] = m->x[ele->at(jj)];
+  }
+}
+
+void setEleX(int ii, ElementMesh * m, const std::vector<Vector3f> &x)
+{
+  Element * ele = m->e[ii];
+  for (int jj = 0; jj<ele->nV(); jj++){
+    m->x[ele->at(jj)] = x[jj];
+  }
+}

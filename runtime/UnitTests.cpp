@@ -2,6 +2,7 @@
 #include "Element.hpp"
 #include "ElementRegGrid.hpp"
 #include "ElementCoarse.hpp"
+#include "ElementHex.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
@@ -72,11 +73,11 @@ void stiffnessTest()
 
   //StrainEneNeo* ene=new StrainEneNeo();
   StrainLin* ene = new StrainLin();
-  ene->param[0] = 1000;
-  ene->param[1] = 10000;
+  ene->param[0] = 10000;
+  ene->param[1] = 100000;
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
-  grid->x[0][0] += 0.1f;
+  grid->x[1][0] += 0.1f;
   //grid->x[3][1] += 0.2f;
   MatrixXd KAna = grid->getStiffness();
   int nVar = (int)grid->X.size();
@@ -172,19 +173,26 @@ void stiffnessTest()
     std::cout << "N:\n"<<N << "\n";
 	  for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
 		  Vector3f quadp = ele->facePt(ii, q2d.x[jj]);
-		  Eigen::MatrixXf B = ele->BMatrix(quadp, grid->X);
+		  Eigen::MatrixXf B0 = ele->BMatrix(quadp, grid->X);
+      Eigen::MatrixXf B = Eigen::MatrixXf::Zero(6, 3 * ele->nV());
+      //only add contributions from the face
+      for (int kk = 0; kk < 4; kk++){
+        int vidx = faces[ii][kk];
+        B.block(0, 3 * vidx, 6, 3) = B0.block(0, 3 * vidx, 6, 3);
+      }
+      //B=B0;
 		  Eigen::MatrixXf H = ele->HMatrix(quadp);
       //std::cout << "H:\n" << H.transpose() << "\n";
-      //std::cout << "B:\n" << B.transpose() << "\n";
-      std::cout << "NEB:\n" << (E * B*U).transpose() << "\n";
+      std::cout << "B:\n" << B.transpose() << "\n";
+      std::cout << "traction:\n";
       Tf += q2d.w[jj] * H.transpose() * N * E * B;
+      //Tf += q2d.w[jj] * B.transpose() * E * B;
       Eigen::Vector3f surfF = (N * E * B * U);
       std::cout << surfF << "\n";
       Matrix3f F = ele->defGrad(quadp, grid->X, grid->x);
       Matrix3f P = ene->getPK1(F);
-      Vector3f surfF1 = P * Vector3f(0, -1, 0);
+      Vector3f surfF1 = P * Vector3f(facen[ii][0], facen[ii][1], facen[ii][2]);
       std::cout << surfF1[0] << " " << surfF1[1] << " " << surfF1[2] <<  "\n";
-      P.print();
 	  }
 	  out << Tf << "\n\n";
 	  T += Tf;

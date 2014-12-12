@@ -5,6 +5,7 @@
 #include "StepperGrad.hpp"
 #include "StepperNewton.hpp"
 #include "AdmmCPU.hpp"
+#include "AdmmNoSpring.hpp"
 //#include "IpoptStepper.hpp"
 #include <thread>
 #include "MaterialQuad.hpp"
@@ -28,16 +29,16 @@ void runTest()
 
 int main(int argc, char* argv[])
 {
-  runTest();
-  int nx = 4, ny=16, nz=4;
+ // runTest();
+  int nx = 2, ny=8, nz=2;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   //StrainEneNeo ene;
   StrainLin ene;
-  ene.param[0] = 34482;
-  ene.param[1] = 310334;
+  ene.param[0] = 10000;
+  ene.param[1] = 100000;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
-  Vector3f ff(0,-20,0);
+  Vector3f ff(5,-20,0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
@@ -60,10 +61,10 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  StepperNewton *stepper= new StepperNewton();
+  //StepperNewton *stepper= new StepperNewton();
   //stepper->rmRigid = true;
-//  IpoptStepper * stepper = new IpoptStepper();
-  //AdmmCPU *stepper= new AdmmCPU();
+  //IpoptStepper * stepper = new IpoptStepper();
+  AdmmNoSpring *stepper = new AdmmNoSpring();
   //stepper->ro0 = 500;
   stepper->nSteps = 100000;
   std::thread simt(runSim, em, stepper);

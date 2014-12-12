@@ -29,7 +29,7 @@ void fixRigid(MatrixXd & K, double * b,
   for(int ii = 0;ii<mesh->x.size();ii++){
     center += mesh->x[ii];
   }
-  center /= mesh->x.size();
+  center /= (float)mesh->x.size();
   float cscale = 1000;
   for(int ii = 0;ii<mesh->x.size();ii++){
     int col = 3*ii;
@@ -88,8 +88,8 @@ float StepperNewton::oneStepDense(ElementMesh * m)
 
   linSolve(K,&(bb[0]));
 
-  float totalMag = 0;
-  for(unsigned int ii = 0;ii<ndof;ii++){
+  double totalMag = 0;
+  for(int ii = 0;ii<ndof;ii++){
     totalMag += std::abs(bb[ii]);
   }
 
@@ -100,7 +100,7 @@ float StepperNewton::oneStepDense(ElementMesh * m)
   }
   //line search
   std::vector<Vector3f> x0 = m->x;
-  float E1;
+  float E1=E;
   while(1){
     if(totalMag * h<dx_tol){
       break;

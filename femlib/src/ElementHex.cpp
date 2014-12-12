@@ -39,7 +39,7 @@ const int faces[6][4]{
 };
 
 ///@brief face normals
-int facen[6][3]{
+const int facen[6][3]{
 	{-1, 0, 0},
 	{ 1, 0, 0},
 	{ 0,-1, 0},

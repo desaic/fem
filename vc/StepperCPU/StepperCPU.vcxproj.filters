@@ -24,6 +24,9 @@
     <ClCompile Include="..\..\StepperCPU\src\LinSolve.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\StepperCPU\src\ADMMNoSpring.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\StepperCPU\include\StepperNewton.hpp">
@@ -33,6 +36,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\StepperCPU\include\LinSolve.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCPU\include\ADMMNoSpring.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

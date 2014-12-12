@@ -3,7 +3,8 @@
 #include "Element.hpp"
 
 #include <Eigen\Dense>
-
+extern const int facen[][3];
+extern const int faces[][4];
 class ElementHex:public Element
 {
 public:
