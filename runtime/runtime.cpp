@@ -29,8 +29,8 @@ void runTest()
 
 int main(int argc, char* argv[])
 {
- // runTest();
-  int nx = 2, ny=8, nz=2;
+  //runTest();
+  int nx = 1, ny=1, nz=1;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   //StrainEneNeo ene;
   StrainLin ene;
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
   ene.param[1] = 100000;
   MaterialQuad material(&ene);
   em->m.push_back(&material);
-  Vector3f ff(5,-20,0);
+  Vector3f ff(5,-2000,0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
   //IpoptStepper * stepper = new IpoptStepper();
   AdmmNoSpring *stepper = new AdmmNoSpring();
   //stepper->ro0 = 500;
-  stepper->nSteps = 100000;
+  stepper->nSteps = 1000;
   std::thread simt(runSim, em, stepper);
   Render render;
   render.init(world);

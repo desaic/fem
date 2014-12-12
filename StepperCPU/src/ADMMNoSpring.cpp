@@ -193,7 +193,7 @@ void AdmmNoSpring::initVar(ElementMesh *e)
     T += Tf;
   }
   float sideLen = e->X[ele->at(7)][0] - e->X[ele->at(0)][0];
-  float area = 0.01*sideLen*sideLen*sideLen;
+  float area = 0.1*sideLen*sideLen*sideLen;
   T = area*T;
   
   bb = new double[3 * e->x.size()];
