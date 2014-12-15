@@ -42,7 +42,7 @@ public:
 
   MatrixXd stiffness(ElementMesh *mesh, int eIdx);
 
-  Eigen::MatrixXf T;
+  std::vector<Eigen::MatrixXf> T;
 private:
   void initVar(ElementMesh * e);
 };

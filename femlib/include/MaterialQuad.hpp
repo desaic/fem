@@ -10,7 +10,7 @@ class Quadrature;
 class MaterialQuad:public Material
 {
 public:
-  MaterialQuad(StrainEne * ene, Quadrature * _q = 0);
+  MaterialQuad(StrainEne * ene = 0, Quadrature * _q = 0);
 
   MaterialQuad(const std::vector<StrainEne *> &ene, Quadrature * _q = 0);
   

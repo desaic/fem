@@ -25,7 +25,7 @@ float AdmmNoSpring::getEnergy(ElementMesh * eMesh, int eIdx)
     }
     E += Vector3f::dot(y[eIdx][ii], diff);
   }
-  E += UZ.transpose() * T * UZ;
+  E += UZ.transpose() * T[eIdx] * UZ;
   return E;
 }
 
@@ -42,7 +42,7 @@ AdmmNoSpring::getForces(ElementMesh * eMesh, int eIdx)
     }
   }
   //continuity force
-  Eigen::VectorXf fCont = T*Uz;
+  Eigen::VectorXf fCont = T[eIdx]*Uz;
   for (unsigned int ii = 0; ii<ff.size(); ii++){
     for (int jj = 0; jj < 3; jj++){
       ff[ii][jj] += fCont[3 * ii + jj];
@@ -65,7 +65,7 @@ AdmmNoSpring::stiffness(ElementMesh *mesh, int eIdx)
 
   for (int ii = 0; ii<K.mm; ii++){
     for (int jj = 0; jj < K.nn; jj++){
-      K(ii, jj) += T(ii, jj);
+      K(ii, jj) += T[eIdx](ii, jj);
     }
   }
   return K;
@@ -168,34 +168,36 @@ void AdmmNoSpring::initVar(ElementMesh *e)
     delete[] bb;
   }
 
-  ElementHex * ele = (ElementHex*)e->e[0];
-  MaterialQuad * m = (MaterialQuad*)e->m[e->me[0]];
-  StrainLin * ene = (StrainLin*)m->e[0];
-  Eigen::MatrixXf E = ene->EMatrix();
-  Eigen::VectorXf U = Eigen::VectorXf::Zero(3 * ele->nV());
-
   const Quadrature & q2d = Quadrature::Gauss2_2D;
-  T = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
-  for (int ii = 0; ii < ele->nF(); ii++){
-    Eigen::MatrixXf Tf = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
-    Eigen::MatrixXf N = ele->NMatrix(ii);
-    for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
-      Vector3f quadp = ele->facePt(ii, q2d.x[jj]);
-      Eigen::MatrixXf B0 = ele->BMatrix(quadp, e->X);
-      Eigen::MatrixXf B = Eigen::MatrixXf::Zero(6, 3 * ele->nV());
-      //only add contributions from the face
-      for (int kk = 0; kk < 4; kk++){
-        int vidx = faces[ii][kk];
-        B.block(0, 3 * vidx, 6, 3) = B0.block(0, 3 * vidx, 6, 3);
+
+  T.resize(e->e.size());
+  for (unsigned int ee = 0; ee < e->e.size(); ee++){
+    ElementHex * ele = (ElementHex*)e->e[ee];
+    MaterialQuad * m = (MaterialQuad*)e->m[e->me[ee]];
+    StrainLin * ene = (StrainLin*)m->e[0];
+    Eigen::MatrixXf E = ene->EMatrix();   
+    T[ee] = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
+    for (int ii = 0; ii < ele->nF(); ii++){
+      Eigen::MatrixXf Tf = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
+      Eigen::MatrixXf N = ele->NMatrix(ii);
+      for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
+        Vector3f quadp = ele->facePt(ii, q2d.x[jj]);
+        Eigen::MatrixXf B0 = ele->BMatrix(quadp, e->X);
+        Eigen::MatrixXf B = Eigen::MatrixXf::Zero(6, 3 * ele->nV());
+        //only add contributions from the face
+        for (int kk = 0; kk < 4; kk++){
+          int vidx = faces[ii][kk];
+          B.block(0, 3 * vidx, 6, 3) = B0.block(0, 3 * vidx, 6, 3);
+        }
+        Tf += q2d.w[jj] * B.transpose() * E * B;
       }
-      Tf += q2d.w[jj] * B.transpose() * E * B;
+      T[ee] += Tf;
     }
-    T += Tf;
+    float sideLen = e->X[ele->at(7)][0] - e->X[ele->at(0)][0];
+    float area = 0.1*sideLen*sideLen*sideLen;
+    T[ee] = area*T[ee];
   }
-  float sideLen = e->X[ele->at(7)][0] - e->X[ele->at(0)][0];
-  float area = 0.1*sideLen*sideLen*sideLen;
-  T = area*T;
-  
+
   bb = new double[3 * e->x.size()];
   u.resize(e->e.size());
   y.resize(u.size());
@@ -252,7 +254,7 @@ void AdmmNoSpring::step(ElementMesh * m)
         int vIdx = ele->at(jj);
         Vector3f disp = u[ii][jj] - m->X[ele->at(jj)];
         Eigen::Vector3f uLocal(disp[0], disp[1], disp[2]);
-        Eigen::Matrix3f Tblock = T.block(3 * jj, 3 * jj, 3, 3);
+        Eigen::Matrix3f Tblock = T[ii].block(3 * jj, 3 * jj, 3, 3);
         Eigen::Vector3f fEigen = Tblock * uLocal;
         Vector3f ff(fEigen[0], fEigen[1], fEigen[2]);
         Z[vIdx] +=  ff + y[ii][jj];
@@ -319,7 +321,7 @@ void AdmmNoSpring::step(ElementMesh * m)
           UZ[3 * jj + kk] = diff[kk];
         }
       }
-      UZ = T*UZ;
+      UZ = T[ii]*UZ;
       for (int jj = 0; jj<ele->nV(); jj++){
         for (int kk = 0; kk < 3; kk++){
           y[ii][jj][kk] += UZ[3 * jj + kk];

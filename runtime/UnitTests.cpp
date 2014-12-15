@@ -170,6 +170,7 @@ void stiffnessTest()
   for (int ii = 0; ii < ele->nF(); ii++){
 	  Eigen::MatrixXf Tf = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
 	  Eigen::MatrixXf N = ele->NMatrix(ii);
+    N.block(0, 3, 3, 3) = Eigen::MatrixXf::Zero(3, 3);
     std::cout << "N:\n"<<N << "\n";
 	  for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
 		  Vector3f quadp = ele->facePt(ii, q2d.x[jj]);

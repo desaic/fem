@@ -223,13 +223,6 @@ void AdmmCPU::step(ElementMesh * m)
       }
     }
 
-    //update multiplier for elements
-    for(unsigned int ii = 0;ii<u.size();ii++){
-      Element * ele = m->e[ii];
-      for(int jj = 0;jj<ele->nV();jj++){
-        y[ii][jj] +=  ro[ii] * (u[ii][jj] - Z[ele->at(jj)]);
-      }
-    }
     float E = m->getEnergy();
     std::cout<<"Energy in iteration "<<iter<<": "<<E<<"\n";
     
@@ -256,9 +249,17 @@ void AdmmCPU::step(ElementMesh * m)
     }
     std::cout<<"hh "<<hh<<"\n";    
     if(prevE-ene1 < tol){
-      break;
+      //break;
     }
     prevE = E;
+
+    //update multiplier for elements
+    for (unsigned int ii = 0; ii<u.size(); ii++){
+      Element * ele = m->e[ii];
+      for (int jj = 0; jj<ele->nV(); jj++){
+        y[ii][jj] += ro[ii] * (u[ii][jj] - Z[ele->at(jj)]);
+      }
+    }
 
     tt = clock();
     out<<(tt-tt0)/(CLOCKS_PER_SEC/1000.0);
