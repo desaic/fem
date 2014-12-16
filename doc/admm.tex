@@ -11,31 +11,35 @@
 	where $\sigma(x) = C:\varepsilon(u)$, 
 		  $\varepsilon(u,x) = \frac{1}{2}(\nabla u + \nabla u^T)$.
 	Auxiliary variable $\sigma = C\varepsilon(u)$.
+	Using the symmetry of the stress matrix $\sigma$, one can derive that
+	\[
+	\nabla v : C \varepsilon(u) = \varepsilon(v) : C : \varepsilon(u).
+	\]
 	Multiply by test functions $v$ and $\tau$ and integrate by parts in each element $K$,
 	\begin{align}
-	\int_K \sigma \cdot \tau&=-\int_Ku\nabla\cdot \tau dx +\int_{\partial K}u \cdot n \tau ds\\
-	\int_K \sigma \cdot \nabla v&=\int_K fv dx +\int_{\partial K}\sigma \cdot n v ds.
+	\int_K \sigma \cdot \tau&=-\int_Ku\nabla\cdot C\tau dx +\int_{\partial K}u \cdot n^T C\tau ds\\
+	\int_K \sigma \cdot \nabla v&=\int_K fv +\int_{\partial K}n^T\sigma v.
 	\end{align}
 	Substitute in numerical fluxes $\hat{u}$ and $\hat{\sigma}$ for boundary integrals.
 	\begin{align}
-	\int_K \sigma \cdot \tau&=-\int_Ku\nabla\cdot \tau dx +\int_{\partial K}\hat{u} n\cdot \tau ds \label{eq:aux}\\
-	\int_K \sigma \cdot \nabla v&=\int_K fv dx +\int_{\partial K}\hat{\sigma} \cdot n v ds.
+	\int_K \sigma \cdot \tau&=-\int_Ku\nabla\cdot C\tau dx +\int_{\partial K}\hat{u} \cdot  n^T C\tau \label{eq:aux}\\
+	\int_K \sigma \cdot \nabla v&=\int_K fv +\int_{\partial K}n^T\hat{\sigma} v .
 		\label{eq:force}
 	\end{align}
-	Integration by parts second time for $\int_Ku\nabla\cdot \tau dx$ in \autoref{eq:aux}:
+	Integration by parts second time for $\int_Ku\nabla\cdot C\tau dx$ in \autoref{eq:aux}:
 	\begin{equation}
-	\int_Ku\nabla\cdot \tau dx=\int_{\partial K}u n\cdot \tau-\int_K\nabla u\cdot \tau.
+	\int_Ku\nabla\cdot C\tau dx=\int_{\partial K}u \cdot n^TC\tau-\int_K\nabla u\cdot C\tau.
 	\label{eq:ibp}
 	\end{equation}
-	Let $\tau=\nabla v$ and substitute \autoref{eq:ibp} into \autoref{eq:aux}:
+	Let $\tau=\varepsilon(v)$ and substitute \autoref{eq:ibp} into \autoref{eq:aux}:
 	\begin{equation}
-	\int_K \sigma \cdot \nabla v = -\int_{\partial K}u n\cdot \nabla v+\int_K\nabla u\cdot \nabla v +\int_{\partial K}\hat{u} n\cdot \nabla v ds 
+	\int_K \sigma \cdot \varepsilon(v) = -\int_{\partial K}u \cdot n^TC\varepsilon(v)+\int_K\nabla u\cdot C \varepsilon(v) +\int_{\partial K}\hat{u} \cdot n^TC\varepsilon(v)
 	\label{eq:stress}
 	\end{equation}
 	Substitute \autoref{eq:stress} into \autoref{eq:force} to get
 	\begin{equation}
-	\int_K fvdx + \int_{\partial K}\hat{\sigma}\cdot nvds 
-	= \int_{\partial K}(\hat{u}-u) n\cdot \nabla v+\int_K\nabla u\cdot \nabla v.
+	\int_K fv + \int_{\partial K}n^T\hat{\sigma}v
+	= \int_{\partial K}(\hat{u}-u)\cdot n^TC \varepsilon(v)+\int_K\varepsilon(u) \cdot C\varepsilon(v).
 	\end{equation}
 		
 \section{Discrete}
