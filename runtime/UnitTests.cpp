@@ -186,7 +186,8 @@ void stiffnessTest()
       //std::cout << "H:\n" << H.transpose() << "\n";
       std::cout << "B:\n" << B.transpose() << "\n";
       std::cout << "traction:\n";
-      Tf += q2d.w[jj] * H.transpose() * N * E * B;
+      //Tf += q2d.w[jj] * H.transpose() * N * E * B;
+      Tf += q2d.w[jj] * H.transpose() * N * E * N.transpose() * H;
       //Tf += q2d.w[jj] * B.transpose() * E * B;
       Eigen::Vector3f surfF = (N * E * B * U);
       std::cout << surfF << "\n";

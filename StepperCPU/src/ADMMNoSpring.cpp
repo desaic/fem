@@ -182,19 +182,21 @@ void AdmmNoSpring::initVar(ElementMesh *e)
       Eigen::MatrixXf N = ele->NMatrix(ii);
       for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
         Vector3f quadp = ele->facePt(ii, q2d.x[jj]);
-        Eigen::MatrixXf B0 = ele->BMatrix(quadp, e->X);
-        Eigen::MatrixXf B = Eigen::MatrixXf::Zero(6, 3 * ele->nV());
+        Eigen::MatrixXf H = ele->HMatrix(quadp);
+        //Eigen::MatrixXf B0 = ele->BMatrix(quadp, e->X);
+        //Eigen::MatrixXf B = Eigen::MatrixXf::Zero(6, 3 * ele->nV());
         //only add contributions from the face
-        for (int kk = 0; kk < 4; kk++){
-          int vidx = faces[ii][kk];
-          B.block(0, 3 * vidx, 6, 3) = B0.block(0, 3 * vidx, 6, 3);
-        }
-        Tf += q2d.w[jj] * B.transpose() * E * B;
+        //for (int kk = 0; kk < 4; kk++){
+        //  int vidx = faces[ii][kk];
+        //  B.block(0, 3 * vidx, 6, 3) = B0.block(0, 3 * vidx, 6, 3);
+        //}
+        //Tf += q2d.w[jj] * B.transpose() * E * B;
+        Tf += q2d.w[jj] * H.transpose() * N * E * N.transpose() * H;
       }
       T[ee] += Tf;
     }
     float sideLen = e->X[ele->at(7)][0] - e->X[ele->at(0)][0];
-    float area = 0.1*sideLen*sideLen*sideLen;
+    float area = sideLen*sideLen;
     T[ee] = area*T[ee];
   }
 
