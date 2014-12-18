@@ -21,15 +21,15 @@ void runSim(ElementMesh * m, Stepper * stepper)
 void runTest()
 {
   //ElementCoarseTest();
-  stiffnessTest();
-	//forceTest();
+  //stiffnessTest();
+	forceTest();
   system("pause");
   exit(0);
 }
 
 int main(int argc, char* argv[])
 {
-  //runTest();
+  runTest();
   int nx = 2, ny=8, nz=2;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   //StrainEneNeo ene;
@@ -84,9 +84,9 @@ int main(int argc, char* argv[])
   //StepperNewton *stepper= new StepperNewton();
   //stepper->rmRigid = true;
   //IpoptStepper * stepper = new IpoptStepper();
-  AdmmCPU * stepper = new AdmmCPU();
-  stepper->ro0 = 500;
-  //AdmmNoSpring *stepper = new AdmmNoSpring();
+  //AdmmCPU * stepper = new AdmmCPU();
+  //stepper->ro0 = 500;
+  AdmmNoSpring *stepper = new AdmmNoSpring();
   stepper->nSteps = 1000;
   std::thread simt(runSim, em, stepper);
   Render render;
