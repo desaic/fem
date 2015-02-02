@@ -73,13 +73,14 @@ void stiffnessTest()
   ElementRegGrid * grid = new ElementRegGrid(1, 1, 1);
 
   //StrainEneNeo* ene=new StrainEneNeo();
-  StrainLin* ene = new StrainLin();
+  //StrainLin* ene = new StrainLin();
+  StrainCorotLin* ene = new StrainCorotLin();
   ene->param[0] = 10000;
   ene->param[1] = 100000;
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
   grid->x[1][0] += 0.1f;
-  //grid->x[3][1] += 0.2f;
+  grid->x[3][1] += 0.2f;
   MatrixXd KAna = grid->getStiffness();
   int nVar = (int)grid->X.size();
   MatrixXd K(3*nVar,3*nVar);
@@ -101,12 +102,12 @@ void stiffnessTest()
     }
   }
 
-  //std::cout<<"Ana K:\n";
-  //KAna.print(std::cout);
-  //std::cout<<"\n";
-  //std::cout<<"Num K:\n";
-  //K.print(std::cout);
-  //std::cout<<"\n";
+  std::cout<<"Ana K:\n";
+  KAna.print(std::cout);
+  std::cout<<"\n";
+  std::cout<<"Num K:\n";
+  K.print(std::cout);
+  std::cout<<"\n";
 
   float maxErr = 0;
   for(int ii = 0;ii<K.mm;ii++){
@@ -172,7 +173,7 @@ void stiffnessTest()
 	  Eigen::MatrixXf Tf = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
 	  Eigen::MatrixXf N = ele->NMatrix(ii);
     N.block(0, 3, 3, 3) = Eigen::MatrixXf::Zero(3, 3);
-    std::cout << "N:\n"<<N << "\n";
+    //std::cout << "N:\n"<<N << "\n";
 	  for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
 		  Vector3f quadp = ele->facePt(ii, q2d.x[jj]);
 		  Eigen::MatrixXf B0 = ele->BMatrix(quadp, grid->X);
@@ -185,23 +186,23 @@ void stiffnessTest()
       //B=B0;
 		  Eigen::MatrixXf H = ele->HMatrix(quadp);
       //std::cout << "H:\n" << H.transpose() << "\n";
-      std::cout << "B:\n" << B.transpose() << "\n";
-      std::cout << "traction:\n";
+      //std::cout << "B:\n" << B.transpose() << "\n";
+      //std::cout << "traction:\n";
       //Tf += q2d.w[jj] * H.transpose() * N * E * B;
       Tf += q2d.w[jj] * H.transpose() * N * E * N.transpose() * H;
       //Tf += q2d.w[jj] * B.transpose() * E * B;
       Eigen::Vector3f surfF = (N * E * B * U);
-      std::cout << surfF << "\n";
+      //std::cout << surfF << "\n";
       Matrix3f F = ele->defGrad(quadp, grid->X, grid->x);
       Matrix3f P = ene->getPK1(F);
       Vector3f surfF1 = P * Vector3f(facen[ii][0], facen[ii][1], facen[ii][2]);
       std::cout << surfF1[0] << " " << surfF1[1] << " " << surfF1[2] <<  "\n";
 	  }
-	  out << Tf << "\n\n";
+	  //out << Tf << "\n\n";
 	  T += Tf;
   }
-  out << T << "\n\n";
-  out << Ka << "\n";
+  //out << T << "\n\n";
+  //out << Ka << "\n";
   out.close();
 }
 

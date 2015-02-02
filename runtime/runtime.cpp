@@ -21,8 +21,8 @@ void runSim(ElementMesh * m, Stepper * stepper)
 void runTest()
 {
   //ElementCoarseTest();
-  //stiffnessTest();
-	forceTest();
+  stiffnessTest();
+	//forceTest();
   system("pause");
   exit(0);
 }

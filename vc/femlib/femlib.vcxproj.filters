@@ -78,6 +78,9 @@
     <ClCompile Include="..\..\femlib\src\StrainLin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\femlib\src\StrainCorotLin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\femlib\include\ArrayUtil.hpp">
@@ -144,6 +147,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\femlib\include\StrainLin.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\femlib\include\StrainCorotLin.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
