@@ -31,9 +31,9 @@ void runTest()
 
 int main(int argc, char* argv[])
 {
-  runTest();
-  //int nx = 4, ny=16, nz=4;
-  int nx = 1, ny=4, nz=1;
+  //runTest();
+  int nx = 4, ny=16, nz=4;
+  //int nx = 1, ny=4, nz=1;
 
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   //StrainEneNeo ene;
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  Vector3f ff(20,-80,0);
+  Vector3f ff(1.25,-5,0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);

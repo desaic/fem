@@ -6,6 +6,8 @@
 
 #include "LinSolve.hpp"
 
+#include <fstream>
+
 StepperNewton::StepperNewton():dense(true),dx_tol(1e-5f),h(1.0f)
 ,rmRigid(false)
 {}
@@ -58,36 +60,47 @@ void fixRigid(MatrixXd & K, double * b,
 float StepperNewton::oneStepDense(ElementMesh * m)
 {
   std::vector<Vector3f> force = m->getForce();
+  std::ofstream out("out.txt");
   float E = m->getEnergy();
 
   MatrixXd K = m->getStiffness();
-  K.print(std::cout);
+  
   int ndof = 3*(int)m->x.size();
   std::vector<double> bb (ndof);
-
+  out << "\n";
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
     for(int jj = 0;jj<3;jj++){
       int row = 3*ii + jj;
-      K(row,row) += 100;
+      //damping, better condition number
+  //    K(row,row) += 100;
       if(m->fixed[ii]){
         bb[ row ] = 0;
         for(int kk = 0;kk<ndof;kk++){
           K(row,kk) = 0;
-          K(row,row) = 1;
+          K(row,row) = 100;
         }
       }else{
         bb[ row ] = force[ii][jj];
       }
+      out << bb[row] << "\n";
     }
   }
-
+  K.print(out);
   if(rmRigid){
     K.resize(ndof + 6, ndof+6);
     bb.resize(ndof+6);
     fixRigid(K,&(bb[0]),m);
   }
-
+ 
   linSolve(K,&(bb[0]));
+  out << "\n";
+  for (unsigned int ii = 0; ii < m->x.size(); ii++){
+    for (int jj = 0; jj < 3; jj++){
+      out << bb[3 * ii + jj] << "\n";
+    }
+  }
+  out.close();
+
   char c;
   std::cin >> c;
   double totalMag = 0;
@@ -101,7 +114,6 @@ float StepperNewton::oneStepDense(ElementMesh * m)
     }
   }
   //line search
-  h = 10;
   std::vector<Vector3f> x0 = m->x;
   float E1=E;
   while(1){
