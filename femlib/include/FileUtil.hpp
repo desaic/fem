@@ -14,7 +14,7 @@ public:
   void readFArr(std::vector<float> & arr);
   void readFArr(std::vector<float> & arr, int size);
   void readArr(std::vector<Eigen::Vector3f> & arr);
-
+  bool good(){ return in.good(); }
   template <typename T>
   friend std::istream & operator>>(std::istream & ii, std::vector<T> & arr);
   std::ifstream in;

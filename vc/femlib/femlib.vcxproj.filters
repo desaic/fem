@@ -81,6 +81,9 @@
     <ClCompile Include="..\..\femlib\src\ElementHier.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\femlib\src\ConfigFile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\femlib\include\ArrayUtil.hpp">
@@ -150,6 +153,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\femlib\include\ElementHier.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\femlib\include\ConfigFile.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

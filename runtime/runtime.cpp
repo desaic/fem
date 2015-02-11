@@ -1,3 +1,4 @@
+#include "ConfigFile.hpp"
 #include "Render.hpp"
 #include "World.hpp"
 #include "Element.hpp"
@@ -31,7 +32,12 @@ void runTest()
 
 int main(int argc, char* argv[])
 {
-  //runTest();
+  const char * filename = "config.txt";
+  ConfigFile conf;
+  conf.load(filename);
+  if (conf.getBool("test")){
+    runTest();
+  }
   int nx = 4, ny=16, nz=4;
   //int nx = 1, ny=4, nz=1;
 

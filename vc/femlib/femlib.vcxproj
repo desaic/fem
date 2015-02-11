@@ -133,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\femlib\src\ArrayUtil.cpp" />
+    <ClCompile Include="..\..\femlib\src\ConfigFile.cpp" />
     <ClCompile Include="..\..\femlib\src\Element.cpp" />
     <ClCompile Include="..\..\femlib\src\ElementHier.cpp" />
     <ClCompile Include="..\..\femlib\src\ElementHex.cpp" />
@@ -158,6 +159,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\femlib\include\ArrayUtil.hpp" />
     <ClInclude Include="..\..\femlib\include\BoundVec3.hpp" />
+    <ClInclude Include="..\..\femlib\include\ConfigFile.hpp" />
     <ClInclude Include="..\..\femlib\include\Element.hpp" />
     <ClInclude Include="..\..\femlib\include\ElementHier.hpp" />
     <ClInclude Include="..\..\femlib\include\ElementHex.hpp" />
