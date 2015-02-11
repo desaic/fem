@@ -93,14 +93,24 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  StepperNewton *stepper= new StepperNewton();
+  Stepper * stepper = 0;
+  int nSteps = 10000;
+  if (conf.hasOpt("nSteps")){
+    nSteps = conf.getInt("nSteps");
+  }
+  std::string stepperType = conf.getString("stepper");
+  if (stepperType == "newton"){
+    stepper = new StepperNewton();
+  }
+  else{
+    stepper = new AdmmNoSpring();
+  }
   //stepper->rmRigid = true;
   //IpoptStepper * stepper = new IpoptStepper();
   //AdmmCPU * stepper = new AdmmCPU();
   //stepper->ro0 = 500;
-  //AdmmNoSpring *stepper = new AdmmNoSpring();
   
-  stepper->nSteps = 10000;
+  stepper->nSteps = nSteps;
   std::thread simt(runSim, em, stepper);
   Render render;
   render.init(world);

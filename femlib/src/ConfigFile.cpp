@@ -40,7 +40,7 @@ int ConfigFile::getInt(const std::string & key)
   if (!hasOpt(key)){
     return 0;
   }
-  return std::stoi(key);
+  return std::stoi(m[key]);
 }
 
 std::string ConfigFile::getString(const std::string & key)
