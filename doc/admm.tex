@@ -21,6 +21,39 @@
 
 \begin{document}
 	\section{Hexahedral Finite Elements}
+	\begin{table}
+		\centering
+		\begin{tabular}{| r | p{8cm} |}
+			\hline
+			$\mbF$ & Deformation gradient\\
+			\hline
+			$\mcJ$ & Displacement function.\\
+			\hline
+			$\mbJ$ & Derivative of $\mcJ$ with respect to degrees of freedom $\mbq$.\\
+			\hline
+			$\mbK$ & Stiffness matrix.\\
+			\hline
+			$N$ & Shape function. \\
+			\hline
+			$\mbP$ & First Piola-Kirchoff stress. Maps from a normal in reference space to traction in world space.\\
+			\hline
+			$\Psi$ & Strain energy.\\
+			\hline
+			$\mbq$ & Degrees of freedom. In this document, it refers to vertex positions of an element.\\
+			\hline
+			$\mbu$ & Displacement. $\mbx = \mbX+\mbu$.\\
+			\hline
+			V & Total potential energy. Internal strain energy plus energy from external forces.\\
+			\hline
+			$\mbx$ & A point in world space.\\
+			\hline
+			$\mbX$ & A point in reference space.\\
+			\hline
+		\end{tabular}
+		\caption{Notations used in the documentation}
+		\label{table:symbols}
+	\end{table}
+	
 We use $\mbX_i$ to denote its vertex positions in its reference space.
 	$\mbX_i$ is specified before the simulation and remains constant.
 	Following the notation conventions, we use $\mbx_i$ to denote the deformed state
@@ -209,6 +242,42 @@ is
 \]
 
 \section{Continuous}
+	\begin{table}
+		\centering
+		\begin{tabular}{| r | p{8cm} |}
+			\hline
+			$B$ & Stacked matrix of shape function gradients. $6\times 24$.\\
+			\hline
+			$C$ & Material parameters stacked in a $6\times 6$ matrix.\\
+			\hline
+			$f$ & External force.\\
+			\hline
+			$H$ & Stacked matrix of shape functions. $3\times 24$.\\
+			\hline
+			$\varepsilon$ & Strain.\\
+			\hline
+			$n$ & Outward pointing normal.\\
+			\hline
+			$N$ & Outward pointing normal arranged into a matrix to work with vector representation of stress.\\
+			\hline
+			$\sigma$ & Cauchy stress. Maps from a normal in the world space to traction in world space.\\
+			\hline
+			$\hat{\sigma}$ & Guessed/approximated stress.\\
+			\hline
+			$\tau$ & Test function for strain. Virtual strain.\\
+			\hline
+			$U$ & Stacked matrix of displacements. $24\times 1$ for a hexahedral element.\\
+			\hline
+			$u$ & Displacement. \\
+			\hline
+			$\hat{u}$ & Guessed/approximated displacement.\\
+			\hline
+			$v$ & Test function for displacement. Virtual displacement.\\
+			\hline
+		\end{tabular}
+		\caption{Notations used in the dgfem sections.}
+		\label{table:dgsymbols}
+	\end{table}
 	Solve
 	\[
 	-\nabla\sigma(u) = f,
