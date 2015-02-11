@@ -1,7 +1,6 @@
 #include "UnitTests.hpp"
 #include "Element.hpp"
 #include "ElementRegGrid.hpp"
-#include "ElementCoarse.hpp"
 #include "ElementHex.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
@@ -15,16 +14,9 @@
 #include <iostream>
 #include <fstream>
 
-void ElementCoarseTest()
-{
-  ElementRegGrid grid (2,2,2);
-  std::vector<ElementCoarse*> ce;
-  ce = coarsen(grid);
-  for(int ii = 0;ii<8;ii++){
-    std::cout<<ce[0]->fineEle[ii];
-  }
 
-}
+void forceTestHelper(StrainEne * ene);
+void stiffnessTestHelper(StrainEne * ene);
 
 void cudaLinTest()
 {
@@ -67,16 +59,37 @@ void cudaLinTest()
   }
 }
 
-void stiffnessTest()
+void stiffnessTest(int matModel)
+{
+  StrainEne * ene = 0;
+  switch (matModel){
+  case 0:
+    ene = new StrainLin();
+    ene->param[0] = 1000;
+    ene->param[1] = 10000;
+    break;
+  case 1:
+    ene = new StrainCorotLin();
+    ene->param[0] = 1000;
+    ene->param[1] = 10000;
+    break;
+  case 2:
+    ene = new StrainEneNeo();
+    ene->param[0] = 1000;
+    ene->param[1] = 10000;
+    break;
+  default:
+    return;
+  }
+  stiffnessTestHelper(ene);
+  delete ene;
+
+}
+
+void stiffnessTestHelper(StrainEne * ene)
 {
   float h = 0.001f;
   ElementRegGrid * grid = new ElementRegGrid(1, 1, 1);
-
-  //StrainEneNeo* ene=new StrainEneNeo();
-  //StrainLin* ene = new StrainLin();
-  StrainCorotLin* ene = new StrainCorotLin();
-  ene->param[0] = 10000;
-  ene->param[1] = 100000;
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
   grid->x[1][0] += 0.1f;
@@ -118,8 +131,20 @@ void stiffnessTest()
       }
     }
   }
-
   std::cout<<"max err "<<maxErr<<"\n";
+
+  delete grid;
+  delete material;
+}
+
+void linearTMatrixTest(StrainLin * ene)
+{
+  ElementRegGrid * grid = new ElementRegGrid(1, 1, 1);
+  MaterialQuad * material = new MaterialQuad(ene);
+  grid->m.push_back(material);
+  grid->x[1][0] += 0.1f;
+  grid->x[3][1] += 0.2f;
+  MatrixXd K = grid->getStiffness();
 
   //linear material stiffness
   ElementHex * ele = (ElementHex*)grid->e[0];
@@ -129,36 +154,36 @@ void stiffnessTest()
   Eigen::VectorXf U = Eigen::VectorXf::Zero(3 * ele->nV());
 
   for (int ii = 0; ii < ele->nV(); ii++){
-	  for (int jj = 0; jj < 3; jj++){
-		  U[3 * ii + jj] = grid->x[ii][jj] - grid->X[ii][jj];
-	  }
+    for (int jj = 0; jj < 3; jj++){
+      U[3 * ii + jj] = grid->x[ii][jj] - grid->X[ii][jj];
+    }
   }
 
   for (unsigned int ii = 0; ii < q.x.size(); ii++){
-	  Eigen::MatrixXf B = ele->BMatrix(q.x[ii], grid->X);
-	  Eigen::MatrixXf ss = E*B*U;
-	  //std::cout <<"sigma:\n"<< ss << "\n";
-	  
-	  Matrix3f F = ele->defGrad(q.x[ii], grid->X, grid->x);
-	  Matrix3f P = ene->getPK1(F);
-	  //std::cout << "P:\n";
-	  //P.print();
+    Eigen::MatrixXf B = ele->BMatrix(q.x[ii], grid->X);
+    Eigen::MatrixXf ss = E*B*U;
+    //std::cout <<"sigma:\n"<< ss << "\n";
 
-	  Ka += q.w[ii] * B.transpose() * E * B;
-	  //std::cout << "B:\n" << B << "\n";
+    Matrix3f F = ele->defGrad(q.x[ii], grid->X, grid->x);
+    Matrix3f P = ene->getPK1(F);
+    //std::cout << "P:\n";
+    //P.print();
+
+    Ka += q.w[ii] * B.transpose() * E * B;
+    //std::cout << "B:\n" << B << "\n";
   }
-  
+
   //std::cout << "E:\n" << E << "\n";
   //std::cout << "alt K:\n";
   //std::cout << Ka << "\n";
-  maxErr = 0;
+  float maxErr = 0;
   for (int ii = 0; ii<K.mm; ii++){
-	  for (int jj = 0; jj<K.nn; jj++){
-		  float err = (float)std::abs(Ka(ii, jj) - K(ii, jj));
-		  if (err>maxErr){
-			  maxErr = err;
-		  }
-	  }
+    for (int jj = 0; jj<K.nn; jj++){
+      float err = (float)std::abs(Ka(ii, jj) - K(ii, jj));
+      if (err>maxErr){
+        maxErr = err;
+      }
+    }
   }
 
   std::cout << "max err " << maxErr << "\n";
@@ -170,13 +195,13 @@ void stiffnessTest()
   const Quadrature & q2d = Quadrature::Gauss2_2D;
   Eigen::MatrixXf T = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
   for (int ii = 0; ii < ele->nF(); ii++){
-	  Eigen::MatrixXf Tf = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
-	  Eigen::MatrixXf N = ele->NMatrix(ii);
+    Eigen::MatrixXf Tf = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
+    Eigen::MatrixXf N = ele->NMatrix(ii);
     N.block(0, 3, 3, 3) = Eigen::MatrixXf::Zero(3, 3);
     //std::cout << "N:\n"<<N << "\n";
-	  for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
-		  Vector3f quadp = ele->facePt(ii, q2d.x[jj]);
-		  Eigen::MatrixXf B0 = ele->BMatrix(quadp, grid->X);
+    for (unsigned int jj = 0; jj < q2d.x.size(); jj++){
+      Vector3f quadp = ele->facePt(ii, q2d.x[jj]);
+      Eigen::MatrixXf B0 = ele->BMatrix(quadp, grid->X);
       Eigen::MatrixXf B = Eigen::MatrixXf::Zero(6, 3 * ele->nV());
       //only add contributions from the face
       for (int kk = 0; kk < 4; kk++){
@@ -184,7 +209,7 @@ void stiffnessTest()
         B.block(0, 3 * vidx, 6, 3) = B0.block(0, 3 * vidx, 6, 3);
       }
       //B=B0;
-		  Eigen::MatrixXf H = ele->HMatrix(quadp);
+      Eigen::MatrixXf H = ele->HMatrix(quadp);
       //std::cout << "H:\n" << H.transpose() << "\n";
       //std::cout << "B:\n" << B.transpose() << "\n";
       //std::cout << "traction:\n";
@@ -196,26 +221,47 @@ void stiffnessTest()
       Matrix3f F = ele->defGrad(quadp, grid->X, grid->x);
       Matrix3f P = ene->getPK1(F);
       Vector3f surfF1 = P * Vector3f(facen[ii][0], facen[ii][1], facen[ii][2]);
-      std::cout << surfF1[0] << " " << surfF1[1] << " " << surfF1[2] <<  "\n";
-	  }
-	  //out << Tf << "\n\n";
-	  T += Tf;
+      std::cout << surfF1[0] << " " << surfF1[1] << " " << surfF1[2] << "\n";
+    }
+    //out << Tf << "\n\n";
+    T += Tf;
   }
   //out << T << "\n\n";
   //out << Ka << "\n";
   out.close();
 }
 
-void forceTest()
+void forceTest(int matModel)
+{
+  StrainEne * ene = 0;
+  switch (matModel){
+  case 0:
+    ene = new StrainLin();
+    ene->param[0] = 1000;
+    ene->param[1] = 10000;
+    break;
+  case 1:
+    ene = new StrainCorotLin();
+    ene->param[0] = 1000;
+    ene->param[1] = 10000;
+    break;
+  case 2:
+    ene = new StrainEneNeo();
+    ene->param[0] = 1000;
+    ene->param[1] = 10000;
+    break;
+  default:
+    return;
+  }
+  forceTestHelper(ene);
+  delete ene;
+}
+
+void forceTestHelper(StrainEne * ene)
 {
   int nx = 1,ny=1,nz=1;
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
-  //StrainEneNeo ene;
-  //StrainLin ene;
-  StrainCorotLin ene;
-  ene.param[0] = 1000;
-  ene.param[1] = 10000;
-  MaterialQuad material(&ene);
+  MaterialQuad material(ene);
   em->m.push_back(&material);
   
   for(int ii = 0;ii<nx;ii++){
@@ -249,4 +295,5 @@ void forceTest()
       std::cout<<"\nCentral diff:\n"<<numF<<"\n--------\n";
     }
   }
+  delete em;
 }

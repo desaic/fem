@@ -68,6 +68,7 @@ ElementRegGrid::GetEleInd_clamp(const Vector3f & p)
   kk = clamp(kk, 0, nz - 1);
   return GetEleInd(ii,jj,kk);
 }
+
 void
 ElementRegGrid::rmEmptyVert()
 {

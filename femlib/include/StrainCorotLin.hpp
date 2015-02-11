@@ -1,10 +1,10 @@
 #ifndef STRAINCOROTLIN_HPP
 #define STRAINCOROTLIN_HPP
-#include "StrainEne.hpp"
+#include "StrainLin.hpp"
 
 #include <Eigen\Dense>
 
-class StrainCorotLin :public StrainEne{
+class StrainCorotLin :public StrainLin{
 public:
   StrainCorotLin();
   virtual float getEnergy(const Matrix3f & F);

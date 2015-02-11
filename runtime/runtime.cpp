@@ -11,6 +11,7 @@
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
+#include "StrainCorotLin.hpp"
 #include "UnitTests.hpp"
 
 void runSim(ElementMesh * m, Stepper * stepper)
@@ -21,8 +22,9 @@ void runSim(ElementMesh * m, Stepper * stepper)
 void runTest()
 {
   //ElementCoarseTest();
-  stiffnessTest();
-	//forceTest();
+  stiffnessTest(0);
+  //testCoarseDefGrad();
+	//forceTest(0);
   system("pause");
   exit(0);
 }
@@ -30,10 +32,14 @@ void runTest()
 int main(int argc, char* argv[])
 {
   runTest();
-  int nx = 2, ny=8, nz=2;
+  //int nx = 4, ny=16, nz=4;
+  int nx = 1, ny=4, nz=1;
+
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   //StrainEneNeo ene;
+  //std::vector<StrainCorotLin> ene(2);
   std::vector<StrainLin> ene(2);
+
   ene[0].param[0] = 10000;
   ene[0].param[1] = 100000;
   ene[1].param[0] = 100000;
@@ -52,13 +58,13 @@ int main(int argc, char* argv[])
       for (int kk = 0; kk < nz; kk++){
         int eidx = em->GetEleInd(ii, jj, kk);
         if (jj < ny / 2){
-          em->me[eidx] = 1;
+        //  em->me[eidx] = 1;
         }
       }
     }
   }
 
-  Vector3f ff(5,-20,0);
+  Vector3f ff(20,-80,0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
@@ -81,13 +87,14 @@ int main(int argc, char* argv[])
   World * world = new World();
   world->em.push_back(em);
   
-  //StepperNewton *stepper= new StepperNewton();
+  StepperNewton *stepper= new StepperNewton();
   //stepper->rmRigid = true;
   //IpoptStepper * stepper = new IpoptStepper();
   //AdmmCPU * stepper = new AdmmCPU();
   //stepper->ro0 = 500;
-  AdmmNoSpring *stepper = new AdmmNoSpring();
-  stepper->nSteps = 1000;
+  //AdmmNoSpring *stepper = new AdmmNoSpring();
+  
+  stepper->nSteps = 10000;
   std::thread simt(runSim, em, stepper);
   Render render;
   render.init(world);

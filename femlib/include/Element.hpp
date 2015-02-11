@@ -11,7 +11,7 @@ class Element
 public:
   
   Element(int _n=0);
-  
+  Element(const Element & e);
   ///@brief number of vertices
   virtual int nV() const;
 
@@ -45,6 +45,8 @@ public:
 
   virtual Vector3f getDisp(const Vector3f & p, const std::vector<Vector3f> & X,
     const std::vector<Vector3f>x);
+
+  const std::vector<int> & getNodeIndices()const{ return n; }
 private:
 
   ///@brief nodal indices

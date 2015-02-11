@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\runtime\CoarseEleTest.cpp" />
     <ClCompile Include="..\..\runtime\runtime.cpp" />
     <ClCompile Include="..\..\runtime\UnitTests.cpp" />
   </ItemGroup>

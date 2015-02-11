@@ -48,6 +48,14 @@ const int facen[6][3]{
 	{ 0, 0, 1}
 };
 
+Vector3f ElementHex::natCoord(const Vector3f & p, const std::vector<Vector3f> & X)
+{
+  Vector3f n = p - X[at(0)];
+  float size = (X[at(7)][0] - X[at(0)][0]);
+  n = (2.0 / size) * n - Vector3f(1,1,1);
+  return n;
+}
+
 std::vector<float>
 ElementHex::shapeFun(const Vector3f & p)const
 {
@@ -186,4 +194,7 @@ float ElementHex::getVol(const std::vector<Vector3f> & X)
 }
 
 ElementHex::ElementHex():Element(8)
+{}
+
+ElementHex::ElementHex(const ElementHex & e) :Element(e)
 {}

@@ -30,13 +30,17 @@ Element::defGrad(Vector3f p, const std::vector<Vector3f> & X,
   }
   fem_error = FEM_OK;
   if(F.determinant()<0){
-    fem_error = FEM_ERROR_INVERT;    
+    fem_error = FEM_ERROR_INVERT;
   }
   return F;
 }
 
 Element::Element(int _n):n(_n)
 {}
+
+Element::Element(const Element & e) : n(e.getNodeIndices())
+{}
+  
 
 std::vector<std::array<int,2> >
 Element::getEdges()

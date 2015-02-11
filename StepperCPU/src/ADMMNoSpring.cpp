@@ -76,7 +76,7 @@ void AdmmNoSpring::minimizeElement(ElementMesh * m, Element * ele,
 {
   float E = 0;
   float h = 1;
-  int NSteps = 5;
+  int NSteps = 1;
   int ndof = 3 * ele->nV();
 
   std::ofstream out("debug.txt");

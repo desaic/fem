@@ -2,7 +2,212 @@
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{hyperref}
+
+
+\newcommand{\mcF}{\mathcal{F}}
+\newcommand{\mcJ}{\mathcal{J}}
+\newcommand{\mbF}{\mathbf{F}}
+\newcommand{\dmbF}{\delta\mathbf{F}}
+\newcommand{\mbI}{\mathbf{I}}
+\newcommand{\mbJ}{\mathbf{J}}
+\newcommand{\mbK}{\mathbf{K}}
+\newcommand{\mbP}{\mathbf{P}}
+\newcommand{\mbp}{\mathbf{p}}
+\newcommand{\mbX}{\mathbf{X}}
+\newcommand{\mbx}{\mathbf{x}}
+\newcommand{\mbf}{\mathbf{f}}
+\newcommand{\mbq}{\mathbf{q}}
+\newcommand{\mbu}{\mathbf{u}}
+
 \begin{document}
+	\section{Hexahedral Finite Elements}
+We use $\mbX_i$ to denote its vertex positions in its reference space.
+	$\mbX_i$ is specified before the simulation and remains constant.
+	Following the notation conventions, we use $\mbx_i$ to denote the deformed state
+	of the cube.
+	
+	The elastic behavior of the cube is governed by a non-negative scalar function called the strain energy function $\Psi(\mbx)$.
+	At rest shape $\Psi(\mbx)$ takes the minimum value $0$. When forces are applied on vertecies of the cube, the
+	cube would deform to minimize the total potential energy defined as
+	\begin{equation}
+	V=\Psi(\mbx) - \sum_{i=1}^8\mbu_i\cdot \mbf_i,
+	\label{eq:pot}
+	\end{equation}
+	where $\mbf_i$ is a force vector applied to vertex $i$.
+	\subsection{Material Model}
+	Instead of directly using $\mbx$, 
+	we define the strain energy functions in terms of deformation gradients $\mbF_j$
+	sampled at a small number of quadrature points $\mbX_j$. The deformation gradients
+	depend on $\mbx$.
+	\[\Psi(\mbx) = \sum_j \Psi(\mbF_j(\mbx)).\]
+	For example, using 3-dimensional
+	2-point Gaussian Quadrature rule, we have $8$ sample points in the reference space of the cube:
+	$\mbX_j=(\pm\sqrt{\frac{1}{3}}, \pm\sqrt{\frac{1}{3}},\pm\sqrt{\frac{1}{3}})$. Subscript $j$ is used
+	denote a quadrature point and $i$ is used to denote a cube vertex.
+	
+	To compute deformation gradient $\mbF_j$ at $\mbp_j$, we need to know how the volume has deformed
+	near $\mbp_j$. Let $\mbu_i=\mbx_i-\mbX_i$ be the displacement for vertex $i$, and $\mbu_j$
+	be the displacement for $\mbX_j$.
+	We use trilinear interpolation to define displacement $\mbu_j$ by
+	\[\mbu_j=\frac{1}{8}\sum_{i=1}^8(1+w_{i,1}\mbX_j^x)(1+w_{i,2}\mbX_j^y)(1+w_{i,3}\mbX_j^z)\mbu_i,\]
+	\[
+	w=\begin{pmatrix}
+	-1 & -1 & -1\\
+	-1 & -1 & 1\\
+	-1 & 1 & -1\\
+	-1 & 1 & 1\\
+	1 & -1 & -1\\
+	1 & -1 & 1\\
+	1 & 1 & -1\\
+	1 & 1 & 1
+	\end{pmatrix}.
+	\]
+	\[
+	F_j=\frac{d\mbu_j}{d\mbX_j} = \mbI + \sum_{i=1}^8\nabla_{\mbX} N_i(\mbX_j)\mbu_i,
+	\]
+	\[
+	\nabla_{\mbX}N_i(\mbX_j) = \frac{1}{4}
+	\begin{pmatrix}
+	\frac{w_{i,0}}{\mbX_7^x-\mbX_1^x}(1+w_{i,1}\mbX_j^y)(1+w_{i,2}\mbX_j^z)\\
+	\frac{w_{i,1}}{\mbX_7^y-\mbX_1^y}(1+w_{i,0}\mbX_j^x)(1+w_{i,2}\mbX_j^z)\\
+	\frac{w_{i,2}}{\mbX_7^z-\mbX_1^z}(1+w_{i,0}\mbX_j^x)(1+w_{i,1}\mbX_j^y)
+	\end{pmatrix}^T.
+	\]
+	A simple and robust material model is called the neo-hookean material
+	model and it defines the strain energy function as
+	\[
+	\Psi(\mbF)=\frac{\mu}{2}(I_1-3) - \mu J + \frac{\lambda}{2}J^2,
+	\]
+	\[I_1=tr(\mbF^T\mbF),\, J=\log(\det(\mbF)).
+	\]
+	$\mu$ and $\lambda$ are shear modulus and first Lam\'{e} constant of the material.
+\section{Solving for Statics}
+	We want to minize the potential energy function in \autoref{eq:pot}.
+	An easy first step is to take the derivative of the function and walk in the
+	opposite direction of the gradient:
+	\begin{equation}
+	\frac{\partial V}{\partial \mbx} = \frac{\partial\Psi}{\partial\mbx} - \mbf.
+	\end{equation}
+	The second term of the gradient tells us the moving vertices along the directions of
+	$\mbf$ can reduce the potential energy caused by these forces.
+	The first term can be expanded using chain rule
+	\begin{align}
+	\frac{\partial\Psi}{\partial\mbx_i} &= \sum_j\frac{\partial\Psi}{\partial\mbF_j} \frac{\partial\mbF_j}{\partial\mbx_i}\\
+	&=\mbP(\mbF)\nabla N_i(\mbX_j).
+	\end{align}
+	$\mbP(\mbF)$ is a material specific function known as the first Piola-Kirchoff stress.
+	For Neo-hookean model,
+	\[\mbP(\mbF) = \mu(\mbF-\mbF^{-T})+\lambda JF^{-T}.\]
+	To improve convergence, we use newton's method to minize the potential energy $V$.
+	The second derivative of $V$ is called the stiffness matrix $\mbK$.
+	$\mbK$ only depends on $\Psi(\mbF)$.
+	Taking derivative of $\mbP$ with respect to $\mbF$ results in a third order tensor.
+	In a particular direction of $\mbF$ denoted as $\dmbF$, the amount of change
+	in $\mbP$ is
+	\[
+	\delta\mbP(\mbF;\dmbF) = \mu\dmbF+(\mu-\lambda J)\mbF^{-T}\dmbF^T\mbF^{-T}	+\lambda tr(\mbF^{-1}\dmbF)\mbF^{-T}.
+	\]
+
+\section{Hierarchical Displacement Field(Under construction)}
+$\mbq_c$ and $\mbq_d$ are coarse and detail vertex displacements.
+$\mbq_d$ is written in the reference frame of the coarse element.
+$\mathbf{X}$ are natural coordinates in an element in its reference configuration.
+$\mathbf{u}$ are displacements at $\mathbf{X}$.
+\[
+\mbu = \mcJ_c(\mbq_c, \mbX + \mcJ_d(\mbq_d,\mbX))
+\approx \mcJ_c(\mbq_c, \mbX) + \mbF_c\mcJ_d(\mbq_d,\mbX).
+\]
+\[
+\mcJ(\mbq,\mbX) = \sum_{i=1}^8 N(\mbX)\mbq_i.
+\]
+The deformation gradient is
+\[
+\mbF (\mbq,\mbX) = \mbI+\frac{\partial\mcJ(\mbq, \mbX)}{\partial\mbX}=
+\mbI+ \sum_i \mbq_i \nabla N^T(\mbX).
+\]
+\[
+\mbF_e = \mbI+\frac{\partial \mbu}{\partial \mbX} 
+=\mbI + \frac{\partial \mcJ_c}{\partial\mbX} 
++ \frac{\partial \mcJ_d}{\partial\mbX} + 
+\frac{\partial \mcJ_c}{\partial\mbX}\frac{\partial \mcJ_d}{\partial\mbX} 
++ \frac{\partial^2\mcJ_c}{\partial\mbX^2}\mcJ_d
+\]
+\[=\mbF_c\mbF_d + \frac{\partial^2\mcJ_c}{\partial\mbX^2}\mcJ_d
+\approx \mbF_c\mbF_d.
+\]
+
+The strain energy can be defined in the same way in terms of $\mbF$.
+The problem is that there isn't a unique minimizer given forces and constraints.
+
+Embed quadrature points $\mbX_i$ in fine cubes.
+Define strain energy density $\Psi$ at each quadrature point as usual in terms of $\mbF_e(\mbq, \mbX_i)$.
+Minimize potential energy
+\[
+\arg\min_{\mbq} V = \sum_i \Psi( \mbF_e(\mbq, \mbX_i) )
+- \mbf_{ext} \cdot \mbq.
+\]
+Need to distribute stress to $\mbq_c$ and $\mbq_d$ so that we don't double count forces. There are $24$ extra degrees
+of freedom from the coarse cube.
+
+Project internal force to the coarse degrees of freedom. The coarse
+displacements handle as much stress as possible.
+Using chain rule, force on
+a coarse vertex $\mbq_i$ is
+\[
+\mbf_{ci} = \frac{\partial\Psi(\mbF)}{\partial \mbq_i} = 
+\sum_{j=1}^{64}w_j\mbP(\mbF_j)\mbF_d^T\nabla N_i(\mbX_j),
+\]
+where $\mbP=\frac{\partial\Psi}{\partial \mbF}$ is the first Piola-Kirchhoff stress and $w_j$ are quadrature weights.
+Similarly for a fine vertex,
+\[
+\mbf_{di} = 
+\sum_{j=1}^{8}w_j\mbP(\mbF_j)\mbF_c\nabla N_i(\mbX_j).
+\]
+
+We can project the fine forces into the column space of 
+$\mbJ_c$ ($81\times 24$)
+to get $f_{dc}$,
+the amount of detail forces handled by the coarse vertices.
+\[
+\mbJ_c=\frac{\partial\mcJ}{\partial\mbq}=\begin{pmatrix}
+N_1(\mbX)\\
+N_2(\mbX)\\
+...\\
+N_8(\mbX)
+\end{pmatrix}^T.
+\]
+If we coarsen 8 elements to 1. $\mbJ_c$ is a $81\times 24$ matrix.
+\[
+\mbf_{c} = (\mbJ_c^T\mbJ_c)^{-1}\mbJ_c^T\mbf_d.
+\]
+\[
+\mbf_{dc} = \mbJ\mbf_c.
+\]
+
+The forces left for the fine vertices are 
+\[
+\mbf_d' = \mbf_d - \mbf_{dc}.
+\]
+Apply the same idea to split the stiffness
+matrix for coarse and fine displacements.
+Given the stiffness matrix for the fine vertices $\mbK_d$,
+\[
+d\mbq_d = \mbK_d\mbf_d.
+\]
+$\mbK_c=\mbJ_c^T\mbK_d\mbJ_c$.
+We can project the displacement to the coarse level to minimize the difference
+\[
+\|\mbK_c d\mbq_c - \mbK_d\mbf_d\|^2.
+\]
+\[
+\mbq_c = \mbK_c^{-1}\mbJ_c^T\mbK_d\mbf_d.
+\]
+The amount of detail displacement removed by coarse displacement
+is
+\[
+\mbq_{dc} = \mbJ_c\mbK_c^{-1}\mbJ_c^T\mbK_d\mbf_d.
+\]
+
 \section{Continuous}
 	Solve
 	\[
@@ -83,4 +288,6 @@
 	
 \section{Linear Material}
 	P(x) = E(x)B(x)
+\section{Two Level Embedding}
+
 \end{document}

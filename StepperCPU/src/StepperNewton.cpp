@@ -61,6 +61,7 @@ float StepperNewton::oneStepDense(ElementMesh * m)
   float E = m->getEnergy();
 
   MatrixXd K = m->getStiffness();
+  K.print(std::cout);
   int ndof = 3*(int)m->x.size();
   std::vector<double> bb (ndof);
 
@@ -87,7 +88,8 @@ float StepperNewton::oneStepDense(ElementMesh * m)
   }
 
   linSolve(K,&(bb[0]));
-
+  char c;
+  std::cin >> c;
   double totalMag = 0;
   for(int ii = 0;ii<ndof;ii++){
     totalMag += std::abs(bb[ii]);
@@ -99,6 +101,7 @@ float StepperNewton::oneStepDense(ElementMesh * m)
     }
   }
   //line search
+  h = 10;
   std::vector<Vector3f> x0 = m->x;
   float E1=E;
   while(1){
@@ -115,7 +118,7 @@ float StepperNewton::oneStepDense(ElementMesh * m)
         break;
       }
     }else{
-      h=1.1f*h;
+     // h=1.1f*h;
       break;
     }
   }
@@ -137,7 +140,7 @@ void StepperNewton::step(ElementMesh * m)
     if(std::abs(E0-E)<1e-3f){
       break;
     }
-    std::cout<<E<<"\n";
+    std::cout<<ii<<": " <<E<<"\n";
     E0=E;
   }
 }

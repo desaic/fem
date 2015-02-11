@@ -21,9 +21,6 @@
     <ClCompile Include="..\..\femlib\src\Element.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\femlib\src\ElementCoarse.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\femlib\src\ElementHex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -81,6 +78,9 @@
     <ClCompile Include="..\..\femlib\src\StrainCorotLin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\femlib\src\ElementHier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\femlib\include\ArrayUtil.hpp">
@@ -90,9 +90,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\femlib\include\Element.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\femlib\include\ElementCoarse.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\femlib\include\ElementHex.hpp">
@@ -150,6 +147,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\femlib\include\StrainCorotLin.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\femlib\include\ElementHier.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
