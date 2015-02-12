@@ -75,7 +75,7 @@ void AdmmNoSpring::minimizeElement(ElementMesh * m, Element * ele,
 {
   float E = 0;
   float h = 1;
-  int NSteps = 1;
+  int NSteps = 5;
   int ndof = 3 * ele->nV();
 
   //std::ofstream out("debug.txt");
@@ -204,7 +204,7 @@ void AdmmNoSpring::init(ElementMesh *_m)
     }
     float sideLen = m->X[ele->at(7)][0] - m->X[ele->at(0)][0];
     float area = sideLen*sideLen;
-    T[ee] = area*T[ee];
+    T[ee] = 0.5*area*T[ee];
   }
 
   bb = new double[3 * m->x.size()];
@@ -284,7 +284,7 @@ int AdmmNoSpring::oneStep()
     float E = m->getEnergy();
     
     std::cout << "Energy: " << E << "\n";
-    
+    out << E << " ";
     float ene1 = E;
     for (unsigned int ii = 0; ii<Z.size(); ii++){
       Z[ii] = Z[ii] - Zk_1[ii];
@@ -332,7 +332,7 @@ int AdmmNoSpring::oneStep()
     }
 
     tt = clock();
-    out << (tt - tt0) / (CLOCKS_PER_SEC / 1000.0);
+    out << (tt - tt0) / (CLOCKS_PER_SEC / 1000.0)<<"\n";
     return 0;
 }
 

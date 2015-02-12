@@ -1,4 +1,4 @@
   test false
-#stepper newton
-stepper admm
+stepper newton
+#stepper admm
 nSteps 10000
