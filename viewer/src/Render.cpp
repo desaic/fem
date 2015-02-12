@@ -179,22 +179,35 @@ void mousePosFun(GLFWwindow *window , double xpos, double ypos)
   }
 }
 
-void Render::drawEle(Element * ele, const std::vector<Vector3f> & x)
+void Render::drawEle(int eidx, ElementMesh * m)
 {
+  Element * ele = m->e[eidx];
   std::vector<std::array<int , 2> > edges = ele->getEdges();
   glColor3f(0.4f, 0.5f, 0.9f);
   glDisable(GL_LIGHTING);
   glBegin(GL_LINES);
   for(unsigned int ii = 0;ii<edges.size();ii++){
     int vidx = (*ele)[edges[ii][0]];
-    if(vidx>=x.size()){
-      std::cout<<x.size()<<"\n";
+    if(vidx>=m->x.size()){
+      std::cout<<m->x.size()<<"\n";
     }
-    Vector3f v = x[vidx];
+    Vector3f v = m->x[vidx];
     glVertex3f(v[0],v[1],v[2]);
-    v = x[(*ele)[edges[ii][1]]];
+    v = m->x[(*ele)[edges[ii][1]]];
     glVertex3f(v[0],v[1],v[2]);
   }
+
+  if (m->u != 0){
+
+    glColor3f(0.2f, 0.7f, 0.1f);
+    for (unsigned int ii = 0; ii < edges.size(); ii++){
+      Vector3f v = (*(m->u))[eidx][edges[ii][0]];
+      glVertex3f(v[0], v[1], v[2]);
+      v = (*(m->u))[eidx][edges[ii][1]];
+      glVertex3f(v[0], v[1], v[2]);
+    }
+  }
+
   glEnable(GL_LIGHTING);
   glEnd();
 }
@@ -202,7 +215,7 @@ void Render::drawEle(Element * ele, const std::vector<Vector3f> & x)
 void Render::drawEleMesh(ElementMesh * eMesh)
 {
   for(unsigned int ii = 0;ii<eMesh->e.size();ii++){
-    drawEle(eMesh->e[ii],eMesh->x);
+    drawEle(ii,eMesh);
   }
 }
 

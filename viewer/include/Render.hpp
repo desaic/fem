@@ -23,7 +23,7 @@ public:
   void init(World * world);
   int loop();
   void draw();
-  void drawEle(Element * ele, const std::vector<Vector3f> & x);
+  void drawEle(int eidx, ElementMesh * eMesh);
   void drawEleMesh(ElementMesh * eMesh);
   void moveCamera(float dt);
   Stepper * getStepper();
