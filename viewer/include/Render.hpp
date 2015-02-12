@@ -15,6 +15,7 @@ class ElementHex;
 class World;
 class Element;
 class ElementMesh;
+class Stepper;
 class Render
 {
 public:
@@ -25,6 +26,7 @@ public:
   void drawEle(Element * ele, const std::vector<Vector3f> & x);
   void drawEleMesh(ElementMesh * eMesh);
   void moveCamera(float dt);
+  Stepper * getStepper();
   virtual ~Render();
   bool anim;
   Camera camera;

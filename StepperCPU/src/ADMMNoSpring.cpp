@@ -11,7 +11,6 @@
 #include "Quadrature.hpp"
 
 #include <time.h>
-#include <fstream>
 
 float AdmmNoSpring::getEnergy(ElementMesh * eMesh, int eIdx)
 {
@@ -79,7 +78,7 @@ void AdmmNoSpring::minimizeElement(ElementMesh * m, Element * ele,
   int NSteps = 1;
   int ndof = 3 * ele->nV();
 
-  std::ofstream out("debug.txt");
+  //std::ofstream out("debug.txt");
   for (int iter = 0; iter<NSteps; iter++){
     std::vector<Vector3f> force = getForces(m, eIdx);
     MatrixXd K = stiffness(m, eIdx);
@@ -95,12 +94,12 @@ void AdmmNoSpring::minimizeElement(ElementMesh * m, Element * ele,
       }
       for (int jj = 0; jj<3; jj++){
         int row = 3 * ii + jj;
-        K(row, row) += 100;
+        //K(row, row) += 100;
         bb[row] = force[ii][jj];
         if (m->fixed[vidx]){
           for (int kk = 0; kk<ndof; kk++){
             K(row, kk) = 0;
-            K(row, row) = 1;
+            K(row, row) = 10;
           }
         }
       }
@@ -162,19 +161,27 @@ void AdmmNoSpring::minimizeElement(ElementMesh * m, Element * ele,
   }
 }
 
-void AdmmNoSpring::initVar(ElementMesh *e)
+void AdmmNoSpring::init(ElementMesh *_m)
 {
+  m = _m;
+  out.open("converge.txt");
+  
+  m->u = &u;
+
+  float prevE = m->getEnergy();
+
+
   if (bb != 0){
     delete[] bb;
   }
 
   const Quadrature & q2d = Quadrature::Gauss2_2D;
 
-  T.resize(e->e.size());
-  for (unsigned int ee = 0; ee < e->e.size(); ee++){
-    ElementHex * ele = (ElementHex*)e->e[ee];
-    MaterialQuad * m = (MaterialQuad*)e->m[e->me[ee]];
-    StrainLin * ene = (StrainLin*)m->e[0];
+  T.resize(m->e.size());
+  for (unsigned int ee = 0; ee < m->e.size(); ee++){
+    ElementHex * ele = (ElementHex*)m->e[ee];
+    MaterialQuad * mat = (MaterialQuad*)m->m[m->me[ee]];
+    StrainLin * ene = (StrainLin*)mat->e[0];
     Eigen::MatrixXf E = ene->EMatrix();   
     T[ee] = Eigen::MatrixXf::Zero(3 * ele->nV(), 3 * ele->nV());
     for (int ii = 0; ii < ele->nF(); ii++){
@@ -195,40 +202,31 @@ void AdmmNoSpring::initVar(ElementMesh *e)
       }
       T[ee] += Tf;
     }
-    float sideLen = e->X[ele->at(7)][0] - e->X[ele->at(0)][0];
+    float sideLen = m->X[ele->at(7)][0] - m->X[ele->at(0)][0];
     float area = sideLen*sideLen;
     T[ee] = area*T[ee];
   }
 
-  bb = new double[3 * e->x.size()];
-  u.resize(e->e.size());
+  bb = new double[3 * m->x.size()];
+  u.resize(m->e.size());
   y.resize(u.size());
-  for (size_t ii = 0; ii<e->e.size(); ii++){
-    Element * ele = e->e[ii];
+  for (size_t ii = 0; ii<m->e.size(); ii++){
+    Element * ele = m->e[ii];
     u[ii].resize(ele->nV());
     y[ii].resize(u[ii].size());
     for (int jj = 0; jj<ele->nV(); jj++){
-      u[ii][jj] = e->X[ele->at(jj)];
+      u[ii][jj] = m->X[ele->at(jj)];
     }
   }
-  Z = e->x;
+  Z = m->x;
 }
 
-void AdmmNoSpring::step(ElementMesh * m)
+int AdmmNoSpring::oneStep()
 {
-  initVar(m);
-
-  std::ofstream out("converge.txt");
   clock_t tt, tt0;
   tt0 = clock();
-
   std::vector<Vector3f> x0 = m->x;
 
-  bool pause = true;
-  m->u = &u;
-  float prevE = m->getEnergy();
-
-  for (int iter = 0; iter<nSteps; iter++){
     //Z in the previous iteraiton.
     std::vector<Vector3f> Zk_1 = Z;
 
@@ -284,7 +282,9 @@ void AdmmNoSpring::step(ElementMesh * m)
 
     //line search for best delta Z magnitude
     float E = m->getEnergy();
-    std::cout << "Energy in iteration " << iter << ": " << E << "\n";
+    
+    std::cout << "Energy: " << E << "\n";
+    
     float ene1 = E;
     for (unsigned int ii = 0; ii<Z.size(); ii++){
       Z[ii] = Z[ii] - Zk_1[ii];
@@ -333,7 +333,7 @@ void AdmmNoSpring::step(ElementMesh * m)
 
     tt = clock();
     out << (tt - tt0) / (CLOCKS_PER_SEC / 1000.0);
-  }
+    return 0;
 }
 
 AdmmNoSpring::~AdmmNoSpring()

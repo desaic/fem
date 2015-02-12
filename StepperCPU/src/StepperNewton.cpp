@@ -12,7 +12,24 @@ StepperNewton::StepperNewton():dense(true),dx_tol(1e-5f),h(1.0f)
 ,rmRigid(false)
 {}
 
-float StepperNewton::oneStepSparse(ElementMesh * m)
+int StepperNewton::oneStep()
+{
+  float E0 = m->getEnergy();
+  float E = 0;
+  if (dense){
+    E = oneStepDense();
+  }
+  else{
+    E = oneStepSparse();
+  }
+  if (std::abs(E0 - E) < 1e-3f){
+    return -1;
+  }
+  std::cout << E << "\n";
+  return 0;
+}
+
+float StepperNewton::oneStepSparse()
 {
   return -1;
 }
@@ -57,17 +74,16 @@ void fixRigid(MatrixXd & K, double * b,
   }
 }
 
-float StepperNewton::oneStepDense(ElementMesh * m)
+float StepperNewton::oneStepDense()
 {
   std::vector<Vector3f> force = m->getForce();
-  std::ofstream out("out.txt");
   float E = m->getEnergy();
 
   MatrixXd K = m->getStiffness();
   
   int ndof = 3*(int)m->x.size();
   std::vector<double> bb (ndof);
-  out << "\n";
+  
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
     for(int jj = 0;jj<3;jj++){
       int row = 3*ii + jj;
@@ -82,10 +98,8 @@ float StepperNewton::oneStepDense(ElementMesh * m)
       }else{
         bb[ row ] = force[ii][jj];
       }
-      out << bb[row] << "\n";
     }
   }
-  K.print(out);
   if(rmRigid){
     K.resize(ndof + 6, ndof+6);
     bb.resize(ndof+6);
@@ -93,16 +107,7 @@ float StepperNewton::oneStepDense(ElementMesh * m)
   }
  
   linSolve(K,&(bb[0]));
-  out << "\n";
-  for (unsigned int ii = 0; ii < m->x.size(); ii++){
-    for (int jj = 0; jj < 3; jj++){
-      out << bb[3 * ii + jj] << "\n";
-    }
-  }
-  out.close();
-
-  char c;
-  std::cin >> c;
+  
   double totalMag = 0;
   for(int ii = 0;ii<ndof;ii++){
     totalMag += std::abs(bb[ii]);
@@ -136,23 +141,4 @@ float StepperNewton::oneStepDense(ElementMesh * m)
   }
 
   return E1;
-}
-
-void StepperNewton::step(ElementMesh * m)
-{
-
-  float E0 = m->getEnergy();
-  for(int ii = 0;ii<nSteps;ii++){
-    float E =0;
-    if(dense){
-      E = oneStepDense(m);
-    }else{
-      E = oneStepSparse(m);
-    }
-    if(std::abs(E0-E)<1e-3f){
-      break;
-    }
-    std::cout<<ii<<": " <<E<<"\n";
-    E0=E;
-  }
 }

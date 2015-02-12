@@ -15,11 +15,6 @@
 #include "StrainCorotLin.hpp"
 #include "UnitTests.hpp"
 
-void runSim(ElementMesh * m, Stepper * stepper)
-{
-  stepper->step(m);
-}
-
 void runTest()
 {
   //ElementCoarseTest();
@@ -102,19 +97,23 @@ int main(int argc, char* argv[])
   if (stepperType == "newton"){
     stepper = new StepperNewton();
   }
+  else if (stepperType == "ipopt"){
+    //not yet implemented
+    //  stepper = new IpoptStepper();
+  }
   else{
     stepper = new AdmmNoSpring();
   }
   //stepper->rmRigid = true;
-  //IpoptStepper * stepper = new IpoptStepper();
   //AdmmCPU * stepper = new AdmmCPU();
   //stepper->ro0 = 500;
   
   stepper->nSteps = nSteps;
-  std::thread simt(runSim, em, stepper);
+  stepper->init(em);
+  stepper->launchThread();
   Render render;
+  world->stepper = stepper;
   render.init(world);
   render.loop();
-  simt.join();
 	return 0;
 }

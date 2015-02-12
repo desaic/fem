@@ -7,8 +7,7 @@
 #include <iostream>
 StepperGrad::StepperGrad():h(0.01f),force_L2tol(1e-4f) {}
 
-///@return energy value.
-float StepperGrad::oneStep(ElementMesh * m)
+int StepperGrad::oneStep()
 {
   std::vector<Vector3f> force = m->getForce();
   for(unsigned int ii = 0;ii<force.size();ii++){
@@ -22,7 +21,7 @@ float StepperGrad::oneStep(ElementMesh * m)
     totalMag += force[ii].absSquared();  
   }
   if(totalMag<force_L2tol){
-    return E;
+    return 0;
   }
 
   std::vector<Vector3f> x0 = m->x;
@@ -40,13 +39,5 @@ float StepperGrad::oneStep(ElementMesh * m)
       break;
     }
   }
-  return E;
-}
-
-void StepperGrad::step(ElementMesh * m)
-{
-  for(int ii = 0;ii<nSteps;ii++){
-    float E = oneStep(m);
-    std::cout<<"E "<<E<<"\n";
-  }
+  return 0;
 }

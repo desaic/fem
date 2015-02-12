@@ -1,17 +1,19 @@
 #ifndef ADMMNOSPRING_HPP
 #define ADMMNOSPRING_HPP
+#include <Eigen/Dense>
+#include "vecmath.h"
 #include "Stepper.hpp"
 #include <vector>
-#include "vecmath.h"
-#include <Eigen/Dense>
+#include <fstream>
+
 class Element;
 struct MatrixXd;
 class AdmmNoSpring :public Stepper
 {
 public:
 
-  void step(ElementMesh * m);
-
+  int oneStep();
+  void init(ElementMesh * _m);
   AdmmNoSpring();
 
   ~AdmmNoSpring();
@@ -43,8 +45,10 @@ public:
   MatrixXd stiffness(ElementMesh *mesh, int eIdx);
 
   std::vector<Eigen::MatrixXf> T;
-private:
-  void initVar(ElementMesh * e);
+
+
+  float prevE;
+  std::ofstream out;
 };
 
 #endif

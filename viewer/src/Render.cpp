@@ -10,11 +10,13 @@
 #include "glheader.hpp"
 #include "Render.hpp"
 #include "World.hpp"
+#include "Stepper.hpp"
 #include "vecmath.h"
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <atomic>
 const float epsilon = 0.01f;
 Render * render;
 //mouse state
@@ -26,6 +28,8 @@ static void error_callback(int error, const char* description)
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+  Stepper * stepper = render->getStepper();
+  std::unique_lock<std::mutex> lck(stepper->mtx, std::defer_lock);
   if(action == GLFW_PRESS){
     switch(key){
     case GLFW_KEY_W:
@@ -70,8 +74,41 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     case GLFW_KEY_F:
       render->camera.keyhold[5]=false;
       break;
+
+    case GLFW_KEY_P:
+      lck.lock();
+      stepper->state = Stepper::PAUSE;
+      lck.unlock();
+      break;
+    case GLFW_KEY_LEFT_BRACKET:
+      lck.lock();
+      if (stepper->state == Stepper::PAUSE){
+        stepper->state = Stepper::SINGLE;
+        stepper->cv.notify_one();
+      }
+      else{
+        stepper->state = Stepper::SINGLE;
+        lck.unlock();
+      }
+      break;
+    case GLFW_KEY_RIGHT_BRACKET:
+      lck.lock();
+      if (stepper->state == Stepper::PAUSE){
+        stepper->state = Stepper::ALL;
+        stepper->cv.notify_one();
+      }
+      else{
+        stepper->state = Stepper::ALL;
+        lck.unlock();
+      }
+      break;
     }
   }
+}
+
+Stepper * Render::getStepper()
+{ 
+  return world->stepper;
 }
 
 void Render::moveCamera(float dt)

@@ -6,8 +6,7 @@ class StepperGrad:public Stepper
 {
 public:
   StepperGrad();
-  void step(ElementMesh * m);
-  float oneStep(ElementMesh * m);
+  int oneStep();
   float h;
   ///@brief tolerance for sum of force length squared.
   float force_L2tol;

@@ -5,9 +5,9 @@ class StepperNewton:public Stepper
 {
 public:
   StepperNewton();
-  void step(ElementMesh * m);
-  float oneStepDense(ElementMesh * m);
-  float oneStepSparse(ElementMesh * m);
+  int oneStep();
+  float oneStepDense();
+  float oneStepSparse();
   bool dense;
 
   float dx_tol;
