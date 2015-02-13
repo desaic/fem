@@ -1,18 +1,14 @@
-%@param p  natural coordinate in fine element
-function u=embedDisp(p, qf, qc, Xf, Xc)
+%@param X reference coordinate
+function u=embedDisp(X, qf, qc, Xf, Xc)
   %compute fine displacement
-  Nf=bilinear(p);
+  pf=natCoord(X,Xf);
+  Nf=bilinear(pf);
   uf=zeros(1,2);
   for ii = 1:4
     uf = uf + Nf(ii)*qf(ii,:);
   end
-  %point in reference frame
-  Xp=zeros(1,2);
-  for ii = 1:4
-    Xp = Xp + Nf(ii) * Xf(ii,:);
-  end
   %natural coordinate in coarse element
-  pc = natCoord(Xp,Xc);
+  pc = natCoord(X,Xc);
   Fc = defGrad(pc,qc+Xc,Xc);
   Nc = bilinear(pc);
   %coarse displacement
