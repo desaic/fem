@@ -63,8 +63,8 @@ Matrix3f defGrad(int eidx, std::vector<ElementMesh *> & meshes, const Vector3f &
 void testCoarseDefGrad()
 {
   ElementRegGrid *grid = new ElementRegGrid(2, 4, 2);
-  replaceElementHex(*grid);
-  ElementMesh * cm = coarsen(*grid);
+  replaceElementHex(grid);
+  ElementMesh * cm = coarsen(grid);
   for (unsigned int ii = 0; ii < grid->e.size(); ii++){
     ElementHier * fine = (ElementHier*)grid->e[ii];
     std::cout << fine->parent<<"\n";
@@ -89,6 +89,6 @@ void ElementCoarseTest()
 {
   ElementRegGrid grid(2, 2, 2);
   ElementMesh* cm;
-  cm = coarsen(grid);
+  cm = coarsen(&grid);
 
 }

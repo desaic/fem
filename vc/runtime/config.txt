@@ -1,4 +1,7 @@
-  test false
-stepper newton
+#  test true
+#stepper newton
 #stepper admm
+#stepper admmCPU
+hier true
+stepper grad
 nSteps 10000

@@ -115,161 +115,162 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
   }
 }
 
-void AdmmCPU::initVar(ElementMesh *e)
+void AdmmCPU::initVar()
 {
   if(bb!=0){
     delete[] bb;
   }
-  bb = new double[3*e->x.size()];
-  u.resize(e->e.size());
+  bb = new double[3*m->x.size()];
+  u.resize(m->e.size());
   y.resize(u.size());
-  ro.resize(e->e.size(),ro0);
-  for(size_t ii= 0; ii<e->e.size();ii++){
-    Element * ele = e->e[ii];
+  ro.resize(m->e.size(),ro0);
+  for(size_t ii= 0; ii<m->e.size();ii++){
+    Element * ele = m->e[ii];
     u[ii].resize(ele->nV());
     y[ii].resize(u[ii].size());
     for(int jj = 0;jj<ele->nV();jj++){
-      u[ii][jj] = e->X[ele->at(jj)];
+      u[ii][jj] = m->X[ele->at(jj)];
     }
   }
-  Z = e->x;
+  Z = m->x;
 }
 
-void AdmmCPU::step(ElementMesh * m)
+void AdmmCPU::init(ElementMesh * _m)
 {
-  initVar(m);
-  
-  std::ofstream out("converge.txt");
-  clock_t tt,tt0 ;
-  tt0 = clock();
+  m = _m;
+  out.open("converge.txt");
 
-  std::vector<Vector3f> x0 = m->x;
-
-  bool pause = true;
   m->u = &u;
-  float prevE = m->getEnergy();
+
+  prevE = m->getEnergy();
+  initVar();
+}
+
+int AdmmCPU::oneStep()
+{
+  std::vector<Vector3f> x0 = m->x;
   
-  for(int iter = 0;iter<nSteps;iter++){
-    float maxRo = 0;
-    float maxDiff=0;
-    //adjust ro
-    for(unsigned int ii = 0;ii<m->e.size();ii++){
-      Element * ele = m->e[ii];
-      float eleSize = m->X[ele->at(1)][2] - m->X[ele->at(0)][2];
-      for(int jj = 0; jj<ele->nV(); jj++){
-        int vidx = ele->at(jj);
-        Vector3f zz = Z[vidx];
-        Vector3f xx = u[ii][jj];
-        float diff = (xx-zz).abs();
-        if(diff>maxDiff){
-          maxDiff = diff;
-        }
-        if(ro[ii] > maxRo){
-          maxRo = ro[ii];
-        }
-        if( diff > maxDist*eleSize){
-          ro[ii] *= roMult;
-          break;
-        }
+  float maxRo = 0;
+  float maxDiff = 0;
+  //adjust ro
+  for (unsigned int ii = 0; ii < m->e.size(); ii++){
+    Element * ele = m->e[ii];
+    float eleSize = m->X[ele->at(1)][2] - m->X[ele->at(0)][2];
+    for (int jj = 0; jj < ele->nV(); jj++){
+      int vidx = ele->at(jj);
+      Vector3f zz = Z[vidx];
+      Vector3f xx = u[ii][jj];
+      float diff = (xx - zz).abs();
+      if (diff > maxDiff){
+        maxDiff = diff;
       }
-    }
-    std::cout<<"maxro "<<maxRo<<"\n";
-    std::cout<<"maxdiff "<<maxDiff<<"\n";
-
-    //Z in the previous iteraiton.
-    std::vector<Vector3f> Zk_1=Z;
-
-    //update u locally
-    for(unsigned int ii = 0;ii<m->e.size();ii++){
-      Element * ele = m->e[ii];
-      setEleX(ii,m,u[ii]);
-      minimizeElement(m,ele, ii);
-      getEleX(ii,m,u[ii]);
-    }
-
-    //restore x to consensus
-    m->x=Z;
-
-    //update z closed form
-    for(unsigned int ii = 0;ii<m->X.size();ii++){
-      Z[ii] = Vector3f(0,0,0);
-    }
-
-    std::vector<float> roSum(Z.size(),0.0f);
-
-    //add per element variables and multipliers
-    for(unsigned int ii = 0;ii<u.size();ii++){
-      Element * ele = m->e[ii];
-      for(int jj = 0;jj<ele->nV();jj++){
-        int vIdx = ele->at(jj);
-        Z[vIdx] += ro[ii] * u[ii][jj]+y[ii][jj];
-        roSum[vIdx] += ro[ii];
+      if (ro[ii] > maxRo){
+        maxRo = ro[ii];
       }
-    }
-
-    for(unsigned int ii = 0; ii< m->fe.size();ii++){
-      Vector3f force = m->fe[ii];
-      Z[ii] += force;
-    }
-    
-    for(size_t ii = 0;ii<m->x.size();ii++){
-      Z[ii] /= roSum[ii];
-    }
-
-    //fix constraints
-    for(unsigned int ii = 0;ii<m->fixed.size();ii++){
-      if(m->fixed[ii]){
-        Z[ii] = x0[ii];
-      }
-    }
-
-    float E = m->getEnergy();
-    std::cout<<"Energy in iteration "<<iter<<": "<<E<<"\n";
-    
-    float ene1=E;
-    for(unsigned int ii =0;ii<Z.size();ii++){
-      Z[ii] = Z[ii] - Zk_1[ii];
-    }
-    float hh = 1.0f;
-    while(1){
-      m->x=Zk_1;
-      addmul(m->x,hh,Z);
-      ene1 = m->getEnergy();
-      if(ene1<E && fem_error==0){
-        Z=m->x;
+      if (diff > maxDist*eleSize){
+        ro[ii] *= roMult;
         break;
-      }else{
-        hh=hh/2;
-        if(hh<1e-15){
-          m->x = Zk_1;
-          Z=Zk_1;
-          break;
-        }
       }
     }
-    std::cout<<"hh "<<hh<<"\n";    
-    if(prevE-ene1 < tol){
-      //break;
-    }
-    prevE = E;
-
-    //update multiplier for elements
-    for (unsigned int ii = 0; ii<u.size(); ii++){
-      Element * ele = m->e[ii];
-      for (int jj = 0; jj<ele->nV(); jj++){
-        y[ii][jj] += ro[ii] * (u[ii][jj] - Z[ele->at(jj)]);
-      }
-    }
-
-    tt = clock();
-    out<<(tt-tt0)/(CLOCKS_PER_SEC/1000.0);
   }
+  std::cout << "maxro " << maxRo << "\n";
+  std::cout << "maxdiff " << maxDiff << "\n";
+
+  //Z in the previous iteraiton.
+  std::vector<Vector3f> Zk_1 = Z;
+
+  //update u locally
+  for (unsigned int ii = 0; ii < m->e.size(); ii++){
+    Element * ele = m->e[ii];
+    setEleX(ii, m, u[ii]);
+    minimizeElement(m, ele, ii);
+    getEleX(ii, m, u[ii]);
+  }
+
+  //restore x to consensus
+  m->x = Z;
+
+  //update z closed form
+  for (unsigned int ii = 0; ii < m->X.size(); ii++){
+    Z[ii] = Vector3f(0, 0, 0);
+  }
+
+  std::vector<float> roSum(Z.size(), 0.0f);
+
+  //add per element variables and multipliers
+  for (unsigned int ii = 0; ii < u.size(); ii++){
+    Element * ele = m->e[ii];
+    for (int jj = 0; jj < ele->nV(); jj++){
+      int vIdx = ele->at(jj);
+      Z[vIdx] += ro[ii] * u[ii][jj] + y[ii][jj];
+      roSum[vIdx] += ro[ii];
+    }
+  }
+
+  for (unsigned int ii = 0; ii < m->fe.size(); ii++){
+    Vector3f force = m->fe[ii];
+    Z[ii] += force;
+  }
+
+  for (size_t ii = 0; ii < m->x.size(); ii++){
+    Z[ii] /= roSum[ii];
+  }
+
+  //fix constraints
+  for (unsigned int ii = 0; ii < m->fixed.size(); ii++){
+    if (m->fixed[ii]){
+      Z[ii] = x0[ii];
+    }
+  }
+
+  float E = m->getEnergy();
+  std::cout << "Energy : " << E << "\n";
+
+  float ene1 = E;
+  for (unsigned int ii = 0; ii < Z.size(); ii++){
+    Z[ii] = Z[ii] - Zk_1[ii];
+  }
+  float hh = 1.0f;
+  while (1){
+    m->x = Zk_1;
+    addmul(m->x, hh, Z);
+    ene1 = m->getEnergy();
+    if (ene1 < E && fem_error == 0){
+      Z = m->x;
+      break;
+    }
+    else{
+      hh = hh / 2;
+      if (hh < 1e-15){
+        m->x = Zk_1;
+        Z = Zk_1;
+        break;
+      }
+    }
+  }
+  std::cout << "hh " << hh << "\n";
+  if (prevE - ene1 < tol){
+    return -1;
+  }
+  prevE = E;
+
+  //update multiplier for elements
+  for (unsigned int ii = 0; ii < u.size(); ii++){
+    Element * ele = m->e[ii];
+    for (int jj = 0; jj < ele->nV(); jj++){
+      y[ii][jj] += ro[ii] * (u[ii][jj] - Z[ele->at(jj)]);
+    }
+  }
+  return 0;
 }
 
 AdmmCPU::~AdmmCPU()
 {
   if(bb!=0){
     delete bb;
+  }
+  if (out.good()){
+    out.close();
   }
 }
 

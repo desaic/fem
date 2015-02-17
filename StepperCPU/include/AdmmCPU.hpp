@@ -1,16 +1,17 @@
 #ifndef ADMMCPU_HPP
 #define ADMMCPU_HPP
 #include "Stepper.hpp"
-#include <vector>
 #include "vecmath.h"
+#include <vector>
+#include <fstream>
+
 class Element;
 struct MatrixXd;
 class AdmmCPU:public Stepper
 {
 public:
-  
-  void step(ElementMesh * m);
-  
+  int oneStep();
+  void init(ElementMesh * _m);
   AdmmCPU();
 
   ~AdmmCPU();
@@ -51,8 +52,10 @@ public:
   
   MatrixXd stiffness(ElementMesh *mesh, int eIdx);
 
+  float prevE;
+  std::ofstream out;
 private:
-  void initVar(ElementMesh * e);
+  void initVar();
 };
 
 #endif

@@ -2,27 +2,99 @@
 #include "Render.hpp"
 #include "World.hpp"
 #include "Element.hpp"
+#include "ElementHier.hpp"
 #include "ElementRegGrid.hpp"
+#include "ElementMeshHier.hpp"
 #include "StepperGrad.hpp"
 #include "StepperNewton.hpp"
 #include "AdmmCPU.hpp"
 #include "AdmmNoSpring.hpp"
 //#include "IpoptStepper.hpp"
-#include <thread>
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
 #include "StrainCorotLin.hpp"
 #include "UnitTests.hpp"
 
+#include <iostream>
 void runTest()
 {
   //ElementCoarseTest();
-  stiffnessTest(0);
-  //testCoarseDefGrad();
+  //stiffnessTest(0);
+  testCoarseDefGrad();
 	//forceTest(0);
   system("pause");
   exit(0);
+}
+
+int runHier(const ConfigFile & conf)
+{
+  int nx = 4, ny = 16, nz = 4;
+  ElementRegGrid * grid = new ElementRegGrid(nx, ny, nz);
+  std::vector<StrainLin> ene(2);
+  ene[0].param[0] = 10000;
+  ene[0].param[1] = 100000;
+  ene[1].param[0] = 100000;
+  ene[1].param[1] = 1000000;
+  std::vector<MaterialQuad> material(ene.size());
+  for (unsigned int ii = 0; ii < material.size(); ii++){
+    for (unsigned int jj = 0; jj < material[ii].e.size(); jj++){
+      material[ii].e[jj] = &ene[ii];
+    }
+    grid->m.push_back(&material[ii]);
+  }
+
+  //assign some materials
+  for (int ii = 0; ii < nx; ii++){
+    for (int jj = 0; jj < ny; jj++){
+      for (int kk = 0; kk < nz; kk++){
+        int eidx = grid->GetEleInd(ii, jj, kk);
+        if (jj < ny / 2){
+          //  em->me[eidx] = 1;
+        }
+      }
+    }
+  }
+  Vector3f ff(1.25,-5,0);
+  for (int ii = 0; ii<nx; ii++){
+    for (int jj = 0; jj<nz; jj++){
+      int eidx = grid->GetEleInd(ii, 0, jj);
+      int aa[4] = { 0, 1, 4, 5 };
+      for (int kk = 0; kk<4; kk++){
+        int vidx = grid->e[eidx]->at(aa[kk]);
+        grid->fixed[vidx] = 1;
+      }
+
+      eidx = grid->GetEleInd(ii, ny - 1, jj);
+      int bb[4] = { 2, 3, 6, 7 };
+      for (int kk = 0; kk<4; kk++){
+        int vidx = grid->e[eidx]->at(bb[kk]);
+        grid->fe[vidx] += ff;
+      }
+    }
+  }
+
+  ElementMeshHier * em = new ElementMeshHier();
+  em->m.push_back(grid);
+  em->buildHier(2);
+  ElementMesh * cm = em->m[2];
+  for (unsigned int ii = 0; ii < em->m[1]->e.size(); ii++){
+    ElementHier * fine = (ElementHier*)(em->m[1]->e[ii]);
+    std::cout << fine->parent << "\n";
+    for (unsigned int jj = 0; jj < fine->Xn.size(); jj++){
+      std::cout << fine->Xn[jj][0] << " " << fine->Xn[jj][1] << " " << fine->Xn[jj][2] << " | ";
+    }
+    std::cout << "\n";
+  }
+
+  for (unsigned int ii = 0; ii < cm->X.size(); ii++){
+    std::cout << cm->X[ii][0] << " " << cm->X[ii][1] << " " << cm->X[ii][2] << " | ";
+    std::cout << cm->fe[ii][0] << " " << cm->fe[ii][1] << " " << cm->fe[ii][2] << " | ";
+    std::cout << cm->fixed[ii] << "\n";
+  }
+
+  system("pause");
+  return 0;
 }
 
 int main(int argc, char* argv[])
@@ -32,6 +104,10 @@ int main(int argc, char* argv[])
   conf.load(filename);
   if (conf.getBool("test")){
     runTest();
+  }
+  else if (conf.getBool("hier")){
+    int ret = runHier(conf);
+    return ret;
   }
   //int nx = 4, ny=16, nz=4;
   //int nx = 2, ny = 8, nz = 2;
@@ -104,12 +180,17 @@ int main(int argc, char* argv[])
     //not yet implemented
     //  stepper = new IpoptStepper();
   }
+  else if (stepperType == "admmCPU"){
+    stepper = new AdmmCPU();
+    ((AdmmCPU*)stepper)->ro0 = 500;
+  }
+  else if (stepperType == "grad"){
+    stepper = new StepperGrad();
+  }
   else{
     stepper = new AdmmNoSpring();
   }
   //stepper->rmRigid = true;
-  //AdmmCPU * stepper = new AdmmCPU();
-  //stepper->ro0 = 500;
   
   stepper->nSteps = nSteps;
   stepper->init(em);

@@ -15,7 +15,9 @@ public:
   ElementHier(const ElementHex& e);
   ///@brief index of parent coarser element if any.
   int parent;
-
+  ///@brief indices of children. size=0 if it's a fine element.
+  ///Built by ElementMeshHier.
+  std::vector<int> children;
   ///@brief natural coordinates of vertices in parent element.
   std::vector<Vector3f> Xn;
   ///@param p natural coordinates.
@@ -24,9 +26,9 @@ public:
 };
 
 ///@brief replace ElementHex with ElementHier
-void replaceElementHex(ElementRegGrid & grid);
+void replaceElementHex(ElementRegGrid * grid);
 ///@bug grid assumed to have even dimensions for the moment.
 ///@param grid assumes to contain elements of type ElementCoarse
-ElementMesh* coarsen(const ElementRegGrid & grid);
+ElementRegGrid* coarsen(const ElementRegGrid * grid);
 
 #endif
