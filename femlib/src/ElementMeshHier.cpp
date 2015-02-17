@@ -155,6 +155,9 @@ float ElementMeshHier::getEnergy(int level, int eIdx)
 {
   float E = 0;
   std::vector<int> quadIdx = getQuadIdx(level, eIdx);
+  Element * ele = m[level]->e[eIdx];
+  float vol = ele->getVol(m[level]->X);
+
   for (unsigned int ii = 0; ii < quadIdx.size(); ii++){
     int qi = quadIdx[ii];
     updateDefGrad(level, qi);
@@ -168,7 +171,7 @@ float ElementMeshHier::getEnergy(int level, int eIdx)
     MaterialQuad* mat = (MaterialQuad* )(m[0]->m[m[0]->me[feidx]]);
     E += q->w[level] * mat->e[0]->getEnergy(Fprod);
   }
-  return E;
+  return vol* E;
 }
 
 std::vector<Vector3f> ElementMeshHier::getForce(int level, int eIdx)

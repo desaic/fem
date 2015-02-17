@@ -29,7 +29,8 @@ void runTest()
 
 int runHier(const ConfigFile & conf)
 {
-  int nx = 4, ny = 16, nz = 4;
+  //int nx = 4, ny = 16, nz = 4;
+  int nx = 4, ny = 4, nz = 4;
   ElementRegGrid * grid = new ElementRegGrid(nx, ny, nz);
   std::vector<StrainLin> ene(2);
   ene[0].param[0] = 10000;
@@ -92,6 +93,19 @@ int runHier(const ConfigFile & conf)
     std::cout << cm->fe[ii][0] << " " << cm->fe[ii][1] << " " << cm->fe[ii][2] << " | ";
     std::cout << cm->fixed[ii] << "\n";
   }
+
+  Vector3f offset(0.1, 0.2, 0);
+  for (unsigned int level = 0; level < em->m.size(); level++){
+    float dx = em->m[level]->X[1][2] - em->m[level]->X[0][2];
+    for (unsigned int vi = 0; vi < em->m[level]->x.size(); vi++){
+      if (em->m[level]->fixed[vi]){
+        continue;
+      }
+      em->m[level]->x[vi] += dx*offset * em->m[level]->x[vi][1];
+    }
+    em->updateDefGrad(level);
+  }
+
   //sanity check
   for (unsigned int level = 0; level < em->m.size(); level++){
     float E = 0;
