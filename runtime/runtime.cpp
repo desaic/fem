@@ -55,7 +55,7 @@ int runHier(const ConfigFile & conf)
       }
     }
   }
-  Vector3f ff(1.25,-5,0);
+  Vector3f ff(1,-4,0);
   for (int ii = 0; ii<nx; ii++){
     for (int jj = 0; jj<nz; jj++){
       int eidx = grid->GetEleInd(ii, 0, jj);
@@ -92,7 +92,14 @@ int runHier(const ConfigFile & conf)
     std::cout << cm->fe[ii][0] << " " << cm->fe[ii][1] << " " << cm->fe[ii][2] << " | ";
     std::cout << cm->fixed[ii] << "\n";
   }
-
+  //sanity check
+  for (unsigned int level = 0; level < em->m.size(); level++){
+    float E = 0;
+    for (unsigned int ei = 0; ei < em->m[level]->e.size(); ei++){
+      E += em->getEnergy(level,ei);
+    }
+    std::cout << "E: " << E<<"\n";
+  }
   system("pause");
   return 0;
 }
@@ -142,9 +149,9 @@ int main(int argc, char* argv[])
     }
   }
 
-  //Vector3f ff(1.25,-5,0);
-  //Vector3f ff(5, -20, 0);
-  Vector3f ff(20, -80, 0);
+  //Vector3f ff(1,-4,0);
+  //Vector3f ff(4, -16, 0);
+  Vector3f ff(16, -64, 0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);

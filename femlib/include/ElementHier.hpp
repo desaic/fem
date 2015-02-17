@@ -15,7 +15,7 @@ public:
   ElementHier(const ElementHex& e);
   ///@brief index of parent coarser element if any.
   int parent;
-  ///@brief indices of children. size=0 if it's a fine element.
+  ///@brief indices of children. For fine elements, they are indices of quadrature points.
   ///Built by ElementMeshHier.
   std::vector<int> children;
   ///@brief natural coordinates of vertices in parent element.
