@@ -1,7 +1,7 @@
 #################
 ## Eclipse
 #################
-
+include/cusp/
 *.pydevproject
 .project
 .metadata

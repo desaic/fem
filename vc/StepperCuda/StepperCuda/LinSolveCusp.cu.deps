@@ -1,0 +1,930 @@
+D:\cuda6.5\include\cuda_runtime.h
+d:\cuda6.5\include\host_config.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\sal.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ConcurrencySal.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\vadefs.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\host_defines.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\limits.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stddef.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\channel_descriptor.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\cuda_runtime_api.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\cuda_device_runtime_api.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\cuda_runtime_api.h
+d:\cuda6.5\include\driver_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\vector_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\common_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\string.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\time.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\wtime.inl
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\time.inl
+d:\cuda6.5\include\math_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdlib.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cmath
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\yvals.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xkeycheck.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\use_ansi.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xtgmath.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xtr1common
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cstdlib
+d:\cuda6.5\include\cuda_surface_types.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\channel_descriptor.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\cuda_texture_types.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\channel_descriptor.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\device_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\sm_11_atomic_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\sm_12_atomic_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\sm_13_double_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\sm_20_atomic_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\sm_32_atomic_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\sm_35_atomic_functions.h
+d:\cuda6.5\include\sm_32_atomic_functions.h
+d:\cuda6.5\include\sm_20_intrinsics.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\sm_30_intrinsics.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\sm_32_intrinsics.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\sm_35_intrinsics.h
+d:\cuda6.5\include\sm_32_intrinsics.h
+d:\cuda6.5\include\surface_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\cuda_surface_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\vector_functions.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\texture_fetch_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\cuda_texture_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_functions.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\texture_indirect_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\vector_functions.h
+d:\cuda6.5\include\surface_indirect_functions.h
+d:\cuda6.5\include\builtin_types.h
+d:\cuda6.5\include\device_types.h
+d:\cuda6.5\include\driver_types.h
+d:\cuda6.5\include\surface_types.h
+d:\cuda6.5\include\texture_types.h
+d:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\host_defines.h
+d:\cuda6.5\include\vector_functions.h
+d:\cuda6.5\include\device_launch_parameters.h
+d:\cuda6.5\include\vector_types.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\StepperCuda\include\LinSolveCusp.hpp
+D:\cuda6.5\include\cuda.h
+D:\cuda6.5\include\thrust/version.h
+D:\cuda6.5\include\thrust/detail/config.h
+D:\cuda6.5\include\thrust/detail/config/config.h
+D:\cuda6.5\include\thrust/detail/config/simple_defines.h
+D:\cuda6.5\include\thrust/detail/config/compiler.h
+D:\cuda6.5\include\thrust/detail/config/host_system.h
+D:\cuda6.5\include\thrust/detail/config/device_system.h
+D:\cuda6.5\include\thrust/detail/config/host_device.h
+D:\cuda6.5\include\host_defines.h
+D:\cuda6.5\include\thrust/detail/config/debug.h
+D:\cuda6.5\include\thrust/detail/config/compiler_fence.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\intrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\setjmp.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\immintrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\wmmintrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\nmmintrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\smmintrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\tmmintrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\pmmintrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\emmintrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xmmintrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\mmintrin.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\malloc.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ammintrin.h
+D:\cuda6.5\include\thrust/detail/config/forceinline.h
+D:\cuda6.5\include\thrust/detail/config/hd_warning_disable.h
+D:\cuda6.5\include\thrust/detail/config/global_workarounds.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/version.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/config.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\iostream
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\istream
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ostream
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ios
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xlocnum
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\climits
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cstdio
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdio.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\swprintf.inl
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\streambuf
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xiosbase
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xlocale
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cstring
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdexcept
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\exception
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xstddef
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cstddef
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\initializer_list
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\eh.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xstring
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xmemory0
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\limits
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ymath.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cfloat
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\float.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtwrn.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cwchar
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\wchar.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\new
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xutility
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\utility
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\iosfwd
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdbg.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\type_traits
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xrefwrap
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xatomic0.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\typeinfo
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xlocinfo
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xlocinfo.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ctype.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\locale.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xdebug
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xfacet
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\system_error
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cerrno
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\errno.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\share.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/hyb_matrix.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/array1d.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/memory.h
+D:\cuda6.5\include\thrust/iterator/iterator_traits.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\iterator
+D:\cuda6.5\include\thrust/iterator/detail/iterator_traversal_tags.h
+D:\cuda6.5\include\thrust/iterator/detail/host_system_tag.h
+D:\cuda6.5\include\thrust/system/cpp/detail/execution_policy.h
+D:\cuda6.5\include\thrust/detail/execution_policy.h
+D:\cuda6.5\include\thrust/iterator/detail/device_system_tag.h
+D:\cuda6.5\include\thrust/system/cuda/detail/execution_policy.h
+D:\cuda6.5\include\thrust/iterator/detail/any_system_tag.h
+D:\cuda6.5\include\thrust/iterator/detail/iterator_traits.inl
+D:\cuda6.5\include\thrust/iterator/iterator_categories.h
+D:\cuda6.5\include\thrust/iterator/detail/universal_categories.h
+D:\cuda6.5\include\thrust/iterator/detail/iterator_category_to_traversal.h
+D:\cuda6.5\include\thrust/iterator/detail/iterator_category_to_system.h
+D:\cuda6.5\include\thrust/detail/type_traits.h
+D:\cuda6.5\include\thrust/detail/type_traits/has_trivial_assign.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/memory.inl
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\memory
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xmemory
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdint.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\cuda6.5\include\thrust/device_allocator.h
+D:\cuda6.5\include\thrust/device_new_allocator.h
+D:\cuda6.5\include\thrust/device_ptr.h
+D:\cuda6.5\include\thrust/memory.h
+D:\cuda6.5\include\thrust/detail/type_traits/pointer_traits.h
+D:\cuda6.5\include\thrust/detail/type_traits/is_metafunction_defined.h
+D:\cuda6.5\include\thrust/detail/type_traits/has_nested_type.h
+D:\cuda6.5\include\thrust/detail/pointer.h
+D:\cuda6.5\include\thrust/iterator/iterator_adaptor.h
+D:\cuda6.5\include\thrust/iterator/iterator_facade.h
+D:\cuda6.5\include\thrust/iterator/detail/iterator_facade_category.h
+D:\cuda6.5\include\thrust/iterator/detail/is_iterator_category.h
+D:\cuda6.5\include\thrust/iterator/detail/distance_from_result.h
+D:\cuda6.5\include\thrust/detail/use_default.h
+D:\cuda6.5\include\thrust/iterator/detail/iterator_adaptor_base.h
+D:\cuda6.5\include\thrust/detail/reference_forward_declaration.h
+D:\cuda6.5\include\thrust/detail/pointer.inl
+D:\cuda6.5\include\thrust/detail/reference.h
+D:\cuda6.5\include\thrust/detail/reference.inl
+D:\cuda6.5\include\thrust/system/detail/generic/select_system.h
+D:\cuda6.5\include\thrust/iterator/detail/minimum_system.h
+D:\cuda6.5\include\thrust/detail/type_traits/minimum_type.h
+D:\cuda6.5\include\thrust/system/detail/generic/type_traits.h
+D:\cuda6.5\include\thrust/system/detail/generic/memory.h
+D:\cuda6.5\include\thrust/system/detail/generic/tag.h
+D:\cuda6.5\include\thrust/pair.h
+D:\cuda6.5\include\thrust/detail/pair.inl
+D:\cuda6.5\include\thrust/detail/swap.h
+D:\cuda6.5\include\thrust/system/detail/generic/memory.inl
+D:\cuda6.5\include\thrust/system/detail/adl/malloc_and_free.h
+D:\cuda6.5\include\thrust/system/cpp/detail/malloc_and_free.h
+D:\cuda6.5\include\thrust/detail/raw_pointer_cast.h
+D:\cuda6.5\include\thrust/system/cuda/detail/malloc_and_free.h
+D:\cuda6.5\include\thrust/system/cuda/detail/guarded_cuda_runtime_api.h
+D:\cuda6.5\include\cuda_runtime_api.h
+D:\cuda6.5\include\thrust/system/system_error.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\string
+D:\cuda6.5\include\thrust/system/error_code.h
+D:\cuda6.5\include\thrust/system/detail/errno.h
+D:\cuda6.5\include\thrust/system/detail/error_category.inl
+D:\cuda6.5\include\thrust/functional.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\functional
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xfunctional
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\tuple
+D:\cuda6.5\include\thrust/detail/functional/placeholder.h
+D:\cuda6.5\include\thrust/detail/functional/actor.h
+D:\cuda6.5\include\thrust/tuple.h
+D:\cuda6.5\include\thrust/detail/tuple.inl
+D:\cuda6.5\include\thrust/detail/functional/value.h
+D:\cuda6.5\include\thrust/detail/functional/composite.h
+D:\cuda6.5\include\thrust/detail/functional/operators/assignment_operator.h
+D:\cuda6.5\include\thrust/detail/functional/operators/operator_adaptors.h
+D:\cuda6.5\include\thrust/detail/type_traits/result_of.h
+D:\cuda6.5\include\thrust/detail/type_traits/function_traits.h
+D:\cuda6.5\include\thrust/detail/functional/actor.inl
+D:\cuda6.5\include\thrust/detail/functional/argument.h
+D:\cuda6.5\include\thrust/detail/functional.inl
+D:\cuda6.5\include\thrust/detail/functional/operators.h
+D:\cuda6.5\include\thrust/detail/functional/operators/arithmetic_operators.h
+D:\cuda6.5\include\thrust/detail/functional/operators/relational_operators.h
+D:\cuda6.5\include\thrust/detail/functional/operators/logical_operators.h
+D:\cuda6.5\include\thrust/detail/functional/operators/bitwise_operators.h
+D:\cuda6.5\include\thrust/detail/functional/operators/compound_assignment_operators.h
+D:\cuda6.5\include\thrust/system/detail/error_code.inl
+D:\cuda6.5\include\thrust/system/detail/error_condition.inl
+D:\cuda6.5\include\thrust/system/detail/system_error.inl
+D:\cuda6.5\include\thrust/system/cuda/error.h
+D:\cuda6.5\include\driver_types.h
+D:\cuda6.5\include\thrust/system/cuda/detail/error.inl
+D:\cuda6.5\include\thrust/system/detail/bad_alloc.h
+D:\cuda6.5\include\thrust/detail/static_assert.h
+D:\cuda6.5\include\thrust/detail/malloc_and_free.h
+D:\cuda6.5\include\thrust/system/detail/adl/get_value.h
+D:\cuda6.5\include\thrust/system/cpp/detail/get_value.h
+D:\cuda6.5\include\thrust/system/cuda/detail/get_value.h
+D:\cuda6.5\include\thrust/system/cuda/detail/assign_value.h
+D:\cuda6.5\include\thrust/detail/copy.h
+D:\cuda6.5\include\thrust/detail/copy.inl
+D:\cuda6.5\include\thrust/system/detail/generic/copy.h
+D:\cuda6.5\include\thrust/system/detail/generic/copy.inl
+D:\cuda6.5\include\thrust/detail/internal_functional.h
+D:\cuda6.5\include\thrust/iterator/detail/tuple_of_iterator_references.h
+D:\cuda6.5\include\thrust/detail/raw_reference_cast.h
+D:\cuda6.5\include\thrust/detail/raw_reference_cast.inl
+D:\cuda6.5\include\thrust/detail/tuple_transform.h
+D:\cuda6.5\include\thrust/detail/tuple_meta_transform.h
+D:\cuda6.5\include\thrust/transform.h
+D:\cuda6.5\include\thrust/detail/transform.inl
+D:\cuda6.5\include\thrust/system/detail/generic/transform.h
+D:\cuda6.5\include\thrust/system/detail/generic/transform.inl
+D:\cuda6.5\include\thrust/for_each.h
+D:\cuda6.5\include\thrust/detail/for_each.inl
+D:\cuda6.5\include\thrust/system/detail/generic/for_each.h
+D:\cuda6.5\include\thrust/system/detail/adl/for_each.h
+D:\cuda6.5\include\thrust/system/cpp/detail/for_each.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/for_each.h
+D:\cuda6.5\include\thrust/detail/function.h
+D:\cuda6.5\include\thrust/system/cuda/detail/for_each.h
+D:\cuda6.5\include\thrust/system/cuda/detail/for_each.inl
+D:\cuda6.5\include\thrust/detail/minmax.h
+D:\cuda6.5\include\thrust/distance.h
+D:\cuda6.5\include\thrust/detail/distance.inl
+D:\cuda6.5\include\thrust/advance.h
+D:\cuda6.5\include\thrust/detail/advance.inl
+D:\cuda6.5\include\thrust/system/detail/generic/advance.h
+D:\cuda6.5\include\thrust/system/detail/generic/advance.inl
+D:\cuda6.5\include\thrust/system/detail/generic/distance.h
+D:\cuda6.5\include\thrust/system/detail/generic/distance.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/launch_closure.h
+D:\cuda6.5\include\thrust/system/cuda/detail/cuda_launch_config.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/launch_closure.inl
+D:\cuda6.5\include\thrust/detail/temporary_array.h
+D:\cuda6.5\include\thrust/iterator/detail/tagged_iterator.h
+D:\cuda6.5\include\thrust/detail/contiguous_storage.h
+D:\cuda6.5\include\thrust/iterator/detail/normal_iterator.h
+D:\cuda6.5\include\thrust/iterator/detail/is_trivial_iterator.h
+D:\cuda6.5\include\thrust/detail/allocator/allocator_traits.h
+D:\cuda6.5\include\thrust/detail/allocator/allocator_traits.inl
+D:\cuda6.5\include\thrust/detail/type_traits/has_member_function.h
+D:\cuda6.5\include\thrust/detail/type_traits/is_call_possible.h
+D:\cuda6.5\include\thrust/detail/contiguous_storage.inl
+D:\cuda6.5\include\thrust/detail/allocator/copy_construct_range.h
+D:\cuda6.5\include\thrust/detail/allocator/copy_construct_range.inl
+D:\cuda6.5\include\thrust/iterator/zip_iterator.h
+D:\cuda6.5\include\thrust/iterator/detail/zip_iterator_base.h
+D:\cuda6.5\include\thrust/iterator/detail/minimum_category.h
+D:\cuda6.5\include\thrust/iterator/detail/zip_iterator.inl
+D:\cuda6.5\include\thrust/detail/allocator/default_construct_range.h
+D:\cuda6.5\include\thrust/detail/allocator/default_construct_range.inl
+D:\cuda6.5\include\thrust/uninitialized_fill.h
+D:\cuda6.5\include\thrust/detail/uninitialized_fill.inl
+D:\cuda6.5\include\thrust/system/detail/generic/uninitialized_fill.h
+D:\cuda6.5\include\thrust/system/detail/generic/uninitialized_fill.inl
+D:\cuda6.5\include\thrust/fill.h
+D:\cuda6.5\include\thrust/detail/fill.inl
+D:\cuda6.5\include\thrust/system/detail/generic/fill.h
+D:\cuda6.5\include\thrust/generate.h
+D:\cuda6.5\include\thrust/detail/generate.inl
+D:\cuda6.5\include\thrust/system/detail/generic/generate.h
+D:\cuda6.5\include\thrust/system/detail/generic/generate.inl
+D:\cuda6.5\include\thrust/system/detail/adl/generate.h
+D:\cuda6.5\include\thrust/system/cpp/detail/generate.h
+D:\cuda6.5\include\thrust/system/cuda/detail/generate.h
+D:\cuda6.5\include\thrust/system/detail/adl/fill.h
+D:\cuda6.5\include\thrust/system/cpp/detail/fill.h
+D:\cuda6.5\include\thrust/system/cuda/detail/fill.h
+D:\cuda6.5\include\thrust/system/cuda/detail/fill.inl
+D:\cuda6.5\include\thrust/detail/util/align.h
+D:\cuda6.5\include\thrust/detail/cstdint.h
+D:\cuda6.5\include\thrust/system/cuda/detail/runtime_introspection.h
+D:\cuda6.5\include\thrust/system/cuda/detail/runtime_introspection.inl
+D:\cuda6.5\include\thrust/detail/util/blocking.h
+D:\cuda6.5\include\thrust/system_error.h
+D:\cuda6.5\include\thrust/system/detail/adl/uninitialized_fill.h
+D:\cuda6.5\include\thrust/system/cpp/detail/uninitialized_fill.h
+D:\cuda6.5\include\thrust/system/cuda/detail/uninitialized_fill.h
+D:\cuda6.5\include\thrust/detail/allocator/destroy_range.h
+D:\cuda6.5\include\thrust/detail/allocator/destroy_range.inl
+D:\cuda6.5\include\thrust/detail/allocator/fill_construct_range.h
+D:\cuda6.5\include\thrust/detail/allocator/fill_construct_range.inl
+D:\cuda6.5\include\thrust/detail/allocator/temporary_allocator.h
+D:\cuda6.5\include\thrust/detail/allocator/tagged_allocator.h
+D:\cuda6.5\include\thrust/detail/allocator/tagged_allocator.inl
+D:\cuda6.5\include\thrust/memory.h
+D:\cuda6.5\include\thrust/detail/temporary_buffer.h
+D:\cuda6.5\include\thrust/system/detail/generic/temporary_buffer.h
+D:\cuda6.5\include\thrust/system/detail/generic/temporary_buffer.inl
+D:\cuda6.5\include\thrust/system/detail/adl/temporary_buffer.h
+D:\cuda6.5\include\thrust/system/cpp/detail/temporary_buffer.h
+D:\cuda6.5\include\thrust/system/cuda/detail/temporary_buffer.h
+D:\cuda6.5\include\thrust/detail/allocator/temporary_allocator.inl
+D:\cuda6.5\include\thrust/detail/allocator/no_throw_allocator.h
+D:\cuda6.5\include\thrust/detail/temporary_array.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/synchronize.h
+D:\cuda6.5\include\thrust/system/cuda/detail/synchronize.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/launch_calculator.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/launch_calculator.inl
+D:\cuda6.5\include\thrust/system/detail/adl/transform.h
+D:\cuda6.5\include\thrust/system/cpp/detail/transform.h
+D:\cuda6.5\include\thrust/system/cuda/detail/transform.h
+D:\cuda6.5\include\thrust/system/detail/adl/copy.h
+D:\cuda6.5\include\thrust/system/cpp/detail/copy.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/copy.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/copy.inl
+D:\cuda6.5\include\thrust/detail/dispatch/is_trivial_copy.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/general_copy.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/trivial_copy.h
+D:\cuda6.5\include\thrust/system/cuda/detail/copy.h
+D:\cuda6.5\include\thrust/system/cuda/detail/copy.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/copy_device_to_device.h
+D:\cuda6.5\include\thrust/system/cuda/detail/copy_device_to_device.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/copy_cross_system.h
+D:\cuda6.5\include\thrust/system/cuda/detail/copy_cross_system.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/trivial_copy.h
+D:\cuda6.5\include\thrust/system/cuda/detail/trivial_copy.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/trivial_copy.h
+D:\cuda6.5\include\thrust/system/cuda/detail/trivial_copy.h
+D:\cuda6.5\include\thrust/system/detail/adl/assign_value.h
+D:\cuda6.5\include\thrust/system/cpp/detail/assign_value.h
+D:\cuda6.5\include\thrust/system/detail/adl/iter_swap.h
+D:\cuda6.5\include\thrust/system/cpp/detail/iter_swap.h
+D:\cuda6.5\include\thrust/system/cuda/detail/iter_swap.h
+D:\cuda6.5\include\thrust/swap.h
+D:\cuda6.5\include\thrust/detail/swap.inl
+D:\cuda6.5\include\thrust/detail/swap_ranges.inl
+D:\cuda6.5\include\thrust/system/detail/generic/swap_ranges.h
+D:\cuda6.5\include\thrust/system/detail/generic/swap_ranges.inl
+D:\cuda6.5\include\thrust/system/detail/adl/swap_ranges.h
+D:\cuda6.5\include\thrust/system/cpp/detail/swap_ranges.h
+D:\cuda6.5\include\thrust/system/cuda/detail/swap_ranges.h
+D:\cuda6.5\include\thrust/detail/device_ptr.inl
+D:\cuda6.5\include\thrust/device_reference.h
+D:\cuda6.5\include\thrust/detail/device_reference.inl
+D:\cuda6.5\include\thrust/device_new.h
+D:\cuda6.5\include\thrust/detail/device_new.inl
+D:\cuda6.5\include\thrust/device_malloc.h
+D:\cuda6.5\include\thrust/detail/device_malloc.inl
+D:\cuda6.5\include\thrust/device_delete.h
+D:\cuda6.5\include\thrust/detail/device_delete.inl
+D:\cuda6.5\include\thrust/device_free.h
+D:\cuda6.5\include\thrust/detail/device_free.inl
+D:\cuda6.5\include\thrust/device_malloc_allocator.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/format.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/exception.h
+D:\cuda6.5\include\thrust/host_vector.h
+D:\cuda6.5\include\thrust/detail/vector_base.h
+D:\cuda6.5\include\thrust/iterator/reverse_iterator.h
+D:\cuda6.5\include\thrust/iterator/detail/reverse_iterator_base.h
+D:\cuda6.5\include\thrust/iterator/detail/reverse_iterator.inl
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\vector
+D:\cuda6.5\include\thrust/detail/vector_base.inl
+D:\cuda6.5\include\thrust/detail/overlapped_copy.h
+D:\cuda6.5\include\thrust/equal.h
+D:\cuda6.5\include\thrust/detail/equal.inl
+D:\cuda6.5\include\thrust/system/detail/generic/equal.h
+D:\cuda6.5\include\thrust/system/detail/generic/equal.inl
+D:\cuda6.5\include\thrust/mismatch.h
+D:\cuda6.5\include\thrust/detail/mismatch.inl
+D:\cuda6.5\include\thrust/system/detail/generic/mismatch.h
+D:\cuda6.5\include\thrust/system/detail/generic/mismatch.inl
+D:\cuda6.5\include\thrust/find.h
+D:\cuda6.5\include\thrust/detail/find.inl
+D:\cuda6.5\include\thrust/system/detail/generic/find.h
+D:\cuda6.5\include\thrust/system/detail/generic/find.inl
+D:\cuda6.5\include\thrust/reduce.h
+D:\cuda6.5\include\thrust/detail/reduce.inl
+D:\cuda6.5\include\thrust/system/detail/generic/reduce.h
+D:\cuda6.5\include\thrust/system/detail/generic/reduce.inl
+D:\cuda6.5\include\thrust/system/detail/generic/reduce_by_key.h
+D:\cuda6.5\include\thrust/system/detail/generic/reduce_by_key.inl
+D:\cuda6.5\include\thrust/detail/type_traits/iterator/is_output_iterator.h
+D:\cuda6.5\include\thrust/iterator/detail/any_assign.h
+D:\cuda6.5\include\thrust/scatter.h
+D:\cuda6.5\include\thrust/detail/scatter.inl
+D:\cuda6.5\include\thrust/system/detail/generic/scatter.h
+D:\cuda6.5\include\thrust/system/detail/generic/scatter.inl
+D:\cuda6.5\include\thrust/iterator/permutation_iterator.h
+D:\cuda6.5\include\thrust/iterator/detail/permutation_iterator_base.h
+D:\cuda6.5\include\thrust/system/detail/adl/scatter.h
+D:\cuda6.5\include\thrust/system/cpp/detail/scatter.h
+D:\cuda6.5\include\thrust/system/cuda/detail/scatter.h
+D:\cuda6.5\include\thrust/scan.h
+D:\cuda6.5\include\thrust/detail/scan.inl
+D:\cuda6.5\include\thrust/system/detail/generic/scan.h
+D:\cuda6.5\include\thrust/system/detail/generic/scan.inl
+D:\cuda6.5\include\thrust/system/detail/generic/scan_by_key.h
+D:\cuda6.5\include\thrust/system/detail/generic/scan_by_key.inl
+D:\cuda6.5\include\thrust/replace.h
+D:\cuda6.5\include\thrust/detail/replace.inl
+D:\cuda6.5\include\thrust/system/detail/generic/replace.h
+D:\cuda6.5\include\thrust/system/detail/generic/replace.inl
+D:\cuda6.5\include\thrust/system/detail/adl/replace.h
+D:\cuda6.5\include\thrust/system/cpp/detail/replace.h
+D:\cuda6.5\include\thrust/system/cuda/detail/replace.h
+D:\cuda6.5\include\thrust/system/detail/adl/scan.h
+D:\cuda6.5\include\thrust/system/cpp/detail/scan.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/scan.h
+D:\cuda6.5\include\thrust/system/cuda/detail/scan.h
+D:\cuda6.5\include\thrust/system/cuda/detail/scan.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/fast_scan.h
+d:\cuda6.5\include\thrust\system\cuda\detail\detail\fast_scan.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/reduce_intervals.h
+D:\cuda6.5\include\thrust/system/cuda/detail/reduce_intervals.inl
+D:\cuda6.5\include\thrust/system/detail/internal/decompose.h
+D:\cuda6.5\include\thrust/system/cuda/detail/extern_shared_ptr.h
+D:\cuda6.5\include\thrust/system/cuda/detail/block/reduce.h
+D:\cuda6.5\include\thrust/system/cuda/detail/default_decomposition.h
+D:\cuda6.5\include\thrust/system/cuda/detail/default_decomposition.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/uninitialized.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/alignment.h
+D:\cuda6.5\include\thrust/system/detail/adl/scan_by_key.h
+D:\cuda6.5\include\thrust/system/cpp/detail/scan_by_key.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/scan_by_key.h
+D:\cuda6.5\include\thrust/system/cuda/detail/scan_by_key.h
+D:\cuda6.5\include\thrust/system/detail/adl/reduce.h
+D:\cuda6.5\include\thrust/system/cpp/detail/reduce.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/reduce.h
+D:\cuda6.5\include\thrust/system/cuda/detail/reduce.h
+D:\cuda6.5\include\thrust/system/cuda/detail/reduce.inl
+D:\cuda6.5\include\thrust/system/detail/adl/reduce_by_key.h
+D:\cuda6.5\include\thrust/system/cpp/detail/reduce_by_key.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/reduce_by_key.h
+D:\cuda6.5\include\thrust/detail/type_traits/algorithm/intermediate_type_from_function_and_iterators.h
+D:\cuda6.5\include\thrust/system/cuda/detail/reduce_by_key.h
+D:\cuda6.5\include\thrust/system/cuda/detail/reduce_by_key.inl
+D:\cuda6.5\include\thrust/iterator/counting_iterator.h
+D:\cuda6.5\include\thrust/iterator/detail/counting_iterator.inl
+D:\cuda6.5\include\thrust/detail/numeric_traits.h
+D:\cuda6.5\include\thrust/iterator/transform_iterator.h
+D:\cuda6.5\include\thrust/iterator/detail/transform_iterator.inl
+D:\cuda6.5\include\thrust/detail/type_traits/iterator/is_discard_iterator.h
+D:\cuda6.5\include\thrust/iterator/discard_iterator.h
+D:\cuda6.5\include\thrust/iterator/detail/discard_iterator_base.h
+D:\cuda6.5\include\thrust/system/cuda/detail/block/inclusive_scan.h
+D:\cuda6.5\include\thrust/extrema.h
+D:\cuda6.5\include\thrust/detail/extrema.inl
+D:\cuda6.5\include\thrust/system/detail/generic/extrema.h
+D:\cuda6.5\include\thrust/system/detail/generic/extrema.inl
+D:\cuda6.5\include\thrust/transform_reduce.h
+D:\cuda6.5\include\thrust/detail/transform_reduce.inl
+D:\cuda6.5\include\thrust/system/detail/generic/transform_reduce.h
+D:\cuda6.5\include\thrust/system/detail/generic/transform_reduce.inl
+D:\cuda6.5\include\thrust/system/detail/adl/transform_reduce.h
+D:\cuda6.5\include\thrust/system/cpp/detail/transform_reduce.h
+D:\cuda6.5\include\thrust/system/cuda/detail/transform_reduce.h
+D:\cuda6.5\include\thrust/system/detail/adl/extrema.h
+D:\cuda6.5\include\thrust/system/cpp/detail/extrema.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/extrema.h
+D:\cuda6.5\include\thrust/system/cuda/detail/extrema.h
+D:\cuda6.5\include\thrust/system/detail/adl/find.h
+D:\cuda6.5\include\thrust/system/cpp/detail/find.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/find.h
+D:\cuda6.5\include\thrust/system/cuda/detail/find.h
+D:\cuda6.5\include\thrust/system/detail/adl/mismatch.h
+D:\cuda6.5\include\thrust/system/cpp/detail/mismatch.h
+D:\cuda6.5\include\thrust/system/cuda/detail/mismatch.h
+D:\cuda6.5\include\thrust/system/detail/adl/equal.h
+D:\cuda6.5\include\thrust/system/cpp/detail/equal.h
+D:\cuda6.5\include\thrust/system/cuda/detail/equal.h
+D:\cuda6.5\include\thrust/detail/host_vector.inl
+D:\cuda6.5\include\thrust/device_vector.h
+D:\cuda6.5\include\thrust/detail/device_vector.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/array1d.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/matrix_base.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/hyb_matrix.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/convert.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/convert.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/dispatch/convert.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/copy.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/copy.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/array2d.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/utils.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/array2d.inl
+D:\cuda6.5\include\thrust/copy.h
+D:\cuda6.5\include\thrust/detail/copy_if.h
+D:\cuda6.5\include\thrust/detail/copy_if.inl
+D:\cuda6.5\include\thrust/system/detail/generic/copy_if.h
+D:\cuda6.5\include\thrust/system/detail/generic/copy_if.inl
+D:\cuda6.5\include\thrust/system/detail/adl/copy_if.h
+D:\cuda6.5\include\thrust/system/cpp/detail/copy_if.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/copy_if.h
+D:\cuda6.5\include\thrust/system/cuda/detail/copy_if.h
+D:\cuda6.5\include\thrust/system/cuda/detail/copy_if.inl
+D:\cuda6.5\include\thrust/gather.h
+D:\cuda6.5\include\thrust/detail/gather.inl
+D:\cuda6.5\include\thrust/system/detail/generic/gather.h
+D:\cuda6.5\include\thrust/system/detail/generic/gather.inl
+D:\cuda6.5\include\thrust/system/detail/adl/gather.h
+D:\cuda6.5\include\thrust/system/cpp/detail/gather.h
+D:\cuda6.5\include\thrust/system/cuda/detail/gather.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/host/convert.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/csr_matrix.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/csr_matrix.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/host/conversion.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/ell_matrix.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/ell_matrix.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/host/conversion_utils.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\algorithm
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\numeric
+D:\cuda6.5\include\thrust/count.h
+D:\cuda6.5\include\thrust/detail/count.inl
+D:\cuda6.5\include\thrust/system/detail/generic/count.h
+D:\cuda6.5\include\thrust/system/detail/generic/count.inl
+D:\cuda6.5\include\thrust/system/detail/adl/count.h
+D:\cuda6.5\include\thrust/system/cpp/detail/count.h
+D:\cuda6.5\include\thrust/system/cuda/detail/count.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/convert.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/coo_matrix.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/coo_matrix.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/format_utils.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/format_utils.inl
+D:\cuda6.5\include\thrust/binary_search.h
+D:\cuda6.5\include\thrust/detail/binary_search.inl
+D:\cuda6.5\include\thrust/system/detail/generic/binary_search.h
+D:\cuda6.5\include\thrust/system/detail/generic/binary_search.inl
+D:\cuda6.5\include\thrust/system/detail/generic/scalar/binary_search.h
+D:\cuda6.5\include\thrust/system/detail/generic/scalar/binary_search.inl
+D:\cuda6.5\include\thrust/system/detail/adl/binary_search.h
+D:\cuda6.5\include\thrust/system/cpp/detail/binary_search.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/binary_search.h
+D:\cuda6.5\include\thrust/system/cuda/detail/binary_search.h
+D:\cuda6.5\include\thrust/sequence.h
+D:\cuda6.5\include\thrust/detail/sequence.inl
+D:\cuda6.5\include\thrust/system/detail/generic/sequence.h
+D:\cuda6.5\include\thrust/system/detail/generic/sequence.inl
+D:\cuda6.5\include\thrust/tabulate.h
+D:\cuda6.5\include\thrust/detail/tabulate.inl
+D:\cuda6.5\include\thrust/system/detail/generic/tabulate.h
+D:\cuda6.5\include\thrust/system/detail/generic/tabulate.inl
+D:\cuda6.5\include\thrust/system/detail/adl/tabulate.h
+D:\cuda6.5\include\thrust/system/cpp/detail/tabulate.h
+D:\cuda6.5\include\thrust/system/cuda/detail/tabulate.h
+D:\cuda6.5\include\thrust/system/detail/adl/sequence.h
+D:\cuda6.5\include\thrust/system/cpp/detail/sequence.h
+D:\cuda6.5\include\thrust/system/cuda/detail/sequence.h
+D:\cuda6.5\include\thrust/sort.h
+D:\cuda6.5\include\thrust/detail/sort.inl
+D:\cuda6.5\include\thrust/system/detail/generic/sort.h
+D:\cuda6.5\include\thrust/system/detail/generic/sort.inl
+D:\cuda6.5\include\thrust/system/detail/adl/sort.h
+D:\cuda6.5\include\thrust/system/cpp/detail/sort.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/sort.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/sort.inl
+D:\cuda6.5\include\thrust/reverse.h
+D:\cuda6.5\include\thrust/detail/reverse.inl
+D:\cuda6.5\include\thrust/system/detail/generic/reverse.h
+D:\cuda6.5\include\thrust/system/detail/generic/reverse.inl
+D:\cuda6.5\include\thrust/system/detail/adl/reverse.h
+D:\cuda6.5\include\thrust/system/cpp/detail/reverse.h
+D:\cuda6.5\include\thrust/system/cuda/detail/reverse.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/stable_merge_sort.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/stable_merge_sort.inl
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/merge.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/merge.inl
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/insertion_sort.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/copy_backward.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/stable_primitive_sort.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/stable_primitive_sort.inl
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/stable_radix_sort.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/stable_radix_sort.inl
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/partition.h
+D:\cuda6.5\include\thrust/system/cuda/detail/sort.h
+D:\cuda6.5\include\thrust/system/cuda/detail/sort.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/stable_merge_sort.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/stable_merge_sort.inl
+D:\cuda6.5\include\thrust/detail/mpl/math.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/stable_sort_by_count.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/stable_sort_by_count.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/block/merging_sort.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/cached_temporary_allocator.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\map
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xtree
+D:\cuda6.5\include\thrust/system/cuda/detail/block/merge.h
+D:\cuda6.5\include\thrust/system/cuda/detail/block/merge.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/block/copy.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/stable_primitive_sort.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/stable_primitive_sort.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/stable_radix_sort.h
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/stable_radix_sort.inl
+D:\cuda6.5\include\thrust/system/cuda/detail/detail/b40c/radixsort_api.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+d:\cuda6.5\include\thrust\system\cuda\detail\detail\b40c\radixsort_reduction_kernel.h
+d:\cuda6.5\include\thrust\system\cuda\detail\detail\b40c\radixsort_kernel_common.h
+d:\cuda6.5\include\thrust\system\cuda\detail\detail\b40c\kernel_utils.h
+d:\cuda6.5\include\thrust\system\cuda\detail\detail\b40c\vector_types.h
+D:\cuda6.5\include\vector_types.h
+d:\cuda6.5\include\thrust\system\cuda\detail\detail\b40c\radixsort_key_conversion.h
+d:\cuda6.5\include\thrust\system\cuda\detail\detail\b40c\radixsort_spine_kernel.h
+d:\cuda6.5\include\thrust\system\cuda\detail\detail\b40c\radixsort_scanscatter_kernel.h
+D:\cuda6.5\include\thrust/partition.h
+D:\cuda6.5\include\thrust/detail/partition.inl
+D:\cuda6.5\include\thrust/system/detail/generic/partition.h
+D:\cuda6.5\include\thrust/system/detail/generic/partition.inl
+D:\cuda6.5\include\thrust/remove.h
+D:\cuda6.5\include\thrust/detail/remove.inl
+D:\cuda6.5\include\thrust/system/detail/generic/remove.h
+D:\cuda6.5\include\thrust/system/detail/generic/remove.inl
+D:\cuda6.5\include\thrust/system/detail/adl/remove.h
+D:\cuda6.5\include\thrust/system/cpp/detail/remove.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/remove.h
+D:\cuda6.5\include\thrust/system/cuda/detail/remove.h
+D:\cuda6.5\include\thrust/system/detail/adl/partition.h
+D:\cuda6.5\include\thrust/system/cpp/detail/partition.h
+D:\cuda6.5\include\thrust/system/cuda/detail/partition.h
+D:\cuda6.5\include\thrust/system/cuda/detail/temporary_indirect_permutation.h
+D:\cuda6.5\include\thrust/detail/trivial_sequence.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/conversion.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/blas.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/complex.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\complex
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ccomplex
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\sstream
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xcomplex
+D:\cuda6.5\include\cuComplex.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+d:\cuda6.5\include\vector_types.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/cmath.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/blas.inl
+D:\cuda6.5\include\thrust/inner_product.h
+D:\cuda6.5\include\thrust/detail/inner_product.inl
+D:\cuda6.5\include\thrust/system/detail/generic/inner_product.h
+D:\cuda6.5\include\thrust/system/detail/generic/inner_product.inl
+D:\cuda6.5\include\thrust/system/detail/adl/inner_product.h
+D:\cuda6.5\include\thrust/system/cpp/detail/inner_product.h
+D:\cuda6.5\include\thrust/system/cuda/detail/inner_product.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/conversion_utils.h
+D:\cuda6.5\include\thrust/adjacent_difference.h
+D:\cuda6.5\include\thrust/detail/adjacent_difference.inl
+D:\cuda6.5\include\thrust/system/detail/generic/adjacent_difference.h
+D:\cuda6.5\include\thrust/system/detail/generic/adjacent_difference.inl
+D:\cuda6.5\include\thrust/system/detail/adl/adjacent_difference.h
+D:\cuda6.5\include\thrust/system/cpp/detail/adjacent_difference.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/adjacent_difference.h
+D:\cuda6.5\include\thrust/system/cuda/detail/adjacent_difference.h
+D:\cuda6.5\include\thrust/system/cuda/detail/adjacent_difference.inl
+D:\cuda6.5\include\thrust/unique.h
+D:\cuda6.5\include\thrust/detail/unique.inl
+D:\cuda6.5\include\thrust/system/detail/generic/unique.h
+D:\cuda6.5\include\thrust/system/detail/generic/unique.inl
+D:\cuda6.5\include\thrust/system/detail/generic/unique_by_key.h
+D:\cuda6.5\include\thrust/system/detail/generic/unique_by_key.inl
+D:\cuda6.5\include\thrust/system/detail/adl/unique.h
+D:\cuda6.5\include\thrust/system/cpp/detail/unique.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/unique.h
+D:\cuda6.5\include\thrust/system/cuda/detail/unique.h
+D:\cuda6.5\include\thrust/system/detail/adl/unique_by_key.h
+D:\cuda6.5\include\thrust/system/cpp/detail/unique_by_key.h
+D:\cuda6.5\include\thrust/system/detail/internal/scalar/unique_by_key.h
+D:\cuda6.5\include\thrust/system/cuda/detail/unique_by_key.h
+D:\cuda6.5\include\thrust/iterator/constant_iterator.h
+D:\cuda6.5\include\thrust/iterator/detail/constant_iterator_base.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cassert
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\assert.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/monitor.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\iomanip
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xlocmon
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xloctime
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ctime
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/poisson.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/stencil.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/stencil.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/dia_matrix.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/dia_matrix.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/linear_operator.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/krylov/cg.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/krylov/detail/cg.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/multiply.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/multiply.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/dispatch/multiply.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/host/multiply.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/functional.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/host/spmv.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/host/detail/coo.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/host/detail/csr.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/multiply.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/spmv/coo_flat.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/arch.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/common.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/utils.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/texture.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/spmv/coo_serial.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/spmv/csr_vector.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/spmv/dia.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/spmv/ell.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/spmv/hyb.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/spmm/coo.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\list
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/print.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/print.inl

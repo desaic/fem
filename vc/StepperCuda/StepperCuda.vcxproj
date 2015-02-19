@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{96BDE26C-96D9-4FA3-974D-1776E4CCA20C}</ProjectGuid>
+    <ProjectGuid>{8EB7FEF4-D8D0-4909-83B8-58E754EF7C3E}</ProjectGuid>
     <RootNamespace>StepperCuda</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -93,7 +93,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\femlib\include;$(ProjectDir)\..\..\StepperCuda\include;%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;$(ProjectDir)\..\..\StepperCuda\include;%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -135,7 +135,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\femlib\include;$(ProjectDir)\..\..\StepperCuda\include;%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;$(ProjectDir)\..\..\StepperCuda\include;%(AdditionalIncludeDirectories);$(CudaToolkitIncludeDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -153,14 +153,13 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="..\..\StepperCuda\conjugateGradient.cu" />
-  </ItemGroup>
-  <ItemGroup>
+    <CudaCompile Include="..\..\StepperCuda\LinSolveCusp.cu">
+      <FileType>CppCode</FileType>
+    </CudaCompile>
     <ClCompile Include="..\..\StepperCuda\NewtonCuda.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\StepperCuda\include\ConjugateGradientCuda.hpp" />
-    <ClInclude Include="..\..\StepperCuda\include\helper_cuda.h" />
+    <ClInclude Include="..\..\StepperCuda\include\LinSolveCusp.hpp" />
     <ClInclude Include="..\..\StepperCuda\include\NewtonCuda.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,7 +1,9 @@
-#  test true
-#stepper newton
-#stepper admm
+test true
+#hier true
+refine 3
+#stepper grad
 #stepper admmCPU
-hier true
-stepper grad
+#stepper newton
+stepper admm
+
 nSteps 10000

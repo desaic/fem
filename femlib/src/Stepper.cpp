@@ -1,7 +1,9 @@
 #include "Stepper.hpp"
+#include "Timer.hpp"
 
 #include <atomic>
 #include <iostream>
+
 Stepper::Stepper() :nSteps(100), m(0)
 {}
 
@@ -9,9 +11,9 @@ Stepper::~Stepper(){}
 
 void runSim(ElementMesh * m, Stepper * stepper)
 {
+  Timer t;
   for (int iter = 0; iter < stepper->nSteps; iter++){
-    std::cout << "iter: " << iter << " state: " << stepper->state << "\n";
-
+    std::cout << "iter: " << iter <<"\n";
     std::unique_lock<std::mutex> lck(stepper->mtx);
     while (stepper->state == Stepper::PAUSE){
       stepper->cv.wait(lck);
@@ -20,8 +22,12 @@ void runSim(ElementMesh * m, Stepper * stepper)
       stepper->state = Stepper::PAUSE;
     }
     lck.unlock();
-
+    
+    t.start();
     int ret = stepper->oneStep();
+    t.end();
+    float duration = t.getMilliseconds();
+    std::cout << "time: " << duration << "\n";
     if (ret < 0){
       break;
     }
@@ -42,8 +48,13 @@ void Stepper::init(ElementMesh * _m)
 
 int Stepper::step()
 {
+  Timer t;
   for (int ii = 0; ii < nSteps; ii++){
+    t.start();
     int ret = oneStep();
+    t.end();
+    float duration = t.getMilliseconds();
+    std::cout << ii << " time: " << duration << "\n";
     if (ret < 0){
       return ret;
     }

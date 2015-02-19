@@ -7,6 +7,8 @@
 #include "ElementMeshHier.hpp"
 #include "StepperGrad.hpp"
 #include "StepperNewton.hpp"
+#include "NewtonCuda.hpp"
+#include "LinSolveCusp.hpp"
 #include "AdmmCPU.hpp"
 #include "AdmmNoSpring.hpp"
 //#include "IpoptStepper.hpp"
@@ -21,8 +23,9 @@ void runTest()
 {
   //ElementCoarseTest();
   //stiffnessTest(0);
-  testCoarseDefGrad();
+  //testCoarseDefGrad();
 	//forceTest(0);
+  testCG();
   system("pause");
   exit(0);
 }
@@ -130,9 +133,17 @@ int main(int argc, char* argv[])
     int ret = runHier(conf);
     return ret;
   }
-  //int nx = 4, ny=16, nz=4;
-  //int nx = 2, ny = 8, nz = 2;
-  int nx = 1, ny=4, nz=1;
+  
+  int refine = 1;
+  if (conf.hasOpt("refine")){
+    refine = conf.getInt("refine");
+  }
+  int res = std::pow(2, refine);
+  int nx = res, ny=4*res, nz=res;
+
+  Vector3f ff(10, -50, 0);
+  //per element pushing force
+  ff = (1.0 / (nx*nz)) * ff;
 
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
   //StrainEneNeo ene;
@@ -163,9 +174,6 @@ int main(int argc, char* argv[])
     }
   }
 
-  //Vector3f ff(1,-4,0);
-  //Vector3f ff(4, -16, 0);
-  Vector3f ff(16, -64, 0);
   for(int ii = 0;ii<nx;ii++){
     for(int jj =0;jj<nz;jj++){
       int eidx= em->GetEleInd(ii,0,jj);
@@ -179,7 +187,7 @@ int main(int argc, char* argv[])
       int bb[4] = {2,3,6,7};
       for(int kk = 0;kk<4;kk++){
         int vidx = em->e[eidx]->at(bb[kk]);
-        em->fe[vidx] = ff;
+        em->fe[vidx] += ff;
       }
     }
   }

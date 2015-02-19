@@ -1,19 +1,15 @@
 #include "NewtonCuda.hpp"
-#include "ConjugateGradientCuda.hpp"
-NewtonCuda::NewtonCuda():solver(0),m(0)
-{
-  solver = new ConjugateGradientCuda();
-}
-
-void NewtonCuda::step(ElementMesh * )
+NewtonCuda::NewtonCuda()
 {
 }
 
-int NewtonCuda::initCuda(ElementMesh * _m)
+void NewtonCuda::init(ElementMesh * _m)
 {
-  m=_m;
-  int N, nz;
-  int * I, * J;
-  solver->initCuda(N,nz,I,J);
+  m = _m;
+
+}
+
+int NewtonCuda::oneStep()
+{
   return 0;
 }

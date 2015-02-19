@@ -33,6 +33,9 @@
     <ProjectReference Include="..\StepperCPU\StepperCPU.vcxproj">
       <Project>{04525bfa-b9be-4342-8b71-e9b14782d568}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\StepperCuda\StepperCuda.vcxproj">
+      <Project>{8eb7fef4-d8d0-4909-83b8-58e754ef7c3e}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\vecmath\vecmath.vcxproj">
       <Project>{b6841e53-3c7f-4aa1-a07e-d196591e5ad9}</Project>
     </ProjectReference>
@@ -115,7 +118,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\StepperCPU\include;$(ProjectDir)\..\..\viewer\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\StepperCPU\include;$(ProjectDir)\..\..\viewer\include;$(ProjectDir)\..\..\StepperCuda\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -158,7 +161,7 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\StepperCPU\include;$(ProjectDir)\..\..\viewer\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\..\StepperCPU\include;$(ProjectDir)\..\..\viewer\include;$(ProjectDir)\..\..\StepperCuda\include;$(ProjectDir)\..\..\vecmath\include;$(ProjectDir)\..\..\femlib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

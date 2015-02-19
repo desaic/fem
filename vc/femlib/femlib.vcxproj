@@ -156,6 +156,7 @@
     <ClCompile Include="..\..\femlib\src\StrainEne.cpp" />
     <ClCompile Include="..\..\femlib\src\StrainEneNeo.cpp" />
     <ClCompile Include="..\..\femlib\src\StrainLin.cpp" />
+    <ClCompile Include="..\..\femlib\src\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\femlib\include\ArrayUtil.hpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="..\..\femlib\include\StrainEne.hpp" />
     <ClInclude Include="..\..\femlib\include\StrainEneNeo.hpp" />
     <ClInclude Include="..\..\femlib\include\StrainLin.hpp" />
+    <ClInclude Include="..\..\femlib\include\Timer.hpp" />
     <ClInclude Include="..\..\femlib\include\util.h" />
     <ClInclude Include="..\..\femlib\include\World.hpp" />
   </ItemGroup>

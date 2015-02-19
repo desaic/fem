@@ -8,7 +8,7 @@
 #include "StrainCorotLin.hpp"
 #include "MatrixXd.hpp"
 #include "Quadrature.hpp"
-//#include "ConjugateGradientCuda.hpp"
+#include "StepperNewton.hpp"
 
 #include <Eigen\Dense>
 #include <iostream>
