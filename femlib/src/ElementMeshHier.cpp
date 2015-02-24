@@ -179,6 +179,44 @@ std::vector<Vector3f> ElementMeshHier::getForce(int level, int eIdx)
   Element * e = m[level]->e[eIdx];
   std::vector<Vector3f> fe(e->nV());
 
+  float E = 0;
+  std::vector<int> quadIdx = getQuadIdx(level, eIdx);
+  Element * ele = m[level]->e[eIdx];
+  float vol = ele->getVol(m[level]->X);
+
+  for (unsigned int ii = 0; ii < quadIdx.size(); ii++){
+    int qi = quadIdx[ii];
+    updateDefGrad(level, qi);
+    QuadPt * q = &quadpt[qi];
+    //F=Fn..Fk..F0. F0 is fine level.
+    Matrix3f Fprod = Matrix3f::identity();
+    //matrices on the left and right of Fk
+    Matrix3f Fl = Matrix3f::identity(), Fr = Matrix3f::identity();
+    for (unsigned int jj = 0; jj < q->F.size(); jj++){
+      Fprod = q->F[jj] * Fprod;
+      if (jj < level){
+        Fl = q->F[jj] * Fl;
+      }
+      else if (jj > level){
+        Fr = q->F[jj] * Fr;
+      }
+    }
+
+    //get fine element index to look up material.
+    int feidx = q->ei[0];
+    MaterialQuad* mat = (MaterialQuad*)(m[0]->m[m[0]->me[feidx]]);
+    Matrix3f P = mat->e[0]->getPK1(Fprod);
+    for (int vi = 0; vi < ele->nV(); vi++){
+      Vector3f gradN = ele->shapeFunGrad(vi, q->X[level], m[level]->X);
+      gradN = Fl.transposed() * gradN;
+      gradN = P*gradN;
+      Vector3f vFr = Fr.transposed() * Vector3f(1, 1, 1);
+      //component-wise product
+      gradN = gradN * vFr;
+      fe[vi] += vol * q->w[level] * gradN;
+    }
+  }
+
   return fe;
 }
 

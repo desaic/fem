@@ -1,5 +1,5 @@
-test true
-#hier true
+#test true
+hier true
 refine 3
 #stepper grad
 #stepper admmCPU

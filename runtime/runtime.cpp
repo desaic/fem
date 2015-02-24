@@ -19,13 +19,14 @@
 #include "UnitTests.hpp"
 
 #include <iostream>
+#include <iomanip>
 void runTest()
 {
   //ElementCoarseTest();
   //stiffnessTest(0);
-  //testCoarseDefGrad();
+  testCoarseDefGrad();
 	//forceTest(0);
-  testCG();
+  //testCG();
   system("pause");
   exit(0);
 }
@@ -33,7 +34,8 @@ void runTest()
 int runHier(const ConfigFile & conf)
 {
   //int nx = 4, ny = 16, nz = 4;
-  int nx = 4, ny = 4, nz = 4;
+  int nlevel = 1;
+  int nx = 2, ny = 2, nz = 2;
   ElementRegGrid * grid = new ElementRegGrid(nx, ny, nz);
   std::vector<StrainLin> ene(2);
   ene[0].param[0] = 10000;
@@ -80,8 +82,8 @@ int runHier(const ConfigFile & conf)
 
   ElementMeshHier * em = new ElementMeshHier();
   em->m.push_back(grid);
-  em->buildHier(2);
-  ElementMesh * cm = em->m[2];
+  em->buildHier(nlevel);
+  ElementMesh * cm = em->m[nlevel];
   for (unsigned int ii = 0; ii < em->m[1]->e.size(); ii++){
     ElementHier * fine = (ElementHier*)(em->m[1]->e[ii]);
     std::cout << fine->parent << "\n";
@@ -117,6 +119,42 @@ int runHier(const ConfigFile & conf)
     }
     std::cout << "E: " << E<<"\n";
   }
+
+  //numerical differencing force.
+  float h = 0.001;
+  for (unsigned int level = 0; level < em->m.size(); level++){
+    float E = 0;
+    std::cout << "====== " << level << " ======\n";
+    std::vector<Vector3f> f = em->getForce(level);
+    //numerical diff force
+    std::vector<Vector3f> fnum (f.size());
+
+    std::cout << std::scientific;
+    std::cout << std::setprecision(3);
+    
+    ElementMesh * m = em->m[level];
+    
+    for (unsigned int vi = 0; vi < m->x.size(); vi++){
+      for (int dim = 0; dim < 3; dim++){
+        m->x[vi][dim] += h;
+        em->updateDefGrad(level);
+        float Ep, Em;
+        Ep = em->getEnergy();
+        m->x[vi][dim] -= 2*h;
+        em->updateDefGrad(level);
+        Em = em->getEnergy();
+        m->x[vi][dim] += h;
+        fnum[vi][dim] = (Ep - Em) / (2 * h);
+      }
+    }
+
+    for (unsigned int ii = 0; ii < f.size(); ii++){
+      std::cout << f[ii][0] << " " << f[ii][1] << " " << f[ii][2] << " | ";
+      std::cout << fnum[ii][0] << " " << fnum[ii][1] << " " << fnum[ii][2] << "\n";
+    }
+    std::cout << "E: " << E << "\n";
+  }
+
   system("pause");
   return 0;
 }

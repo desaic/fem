@@ -24,7 +24,7 @@ typedef cusp::device_memory MemorySpace;
 typedef float ValueType;
 void testCG(void)
 {
-  cusp::hyb_matrix<int, ValueType, MemorySpace> P;
+  cusp::csr_matrix<int, ValueType, MemorySpace> P;
   // create a 2d Poisson problem on a 10x10 mesh
   cusp::gallery::poisson5pt(P, 100, 100);
   // allocate storage for solution (x) and right hand side (b)
@@ -51,55 +51,31 @@ void testCG(void)
   }
 
 
-  // dimensions of the matrix
-  int num_rows = 3;
-  int num_cols = 3;
+  // allocate storage for (4,3) matrix with 6 nonzeros
+  cusp::csr_matrix<int, float, cusp::host_memory> A(4, 3, 6);
 
-  // number of (i,j,v) triplets
-  int num_triplets = 10;
+  // initialize matrix entries on host
+  A.row_offsets[0] = 0;  // first offset is always zero
+  A.row_offsets[1] = 2;
+  A.row_offsets[2] = 2;
+  A.row_offsets[3] = 3;
+  A.row_offsets[4] = 6; // last offset is always num_entries
 
-  // allocate storage for unordered triplets
-  cusp::array1d<int, cusp::device_memory> I(num_triplets);  // row indices
-  cusp::array1d<int, cusp::device_memory> J(num_triplets);  // column indices
-  cusp::array1d<float, cusp::device_memory> V(num_triplets);  // values
+  A.column_indices[0] = 0; A.values[0] = 10;
+  A.column_indices[1] = 2; A.values[1] = 20;
+  A.column_indices[2] = 2; A.values[2] = 30;
+  A.column_indices[3] = 0; A.values[3] = 40;
+  A.column_indices[4] = 1; A.values[4] = 50;
+  A.column_indices[5] = 2; A.values[5] = 60;
 
-  // fill triplet arrays
-  I[0] = 2; J[0] = 0; V[0] = 10;
-  I[1] = 0; J[1] = 2; V[1] = 10;
-  I[2] = 1; J[2] = 1; V[2] = 10;
-  I[3] = 2; J[3] = 0; V[3] = 10;
-  I[4] = 1; J[4] = 1; V[4] = 10;
-  I[5] = 0; J[5] = 0; V[5] = 10;
-  I[6] = 2; J[6] = 2; V[6] = 10;
-  I[7] = 0; J[7] = 0; V[7] = 10;
-  I[8] = 1; J[8] = 0; V[8] = 10;
-  I[9] = 0; J[9] = 0; V[9] = 10;
+  // A now represents the following matrix
+  //    [10  0 20]
+  //    [ 0  0  0]
+  //    [ 0  0 30]
+  //    [40 50 60]
 
-  // sort triplets by (i,j) index using two stable sorts (first by J, then by I)
-  thrust::stable_sort_by_key(J.begin(), J.end(), thrust::make_zip_iterator(thrust::make_tuple(I.begin(), V.begin())));
-  thrust::stable_sort_by_key(I.begin(), I.end(), thrust::make_zip_iterator(thrust::make_tuple(J.begin(), V.begin())));
-
-  // compute unique number of nonzeros in the output
-  int num_entries = thrust::inner_product(thrust::make_zip_iterator(thrust::make_tuple(I.begin(), J.begin())),
-    thrust::make_zip_iterator(thrust::make_tuple(I.end(), J.end())) - 1,
-    thrust::make_zip_iterator(thrust::make_tuple(I.begin(), J.begin())) + 1,
-    int(0),
-    thrust::plus<int>(),
-    thrust::not_equal_to< thrust::tuple<int, int> >()) + 1;
-
-  // allocate output matrix
-  cusp::coo_matrix<int, float, cusp::device_memory> A(num_rows, num_cols, num_entries);
-
-  // sum values with the same (i,j) index
-  thrust::reduce_by_key(thrust::make_zip_iterator(thrust::make_tuple(I.begin(), J.begin())),
-    thrust::make_zip_iterator(thrust::make_tuple(I.end(), J.end())),
-    V.begin(),
-    thrust::make_zip_iterator(thrust::make_tuple(A.row_indices.begin(), A.column_indices.begin())),
-    A.values.begin(),
-    thrust::equal_to< thrust::tuple<int, int> >(),
-    thrust::plus<float>());
-
-  // print matrix
+  // print matrix entries
   cusp::print(A);
+
 
 }

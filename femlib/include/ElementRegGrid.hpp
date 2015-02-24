@@ -12,7 +12,7 @@
 class ElementRegGrid:public ElementMesh
 {
 public:
-  ElementRegGrid(int _nx = 1 , int _ny = 1, int _nz = 1);
+  ElementRegGrid(int _nx = 0 , int _ny = 0, int _nz = 0);
   void resize(int _nx, int _ny, int _nz);
   void allocate();
   void deleteEle();
