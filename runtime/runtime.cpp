@@ -147,11 +147,17 @@ int runHier(const ConfigFile & conf)
         fnum[vi][dim] = (Ep - Em) / (2 * h);
       }
     }
-
+    float maxDiff = 0;
     for (unsigned int ii = 0; ii < f.size(); ii++){
       std::cout << f[ii][0] << " " << f[ii][1] << " " << f[ii][2] << " | ";
       std::cout << fnum[ii][0] << " " << fnum[ii][1] << " " << fnum[ii][2] << "\n";
+      Vector3f diff = f[ii] - fnum[ii];
+      float dd = diff.abs();
+      if (dd > maxDiff){
+        maxDiff = dd;
+      }
     }
+    std::cout << "max diff norm: " << maxDiff << "\n";
     std::cout << "E: " << E << "\n";
   }
 

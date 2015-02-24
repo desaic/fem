@@ -210,9 +210,9 @@ std::vector<Vector3f> ElementMeshHier::getForce(int level, int eIdx)
       Vector3f gradN = ele->shapeFunGrad(vi, q->X[level], m[level]->X);
       gradN = Fl.transposed() * gradN;
       gradN = P*gradN;
-      Vector3f vFr = Fr.transposed() * Vector3f(1, 1, 1);
+      //Vector3f vFr = Fr.transposed() * Vector3f(1, 1, 1);
       //component-wise product
-      gradN = gradN * vFr;
+      gradN = Fr.transposed() * gradN;
       fe[vi] += vol * q->w[level] * gradN;
     }
   }
