@@ -24,9 +24,10 @@ void runTest()
 {
   //ElementCoarseTest();
   //stiffnessTest(0);
-  testCoarseDefGrad();
+  //testCoarseDefGrad();
 	//forceTest(0);
   //testCG();
+  cudaLinTest();
   system("pause");
   exit(0);
 }
@@ -34,8 +35,8 @@ void runTest()
 int runHier(const ConfigFile & conf)
 {
   //int nx = 4, ny = 16, nz = 4;
-  int nlevel = 1;
-  int nx = 2, ny = 2, nz = 2;
+  int nlevel = 2;
+  int nx = 4, ny = 4, nz = 4;
   ElementRegGrid * grid = new ElementRegGrid(nx, ny, nz);
   std::vector<StrainLin> ene(2);
   ene[0].param[0] = 10000;

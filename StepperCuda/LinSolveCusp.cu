@@ -1,5 +1,6 @@
 #include "LinSolveCusp.hpp"
 #include "cuda.h"
+
 #include <thrust/version.h>
 #include <cusp/version.h>
 #include <iostream>
@@ -76,6 +77,36 @@ void testCG(void)
 
   // print matrix entries
   cusp::print(A);
+}
 
+void solveTriplet(std::vector<int> & I, std::vector<int> & J,
+  std::vector<float> &val, float * x)
+{
+  int mSize = (int)I.size()-1;
+  int nnz = I[I.size() - 1];
+  cusp::csr_matrix<int, float, cusp::host_memory> A(mSize,mSize,nnz);
+  cusp::array1d<int, cusp::host_memory> b(mSize);
 
+  for (unsigned int ii = 0; ii < I.size(); ii++){
+    A.row_offsets[ii] = I[ii];
+  }
+  for (unsigned int ii = 0; ii < J.size(); ii++){
+    A.column_indices[ii] = J[ii];
+    A.values[ii] = val[ii];
+  }
+  for (int ii = 0; ii < mSize; ii++){
+    b[ii] = x[ii];
+  }
+
+  cusp::array1d<ValueType, MemorySpace> xdev(mSize, 0);
+  cusp::array1d<ValueType, MemorySpace> bdev(b);
+  cusp::csr_matrix<int, ValueType, MemorySpace> Adev(A);
+  cusp::default_monitor<ValueType> monitor(bdev, 1000, 1e-3);
+  //cusp::identity_operator<ValueType, cusp::device_memory> M(A.num_rows, A.num_rows);
+  cusp::krylov::cg(Adev, xdev, bdev, monitor);
+  cusp::print(A);
+  b = xdev;
+  for (int ii = 0; ii < mSize; ii++){
+    x[ii] = b[ii];
+  }
 }

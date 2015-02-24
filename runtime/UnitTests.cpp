@@ -9,7 +9,7 @@
 #include "MatrixXd.hpp"
 #include "Quadrature.hpp"
 #include "StepperNewton.hpp"
-
+#include "LinSolveCusp.hpp"
 #include <Eigen\Dense>
 #include <iostream>
 #include <fstream>
@@ -20,43 +20,55 @@ void stiffnessTestHelper(StrainEne * ene);
 
 void cudaLinTest()
 {
-  //make a poisson problem
-  int N = 10000;
-  int nz = 3*N-4;
-  std::vector<int> I(N+1),J(nz);
-  std::vector<float> val, x(N,0), rhs(N,1);
-  I[0] = 0;
-  J[0] = 0;
-  val.push_back(1);
-  int nEntry=1;
-  for(int ii = 1;ii<N-1;ii++){
-    
-    I[ii] = nEntry;
-    J[nEntry]=ii-1;
-    J[nEntry+1]=ii;
-    J[nEntry+2]=ii+1;
-
-    val.push_back(-1);
-    val.push_back(2.15f);
-    val.push_back(-1);
-
-    nEntry+=3;
-  }
-  I[N-1]=nEntry;
-  J[nEntry] = N-1;
-  val.push_back(1);
-  val[1] = 0;
-  val[nEntry-1] = 0;
-  I[N] = nEntry+1;
+  int nx = 1, ny = 4, nz = 1;
+  ElementRegGrid * grid = new ElementRegGrid(nx, ny, nz);
+  StrainEne * ene = 0;
+  ene = new StrainEneNeo();
+  ene->param[0] = 1000;
+  ene->param[1] = 10000;
+  MaterialQuad * material = new MaterialQuad(ene);
+  grid->m.push_back(material);
   
-  //ConjugateGradientCuda * linSolver = new ConjugateGradientCuda();
-  //linSolver->initCuda(N,nz, &(I[0]), &(J[0]));
-  //linSolver->solve(&(val[0]), &(x[0]), &(rhs[0]));
-  //linSolver->clearCuda();
+  Vector3f ff(10, -50, 0);
+  ff = (1.0 / (nx*nz)) * ff;
 
-  for(unsigned int ii = 0;ii<rhs.size();ii++){
-  //  std::cout<<x[ii]<<"\n";
+  for (int ii = 0; ii<nx; ii++){
+    for (int jj = 0; jj<nz; jj++){
+      int eidx = grid->GetEleInd(ii, 0, jj);
+      int aa[4] = { 0, 1, 4, 5 };
+      for (int kk = 0; kk<4; kk++){
+        int vidx = grid->e[eidx]->at(aa[kk]);
+        grid->fixed[vidx] = 1;
+      }
+
+      eidx = grid->GetEleInd(ii, ny - 1, jj);
+      int bb[4] = { 2, 3, 6, 7 };
+      for (int kk = 0; kk<4; kk++){
+        int vidx = grid->e[eidx]->at(bb[kk]);
+        grid->fe[vidx] += ff;
+      }
+    }
   }
+  int status = grid->check();
+  std::cout << "Check Mesh: " << status << "\n";
+  std::vector<int> I, J;
+  std::vector<float> val;
+  grid->getStiffnessSparse(I, J, val);
+  float * x = new float[I.size()-1];
+  std::vector<Vector3f> f = grid->getForce();
+  for (unsigned int ii = 0; ii < f.size(); ii++){
+    for (int jj = 0; jj < 3; jj++){
+      x[3 * ii + jj] = f[ii][jj];
+    }
+  }
+  solveTriplet(I,J,val,x);
+  for (unsigned int ii = 0; ii < f.size(); ii++){
+    for (int jj = 0; jj < 3; jj++){
+      f[ii][jj] = x[3 * ii + jj];
+    }
+    std::cout << f[ii][0] << " " << f[ii][1] << " " << f[ii][2] << "\n";
+  }
+  delete[]x;
 }
 
 void stiffnessTest(int matModel)
