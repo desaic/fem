@@ -10,6 +10,8 @@
 #include "Quadrature.hpp"
 #include "StepperNewton.hpp"
 #include "LinSolveCusp.hpp"
+#include "Timer.hpp"
+
 #include <Eigen\Dense>
 #include <iostream>
 #include <fstream>
@@ -20,15 +22,17 @@ void stiffnessTestHelper(StrainEne * ene);
 
 void cudaLinTest()
 {
-  int nx = 1, ny = 4, nz = 1;
+  int nx = 1, ny = 1, nz = 1;
   ElementRegGrid * grid = new ElementRegGrid(nx, ny, nz);
   StrainEne * ene = 0;
-  ene = new StrainEneNeo();
-  ene->param[0] = 1000;
-  ene->param[1] = 10000;
+  ene = new StrainLin();
+  ene->param[0] = 10000;
+  ene->param[1] = 100000;
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
   
+  std::ofstream out("debug.txt");
+
   Vector3f ff(10, -50, 0);
   ff = (1.0 / (nx*nz)) * ff;
 
@@ -53,21 +57,51 @@ void cudaLinTest()
   std::cout << "Check Mesh: " << status << "\n";
   std::vector<int> I, J;
   std::vector<float> val;
-  grid->getStiffnessSparse(I, J, val);
+  grid->stiffnessPattern(I, J);
+  grid->getStiffnessSparse(val);
   float * x = new float[I.size()-1];
   std::vector<Vector3f> f = grid->getForce();
+  for (unsigned int row = 0; row < I.size() - 1; row++){
+    int nCol = I[row + 1] - I[row];
+    int vi = row / 3;
+    for (int jj = 0; jj < nCol; jj++){
+      int idx = I[row] + jj;
+      int col = J[idx];
+      int vj = col / 3;
+      
+      if (grid->fixed[vi] || grid->fixed[vj]){
+        val[idx] = 0;
+        if (row == col){
+          val[idx] = 100;
+        }
+      }
+      out << val[idx] << " ";
+    }
+    out << "\n";
+  }
   for (unsigned int ii = 0; ii < f.size(); ii++){
+    if (grid->fixed[ii]){
+      f[ii] = Vector3f::ZERO;
+    }
     for (int jj = 0; jj < 3; jj++){
       x[3 * ii + jj] = f[ii][jj];
+      out << x[3 * ii + jj] << "\n";
     }
   }
-  solveTriplet(I,J,val,x);
+  out.close();
+  LinSolveCusp solver;
+  solver.init(I, J);
+  Timer timer;
+  timer.start();
+  solver.solve(val, x);
   for (unsigned int ii = 0; ii < f.size(); ii++){
     for (int jj = 0; jj < 3; jj++){
       f[ii][jj] = x[3 * ii + jj];
     }
     std::cout << f[ii][0] << " " << f[ii][1] << " " << f[ii][2] << "\n";
   }
+  timer.end();
+  std::cout << timer.getMilliseconds();
   delete[]x;
 }
 
@@ -104,8 +138,8 @@ void stiffnessTestHelper(StrainEne * ene)
   ElementRegGrid * grid = new ElementRegGrid(1, 1, 1);
   MaterialQuad * material = new MaterialQuad(ene);
   grid->m.push_back(material);
-  grid->x[1][0] += 0.1f;
-  grid->x[3][1] += 0.2f;
+ // grid->x[1][0] += 0.1f;
+  //grid->x[3][1] += 0.2f;
   MatrixXd KAna = grid->getStiffness();
   int nVar = (int)grid->X.size();
   MatrixXd K(3*nVar,3*nVar);

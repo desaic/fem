@@ -335,11 +335,21 @@ D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cerrno
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\errno.h
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\share.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/hyb_matrix.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/array1d.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/memory.h
-D:\cuda6.5\include\thrust/iterator/iterator_traits.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/monitor.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/blas.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/complex.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\complex
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ccomplex
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\sstream
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\string
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\iterator
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xcomplex
+D:\cuda6.5\include\cuComplex.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
+d:\cuda6.5\include\vector_types.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/cmath.h
+D:\cuda6.5\include\thrust/iterator/iterator_traits.h
 D:\cuda6.5\include\thrust/iterator/detail/iterator_traversal_tags.h
 D:\cuda6.5\include\thrust/iterator/detail/host_system_tag.h
 D:\cuda6.5\include\thrust/system/cpp/detail/execution_policy.h
@@ -354,6 +364,9 @@ D:\cuda6.5\include\thrust/iterator/detail/iterator_category_to_traversal.h
 D:\cuda6.5\include\thrust/iterator/detail/iterator_category_to_system.h
 D:\cuda6.5\include\thrust/detail/type_traits.h
 D:\cuda6.5\include\thrust/detail/type_traits/has_trivial_assign.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/blas.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/array1d.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/memory.h
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/memory.inl
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\memory
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdint.h
@@ -394,7 +407,6 @@ D:\cuda6.5\include\thrust/system/cuda/detail/malloc_and_free.h
 D:\cuda6.5\include\thrust/system/cuda/detail/guarded_cuda_runtime_api.h
 D:\cuda6.5\include\cuda_runtime_api.h
 D:\cuda6.5\include\thrust/system/system_error.h
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\string
 D:\cuda6.5\include\thrust/system/error_code.h
 D:\cuda6.5\include\thrust/system/detail/errno.h
 D:\cuda6.5\include\thrust/system/detail/error_category.inl
@@ -700,16 +712,6 @@ D:\cuda6.5\include\thrust/detail/host_vector.inl
 D:\cuda6.5\include\thrust/device_vector.h
 D:\cuda6.5\include\thrust/detail/device_vector.inl
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/array1d.inl
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/matrix_base.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/hyb_matrix.inl
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/convert.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/convert.inl
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/dispatch/convert.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/copy.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/copy.inl
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/array2d.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/utils.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/array2d.inl
 D:\cuda6.5\include\thrust/copy.h
 D:\cuda6.5\include\thrust/detail/copy_if.h
 D:\cuda6.5\include\thrust/detail/copy_if.inl
@@ -720,13 +722,29 @@ D:\cuda6.5\include\thrust/system/cpp/detail/copy_if.h
 D:\cuda6.5\include\thrust/system/detail/internal/scalar/copy_if.h
 D:\cuda6.5\include\thrust/system/cuda/detail/copy_if.h
 D:\cuda6.5\include\thrust/system/cuda/detail/copy_if.inl
-D:\cuda6.5\include\thrust/gather.h
-D:\cuda6.5\include\thrust/detail/gather.inl
-D:\cuda6.5\include\thrust/system/detail/generic/gather.h
-D:\cuda6.5\include\thrust/system/detail/generic/gather.inl
-D:\cuda6.5\include\thrust/system/detail/adl/gather.h
-D:\cuda6.5\include\thrust/system/cpp/detail/gather.h
-D:\cuda6.5\include\thrust/system/cuda/detail/gather.h
+D:\cuda6.5\include\thrust/inner_product.h
+D:\cuda6.5\include\thrust/detail/inner_product.inl
+D:\cuda6.5\include\thrust/system/detail/generic/inner_product.h
+D:\cuda6.5\include\thrust/system/detail/generic/inner_product.inl
+D:\cuda6.5\include\thrust/system/detail/adl/inner_product.h
+D:\cuda6.5\include\thrust/system/cpp/detail/inner_product.h
+D:\cuda6.5\include\thrust/system/cuda/detail/inner_product.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\iomanip
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xlocmon
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xloctime
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ctime
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/poisson.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/stencil.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/stencil.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/copy.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/copy.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/array2d.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/matrix_base.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/utils.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/array2d.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/convert.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/convert.inl
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/dispatch/convert.h
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/host/convert.h
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/csr_matrix.h
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/csr_matrix.inl
@@ -758,6 +776,13 @@ D:\cuda6.5\include\thrust/system/detail/adl/binary_search.h
 D:\cuda6.5\include\thrust/system/cpp/detail/binary_search.h
 D:\cuda6.5\include\thrust/system/detail/internal/scalar/binary_search.h
 D:\cuda6.5\include\thrust/system/cuda/detail/binary_search.h
+D:\cuda6.5\include\thrust/gather.h
+D:\cuda6.5\include\thrust/detail/gather.inl
+D:\cuda6.5\include\thrust/system/detail/generic/gather.h
+D:\cuda6.5\include\thrust/system/detail/generic/gather.inl
+D:\cuda6.5\include\thrust/system/detail/adl/gather.h
+D:\cuda6.5\include\thrust/system/cpp/detail/gather.h
+D:\cuda6.5\include\thrust/system/cuda/detail/gather.h
 D:\cuda6.5\include\thrust/sequence.h
 D:\cuda6.5\include\thrust/detail/sequence.inl
 D:\cuda6.5\include\thrust/system/detail/generic/sequence.h
@@ -844,25 +869,6 @@ D:\cuda6.5\include\thrust/system/cuda/detail/partition.h
 D:\cuda6.5\include\thrust/system/cuda/detail/temporary_indirect_permutation.h
 D:\cuda6.5\include\thrust/detail/trivial_sequence.h
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/conversion.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/blas.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/complex.h
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\complex
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ccomplex
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\sstream
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xcomplex
-D:\cuda6.5\include\cuComplex.h
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\math.h
-d:\cuda6.5\include\vector_types.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/cmath.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/blas.inl
-D:\cuda6.5\include\thrust/inner_product.h
-D:\cuda6.5\include\thrust/detail/inner_product.inl
-D:\cuda6.5\include\thrust/system/detail/generic/inner_product.h
-D:\cuda6.5\include\thrust/system/detail/generic/inner_product.inl
-D:\cuda6.5\include\thrust/system/detail/adl/inner_product.h
-D:\cuda6.5\include\thrust/system/cpp/detail/inner_product.h
-D:\cuda6.5\include\thrust/system/cuda/detail/inner_product.h
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/device/conversion_utils.h
 D:\cuda6.5\include\thrust/adjacent_difference.h
 D:\cuda6.5\include\thrust/detail/adjacent_difference.inl
@@ -892,14 +898,6 @@ D:\cuda6.5\include\thrust/iterator/detail/constant_iterator_base.h
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cassert
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\assert.h
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/monitor.h
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\iomanip
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xlocmon
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xloctime
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ctime
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/poisson.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/stencil.h
-C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/stencil.inl
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/dia_matrix.h
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/detail/dia_matrix.inl
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/linear_operator.h

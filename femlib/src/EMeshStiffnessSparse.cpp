@@ -5,8 +5,7 @@
 
 typedef Eigen::Triplet<float> Tripletf;
 
-void ElementMesh::getStiffnessSparse(std::vector<int> & I, std::vector<int> & J,
-    std::vector<float> &val, bool trig)
+void ElementMesh::getStiffnessSparse(std::vector<float> &val, bool trig, bool constrained)
 {
   int N = 3* (int)x.size();
   std::vector<Tripletf> coef;
@@ -24,7 +23,19 @@ void ElementMesh::getStiffnessSparse(std::vector<int> & I, std::vector<int> & J,
             if(trig && (3*vk+dim2 > 3*vj+dim1)) {
               continue;
             }
-            Tripletf triple(3*vj+dim1,3*vk+dim2,K(3*jj+dim1, 3*kk+dim2));
+            float val = K(3 * jj + dim1, 3 * kk + dim2);
+            if (constrained){
+              if (fixed[vk] || fixed[vj]){
+                val = 0;
+                if (vj == vk && dim1 == dim2){
+                  val = 100;
+                }
+              }
+            }
+            //if (vk == vj && dim1 == dim2){
+            //  val += 1;
+            //}
+            Tripletf triple(3 * vj + dim1, 3 * vk + dim2, val);
             coef.push_back(triple);
           }
         }
@@ -32,18 +43,15 @@ void ElementMesh::getStiffnessSparse(std::vector<int> & I, std::vector<int> & J,
     }
   }
   Ksparse.setFromTriplets(coef.begin(), coef.end());
-
   for(int ii = 0; ii<Ksparse.rows(); ii++){
-    I.push_back(0);
     for (Eigen::SparseMatrix<float>::InnerIterator it(Ksparse, ii); it; ++it){
      val.push_back(it.value());
-     J.push_back(it.col());
-     I.push_back(J.size());
    }
   }
 }
 
-void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J)
+void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,
+   bool trig)
 {
   int N = 3* (int)x.size();
   std::vector<Tripletf> coef;
@@ -57,7 +65,7 @@ void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J)
         int vk = ele->at(kk);
         for(int dim1= 0 ;dim1<3;dim1++){
           for(int dim2= 0 ;dim2<3;dim2++){
-            if(3*vk+dim2 > 3*vj+dim1){
+            if(trig&&(3*vk+dim2 > 3*vj+dim1)){
               continue;
             }
             Tripletf triple(3*vj+dim1,3*vk+dim2,1);
@@ -70,10 +78,11 @@ void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J)
 
   Ksparse.setFromTriplets(coef.begin(), coef.end());
 
+  I.push_back(0);
   for(int ii = 0; ii<Ksparse.rows(); ii++){
     for (Eigen::SparseMatrix<float>::InnerIterator it(Ksparse, ii); it; ++it){
-     I.push_back(it.row());
-     J.push_back(it.col());
+     J.push_back(it.row());
    }
+    I.push_back(J.size());
   }
 }

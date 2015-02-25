@@ -11,6 +11,7 @@
 #include "LinSolveCusp.hpp"
 #include "AdmmCPU.hpp"
 #include "AdmmNoSpring.hpp"
+#include "NewtonCuda.hpp"
 //#include "IpoptStepper.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
@@ -23,7 +24,7 @@
 void runTest()
 {
   //ElementCoarseTest();
-  //stiffnessTest(0);
+  stiffnessTest(2);
   //testCoarseDefGrad();
 	//forceTest(0);
   //testCG();
@@ -100,7 +101,7 @@ int runHier(const ConfigFile & conf)
     std::cout << cm->fixed[ii] << "\n";
   }
 
-  Vector3f offset(0.1, 0.2, 0);
+  Vector3f offset(0.1f, 0.2f, 0.0f);
   for (unsigned int level = 0; level < em->m.size(); level++){
     float dx = em->m[level]->X[1][2] - em->m[level]->X[0][2];
     for (unsigned int vi = 0; vi < em->m[level]->x.size(); vi++){
@@ -122,7 +123,7 @@ int runHier(const ConfigFile & conf)
   }
 
   //numerical differencing force.
-  float h = 0.001;
+  float h = 0.001f;
   for (unsigned int level = 0; level < em->m.size(); level++){
     float E = 0;
     std::cout << "====== " << level << " ======\n";
@@ -185,15 +186,15 @@ int main(int argc, char* argv[])
   }
   int res = std::pow(2, refine);
   int nx = res, ny=4*res, nz=res;
-
-  Vector3f ff(10, -50, 0);
+  //int nx = 32, ny = 80, nz = 32;
+  Vector3f ff(5, -10, 0);
   //per element pushing force
-  ff = (1.0 / (nx*nz)) * ff;
+  ff = (1.0f / (nx*nz)) * ff;
 
   ElementRegGrid * em = new ElementRegGrid(nx,ny,nz);
-  //StrainEneNeo ene;
+  std::vector<StrainEneNeo> ene(2);
   //std::vector<StrainCorotLin> ene(2);
-  std::vector<StrainLin> ene(2);
+  //std::vector<StrainLin> ene(2);
 
   ene[0].param[0] = 10000;
   ene[0].param[1] = 100000;
@@ -249,6 +250,9 @@ int main(int argc, char* argv[])
   std::string stepperType = conf.getString("stepper");
   if (stepperType == "newton"){
     stepper = new StepperNewton();
+  }
+  else if (stepperType == "newtonCuda"){
+    stepper = new NewtonCuda();
   }
   else if (stepperType == "ipopt"){
     //not yet implemented

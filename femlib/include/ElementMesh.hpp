@@ -48,13 +48,12 @@ public:
 
   MatrixXd getStiffness(int eIdx);
 
+  ///@param trig if true, return only the upper triangle of the symmetric matrix.
+  void getStiffnessSparse(std::vector<float> &val, bool trig = false, bool constrained=false);
+
   ///@param I row offsets. I.size() = matrix size + 1. I[size()-1]=number of non-zeros.
   ///@param J column indices.
-  ///@param trig if true, return only the upper triangle of the symmetric matrix.
-  void getStiffnessSparse(std::vector<int> & I, std::vector<int> & J,
-    std::vector<float> &val, bool trig = false);
-
-  void stiffnessPattern(std::vector<int> & I, std::vector<int> & J);
+  void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig = false);
 
   MatrixXd getStiffness();
 
