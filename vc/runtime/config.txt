@@ -1,6 +1,7 @@
 #test true
 #hier true
-refine 4
+refine 6
+render false
 #stepper grad
 #stepper admmCPU
 #stepper newton

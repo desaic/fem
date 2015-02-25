@@ -14,7 +14,7 @@ public:
   int * device_I, * device_J;
   ValueType * device_V, *device_x, *device_b;
   ///@brief matrix size assuming square matrix
-  int mSize,nnz;
+  int mSize,nnz, nIter;
 };
 
 void testCG();

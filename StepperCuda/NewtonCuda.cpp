@@ -4,8 +4,9 @@
 #include "ArrayUtil.hpp"
 
 #include <iostream>
-NewtonCuda::NewtonCuda() :dx_tol(1e-5f), h(1.0f)
+NewtonCuda::NewtonCuda() :dx_tol(1e-5f), h(1.0f), linIter(1000)
 {
+  solver.nIter = linIter;
 }
 
 void NewtonCuda::init(ElementMesh * _m)

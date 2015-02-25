@@ -12,6 +12,8 @@ public:
 
   float dx_tol;
   float h;
+  //number of iterations for linear solver;
+  int linIter;
 };
 
 #endif

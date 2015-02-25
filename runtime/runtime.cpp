@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
   if (conf.hasOpt("refine")){
     refine = conf.getInt("refine");
   }
-  int res = std::pow(2, refine);
+  int res = (int)std::pow(2, refine);
   int nx = res, ny=4*res, nz=res;
   //int nx = 32, ny = 80, nz = 32;
   Vector3f ff(5, -10, 0);
@@ -240,8 +240,13 @@ int main(int argc, char* argv[])
   em->check();
 
   World * world = new World();
-  world->em.push_back(em);
-  
+  bool renderOpt = true;
+  if (conf.hasOpt("render") && conf.getBool("render") == false){
+    renderOpt = false;
+  }
+  if (renderOpt){
+    world->em.push_back(em);
+  }
   Stepper * stepper = 0;
   int nSteps = 10000;
   if (conf.hasOpt("nSteps")){

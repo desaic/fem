@@ -19,7 +19,7 @@
 #include <thrust/iterator/zip_iterator.h>
 using namespace cusp;
 LinSolveCusp::LinSolveCusp():device_I(0), device_J(0), device_V(0),
-device_x(0), device_b(0), mSize(0), nnz(0)
+device_x(0), device_b(0), mSize(0), nnz(0), nIter(1000)
 {}
 
 void LinSolveCusp::init(std::vector<int> & I, std::vector<int> & J)
@@ -65,7 +65,7 @@ void LinSolveCusp::solve(std::vector<ValueType> & A, ValueType * xIO)
       DeviceIndexArrayView,
       DeviceValueArrayView > DeviceView;
     DeviceView A(mSize, mSize, nnz, row_offsets, column_indices, values);
-    cusp::default_monitor<ValueType> monitor(b, 1000, 1e-5);
+    cusp::default_monitor<ValueType> monitor(b, nIter, 1e-5);
     cusp::krylov::cg(A, x, b, monitor);
     cudaMemcpy((void*)xIO, device_x, mSize*sizeof(ValueType), cudaMemcpyDeviceToHost);
   }
