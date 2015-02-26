@@ -34,6 +34,12 @@ public:
   std::vector<Vector3f> getForce(int level, int eIdx);
   std::vector<Vector3f> getForce(int level);
 
+  ///@brief stiffness block between dofs at the same level.
+  MatrixXf getStiffness(int level, int eIdx);
+  ///@brief stiffness contributed by a quadrature point.
+  ///@param qIdx assumed to be in the range of number of quadrature points for that element.
+  MatrixXf getStiffness(int level, int eIdx, int qIdx);
+  
   virtual ~ElementMeshHier();
 };
 

@@ -185,10 +185,10 @@ int main(int argc, char* argv[])
     refine = conf.getInt("refine");
   }
   int res = (int)std::pow(2, refine);
-  //int nx = res, ny=4*res, nz=res;
-  int nx = 32, ny = 80, nz = 32;
+  int nx = res, ny=4*res, nz=res;
+  //int nx = 32, ny = 80, nz = 32;
   //int nx = 16, ny = 40, nz = 16;
-  Vector3f ff(5, -20, 0);
+  Vector3f ff(5, -10, 0);
   //per element pushing force
   ff = (1.0f / (nx*nz)) * ff;
 
@@ -266,7 +266,7 @@ int main(int argc, char* argv[])
   }
   else if (stepperType == "admmCPU"){
     stepper = new AdmmCPU();
-    ((AdmmCPU*)stepper)->ro0 = 500;
+    ((AdmmCPU*)stepper)->ro0 = 100;
   }
   else if (stepperType == "grad"){
     stepper = new StepperGrad();

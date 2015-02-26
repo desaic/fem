@@ -206,14 +206,11 @@ std::vector<Vector3f> ElementMeshHier::getForce(int level, int eIdx)
     //get fine element index to look up material.
     int feidx = q->ei[0];
     MaterialQuad* mat = (MaterialQuad*)(m[0]->m[m[0]->me[feidx]]);
+    ///@TODO: only uses the material assigned to the first quadrature point.
     Matrix3f P = mat->e[0]->getPK1(Fprod);
     for (int vi = 0; vi < ele->nV(); vi++){
       Vector3f gradN = ele->shapeFunGrad(vi, q->X[level], m[level]->X);
-      gradN = Fl.transposed() * gradN;
-      gradN = P*gradN;
-      //Vector3f vFr = Fr.transposed() * Vector3f(1, 1, 1);
-      //component-wise product
-      gradN = Fr.transposed() * gradN;
+      gradN = Fr.transposed() *P*Fl.transposed() * gradN;
       fe[vi] += vol * q->w[level] * gradN;
     }
   }
@@ -234,6 +231,27 @@ std::vector<Vector3f> ElementMeshHier::getForce(int level)
   }
   return f;
 }
+
+MatrixXf ElementMeshHier::getStiffness(int level, int eIdx)
+{
+  MatrixXf K;
+  //compute dF/dq_i for 8 vertices
+  ElementMesh * em = m[level];
+  Element * e = em->e[eIdx];
+  std::vector<Vector3f> dN(e->nV());
+  for (int ii = 0; ii < e->nV(); ii++){
+
+  }
+  return K;
+}
+
+MatrixXf ElementMeshHier::getStiffness(int level, int eIdx, int qIdx)
+{
+  MatrixXf K;
+
+  return K;
+}
+
 
 ElementMeshHier::~ElementMeshHier()
 {

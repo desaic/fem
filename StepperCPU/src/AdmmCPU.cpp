@@ -49,7 +49,6 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
                               int eIdx)
 {
   float E = 0;
-  float h = 1;
   int NSteps = 5;
   int ndof = 3*ele->nV();
   
@@ -63,12 +62,12 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
       }
       for(int jj = 0;jj<3;jj++){
         int row = 3*ii + jj;
-        K(row,row) += 100;
+       // K(row,row) += 100;
         bb[ row ] = force[ii][jj];
         if(m->fixed[vidx]){
           for(int kk = 0;kk<ndof;kk++){
             K(row,kk) = 0;
-            K(row,row) = 1;
+            K(row,row) = 100;
           }
         }
       }
@@ -98,6 +97,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
     std::vector<Vector3f> x0,x;
     getEleX(eIdx, m, x0);
     float E1;
+    float h = 1;
     while(1){
       x=x0;
       addmul(x, h, force);
@@ -108,7 +108,6 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
         fem_error = 0;
         h = 0.5f* h;
       }else{
-        h=1.1f*h;
         break;
       }
     }
@@ -231,26 +230,26 @@ int AdmmCPU::oneStep()
     Z[ii] = Z[ii] - Zk_1[ii];
   }
   float hh = 1.0f;
-  while (1){
-    m->x = Zk_1;
+  //while (1){
+  //  m->x = Zk_1;
     addmul(m->x, hh, Z);
     ene1 = m->getEnergy();
-    if (ene1 < E && fem_error == 0){
+    //if (ene1 < E && fem_error == 0){
       Z = m->x;
-      break;
-    }
-    else{
-      hh = hh / 2;
-      if (hh < 1e-15){
-        m->x = Zk_1;
-        Z = Zk_1;
-        break;
-      }
-    }
-  }
+      //break;
+  //  }
+  //  else{
+  //    hh = hh / 2;
+  //    if (hh < 1e-15){
+  //      m->x = Zk_1;
+  //      Z = Zk_1;
+  //      break;
+  //    }
+  //  }
+  //}
   std::cout << "hh " << hh << "\n";
   if (prevE - ene1 < tol){
-    return -1;
+  //  return -1;
   }
   prevE = E;
 
@@ -258,7 +257,7 @@ int AdmmCPU::oneStep()
   for (unsigned int ii = 0; ii < u.size(); ii++){
     Element * ele = m->e[ii];
     for (int jj = 0; jj < ele->nV(); jj++){
-      y[ii][jj] += ro[ii] * (u[ii][jj] - Z[ele->at(jj)]);
+      y[ii][jj] += 0.2*ro[ii] * (u[ii][jj] - Z[ele->at(jj)]);
     }
   }
   return 0;
@@ -274,7 +273,7 @@ AdmmCPU::~AdmmCPU()
   }
 }
 
-AdmmCPU::AdmmCPU():bb(0),maxDist(0.05f),ro0(1000.0f),
+AdmmCPU::AdmmCPU():bb(0),maxDist(0.25f),ro0(1000.0f),
   roMult(1.5f),tol(0.001f),xtol(0.001f)
 {
 }

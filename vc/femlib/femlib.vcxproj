@@ -146,7 +146,6 @@
     <ClCompile Include="..\..\femlib\src\FileUtil.cpp" />
     <ClCompile Include="..\..\femlib\src\Material.cpp" />
     <ClCompile Include="..\..\femlib\src\MaterialQuad.cpp" />
-    <ClCompile Include="..\..\femlib\src\MatrixX.cpp" />
     <ClCompile Include="..\..\femlib\src\MatTable.cpp" />
     <ClCompile Include="..\..\femlib\src\MeshMulti.cpp" />
     <ClCompile Include="..\..\femlib\src\Quadrature.cpp" />
