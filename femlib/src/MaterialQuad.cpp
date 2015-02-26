@@ -26,6 +26,18 @@ MaterialQuad::MaterialQuad(const std::vector<StrainEne *> & ene, Quadrature * _q
   e=ene;
 }
 
+void MaterialQuad::init(ElementMesh * m)
+{
+  Element * e = m->e[0];
+  gradN.resize(e->nV());
+  for (int ii = 0; ii < e->nV(); ii++){
+    gradN[ii].resize(q->x.size());
+    for (int qq = 0; qq < q->x.size(); qq++){
+      gradN[ii][qq] = e->shapeFunGrad(ii, q->x[qq], m->X);
+    }
+  }
+}
+
 float MaterialQuad::getEnergy(Element* ele, ElementMesh * mesh)
 {
   float energy = 0;
@@ -48,8 +60,7 @@ std::vector<Vector3f> MaterialQuad::getForce(Element* ele, ElementMesh * mesh)
   float vol = ele->getVol(mesh->X);
   for(unsigned int jj = 0; jj<q->x.size(); jj++){
     for(int ii = 0; ii<ele->nV(); ii++){
-      Vector3f gradN = ele->shapeFunGrad(ii, q->x[jj], mesh->X);
-      f[ii] -= vol * q->w[jj] * (P[jj]*gradN);
+      f[ii] -= vol * q->w[jj] * (P[jj]*gradN[ii][jj]);
     }
   }
   return f;
@@ -76,19 +87,16 @@ Eigen::MatrixXf stiffness(int qi, const MaterialQuad * mat, Element* ele, Elemen
   int ndof = 3*ele->nV();
   Vector3f p = mat->q->x[qi];
 
-  std::vector<Vector3f> dN(nquad);
   Eigen::MatrixXf K = Eigen::MatrixXf::Zero(ndof, ndof);
   Matrix3f F = ele->defGrad(p,mesh->X,mesh->x);
-  for(int ii = 0;ii<8;ii++){
-    dN[ii] = ele->shapeFunGrad(ii,p,mesh->X);
-  }
+  
   for(int ii = 0;ii<8;ii++){
     for(int jj = 0;jj<3;jj++){
       Matrix3f dF;
-      dF.setRow(jj, dN[ii]);
+      dF.setRow(jj, mat->gradN[ii][qi]);
       Matrix3f dP = mat->e[ii]->getdPdx(F,dF);
       for(int vv = 0;vv<8;vv++){
-        Vector3f dfdxi = dP*dN[vv];
+        Vector3f dfdxi = dP*mat->gradN[vv][qi];
         int col = 3*ii+jj;
         for(int kk = 0;kk<3;kk++){
           K(3*vv+kk, col) = dfdxi[kk];

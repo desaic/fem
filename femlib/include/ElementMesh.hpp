@@ -35,7 +35,8 @@ public:
   ///@brief utility. call after initializing or changing X and e 
   ///X is copied to x;
   void initArrays();
-  
+  ///@brief add a material to the list of materials in this mesh
+  void addMaterial(Material*_m);
   ///@brief for debug, check the size of members.
   int check();
 

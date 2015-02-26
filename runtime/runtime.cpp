@@ -27,8 +27,8 @@ void runTest()
   stiffnessTest(2);
   //testCoarseDefGrad();
 	//forceTest(0);
-  //testCG();
-  cudaLinTest();
+  testCG();
+  //cudaLinTest();
   system("pause");
   exit(0);
 }
@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
     for (unsigned int jj = 0; jj < material[ii].e.size(); jj++){
       material[ii].e[jj] = &ene[ii];
     }
-    em->m.push_back(&material[ii]);
+    em->addMaterial(&material[ii]);
   }
 
   //assign some materials

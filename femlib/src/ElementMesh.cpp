@@ -12,6 +12,12 @@ void ElementMesh::initArrays()
   me.resize(e.size());
 }
 
+void ElementMesh::addMaterial(Material*_m)
+{
+  m.push_back(_m);
+  _m->init(this);
+}
+
 int ElementMesh::check()
 {
   if(fe.size()!=x.size()){

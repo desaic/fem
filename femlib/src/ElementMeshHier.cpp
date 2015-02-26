@@ -5,6 +5,7 @@
 #include "Element.hpp"
 #include "MaterialQuad.hpp"
 #include "Quadrature.hpp"
+#include "QuadPt.hpp"
 #include "StrainEne.hpp"
 #include <iostream>
 const float eps = 1e-6f;

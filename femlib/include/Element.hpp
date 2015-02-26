@@ -33,9 +33,9 @@ public:
   ///@return interpolation weight for each dof.
   virtual std::vector<float> shapeFun(const Vector3f & p) const=0;
 
-  ///@brief ii index of basis function.
-  ///@brief xx point in natural coordinates.
-  ///@brief X global array of rest positions.
+  ///@param ii index of basis function.
+  ///@param xx point in natural coordinates.
+  ///@param X global array of rest positions.
   virtual Vector3f shapeFunGrad(int ii, const Vector3f & xx,
     const std::vector<Vector3f> & X) const=0;
 

@@ -175,6 +175,7 @@
     <ClInclude Include="..\..\femlib\include\MatrixXd.hpp" />
     <ClInclude Include="..\..\femlib\include\MatTable.hpp" />
     <ClInclude Include="..\..\femlib\include\MeshMulti.hpp" />
+    <ClInclude Include="..\..\femlib\include\QuadPt.hpp" />
     <ClInclude Include="..\..\femlib\include\Quadrature.hpp" />
     <ClInclude Include="..\..\femlib\include\Stepper.hpp" />
     <ClInclude Include="..\..\femlib\include\StepperGrad.hpp" />

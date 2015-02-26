@@ -170,5 +170,8 @@
     <ClInclude Include="..\..\femlib\include\Timer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\femlib\include\QuadPt.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

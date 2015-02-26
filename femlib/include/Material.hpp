@@ -14,6 +14,8 @@ public:
   virtual MatrixXd getStiffness(Element* ele, ElementMesh * mesh);
   virtual ~Material();
 
+  virtual void init(ElementMesh * mesh){};
+  
   std::vector<float> param;
 };
 

@@ -14,6 +14,7 @@ public:
 
   int nF() const override{ return 6; }
 
+
   ///@brief natural coordinate for a point in reference space
   Vector3f natCoord(const Vector3f & p, const std::vector<Vector3f> & X);
   
