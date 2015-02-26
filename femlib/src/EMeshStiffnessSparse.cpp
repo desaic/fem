@@ -1,7 +1,7 @@
 #include "ElementMesh.hpp"
 #include "Element.hpp"
 #include "Eigen/Sparse"
-#include "MatrixXd.hpp"
+#include "MatrixX.hpp"
 
 typedef Eigen::Triplet<float> Tripletf;
 
@@ -13,7 +13,7 @@ void ElementMesh::getStiffnessSparse(std::vector<float> &val, bool trig, bool co
   for(unsigned int ii = 0;ii<e.size();ii++){
     Element * ele = e[ii];
     int nV = ele->nV();
-    MatrixXd K  = getStiffness(ii);
+    MatrixXf K  = getStiffness(ii);
     for(int jj = 0; jj<nV; jj++){
       int vj = ele->at(jj);
       for(int kk = 0; kk<nV; kk++){
@@ -83,6 +83,6 @@ void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,
     for (Eigen::SparseMatrix<float>::InnerIterator it(Ksparse, ii); it; ++it){
      J.push_back(it.row());
    }
-    I.push_back(J.size());
+    I.push_back((int)J.size());
   }
 }

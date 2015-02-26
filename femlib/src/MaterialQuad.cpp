@@ -1,7 +1,7 @@
 #include "MaterialQuad.hpp"
 #include "Element.hpp"
 #include "ElementMesh.hpp"
-#include "MatrixXd.hpp"
+#include "MatrixX.hpp"
 #include "Quadrature.hpp"
 #include "StrainEne.hpp"
 
@@ -66,7 +66,7 @@ std::vector<Vector3f> MaterialQuad::getForce(Element* ele, ElementMesh * mesh)
   return f;
 }
 
-MatrixXd MaterialQuad::getStiffness(Element* ele, ElementMesh * mesh)
+MatrixXf MaterialQuad::getStiffness(Element* ele, ElementMesh * mesh)
 {
   int ndof = 3* ele->nV();
   Eigen::MatrixXf K = Eigen::MatrixXf::Zero(ndof, ndof);
@@ -76,7 +76,7 @@ MatrixXd MaterialQuad::getStiffness(Element* ele, ElementMesh * mesh)
   }
   float vol = ele->getVol(mesh->X);
   K *= vol;
-  MatrixXd Kret(ndof, ndof);
+  MatrixXf Kret(ndof, ndof);
   copyMat(K, Kret, ndof, ndof);
   return Kret;
 }

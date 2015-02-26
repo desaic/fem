@@ -313,7 +313,7 @@ Render::init(World * _world)
   glfwGetFramebufferSize(window, &width, &height);
   ratio = width / (float) height;
   glViewport(0, 0, width, height);
-  glClearColor(0.95, 0.95, 0.95, 0.0);
+  glClearColor(0.95f, 0.95f, 0.95f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();

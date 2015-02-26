@@ -1,11 +1,11 @@
 #test true
 #hier true
 refine 4
-#render false
+render false
 #stepper grad
-#stepper admmCPU
+stepper admmCPU
 #stepper newton
-stepper newtonCuda
+#stepper newtonCuda
 #stepper admm
 
 nSteps 10000

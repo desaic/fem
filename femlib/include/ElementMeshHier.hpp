@@ -3,12 +3,12 @@
 #include <vector>
 #include "vecmath.h"
 #include "BoundVec3.hpp"
-
+#include "MatrixX.hpp"
 class Element;
 class Material;
-struct MatrixXd;
 class ElementMesh;
 struct QuadPt;
+
 ///@brief Assumes materials are MaterialQuad. 
 ///For each element, all quadrature points uses the first material stored in MaterialQuad.
 class ElementMeshHier{

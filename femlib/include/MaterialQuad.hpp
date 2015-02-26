@@ -20,7 +20,7 @@ public:
   float getEnergy(Element* ele, ElementMesh * mesh);
   std::vector<Vector3f> getForce(Element* ele, ElementMesh * mesh);
   
-  MatrixXd getStiffness(Element* ele, ElementMesh * mesh);
+  MatrixXf getStiffness(Element* ele, ElementMesh * mesh);
 
   std::vector<StrainEne*> e;
   const Quadrature * q;

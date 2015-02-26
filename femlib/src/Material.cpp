@@ -1,8 +1,8 @@
 #include "Material.hpp"
-#include "MatrixXd.hpp"
+#include "MatrixX.hpp"
 Material::Material(){}
 Material::~Material(){}
-MatrixXd Material::getStiffness(Element* ele, ElementMesh * mesh)
+MatrixXf Material::getStiffness(Element* ele, ElementMesh * mesh)
 {
-  return MatrixXd();
+  return MatrixXf();
 }

@@ -2,7 +2,7 @@
 #include "Element.hpp"
 #include "ElementHex.hpp"
 #include "ElementMesh.hpp"
-#include "MatrixXd.hpp"
+#include "MatrixX.hpp"
 #include "LinSolve.hpp"
 #include "ArrayUtil.hpp"
 #include "femError.hpp"
@@ -35,10 +35,10 @@ std::vector<Vector3f>
   return ff;
 }
 
-MatrixXd
+MatrixXf
   AdmmCPU::stiffness(ElementMesh *mesh, int eIdx)
 {
-  MatrixXd K = mesh->getStiffness(eIdx);
+  MatrixXf K = mesh->getStiffness(eIdx);
   for(int ii = 0;ii<K.mm;ii++){
     K(ii,ii) += ro[eIdx];
   }
@@ -55,7 +55,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
   
   for(int iter = 0; iter<NSteps; iter++){
     std::vector<Vector3f> force = getForces(m,eIdx);
-    MatrixXd K = stiffness(m,eIdx);
+    MatrixXf K = stiffness(m,eIdx);
     for(int ii = 0; ii<ele->nV(); ii++){
       int vidx = ele->at(ii);
       if(m->fixed[vidx]){
@@ -73,7 +73,7 @@ void AdmmCPU::minimizeElement(ElementMesh * m, Element * ele,
         }
       }
     }
-    linSolve(K,bb);
+    linSolvef(K,bb);
 
     for(int ii = 0; ii<ele->nV(); ii++){
       for(int jj = 0;jj<3;jj++){
@@ -120,7 +120,7 @@ void AdmmCPU::initVar()
   if(bb!=0){
     delete[] bb;
   }
-  bb = new double[3*m->x.size()];
+  bb = new float[3*m->x.size()];
   u.resize(m->e.size());
   y.resize(u.size());
   ro.resize(m->e.size(),ro0);

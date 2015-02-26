@@ -4,7 +4,7 @@
 #include "ElementMesh.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainLin.hpp"
-#include "MatrixXd.hpp"
+#include "MatrixX.hpp"
 #include "LinSolve.hpp"
 #include "ArrayUtil.hpp"
 #include "femError.hpp"
@@ -52,10 +52,10 @@ AdmmNoSpring::getForces(ElementMesh * eMesh, int eIdx)
   return ff;
 }
 
-MatrixXd
+MatrixXf
 AdmmNoSpring::stiffness(ElementMesh *mesh, int eIdx)
 {
-  MatrixXd K = mesh->getStiffness(eIdx);
+  MatrixXf K = mesh->getStiffness(eIdx);
   
   //std::ofstream out("debug.txt");
   //K.print(out);
@@ -81,7 +81,7 @@ void AdmmNoSpring::minimizeElement(ElementMesh * m, Element * ele,
   //std::ofstream out("debug.txt");
   for (int iter = 0; iter<NSteps; iter++){
     std::vector<Vector3f> force = getForces(m, eIdx);
-    MatrixXd K = stiffness(m, eIdx);
+    MatrixXf K = stiffness(m, eIdx);
     
     //K.print(out);
     //out << "\n";
@@ -112,7 +112,7 @@ void AdmmNoSpring::minimizeElement(ElementMesh * m, Element * ele,
     //}
     //out << "\n";
     
-    linSolve(K, bb);
+    linSolvef(K, bb);
     
     //for (int ii = 0; ii < 3 * ele->nV(); ii++){
     //  out << bb[ii] << "\n";
@@ -204,10 +204,10 @@ void AdmmNoSpring::init(ElementMesh *_m)
     }
     float sideLen = m->X[ele->at(7)][0] - m->X[ele->at(0)][0];
     float area = sideLen*sideLen;
-    T[ee] = 0.5*area*T[ee];
+    T[ee] = 0.5f*area*T[ee];
   }
 
-  bb = new double[3 * m->x.size()];
+  bb = new float[3 * m->x.size()];
   u.resize(m->e.size());
   y.resize(u.size());
   for (size_t ii = 0; ii<m->e.size(); ii++){

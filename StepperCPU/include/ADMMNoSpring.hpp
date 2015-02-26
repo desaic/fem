@@ -5,9 +5,9 @@
 #include "Stepper.hpp"
 #include <vector>
 #include <fstream>
-
+#include "MatrixX.hpp"
 class Element;
-struct MatrixXd;
+
 class AdmmNoSpring :public Stepper
 {
 public:
@@ -29,7 +29,7 @@ public:
   std::vector<Vector3f> Z;
 
   ///@temporary array for lin solve
-  double * bb;
+  float * bb;
 
   float tol;
 
@@ -42,7 +42,7 @@ public:
 
   std::vector<Vector3f> getForces(ElementMesh * eMesh, int eIdx);
 
-  MatrixXd stiffness(ElementMesh *mesh, int eIdx);
+  MatrixXf stiffness(ElementMesh *mesh, int eIdx);
 
   std::vector<Eigen::MatrixXf> T;
 

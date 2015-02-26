@@ -1,6 +1,6 @@
 #include "StepperNewton.hpp"
 #include "ElementMesh.hpp"
-#include "MatrixXd.hpp"
+#include "MatrixX.hpp"
 #include "ArrayUtil.hpp"
 #include "femError.hpp"
 
@@ -36,7 +36,7 @@ float StepperNewton::oneStepSparse()
 
 ///@brief add rows to K and b to constrain 6 degrees of freedom.
 ///@param K size is #DOF + 6
-void fixRigid(MatrixXd & K, double * b,
+void fixRigid(MatrixXf & K, float * b,
         ElementMesh * mesh)
 {
   int row = K.mm-6;
@@ -79,10 +79,10 @@ float StepperNewton::oneStepDense()
   std::vector<Vector3f> force = m->getForce();
   float E = m->getEnergy();
 
-  MatrixXd K = m->getStiffness();
+  MatrixXf K = m->getStiffness();
   
   int ndof = 3*(int)m->x.size();
-  std::vector<double> bb (ndof);
+  std::vector<float> bb (ndof);
   
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
     for(int jj = 0;jj<3;jj++){
@@ -106,7 +106,7 @@ float StepperNewton::oneStepDense()
     fixRigid(K,&(bb[0]),m);
   }
  
-  linSolve(K,&(bb[0]));
+  linSolvef(K,&(bb[0]));
   
   double totalMag = 0;
   for(int ii = 0;ii<ndof;ii++){

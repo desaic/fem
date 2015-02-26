@@ -4,9 +4,8 @@
 #include "vecmath.h"
 #include <vector>
 #include <fstream>
-
+#include "MatrixX.hpp"
 class Element;
-struct MatrixXd;
 class AdmmCPU:public Stepper
 {
 public:
@@ -30,7 +29,7 @@ public:
   std::vector<Vector3f> Z;
   
   ///@temporary array for lin solve
-  double * bb ;
+  float * bb ;
 
   ///@brief maximum distance allowed between x and z
   float maxDist;
@@ -50,7 +49,7 @@ public:
   
   std::vector<Vector3f> getForces(ElementMesh * eMesh, int eIdx);
   
-  MatrixXd stiffness(ElementMesh *mesh, int eIdx);
+  MatrixXf stiffness(ElementMesh *mesh, int eIdx);
 
   float prevE;
   std::ofstream out;

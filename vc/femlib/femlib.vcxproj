@@ -146,7 +146,7 @@
     <ClCompile Include="..\..\femlib\src\FileUtil.cpp" />
     <ClCompile Include="..\..\femlib\src\Material.cpp" />
     <ClCompile Include="..\..\femlib\src\MaterialQuad.cpp" />
-    <ClCompile Include="..\..\femlib\src\MatrixXd.cpp" />
+    <ClCompile Include="..\..\femlib\src\MatrixX.cpp" />
     <ClCompile Include="..\..\femlib\src\MatTable.cpp" />
     <ClCompile Include="..\..\femlib\src\MeshMulti.cpp" />
     <ClCompile Include="..\..\femlib\src\Quadrature.cpp" />
@@ -172,7 +172,7 @@
     <ClInclude Include="..\..\femlib\include\FileUtil.hpp" />
     <ClInclude Include="..\..\femlib\include\Material.hpp" />
     <ClInclude Include="..\..\femlib\include\MaterialQuad.hpp" />
-    <ClInclude Include="..\..\femlib\include\MatrixXd.hpp" />
+    <ClInclude Include="..\..\femlib\include\MatrixX.hpp" />
     <ClInclude Include="..\..\femlib\include\MatTable.hpp" />
     <ClInclude Include="..\..\femlib\include\MeshMulti.hpp" />
     <ClInclude Include="..\..\femlib\include\QuadPt.hpp" />

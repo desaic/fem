@@ -3,10 +3,10 @@
 #include <vector>
 #include "vecmath.h"
 #include "BoundVec3.hpp"
+#include "MatrixX.hpp"
 
 class Element;
 class Material;
-struct MatrixXd;
 
 class ElementMesh{
 public:
@@ -47,7 +47,7 @@ public:
   std::vector<Vector3f> getForce(int eIdx);
   std::vector<Vector3f> getForce();
 
-  MatrixXd getStiffness(int eIdx);
+  MatrixXf getStiffness(int eIdx);
 
   ///@param trig if true, return only the upper triangle of the symmetric matrix.
   void getStiffnessSparse(std::vector<float> &val, bool trig = false, bool constrained=false);
@@ -56,7 +56,7 @@ public:
   ///@param J column indices.
   void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig = false);
 
-  MatrixXd getStiffness();
+  MatrixXf getStiffness();
 
   virtual ~ElementMesh();
 };

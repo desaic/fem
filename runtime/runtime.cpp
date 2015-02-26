@@ -185,9 +185,10 @@ int main(int argc, char* argv[])
     refine = conf.getInt("refine");
   }
   int res = (int)std::pow(2, refine);
-  int nx = res, ny=4*res, nz=res;
-  //int nx = 32, ny = 80, nz = 32;
-  Vector3f ff(5, -10, 0);
+  //int nx = res, ny=4*res, nz=res;
+  int nx = 32, ny = 80, nz = 32;
+  //int nx = 16, ny = 40, nz = 16;
+  Vector3f ff(5, -20, 0);
   //per element pushing force
   ff = (1.0f / (nx*nz)) * ff;
 

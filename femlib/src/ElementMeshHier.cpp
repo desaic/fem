@@ -195,10 +195,10 @@ std::vector<Vector3f> ElementMeshHier::getForce(int level, int eIdx)
     Matrix3f Fl = Matrix3f::identity(), Fr = Matrix3f::identity();
     for (unsigned int jj = 0; jj < q->F.size(); jj++){
       Fprod = q->F[jj] * Fprod;
-      if (jj < level){
+      if ((int)jj < level){
         Fl = q->F[jj] * Fl;
       }
-      else if (jj > level){
+      else if ((int)jj > level){
         Fr = q->F[jj] * Fr;
       }
     }

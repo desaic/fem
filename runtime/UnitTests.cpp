@@ -6,7 +6,7 @@
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
 #include "StrainCorotLin.hpp"
-#include "MatrixXd.hpp"
+#include "MatrixX.hpp"
 #include "Quadrature.hpp"
 #include "StepperNewton.hpp"
 #include "LinSolveCusp.hpp"
@@ -34,7 +34,7 @@ void cudaLinTest()
   std::ofstream out("debug.txt");
 
   Vector3f ff(10, -50, 0);
-  ff = (1.0 / (nx*nz)) * ff;
+  ff = (1.0f / (nx*nz)) * ff;
 
   for (int ii = 0; ii<nx; ii++){
     for (int jj = 0; jj<nz; jj++){
@@ -140,9 +140,9 @@ void stiffnessTestHelper(StrainEne * ene)
   grid->m.push_back(material);
  // grid->x[1][0] += 0.1f;
   //grid->x[3][1] += 0.2f;
-  MatrixXd KAna = grid->getStiffness();
+  MatrixXf KAna = grid->getStiffness();
   int nVar = (int)grid->X.size();
-  MatrixXd K(3*nVar,3*nVar);
+  MatrixXf K(3*nVar,3*nVar);
   //check each partial derivative
   for(unsigned int ii = 0;ii<grid->x.size();ii++){
     for(int jj = 0; jj<3; jj++){
@@ -190,7 +190,7 @@ void linearTMatrixTest(StrainLin * ene)
   grid->m.push_back(material);
   grid->x[1][0] += 0.1f;
   grid->x[3][1] += 0.2f;
-  MatrixXd K = grid->getStiffness();
+  MatrixXf K = grid->getStiffness();
 
   //linear material stiffness
   ElementHex * ele = (ElementHex*)grid->e[0];
