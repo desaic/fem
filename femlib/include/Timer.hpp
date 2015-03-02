@@ -9,6 +9,7 @@ public:
   void start();
   ///@return -1 if overflow happened
   int end();
+  float getSeconds();
   float getMilliseconds();
   clock_t getClocks();
 private:

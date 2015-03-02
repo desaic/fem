@@ -17,9 +17,14 @@ int Timer::end()
   return 0;
 }
 
-float Timer::getMilliseconds()
+float Timer::getSeconds()
 {
   return (t1 - t0) / (float)(CLOCKS_PER_SEC);
+}
+
+float Timer::getMilliseconds()
+{
+  return (t1 - t0) / (CLOCKS_PER_SEC/1000.0f);
 }
 
 clock_t Timer::getClocks()

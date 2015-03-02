@@ -26,7 +26,7 @@ void runSim(ElementMesh * m, Stepper * stepper)
     t.start();
     int ret = stepper->oneStep();
     t.end();
-    float duration = t.getMilliseconds();
+    float duration = t.getSeconds();
     std::cout << "time: " << duration << "\n";
     if (ret < 0){
       break;
@@ -53,7 +53,7 @@ int Stepper::step()
     t.start();
     int ret = oneStep();
     t.end();
-    float duration = t.getMilliseconds();
+    float duration = t.getSeconds();
     std::cout << ii << " time: " << duration << "\n";
     if (ret < 0){
       return ret;

@@ -101,7 +101,7 @@ void cudaLinTest()
     std::cout << f[ii][0] << " " << f[ii][1] << " " << f[ii][2] << "\n";
   }
   timer.end();
-  std::cout << timer.getMilliseconds();
+  std::cout << timer.getSeconds();
   delete[]x;
 }
 

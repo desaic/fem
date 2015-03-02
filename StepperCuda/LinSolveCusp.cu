@@ -1,5 +1,6 @@
 #include "LinSolveCusp.hpp"
 #include "cuda.h"
+#include "Timer.hpp"
 
 #include <thrust/version.h>
 #include <cusp/version.h>
@@ -66,7 +67,12 @@ void LinSolveCusp::solve(std::vector<ValueType> & A, ValueType * xIO)
       DeviceValueArrayView > DeviceView;
     DeviceView A(mSize, mSize, nnz, row_offsets, column_indices, values);
     cusp::default_monitor<ValueType> monitor(b, nIter, 1e-5);
+
+    //Timer timer;
+    //timer.start();
     cusp::krylov::cg(A, x, b, monitor);
+    //timer.end();
+    //std::cout << "Cusp cg time: " << timer.getSeconds() << "\n";
     cudaMemcpy((void*)xIO, device_x, mSize*sizeof(ValueType), cudaMemcpyDeviceToHost);
   }
 }

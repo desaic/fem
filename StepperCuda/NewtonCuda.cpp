@@ -2,7 +2,7 @@
 #include "ElementMesh.hpp"
 #include "femError.hpp"
 #include "ArrayUtil.hpp"
-
+#include "Timer.hpp"
 #include <iostream>
 NewtonCuda::NewtonCuda() :dx_tol(1e-5f), h(1.0f), linIter(1000)
 {
@@ -40,8 +40,11 @@ int NewtonCuda::oneStep()
     }
   }
  
+  Timer timer;
+  timer.start();
   solver.solve(val, &(bb[0]));
-
+  timer.end();
+  std::cout << "lin solve time: " << timer.getSeconds() << "\n";
   double totalMag = 0;
   for (int ii = 0; ii<ndof; ii++){
     totalMag += std::abs(bb[ii]);

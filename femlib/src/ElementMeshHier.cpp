@@ -250,7 +250,6 @@ MatrixXf ElementMeshHier::getStiffness(int level, int eIdx)
   MatrixXf Kquad;
   for (unsigned int ii = 0; ii < quadIdx.size(); ii++){
     Kquad = getStiffness(level, eIdx, quadIdx[ii]);
-   // Kquad.print(std::cout);
     addScaleMat(Kquad, K, vol* quadpt[quadIdx[ii]].w[level], matSize, matSize);
   }
   return K;
