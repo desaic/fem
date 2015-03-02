@@ -175,34 +175,40 @@ float ElementMeshHier::getEnergy(int level, int eIdx)
   return vol* E;
 }
 
+void ElementMeshHier::defGradProd(int level, int qi, Matrix3f & Fl, Matrix3f & Fr)
+{
+  updateDefGrad(level, qi);
+  QuadPt * q = &quadpt[qi];
+  //F=Fn..Fk..F0. F0 is fine level.
+  Matrix3f Fprod = Matrix3f::identity();
+  //matrices on the left and right of Fk
+  for (unsigned int jj = 0; jj < q->F.size(); jj++){
+    Fprod = q->F[jj] * Fprod;
+    if ((int)jj < level){
+      Fl = q->F[jj] * Fl;
+    }
+    else if ((int)jj > level){
+      Fr = q->F[jj] * Fr;
+    }
+  }
+}
+
 std::vector<Vector3f> ElementMeshHier::getForce(int level, int eIdx)
 {
   Element * e = m[level]->e[eIdx];
   std::vector<Vector3f> fe(e->nV());
 
-  float E = 0;
   std::vector<int> quadIdx = getQuadIdx(level, eIdx);
   Element * ele = m[level]->e[eIdx];
   float vol = ele->getVol(m[level]->X);
 
   for (unsigned int ii = 0; ii < quadIdx.size(); ii++){
     int qi = quadIdx[ii];
-    updateDefGrad(level, qi);
     QuadPt * q = &quadpt[qi];
-    //F=Fn..Fk..F0. F0 is fine level.
-    Matrix3f Fprod = Matrix3f::identity();
     //matrices on the left and right of Fk
     Matrix3f Fl = Matrix3f::identity(), Fr = Matrix3f::identity();
-    for (unsigned int jj = 0; jj < q->F.size(); jj++){
-      Fprod = q->F[jj] * Fprod;
-      if ((int)jj < level){
-        Fl = q->F[jj] * Fl;
-      }
-      else if ((int)jj > level){
-        Fr = q->F[jj] * Fr;
-      }
-    }
-
+    defGradProd(level, qi, Fl, Fr);
+    Matrix3f Fprod = Fl * q->F[level] * Fr;
     //get fine element index to look up material.
     int feidx = q->ei[0];
     MaterialQuad* mat = (MaterialQuad*)(m[0]->m[m[0]->me[feidx]]);
@@ -234,21 +240,59 @@ std::vector<Vector3f> ElementMeshHier::getForce(int level)
 
 MatrixXf ElementMeshHier::getStiffness(int level, int eIdx)
 {
-  MatrixXf K;
-  //compute dF/dq_i for 8 vertices
   ElementMesh * em = m[level];
   Element * e = em->e[eIdx];
-  std::vector<Vector3f> dN(e->nV());
-  for (int ii = 0; ii < e->nV(); ii++){
-
+  int matSize = 3 * e->nV();
+  MatrixXf K(matSize, matSize);
+  K.fill(0.0f);
+  std::vector<int> quadIdx = getQuadIdx(level, eIdx);
+  float vol = e->getVol(m[level]->X);
+  MatrixXf Kquad;
+  for (unsigned int ii = 0; ii < quadIdx.size(); ii++){
+    Kquad = getStiffness(level, eIdx, quadIdx[ii]);
+   // Kquad.print(std::cout);
+    addScaleMat(Kquad, K, vol* quadpt[quadIdx[ii]].w[level], matSize, matSize);
   }
   return K;
 }
 
-MatrixXf ElementMeshHier::getStiffness(int level, int eIdx, int qIdx)
+MatrixXf ElementMeshHier::getStiffness(int level, int eIdx, int qi)
 {
-  MatrixXf K;
+  Element * e = m[level]->e[eIdx];
+  MatrixXf K(3 * e->nV(), 3 * e->nV());
 
+  Element * ele = m[level]->e[eIdx];
+  float vol = ele->getVol(m[level]->X);
+
+  QuadPt * q = &quadpt[qi];
+  //matrices on the left and right of Fk
+  Matrix3f Fl = Matrix3f::identity(), Fr = Matrix3f::identity();
+  defGradProd(level, qi, Fl, Fr);
+  Matrix3f F = Fl * q->F[level] * Fr;
+  //fine element index
+  int feidx = q->ei[0];
+  MaterialQuad* mat = (MaterialQuad*)(m[0]->m[m[0]->me[feidx]]);
+  std::vector<Vector3f> dN(e->nV());
+
+  for (int ii = 0; ii < e->nV(); ii++){
+    dN[ii] = e->shapeFunGrad(ii, q->X[level], m[level]->X);
+  }
+  
+  for (int ii = 0; ii < e->nV(); ii++){
+    for (int dimi = 0; dimi < 3; dimi++){
+      Matrix3f dF;
+      dF.setRow(dimi, dN[ii]);
+      dF = Fl * dF * Fr;
+      Matrix3f dP = mat->e[0]->getdPdx(F, dF);
+      for (int jj = 0; jj < e->nV(); jj++){
+        Vector3f dfdxi = Fr.transposed() *dP*Fl.transposed() * dN[jj];
+        int col = 3 * ii + dimi;
+        for (int dimj = 0; dimj < 3; dimj++){
+          K(col, 3 * jj + dimj) = dfdxi[dimj];
+        }
+      }
+    }
+  }
   return K;
 }
 

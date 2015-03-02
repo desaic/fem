@@ -115,6 +115,27 @@ struct MatrixX
 };
 
 template<typename T1, typename T2>
+void addMat(const T1 & src, T2 & dst, int m, int n)
+{
+  for (int ii = 0; ii<m; ii++){
+    for (int jj = 0; jj<n; jj++){
+      dst(ii, jj) += src(ii, jj);
+    }
+  }
+}
+
+template<typename T1, typename T2>
+void addScaleMat(const T1 & src, T2 & dst, float s, int m, int n)
+{
+  for (int ii = 0; ii<m; ii++){
+    for (int jj = 0; jj<n; jj++){
+      dst(ii, jj) += s * src(ii, jj);
+    }
+  }
+}
+
+
+template<typename T1, typename T2>
 void addSubMat(const T1 & src, T2 & dst, int si1, int sj1, int si2, int sj2,
                 int m, int n)
 {

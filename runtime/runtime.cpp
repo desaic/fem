@@ -33,9 +33,8 @@ void runTest()
   exit(0);
 }
 
-int runHier(const ConfigFile & conf)
+void testHierForce(const ConfigFile & conf)
 {
-  //int nx = 4, ny = 16, nz = 4;
   int nlevel = 2;
   int nx = 4, ny = 4, nz = 4;
   ElementRegGrid * grid = new ElementRegGrid(nx, ny, nz);
@@ -63,7 +62,7 @@ int runHier(const ConfigFile & conf)
       }
     }
   }
-  Vector3f ff(1,-4,0);
+  Vector3f ff(1, -4, 0);
   for (int ii = 0; ii<nx; ii++){
     for (int jj = 0; jj<nz; jj++){
       int eidx = grid->GetEleInd(ii, 0, jj);
@@ -114,13 +113,13 @@ int runHier(const ConfigFile & conf)
   }
 
   //sanity check
-  for (unsigned int level = 0; level < em->m.size(); level++){
-    float E = 0;
-    for (unsigned int ei = 0; ei < em->m[level]->e.size(); ei++){
-      E += em->getEnergy(level,ei);
-    }
-    std::cout << "E: " << E<<"\n";
-  }
+  //for (unsigned int level = 0; level < em->m.size(); level++){
+  //  float E = 0;
+  //  for (unsigned int ei = 0; ei < em->m[level]->e.size(); ei++){
+  //    E += em->getEnergy(level, ei);
+  //  }
+  //  std::cout << "E: " << E << "\n";
+  //}
 
   //numerical differencing force.
   float h = 0.001f;
@@ -129,20 +128,20 @@ int runHier(const ConfigFile & conf)
     std::cout << "====== " << level << " ======\n";
     std::vector<Vector3f> f = em->getForce(level);
     //numerical diff force
-    std::vector<Vector3f> fnum (f.size());
+    std::vector<Vector3f> fnum(f.size());
 
     std::cout << std::scientific;
     std::cout << std::setprecision(3);
-    
+
     ElementMesh * m = em->m[level];
-    
+
     for (unsigned int vi = 0; vi < m->x.size(); vi++){
       for (int dim = 0; dim < 3; dim++){
         m->x[vi][dim] += h;
         em->updateDefGrad(level);
         float Ep, Em;
         Ep = em->getEnergy();
-        m->x[vi][dim] -= 2*h;
+        m->x[vi][dim] -= 2 * h;
         em->updateDefGrad(level);
         Em = em->getEnergy();
         m->x[vi][dim] += h;
@@ -162,8 +161,132 @@ int runHier(const ConfigFile & conf)
     std::cout << "max diff norm: " << maxDiff << "\n";
     std::cout << "E: " << E << "\n";
   }
+  system("pause");
+}
+
+void testHierStiffness(const ConfigFile & conf)
+{
+  int nlevel = 2;
+  int nx = 4, ny = 4, nz = 4;
+  ElementRegGrid * grid = new ElementRegGrid(nx, ny, nz);
+  std::vector<StrainLin> ene(2);
+  ene[0].param[0] = 10000;
+  ene[0].param[1] = 100000;
+  ene[1].param[0] = 100000;
+  ene[1].param[1] = 1000000;
+  std::vector<MaterialQuad> material(ene.size());
+  for (unsigned int ii = 0; ii < material.size(); ii++){
+    for (unsigned int jj = 0; jj < material[ii].e.size(); jj++){
+      material[ii].e[jj] = &ene[ii];
+    }
+    grid->m.push_back(&material[ii]);
+  }
+
+  //assign some materials
+  for (int ii = 0; ii < nx; ii++){
+    for (int jj = 0; jj < ny; jj++){
+      for (int kk = 0; kk < nz; kk++){
+        int eidx = grid->GetEleInd(ii, jj, kk);
+        if (jj < ny / 2){
+          //  em->me[eidx] = 1;
+        }
+      }
+    }
+  }
+
+  Vector3f ff(1, -4, 0);
+  for (int ii = 0; ii<nx; ii++){
+    for (int jj = 0; jj<nz; jj++){
+      int eidx = grid->GetEleInd(ii, 0, jj);
+      int aa[4] = { 0, 1, 4, 5 };
+      for (int kk = 0; kk<4; kk++){
+        int vidx = grid->e[eidx]->at(aa[kk]);
+        grid->fixed[vidx] = 1;
+      }
+
+      eidx = grid->GetEleInd(ii, ny - 1, jj);
+      int bb[4] = { 2, 3, 6, 7 };
+      for (int kk = 0; kk<4; kk++){
+        int vidx = grid->e[eidx]->at(bb[kk]);
+        grid->fe[vidx] += ff;
+      }
+    }
+  }
+
+  ElementMeshHier * em = new ElementMeshHier();
+  em->m.push_back(grid);
+  em->buildHier(nlevel);
+  ElementMesh * cm = em->m[nlevel];
+
+  //apply some displacement
+  Vector3f offset(0.1f, 0.2f, 0.0f);
+  for (unsigned int level = 0; level < em->m.size(); level++){
+    float dx = em->m[level]->X[1][2] - em->m[level]->X[0][2];
+    for (unsigned int vi = 0; vi < em->m[level]->x.size(); vi++){
+      if (em->m[level]->fixed[vi]){
+        continue;
+      }
+      em->m[level]->x[vi] += dx*offset * em->m[level]->x[vi][1];
+    }
+    em->updateDefGrad(level);
+  }
+
+  float h = 0.001;
+  std::cout << "Check stiffness analytical vs numerical\n\n";
+  //numerical differencing stiffness
+  for (unsigned int level = 0; level < em->m.size(); level++){
+    int eIdx = 0;
+    float E = 0;
+    std::cout << "====== " << level << " ======\n";
+    MatrixXf K = em->getStiffness(level, eIdx);
+    //numerical diff force
+    MatrixXf Knum(K.mm, K.nn);
+
+    std::cout << std::scientific;
+    std::cout << std::setprecision(3);
+
+    ElementMesh * m = em->m[level];
+    Element * e = m->e[eIdx];
+    for (unsigned int vi = 0; vi < e->nV(); vi++){
+      for (int dim = 0; dim < 3; dim++){
+        m->x[e->at(vi)][dim] += h;
+        em->updateDefGrad(level);
+        std::vector<Vector3f> fp, fm;
+        fp = em->getForce(level, eIdx);
+        m->x[e->at(vi)][dim] -= 2 * h;
+        em->updateDefGrad(level);
+        fm = em->getForce(level, eIdx);
+        m->x[e->at(vi)][dim] += h;
+        for (int vj = 0; vj < e->nV(); vj++){
+          Vector3f df = (0.5 / h) * (fp[vj] - fm[vj]);
+          for (int dimj = 0; dimj < 3; dimj++){
+            Knum(3 * vi + dim, 3 * vj + dimj) = df[dimj];
+          }
+        }
+      }
+    }
+    float maxDiff = 0;
+    K.print(std::cout);
+    std::cout << "\n----------------\n\n";
+    Knum.print(std::cout);
+    for (int ii = 0; ii < K.mm; ii++){
+      for (int jj = 0; jj < K.nn; jj++){
+        float diff = std::abs(K(ii, jj) - Knum(ii, jj));
+        if (diff > maxDiff){
+          maxDiff = diff;
+        }
+      }
+    }
+    std::cout << "max diff norm: " << maxDiff << "\n";
+    std::cout << "E: " << E << "\n";
+  }
 
   system("pause");
+}
+
+int runHier(const ConfigFile & conf)
+{
+  //int nx = 4, ny = 16, nz = 4;
   return 0;
 }
 
@@ -175,7 +298,14 @@ int main(int argc, char* argv[])
   if (conf.getBool("test")){
     runTest();
   }
-  else if (conf.getBool("hier")){
+  else if (conf.getBool("testHierForce")){
+    testHierForce(conf);
+    return 0;
+  }
+  else if (conf.getBool("testHierStiffness")){
+    testHierStiffness(conf);
+    return 0;
+  }else if (conf.getBool("hier")){
     int ret = runHier(conf);
     return ret;
   }

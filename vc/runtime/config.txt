@@ -1,5 +1,6 @@
 #test true
-hier true
+#hier true
+testHierStiffness true
 refine 2
 #render false
 #stepper grad
