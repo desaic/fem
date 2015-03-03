@@ -57,6 +57,8 @@ public:
   void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig = false);
 
   MatrixXf getStiffness();
+  
+  float eleSize();
 
   virtual ~ElementMesh();
 };

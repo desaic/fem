@@ -84,6 +84,11 @@ std::vector<Vector3f> ElementMesh::getForce()
   return force;
 }
 
+float ElementMesh::eleSize()
+{
+  return X[e[0]->at(7)][0] - X[e[0]->at(0)][0];
+}
+
 ElementMesh::ElementMesh():u(0)
 {}
 

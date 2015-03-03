@@ -4,7 +4,7 @@
 #include "ArrayUtil.hpp"
 #include "Timer.hpp"
 #include <iostream>
-NewtonCuda::NewtonCuda() :dx_tol(1e-5f), h(1.0f), linIter(1000)
+NewtonCuda::NewtonCuda() :dx_tol(1e-5f), h(1.0f), linIter(10000)
 {
   solver.nIter = linIter;
 }
@@ -19,11 +19,17 @@ void NewtonCuda::init(ElementMesh * _m)
 
 int NewtonCuda::oneStep()
 {
+
+  //Timer timer;
+
   std::vector<Vector3f> force = m->getForce();
   float E = m->getEnergy();
 
   std::vector<float> val;
+  //timer.start();
   m->getStiffnessSparse(val, false,true);
+  //timer.end();
+  //std::cout << "assembly time: " << timer.getSeconds() << "\n";
 
   int ndof = 3 * (int)m->x.size();
   std::vector<float> bb(ndof);
@@ -40,11 +46,12 @@ int NewtonCuda::oneStep()
     }
   }
  
-  Timer timer;
-  timer.start();
+  //timer.start();
   solver.solve(val, &(bb[0]));
-  timer.end();
-  std::cout << "lin solve time: " << timer.getSeconds() << "\n";
+  //timer.end();
+  //std::cout << "lin solve time: " << timer.getSeconds() << "\n";
+
+  //timer.start();
   double totalMag = 0;
   for (int ii = 0; ii<ndof; ii++){
     totalMag += std::abs(bb[ii]);
@@ -55,11 +62,13 @@ int NewtonCuda::oneStep()
       force[ii][jj] = (float)bb[3 * ii + jj];
     }
   }
-  std::cout << "total disp: " << totalMag <<" ,h: "<<h<< ", E:"<<E<<"\n";
+  //std::cout << "total disp: " << totalMag << " ,h: " << h << "\n";
+  std::cout<< "E: " << E << "\n";
   //line search
   std::vector<Vector3f> x0 = m->x;
   h = 1.0f;
   float E1 = E;
+  bool valid = true;
   while (1){
     if (totalMag * h<dx_tol){
       return -1;
@@ -71,13 +80,19 @@ int NewtonCuda::oneStep()
       fem_error = 0;
       h = 0.5f* h;
       if (h<1e-12){
-        return -1;
+        valid = false;
         break;
       }
     }
     else{
-      return 0;
+      break;
     }
   }
   
+  //timer.end();
+  //std::cout << "line search time: " << timer.getSeconds() << "\n";
+  if (!valid){
+    return -1;
+  }
+  return 0;
 }

@@ -27,13 +27,15 @@ public:
   ///@param qidx index of quadrature point
   void updateDefGrad(int level, int qidx);
   void updateDefGrad(int level);
-  float getEnergy();
+  float getEnergy(int level = 0);
   float getEnergy(int level, int eIdx);
 
   ///@brief computes internal forces only
   std::vector<Vector3f> getForce(int level, int eIdx);
   std::vector<Vector3f> getForce(int level);
 
+  void getStiffnessPattern(int level, std::vector<int> & I, std::vector<int> & J, bool trig);
+  void getStiffness(int level, std::vector<float> &val, bool trig, bool constrained);
   ///@brief stiffness block between dofs at the same level.
   MatrixXf getStiffness(int level, int eIdx);
   ///@brief stiffness contributed by a quadrature point.

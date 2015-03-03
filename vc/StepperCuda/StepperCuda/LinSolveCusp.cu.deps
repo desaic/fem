@@ -297,6 +297,8 @@ D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ammintrin.h
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdexcept
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xstring
 D:\cuda6.5\include\cuda.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\femlib\include\Timer.hpp
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ctime
 D:\cuda6.5\include\thrust/version.h
 D:\cuda6.5\include\thrust/detail/config.h
 D:\cuda6.5\include\thrust/detail/config/config.h
@@ -732,7 +734,6 @@ D:\cuda6.5\include\thrust/system/cuda/detail/inner_product.h
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\iomanip
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xlocmon
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xloctime
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ctime
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/poisson.h
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/stencil.h
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\include\cusp/gallery/stencil.inl

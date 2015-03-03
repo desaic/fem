@@ -12,6 +12,7 @@
 #include "AdmmCPU.hpp"
 #include "AdmmNoSpring.hpp"
 #include "NewtonCuda.hpp"
+#include "NewtonCudaHier.hpp"
 //#include "IpoptStepper.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
@@ -286,7 +287,86 @@ void testHierStiffness(const ConfigFile & conf)
 
 int runHier(const ConfigFile & conf)
 {
-  //int nx = 4, ny = 16, nz = 4;
+  int nx = 4, ny = 16, nz = 4;
+  int nlevel = 2;
+  ElementRegGrid * grid = new ElementRegGrid(nx, ny, nz);
+  std::vector<StrainEneNeo> ene(2);
+  ene[0].param[0] = 10000;
+  ene[0].param[1] = 100000;
+  ene[1].param[0] = 100000;
+  ene[1].param[1] = 1000000;
+  std::vector<MaterialQuad> material(ene.size());
+  for (unsigned int ii = 0; ii < material.size(); ii++){
+    for (unsigned int jj = 0; jj < material[ii].e.size(); jj++){
+      material[ii].e[jj] = &ene[ii];
+    }
+    grid->m.push_back(&material[ii]);
+  }
+
+  //assign some materials
+  for (int ii = 0; ii < nx; ii++){
+    for (int jj = 0; jj < ny; jj++){
+      for (int kk = 0; kk < nz; kk++){
+        int eidx = grid->GetEleInd(ii, jj, kk);
+        if (jj < ny / 2){
+          //  em->me[eidx] = 1;
+        }
+      }
+    }
+  }
+
+  Vector3f ff(5, -10, 0);
+  for (int ii = 0; ii<nx; ii++){
+    for (int jj = 0; jj<nz; jj++){
+      int eidx = grid->GetEleInd(ii, 0, jj);
+      int aa[4] = { 0, 1, 4, 5 };
+      for (int kk = 0; kk<4; kk++){
+        int vidx = grid->e[eidx]->at(aa[kk]);
+        grid->fixed[vidx] = 1;
+      }
+
+      eidx = grid->GetEleInd(ii, ny - 1, jj);
+      int bb[4] = { 2, 3, 6, 7 };
+      for (int kk = 0; kk<4; kk++){
+        int vidx = grid->e[eidx]->at(bb[kk]);
+        grid->fe[vidx] += ff;
+      }
+    }
+  }
+
+  ElementMeshHier * em = new ElementMeshHier();
+  em->m.push_back(grid);
+  em->buildHier(nlevel);
+  ElementMesh * cm = em->m[nlevel];
+
+  World * world = new World();
+  bool renderOpt = true;
+  if (conf.hasOpt("render") && conf.getBool("render") == false){
+    renderOpt = false;
+  }
+  if (renderOpt){
+    for (unsigned int ii = 0; ii < em->m.size(); ii++){
+      world->em.push_back(em->m[ii]);
+    }
+  }
+  Stepper * stepper = 0;
+  int nSteps = 10000;
+  if (conf.hasOpt("nSteps")){
+    nSteps = conf.getInt("nSteps");
+  }
+  
+  stepper = new NewtonCudaHier();
+  //stepper->rmRigid = true;
+
+  stepper->nSteps = nSteps;
+  ///@TODO: need better type hierarchy
+  stepper->init((ElementMesh*)em);
+  stepper->launchThread();
+  Render render;
+  world->stepper = stepper;
+  render.init(world);
+  render.loop();
+
   return 0;
 }
 
@@ -338,15 +418,17 @@ int main(int argc, char* argv[])
     }
     em->addMaterial(&material[ii]);
   }
-
   //assign some materials
   for (int ii = 0; ii < nx; ii++){
     for (int jj = 0; jj < ny; jj++){
       for (int kk = 0; kk < nz; kk++){
         int eidx = em->GetEleInd(ii, jj, kk);
-        if (jj < ny / 2){
+        //if (jj < ny / 2){
         //  em->me[eidx] = 1;
-        }
+        //}
+        //if ( (ii == 0) || ii == nx - 1 || kk == 0 || kk == nz - 1){
+        //  em->me[eidx] = 1;
+        //}
       }
     }
   }
@@ -396,7 +478,7 @@ int main(int argc, char* argv[])
   }
   else if (stepperType == "admmCPU"){
     stepper = new AdmmCPU();
-    ((AdmmCPU*)stepper)->ro0 = 100;
+    ((AdmmCPU*)stepper)->ro0 = 50;
   }
   else if (stepperType == "grad"){
     stepper = new StepperGrad();

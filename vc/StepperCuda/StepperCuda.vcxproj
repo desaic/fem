@@ -153,14 +153,26 @@ copy "$(CudaToolkitBinDir)\cudart*.dll" "$(OutDir)"</Command>
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\StepperCuda\NewtonCudaHier.cpp" />
+    <CudaCompile Include="..\..\StepperCuda\ADMM.cu" />
+    <CudaCompile Include="..\..\StepperCuda\HexEle.cu" />
     <CudaCompile Include="..\..\StepperCuda\LinSolveCusp.cu">
       <FileType>CppCode</FileType>
     </CudaCompile>
     <ClCompile Include="..\..\StepperCuda\NewtonCuda.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\StepperCuda\include\ADMM.h" />
+    <ClInclude Include="..\..\StepperCuda\include\CGCuda.h" />
+    <ClInclude Include="..\..\StepperCuda\include\cuPrintf.cuh" />
+    <ClInclude Include="..\..\StepperCuda\include\float3x3.h" />
+    <ClInclude Include="..\..\StepperCuda\include\float3x3_helper.h" />
+    <ClInclude Include="..\..\StepperCuda\include\helper_math.h" />
+    <ClInclude Include="..\..\StepperCuda\include\HexEle.h" />
     <ClInclude Include="..\..\StepperCuda\include\LinSolveCusp.hpp" />
+    <ClInclude Include="..\..\StepperCuda\include\NeoHookean.h" />
     <ClInclude Include="..\..\StepperCuda\include\NewtonCuda.hpp" />
+    <ClInclude Include="..\..\StepperCuda\include\NewtonCudaHier.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

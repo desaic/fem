@@ -7,7 +7,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\StepperCuda\NewtonCuda.cpp" />
-    <ClCompile Include="..\..\StepperCuda\LinSolveCusp.cu" />
+    <ClCompile Include="..\..\StepperCuda\NewtonCudaHier.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\StepperCuda\include\NewtonCuda.hpp">
@@ -16,5 +16,37 @@
     <ClInclude Include="..\..\StepperCuda\include\LinSolveCusp.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\NewtonCudaHier.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\CGCuda.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\float3x3.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\float3x3_helper.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\helper_math.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\HexEle.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\NeoHookean.h">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\cuPrintf.cuh">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\StepperCuda\include\ADMM.h">
+      <Filter>include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="..\..\StepperCuda\LinSolveCusp.cu" />
+    <CudaCompile Include="..\..\StepperCuda\HexEle.cu" />
+    <CudaCompile Include="..\..\StepperCuda\ADMM.cu" />
   </ItemGroup>
 </Project>

@@ -77,7 +77,7 @@ void LinSolveCusp::solve(std::vector<ValueType> & A, ValueType * xIO)
   }
 }
 
-LinSolveCusp::~LinSolveCusp()
+void LinSolveCusp::dealloc()
 {
   if (device_I != 0){
     cudaFree(device_I);
@@ -103,6 +103,11 @@ LinSolveCusp::~LinSolveCusp()
     cudaFree(device_b);
     device_b = 0;
   }
+}
+
+LinSolveCusp::~LinSolveCusp()
+{
+  dealloc();
 }
 
 // where to perform the computation
@@ -191,7 +196,7 @@ void solveTriplet(std::vector<int> & I, std::vector<int> & J,
   cusp::array1d<ValueType, MemorySpace> xdev(mSize, 0);
   cusp::array1d<ValueType, MemorySpace> bdev(b);
   cusp::csr_matrix<int, ValueType, MemorySpace> Adev(A);
-  cusp::default_monitor<ValueType> monitor(bdev, 10000, 1e-7);
+  cusp::default_monitor<ValueType> monitor(bdev, 10000, 1e-3);
   cusp::identity_operator<ValueType, cusp::device_memory> M(A.num_rows, A.num_rows);
   cusp::krylov::cg(Adev, xdev, bdev, monitor, M);
  // cusp::print(A);
