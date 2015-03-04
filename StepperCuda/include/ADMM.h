@@ -2,15 +2,19 @@
 #define ADMM_H
 #include <vector>
 #include <string>
+#include "Stepper.hpp"
 #include "vecmath.h"
 #include "vector_types.h"
 struct ADMMInfo;
 class ElementMesh;
-class ADMMStepper
+class ADMMStepper:public Stepper
 {
 public:
 	ADMMStepper();
   ~ADMMStepper();
+
+  void init(ElementMesh * _m);
+
   ///@lagrange multiplier for each copy of a vertex
   std::vector<std::vector<Vector3f> > l;
   
@@ -35,11 +39,10 @@ public:
 
   float  * Ehost, *Edev;
   float3 * fhost, *fdev;
+  float prevE;
 
-  ElementMesh * e;
-
-  void step();
-  void initVar(ElementMesh * _e);
+  int oneStep();
+  void initVar();
 
   //used for line search
   

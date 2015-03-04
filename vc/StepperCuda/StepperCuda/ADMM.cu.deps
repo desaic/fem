@@ -319,6 +319,25 @@ D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\cerrno
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\errno.h
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\share.h
+C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\femlib\include\Stepper.hpp
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\thread
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\functional
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\xfunctional
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\tuple
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\chrono
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\ratio
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\stdint.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\thr/xtimec.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\thr/xthrcommon.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\concrt.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\crtdefs.h
+C:\Program Files (x86)\Windows Kits\8.1\Include\shared\guiddef.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\thr/xthread
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\thr/xtime
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\thr/xthreads.h
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\mutex
+D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\condition_variable
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\vecmath\include\vecmath.h
 c:\users\desai\documents\github\fem\vecmath\include\Matrix2f.h
 c:\users\desai\documents\github\fem\vecmath\include\Matrix3f.h
@@ -340,6 +359,5 @@ D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\iostream
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\femlib\include\Element.hpp
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\array
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\algorithm
-D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\tuple
 C:\Users\Desai\Documents\GitHub\fem\vc\StepperCuda\\..\..\StepperCuda\include\Util.hpp
 D:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\include\fstream

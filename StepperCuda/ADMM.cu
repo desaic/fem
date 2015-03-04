@@ -7,8 +7,8 @@
 #include "Util.hpp"
 #include <time.h>  
 #include <fstream>
-ADMMStepper::ADMMStepper():NSteps(100),nThread(256),ro(100),tol(0.0001f),
-  maxDist(0.05f),roMult(1.5f),e(0), outname("out.txt")
+ADMMStepper::ADMMStepper():NSteps(100),nThread(256),ro(10),tol(0.0001f),
+  maxDist(0.15f),roMult(1.5f),outname("out.txt")
 {}
 
 ADMMStepper::~ADMMStepper()
@@ -28,11 +28,11 @@ Vector3f float2vec(const float3 & v)
 
 void ADMMStepper::setZdev(const std::vector<Vector3f> & vec)
 {
-  int nEle = (int)e->e.size();
+  int nEle = (int)m->e.size();
   for(int ii = 0;ii<nEle;ii++){
     ADMMInfo * admm = &(hostadmm[ii]);
     for(int jj = 0;jj<NVERT;jj++){
-      int vIdx = e->e[ii]->at(jj);
+      int vIdx = m->e[ii]->at(jj);
       admm->Z[jj] = vec2float(vec[vIdx]);
     }
   }
@@ -41,7 +41,7 @@ void ADMMStepper::setZdev(const std::vector<Vector3f> & vec)
 
 float ADMMStepper::getEnergy()
 {
-  int nEle = (int)e->e.size();
+  int nEle = (int)m->e.size();
   int nBlock = nEle/nThread + ((nEle % nThread)!=0);
   GetEnergy<<<nBlock, nThread>>>(devXX, devadmm, Edev);
   cudaMemcpy(Ehost, Edev, nEle*sizeof(float), cudaMemcpyDeviceToHost);
@@ -49,8 +49,8 @@ float ADMMStepper::getEnergy()
   for(int ii= 0;ii<nEle;ii++){
     ene += Ehost[ii];
   }
-  for(unsigned int ii = 0;ii<e->fe.size();ii++){
-    ene -= Vector3f::dot(e->fe[ii], Z[ii]);
+  for(unsigned int ii = 0;ii<m->fe.size();ii++){
+    ene -= Vector3f::dot(m->fe[ii], Z[ii]);
   }
   return ene;
 }
@@ -58,7 +58,7 @@ float ADMMStepper::getEnergy()
 //get forces for the mesh excluding ADMM terms
 void ADMMStepper::getForce(std::vector<Vector3f> & ff)
 {
-  int nEle = (int)e->e.size();
+  int nEle = (int)m->e.size();
   int nBlock = nEle/nThread + ((nEle % nThread)!=0);
   
   GetIntForce<<<nBlock, nThread>>>(devXX, devadmm, fdev);
@@ -67,17 +67,17 @@ void ADMMStepper::getForce(std::vector<Vector3f> & ff)
   ff.assign(ff.size(), Vector3f::ZERO);
   for(int ii= 0;ii<nEle;ii++){
     for(int jj = 0;jj<NVERT;jj++){
-      int vidx = e->e[ii]->at(jj);
+      int vidx = m->e[ii]->at(jj);
       float3 ftmp = fhost[NVERT*ii + jj];
       Vector3f fint(ftmp.x,ftmp.y,ftmp.z);
       ff[vidx] += fint;
     }
   }
-  for(int ii = 0;ii<e->fe.size();ii++){
-    ff[ii] += e->fe[ii];
+  for(int ii = 0;ii<m->fe.size();ii++){
+    ff[ii] += m->fe[ii];
   }
-  for(unsigned int ii = 0;ii<e->fixed.size();ii++){
-    if (e->fixed[ii]){
+  for(unsigned int ii = 0;ii<m->fixed.size();ii++){
+    if (m->fixed[ii]){
       ff[ii] = Vector3f::ZERO;
     }
   }
@@ -85,7 +85,7 @@ void ADMMStepper::getForce(std::vector<Vector3f> & ff)
 
 void ADMMStepper::stepGrad()
 {
-  int nEle = (int)e->e.size();
+  int nEle = (int)m->e.size();
   
   //change in Z
   std::vector<Vector3f> dZ(Z.size());
@@ -110,7 +110,7 @@ void ADMMStepper::stepGrad()
     float ene1=ene;
     while(1){
       dZ = hh * ff;
-      Z = e->x + dZ;
+      Z = m->x + dZ;
       setZdev(Z);
       ene1 = getEnergy();
       if(ene1<ene){
@@ -125,148 +125,148 @@ void ADMMStepper::stepGrad()
     }
     std::cout<<hh<<" "<<ene1<<"\n";
     
-    e->x = Z;
+    m->x = Z;
   }
 }
 
-void
-ADMMStepper::step()
+int
+ADMMStepper::oneStep()
 {
-  int nEle = (int)e->e.size();
+  int nEle = (int)m->e.size();
   int nBlock = nEle/nThread + ((nEle % nThread)!=0);
   
-  clock_t tt0, tt;
-  tt0 = clock();
-  std::ofstream out(outname);
-
+  
   //change in Z
   std::vector<Vector3f> dZ(Z.size());
   //internal + external forces
   std::vector<Vector3f> ff(Z.size());
 
-  for(int iter = 0;iter<NSteps;iter++){
-    std::cout<<iter<<"\n";
-    tt = clock();
-    out<<(tt-tt0)/(CLOCKS_PER_SEC/(float)1000)<<" ";
-    setZdev(Z);
-    float ene = getEnergy();
-    out<<ene<<"\n";
-    getForce(ff);
-    float eleSize = e->eleSize();
-    float maxRo = 0;
-    float maxDiff=0;
-    //adjust ro
-    for(int ii = 0;ii<nEle;ii++){
-      ADMMInfo * admm = &(hostadmm[ii]);
-      for(int jj = 0;jj<NVERT;jj++){
-        int vidx = e->e[ii]->at(jj);
-        Vector3f zz = Z[vidx];
-        Vector3f xx = float2vec(hostxx[ii*NVERT+jj]);
-        float diff = (xx-zz).abs();
-        if(diff>maxDiff){
-          maxDiff = diff;
-        }
-        if(admm->ro > maxRo){
-          maxRo = admm->ro;
-        }
-        if( diff > maxDist*eleSize){
-          admm->ro *= roMult;
-          break;
-        }
+  setZdev(Z);
+  float ene = getEnergy();
+  getForce(ff);
+  float eleSize = m->eleSize();
+  float maxRo = 0;
+  float maxDiff = 0;
+  //adjust ro
+  for (int ii = 0; ii < nEle; ii++){
+    ADMMInfo * admm = &(hostadmm[ii]);
+    for (int jj = 0; jj < NVERT; jj++){
+      int vidx = m->e[ii]->at(jj);
+      Vector3f zz = Z[vidx];
+      Vector3f xx = float2vec(hostxx[ii*NVERT + jj]);
+      float diff = (xx - zz).abs();
+      if (diff > maxDiff){
+        maxDiff = diff;
       }
-    }
-    std::cout<<"maxro "<<maxRo<<"\n";
-    std::cout<<"maxdiff "<<maxDiff<<"\n";
-    for(int ii = 0;ii<nEle;ii++){
-      //copy Z and y to device
-      ADMMInfo * admm = &(hostadmm[ii]);
-      for(int jj = 0;jj<NVERT;jj++){
-        int vIdx = e->e[ii]->at(jj);
-        admm->Z[jj] = vec2float(Z[vIdx]);
-        admm->y[jj] = vec2float(l[ii][jj]);
+      if (admm->ro > maxRo){
+        maxRo = admm->ro;
       }
-    }
-    cudaMemcpy(devadmm, hostadmm, nEle*sizeof(ADMMInfo), cudaMemcpyHostToDevice);
-    admmMinEleDup<<<nBlock, nThread>>>(devXX, devxx, devadmm);
-    cudaMemcpy(hostxx, devxx, nEle*NVERT*sizeof(float3), cudaMemcpyDeviceToHost);
-       
-    //update z closed form
-    for(size_t ii = 0;ii<e->X.size();ii++){
-		  Z[ii] = Vector3f::ZERO;
-    }
-    //add per element variables and multipliers
-    for(int ii = 0;ii<nEle;ii++){
-      Element * ele = e->e[ii];
-      for(int jj = 0;jj<ele->nV();jj++){
-        Vector3f xx = float2vec(hostxx[ii*NVERT+jj]);
-        Z[ele->at(jj)] += xx + l[ii][jj]/ro;
-      }
-    }
-
-    //add force variables
-    for(size_t ii = 0;ii<e->fe.size();ii++){
-      Z[ii] += (1.0f/ro)*e->fe[ii];
-    }
-
-    //divide
-    for(size_t ii = 0;ii<e->x.size();ii++){
-      Z[ii] /= (float)N[ii];
-    }
-    
-    //fix constrained vertices
-    for(auto ii = 0;ii<e->fixed.size();ii++){
-      if (e->fixed[ii]){
-        Z[ii] = e->x[ii];
-      }
-    }
-
-    //update multiplier for elements
-    for(size_t ii = 0;ii<nEle;ii++){
-      Element * ele = e->e[ii];
-      for(int jj = 0;jj<ele->nV();jj++){
-         Vector3f xx = float2vec(hostxx[ii*NVERT+jj]);
-        l[ii][jj] += ro*(xx - Z[ele->at(jj)]);
-      }
-    }
-
-    float hh = 1;
-    float mag = 0;
-    for(unsigned int ii = 0;ii<ff.size(); ii++){
-      for(int jj = 0;jj<3;jj++){
-        mag += std::abs(ff[ii][jj]);
-      }
-    }
-    mag = mag/ff.size();
-    if(mag<tol){
-      break;
-    }
-    
-    float ene1=ene;
-    for(unsigned int ii =0;ii<Z.size();ii++){
-      dZ[ii] = Z[ii] - e->x[ii];
-    }
-    while(1){
-      Z = e->x + hh*dZ;
-      setZdev(Z);
-      ene1 = getEnergy();
-      if(ene1<ene){
+      if (diff > maxDist*eleSize){
+        admm->ro *= roMult;
         break;
-      }else{
-        hh=hh/2;
-        if(hh<1e-15){
-          break;
-        }
       }
     }
-    std::cout<<hh<<" "<<ene1<<"\n";
-    e->x = Z;
   }
+  std::cout << "maxro " << maxRo << "\n";
+  std::cout << "maxdiff " << maxDiff << "\n";
+  for (int ii = 0; ii < nEle; ii++){
+    //copy Z and y to device
+    ADMMInfo * admm = &(hostadmm[ii]);
+    for (int jj = 0; jj < NVERT; jj++){
+      int vIdx = m->e[ii]->at(jj);
+      admm->Z[jj] = vec2float(Z[vIdx]);
+      admm->y[jj] = vec2float(l[ii][jj]);
+    }
+  }
+  cudaMemcpy(devadmm, hostadmm, nEle*sizeof(ADMMInfo), cudaMemcpyHostToDevice);
+  admmMinEleDup <<<nBlock, nThread >>>(devXX, devxx, devadmm);
+  cudaMemcpy(hostxx, devxx, nEle*NVERT*sizeof(float3), cudaMemcpyDeviceToHost);
+
+  //update z closed form
+  for (size_t ii = 0; ii < m->X.size(); ii++){
+    Z[ii] = Vector3f::ZERO;
+  }
+  //add per element variables and multipliers
+  for (int ii = 0; ii < nEle; ii++){
+    Element * ele = m->e[ii];
+    for (int jj = 0; jj < ele->nV(); jj++){
+      Vector3f xx = float2vec(hostxx[ii*NVERT + jj]);
+      Z[ele->at(jj)] += xx + l[ii][jj] / ro;
+    }
+  }
+
+  //add force variables
+  for (size_t ii = 0; ii < m->fe.size(); ii++){
+    Z[ii] += (1.0f / ro)*m->fe[ii];
+  }
+
+  //divide
+  for (size_t ii = 0; ii < m->x.size(); ii++){
+    Z[ii] /= (float)N[ii];
+  }
+
+  //fix constrained vertices
+  for (auto ii = 0; ii < m->fixed.size(); ii++){
+    if (m->fixed[ii]){
+      Z[ii] = m->x[ii];
+    }
+  }
+
+  //update multiplier for elements
+  for (size_t ii = 0; ii < nEle; ii++){
+    Element * ele = m->e[ii];
+    for (int jj = 0; jj < ele->nV(); jj++){
+      Vector3f xx = float2vec(hostxx[ii*NVERT + jj]);
+      l[ii][jj] += ro*(xx - Z[ele->at(jj)]);
+    }
+  }
+
+  float hh = 1;
+  float mag = 0;
+  for (unsigned int ii = 0; ii < ff.size(); ii++){
+    for (int jj = 0; jj < 3; jj++){
+      mag += std::abs(ff[ii][jj]);
+    }
+  }
+  mag = mag / ff.size();
+  if (mag < tol){
+    return -1;
+  }
+
+  float ene1 = ene;
+  for (unsigned int ii = 0; ii < Z.size(); ii++){
+    dZ[ii] = Z[ii] - m->x[ii];
+  }
+  //while (1){
+  //  Z = m->x + hh*dZ;
+  //  setZdev(Z);
+  //  ene1 = getEnergy();
+  //  if (ene1 < ene){
+  //    break;
+  //  }
+  //  else{
+  //    hh = hh / 2;
+  //    if (hh < 1e-15){
+  //      break;
+  //    }
+  //  }
+  //}
+  std::cout << hh << " " << ene1 << "\n";
+  m->x = Z;
+  return 0;
+}
+
+void ADMMStepper::init(ElementMesh * _m)
+{
+  m = _m;
+  prevE = m->getEnergy();
+  initVar();
 }
 
 void
-ADMMStepper::initVar(ElementMesh * _e)
+ADMMStepper::initVar()
 {
-  e=_e;
+  ElementMesh * e = m;
   int nEle = (int)e->e.size();
   l.resize(e->e.size());
   N.assign(e->X.size(),0);

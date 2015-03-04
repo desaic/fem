@@ -9,6 +9,7 @@
 #include "StepperNewton.hpp"
 #include "NewtonCuda.hpp"
 #include "LinSolveCusp.hpp"
+#include "ADMM.h"
 #include "AdmmCPU.hpp"
 #include "AdmmNoSpring.hpp"
 #include "NewtonCuda.hpp"
@@ -478,13 +479,15 @@ int main(int argc, char* argv[])
   }
   else if (stepperType == "admmCPU"){
     stepper = new AdmmCPU();
-    ((AdmmCPU*)stepper)->ro0 = 50;
+    ((AdmmCPU*)stepper)->ro0 = 10;
   }
   else if (stepperType == "grad"){
     stepper = new StepperGrad();
   }
   else{
-    stepper = new AdmmNoSpring();
+    //stepper = new AdmmNoSpring();
+    stepper = new ADMMStepper();
+    
   }
   //stepper->rmRigid = true;
   

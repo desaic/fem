@@ -215,7 +215,7 @@ __device__ void admmMinEle(const float3 * XX, float3 * xx,
 {
   float E = 0;
   float hh = 1;
-  int NSteps = 10;
+  int NSteps = 2;
   float change = 0;
   float3 ff[NVERT];
   float3 dx[NVERT];
@@ -248,7 +248,7 @@ __device__ void admmMinEle(const float3 * XX, float3 * xx,
       }
       addMult(xx, dx, hh, NVERT);
       float ene = admmEnergy(XX, xx, admm);
-      cuPrintf("%d %d\n", ii, jj);
+      //cuPrintf("%d %d\n", ii, jj);
       if (ene <= -1 || ene >= E){
         //cuPrintf("%.6f %0.6f\n", ene, E);
         //cuPrintf("%.4f\n", hh);

@@ -1,10 +1,10 @@
 #test true
 #hier true
 #testHierStiffness true
-refine 3
+refine 5
 #render false
 #stepper grad
-stepper admmCPU
+#stepper admmCPU
 #stepper newton
 #stepper newtonCuda
 #stepper admm
