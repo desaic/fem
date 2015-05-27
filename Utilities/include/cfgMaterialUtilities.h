@@ -1,0 +1,55 @@
+#ifndef cfgMaterialUtilities_h
+#define cfgMaterialUtilities_h
+
+#include <string>
+#include <map>
+
+#include "cfgDefs.h"
+
+#include <Vector3f.h>
+
+class ElementRegGrid;
+
+namespace cfgMaterialUtilities
+{
+  // I/O
+  // ---
+  bool readMaterialCombinations(const std::string iFileName, std::vector<std::vector<int> > &oMaterials);
+  bool writeMaterialCombinations(const std::string iFileName, const std::vector<std::vector<int> > &iMaterials);
+  bool readData(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<int> &oMaterials, std::vector<float> &oStresses, std::vector<float> &oStrains);
+  bool writeData(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<int> &iMaterials, const std::vector<float> &iStresses, const std::vector<float> &iStrains);
+  bool computeMaterialParameters(const std::string &iMaterialFile, const std::string iStressStrainFilesDirectories[2], const std::string iStressStrainBaseFileName, int iNbFiles, std::vector<Scalar> &oPhysicalParameters);
+
+  Scalar computeYoungModulus(const std::vector<Scalar> &iStrains, const std::vector<Scalar>  &iStresses);
+
+  // Hexahedral mesh utilities
+  // -------------------------
+  void getMaterialAssignment(int nx, int ny, int nz, const std::vector<int> &iMaterialCombIndices, int nX, int nY, int nZ, const std::vector<std::vector<int> > &iBaseCellMaterials, std::vector<int> &oMaterials);
+
+  //0: Left, 1: Right, 2: Bottom, 3:Top, 4: Back, 5: Front
+  void getSideVertices(int iSide, const ElementRegGrid * iElementGrid, std::vector<int> &oElemIndices, std::vector<std::vector<int> > &oFaceVertexIndices);
+  void getExternalVertices(ElementRegGrid * iElementGrid, std::vector<int> &oElemIndices, std::vector<std::vector<int> > &oFaceVertexIndices, std::vector<Vector3f> &oNormals);
+  void getVertexValences(const ElementRegGrid * iElementGrid, const std::vector<int> &iElemIndices, const std::vector<std::vector<int> > &iFvIndices, std::map<int,int> &oind2Valence);
+
+  // Point cloud utitlities
+  // ----------------------
+  void computeConvexHull(const std::vector<float> &iPoints, int iDim, std::vector<int> &oConvexHullVertices);
+  void computeDelaundayTriangulation(const std::vector<float> &iPoints, int iDim, std::vector<int> &oFaces, std::vector<int> &oBoundaryVertices, std::vector<int> &oBoundaryFaces);
+
+  // Triangle mesh utilities
+  //------------------------
+  float getMeanEdgeLength(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim);
+  float getMinEdgeLength(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim);
+  void getEdgesFromTriFaceIndexArray(const std::vector<int> &iTriIndexArray, std::vector<int> &oEdgeIndexArray);
+
+  // Tet mesh utilities
+  // ------------------
+  void getEdgesFromTetFaceIndexArray(const std::vector<int> &iTetIndexArray, std::vector<int> &oEdgeIndexArray);
+
+  // Conversion between types
+  // -----------------------
+  Vector3f getVector3f(int indVertex, const std::vector<float> &iPoints);
+};
+
+#endif 
+
