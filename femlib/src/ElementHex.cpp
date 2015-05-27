@@ -29,7 +29,7 @@ const int sw[8][3] =
  { 1, 1, 1}
 };
 
-const int faces[6][4]{
+const int faces[6][4]={
 		{ 0, 1, 3, 2 },
 		{ 4, 6, 7, 5 },
 		{ 0, 4, 5, 1 },
@@ -39,7 +39,7 @@ const int faces[6][4]{
 };
 
 ///@brief face normals
-const int facen[6][3]{
+const int facen[6][3]={
 	{-1, 0, 0},
 	{ 1, 0, 0},
 	{ 0,-1, 0},

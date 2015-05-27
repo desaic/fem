@@ -58,6 +58,11 @@ int Stepper::step()
     if (ret < 0){
       return ret;
     }
+    else if (ret==1)
+    {
+      std::cout << "Failed!" << std::endl;
+      return ret;
+    }
   }
   return 0;
 }

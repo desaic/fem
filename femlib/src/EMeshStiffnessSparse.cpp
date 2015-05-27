@@ -5,7 +5,47 @@
 
 typedef Eigen::Triplet<float> Tripletf;
 
-void ElementMesh::getStiffnessSparse(std::vector<float> &val, bool trig, bool constrained)
+///@brief add rows to K and b to constrain 6 degrees of freedom.
+void fixRigid(Eigen::SparseMatrix<float> & K,  ElementMesh * mesh)
+{
+  int row = K.rows();
+  K.conservativeResize(row + 6, K.cols()+6);
+  Eigen::SparseMatrix<float> KConstraint(row + 6,row + 6);
+
+  Eigen::Vector3f center = Eigen::Vector3f::Zero();
+  for(int ii = 0;ii<mesh->x.size();ii++){
+    center += (Eigen::Vector3f) mesh->x[ii];
+  }
+  center /= mesh->x.size();
+  float cScale = 1000;
+  std::vector<Tripletf> triplets;
+  for(int ii = 0;ii<mesh->x.size();ii++){
+    int col = 3*ii;
+    //relative position to center
+    Eigen::Vector3f rel = (Eigen::Vector3f) mesh->x[ii] - center;
+    //cross product matrix
+    Eigen::Matrix3f c;
+    c <<       0, -rel[2],  rel[1],
+          rel[2],       0, -rel[0],
+         -rel[1],  rel[0],       0;
+    c = -cScale * c;
+    for(int kk = 0; kk<3; kk++){
+      triplets.push_back( Tripletf(row + kk+3,   col + kk, -cScale ));
+//      triplets.push_back( Tripf(col + kk  , row + kk+3, cScale ));
+      for(int ll = 0; ll<3;ll++){
+        triplets.push_back( Tripletf(row + kk, col + ll, c(kk,ll)) );
+//        triplets.push_back( Tripf(col + ll, row + kk, c(kk,ll)) );
+      }
+    }
+  }
+  for(int ii = 0;ii<6;ii++){
+    triplets.push_back(Tripletf(row+ii, row + ii,0.f));
+  }
+  KConstraint.setFromTriplets(triplets.begin(), triplets.end());
+  K += KConstraint;
+}
+
+void ElementMesh::getStiffnessSparse(std::vector<float> &val, bool trig, bool constrained, bool iFixedRigid)
 {
   int N = 3* (int)x.size();
   std::vector<Tripletf> coef;
@@ -43,15 +83,20 @@ void ElementMesh::getStiffnessSparse(std::vector<float> &val, bool trig, bool co
     }
   }
   Ksparse.setFromTriplets(coef.begin(), coef.end());
+  if (iFixedRigid)
+  {
+    fixRigid(Ksparse, this);
+  }
   for(int ii = 0; ii<Ksparse.rows(); ii++){
     for (Eigen::SparseMatrix<float>::InnerIterator it(Ksparse, ii); it; ++it){
      val.push_back(it.value());
    }
   }
+ 
 }
 
 void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,
-   bool trig)
+   bool trig, bool iFixedRigid)
 {
   int N = 3* (int)x.size();
   std::vector<Tripletf> coef;
@@ -77,6 +122,10 @@ void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,
   }
 
   Ksparse.setFromTriplets(coef.begin(), coef.end());
+  if (iFixedRigid)
+  {
+    fixRigid(Ksparse, this);
+  }
 
   I.push_back(0);
   for(int ii = 0; ii<Ksparse.rows(); ii++){

@@ -14,6 +14,7 @@ public:
   float h;
   //number of iterations for linear solver;
   int linIter;
+  bool m_fixRigidMotion;
 };
 
 #endif

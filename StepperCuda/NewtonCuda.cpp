@@ -7,13 +7,14 @@
 NewtonCuda::NewtonCuda() :dx_tol(1e-5f), h(1.0f), linIter(10000)
 {
   solver.nIter = linIter;
+  m_fixRigidMotion = false;
 }
 
 void NewtonCuda::init(ElementMesh * _m)
 {
   m = _m;
   std::vector<int> I, J;
-  _m->stiffnessPattern(I, J, false);
+  _m->stiffnessPattern(I, J, false, m_fixRigidMotion);
   solver.init(I, J);
 }
 
@@ -27,7 +28,14 @@ int NewtonCuda::oneStep()
 
   std::vector<float> val;
   //timer.start();
-  m->getStiffnessSparse(val, false,true);
+  if (m_fixRigidMotion)
+  {
+    m->getStiffnessSparse(val, false,true,true);
+  }
+  else
+  {
+    m->getStiffnessSparse(val, false,true);
+  }
   //timer.end();
   //std::cout << "assembly time: " << timer.getSeconds() << "\n";
 
@@ -43,6 +51,12 @@ int NewtonCuda::oneStep()
       else{
         bb[row] = force[ii][jj];
       }
+    }
+  }
+  if (m_fixRigidMotion)
+  {
+    for(int ii =0;ii<6;ii++){
+      bb.push_back(0.f);
     }
   }
  
@@ -92,7 +106,7 @@ int NewtonCuda::oneStep()
   //timer.end();
   //std::cout << "line search time: " << timer.getSeconds() << "\n";
   if (!valid){
-    return -1;
+    return 1;
   }
   return 0;
 }

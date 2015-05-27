@@ -5,33 +5,72 @@
 #include "femError.hpp"
 
 #include "LinSolve.hpp"
+#include "SparseLin.hpp"
+#include "Eigen/Sparse"
 
 #include <fstream>
+#include <assert.h>
 
 StepperNewton::StepperNewton():dense(true),dx_tol(1e-5f),h(1.0f)
-,rmRigid(false)
-{}
+  ,rmRigid(false)
+{
+  m_Init = false;
+  dense = false;
+}
 
 int StepperNewton::oneStep()
 {
-  float E0 = m->getEnergy();
-  float E = 0;
-  if (dense){
-    E = oneStepDense();
+  std::vector<Vector3f> force = m->getForce();
+  float E = m->getEnergy();
+ 
+  int ndof = 3*(int)m->x.size();
+  std::vector<float> bb(ndof);
+
+  if (dense)
+  {
+    compute_dx_dense(m, force, rmRigid, bb);
   }
-  else{
-    E = oneStepSparse();
+  else
+  {
+    compute_dx_sparse(m, force, rmRigid, bb);
   }
-  if (std::abs(E0 - E) < 1e-3f){
+
+  double totalMag = 0;
+  for(int ii = 0;ii<ndof;ii++){
+    totalMag += std::abs(bb[ii]);
+  }
+
+  for(unsigned int ii = 0;ii<m->x.size(); ii++){
+    for(int jj = 0;jj<3;jj++){
+      force[ii][jj] = (float)bb[3*ii+jj];
+    }
+  }
+  //line search
+  std::vector<Vector3f> x0 = m->x;
+  float E1=E;
+  while(1){
+    if(totalMag * h<dx_tol){
+      break;
+    }
+    m->x=x0;
+    addmul(m->x, h, force);
+    E1 = m->getEnergy();
+    if(E1>E || fem_error){
+      fem_error = 0;
+      h = 0.5f* h;
+      if(h<1e-12){
+        break;
+      }
+    }else{
+     // h=1.1f*h;
+      break;
+    }
+  }
+  if (std::abs(E - E1) < 1e-3f){
     return -1;
   }
   std::cout << E << "\n";
   return 0;
-}
-
-float StepperNewton::oneStepSparse()
-{
-  return -1;
 }
 
 ///@brief add rows to K and b to constrain 6 degrees of freedom.
@@ -74,16 +113,13 @@ void fixRigid(MatrixXf & K, float * b,
   }
 }
 
-float StepperNewton::oneStepDense()
+float StepperNewton::compute_dx_dense(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
 {
-  std::vector<Vector3f> force = m->getForce();
-  float E = m->getEnergy();
+  int ndof = bb.size();
+  assert(iMesh && 3*iMesh->x.size()==ndof);
 
-  MatrixXf K = m->getStiffness();
-  
-  int ndof = 3*(int)m->x.size();
-  std::vector<float> bb (ndof);
-  
+  MatrixXf K = iMesh->getStiffness();
+   
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
     for(int jj = 0;jj<3;jj++){
       int row = 3*ii + jj;
@@ -96,49 +132,84 @@ float StepperNewton::oneStepDense()
           K(row,row) = 100;
         }
       }else{
-        bb[ row ] = force[ii][jj];
+        bb[ row ] = iForces[ii][jj];
       }
     }
   }
-  if(rmRigid){
+  if(iRmRigid){
     K.resize(ndof + 6, ndof+6);
     bb.resize(ndof+6);
     fixRigid(K,&(bb[0]),m);
   }
- 
   linSolvef(K,&(bb[0]));
-  
-  double totalMag = 0;
-  for(int ii = 0;ii<ndof;ii++){
-    totalMag += std::abs(bb[ii]);
+
+  return 0;
+}
+
+float StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
+{
+  bool triangular = true;
+
+  if (!m_Init)
+  {
+    m_I.clear();
+    m_J.clear();
+    iMesh->stiffnessPattern(m_I, m_J, triangular, iRmRigid);
+    sparseInit();
+    m_Init = true;
   }
 
+  int ndof = bb.size();
+  assert(iMesh && 3*iMesh->x.size()==bb.size());
+
+  std::vector<float> Kvalues;
+  iMesh->getStiffnessSparse(Kvalues, triangular, true, iRmRigid);
+   
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
     for(int jj = 0;jj<3;jj++){
-      force[ii][jj] = (float)bb[3*ii+jj];
-    }
-  }
-  //line search
-  std::vector<Vector3f> x0 = m->x;
-  float E1=E;
-  while(1){
-    if(totalMag * h<dx_tol){
-      break;
-    }
-    m->x=x0;
-    addmul(m->x, h, force);
-    E1 = m->getEnergy();
-    if(E1>E || fem_error){
-      fem_error = 0;
-      h = 0.5f* h;
-      if(h<1e-12){
-        break;
+      int row = 3*ii + jj;
+      if(m->fixed[ii]){
+        bb[ row ] = 0;
+      }else{
+        bb[ row ] = iForces[ii][jj];
       }
-    }else{
-     // h=1.1f*h;
-      break;
     }
   }
 
-  return E1;
+  int nrow = ndof;
+  int ncol = ndof;
+  std::vector<int> ia(nrow+1),ja;
+  std::vector<double> val ;
+  std::vector<double> rhs(nrow);
+  std::vector<double> x(nrow,0);
+  int indVal = 0;
+  //starting index of a row
+  //only upper triangle is needed
+  for (int col=0; col<ncol;col++){
+    rhs[col] = bb[col];
+    ia[col] = indVal;
+
+    //for (Eigen::SparseMatrix<float>::InnerIterator it(K, col); it; ++it){
+    //    int row = it.row();
+    for (int i=m_I[col]; i<m_I[col+1]; i++)
+    {
+      int row = m_J[indVal];
+      if(triangular && col>row)
+      {
+        continue;
+      }
+      ja.push_back(row);
+      val.push_back(Kvalues[indVal]);
+      indVal++;
+    }
+  }
+  ia[nrow] = indVal;
+
+  int status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
+      std::cout<< "sparse solve " << status << "\n";
+  for(int ii = 0;ii<x.size();ii++){
+    bb[ii] = x[ii];
+  }
+
+  return 0;
 }
