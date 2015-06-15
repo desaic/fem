@@ -118,14 +118,14 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
 
   Q_ASSERT(m_project);
   // read data
-  std::vector<std::vector<Scalar> > physicalParametersPerLevel(2);
-  bool ResOk = m_project->getMaterialParameters(physicalParametersPerLevel[0], 1);
-  ResOk = m_project->getMaterialParameters(physicalParametersPerLevel[1], 2);
+  int nlevel = 2;
+  std::vector<std::vector<cfgScalar> > physicalParametersPerLevel(nlevel);
+  std::vector<cfgScalar> physicalParameters;
 
-  std::vector<Scalar> physicalParameters;
-  int ilevel=0, nlevel=(int)physicalParametersPerLevel.size();
+  int ilevel=0;
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
+     bool ResOk = m_project->getMaterialParameters(physicalParametersPerLevel[ilevel], ilevel+1);
     physicalParameters.insert(physicalParameters.end(), physicalParametersPerLevel[ilevel].begin(), physicalParametersPerLevel[ilevel].end());
   }
 
@@ -136,6 +136,7 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
   std::vector<vtkVector3i> matColors;
   matColors.push_back(vtkVector3i(255, 0, 0));
   matColors.push_back(vtkVector3i(0, 0, 255));
+  matColors.push_back(vtkVector3i(0, 255, 255));
   
   int nrow=0;
   for (ilevel=0; ilevel<nlevel; ilevel++)
@@ -156,7 +157,10 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
 
   std::vector<int> convexHull, boundaryVertices, boundaryFaces;
   //computeBoundaryPoints(physicalParametersPerLevel[0], 3, convexHull);
-  computeDelaundayTriangulation(physicalParametersPerLevel[0], 3, convexHull, boundaryVertices, boundaryFaces);
+  //computeDelaundayTriangulation(physicalParametersPerLevel[1], 3, convexHull, boundaryVertices, boundaryFaces);
+  std::vector<cfgScalar> parameterPoints;
+  parameterPoints.insert(parameterPoints.end(), physicalParameters.begin(), physicalParameters.begin()+ 3*m_lastPointIndices[0]+3);
+  computeDelaundayTriangulation(parameterPoints, 3, convexHull, boundaryVertices, boundaryFaces);
 
   if (boundaryVertices.size()>0)
   {
@@ -177,9 +181,9 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
     chart->AddPlot(edgesPlot);
 
     vtkSmartPointer<vtkTable> facesTable =  createTable(physicalParameters, levels, 3, 1, labels, &boundaryFaces);
-    vtkSmartPointer<cfgPlotSurface> surfacePlot = createSurfacePlot3D(facesTable, "Y1", "Y2", "Density", vtkVector3i(255,0,0), 255);
+    vtkSmartPointer<cfgPlotSurface> surfacePlot = createSurfacePlot3D(facesTable, "Y1", "Y2", "Density", vtkVector3i(255,0,0), 10);
     chart->AddPlot(surfacePlot);
-  } 
+  }
 
   GetRenderWindow();
   int width = this->width();

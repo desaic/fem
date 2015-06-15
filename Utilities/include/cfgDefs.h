@@ -1,7 +1,7 @@
 #ifndef exDefs_h
 #define exDefs_h
 
-#define Scalar float
+#define cfgScalar float
 
 #include <vector>
 

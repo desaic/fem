@@ -18,6 +18,9 @@ namespace cfgUtil
   std::vector<T> getSubVector(const std::vector<T> &iVec, const std::vector<int> &iIndices);
 
   template<class T>
+  std::vector<T> getSubVector(const std::vector<T> &iVec, int iDim, const std::vector<int> &iIndices);
+
+  template<class T>
   std::vector<std::vector<T> > getSubVector(const std::vector<std::vector<T> > &iVec, const std::vector<int> &iIndices);
 
   template<class T>
@@ -32,9 +35,16 @@ namespace cfgUtil
   template<class T>
   T average(const std::vector<T> &iVec);
 
+  template<class T, int Dim>
+  void getBarycenter(const std::vector<T> &iVec, T oBarycenter[Dim]);
+
+  //add iValue to every element in iVec
+  template<class T>
+  std::vector<T> add(const std::vector<T> &iVec, const T &iValue); 
+
   //substract iValue to every element in iVec
   template<class T>
-  std::vector<T> sub(const std::vector<T> &iVec, T &iValue); 
+  std::vector<T> sub(const std::vector<T> &iVec, const T &iValue); 
 
   template<class T>
   T innerProd(const std::vector<T> &iVec1, const std::vector<T> &iVec2);
@@ -112,7 +122,27 @@ namespace cfgUtil
     {
       int ind = iIndices[ielem];
       assert(ind>=0 && ind<iVec.size());
-      subVector.push_back(ind);
+      subVector.push_back(iVec[ind]);
+    }
+    return subVector;
+  }
+
+  template<class T>
+  std::vector<T> getSubVector(const std::vector<T> &iVec, int iDim, const std::vector<int> &iIndices)
+  {
+    assert(iVec.size()%iDim==0 && iDim>0);
+
+    std::vector<T> subVector;
+    size_t ielem, nelem=iIndices.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      int ind = iIndices[ielem];
+      assert(ind>=0 && ind<iVec.size()/iDim);
+      int icoord;
+      for (icoord=0; icoord<iDim; icoord++)
+      {
+        subVector.push_back(iVec[iDim*ind+icoord]);
+      }
     }
     return subVector;
   }
@@ -165,8 +195,43 @@ namespace cfgUtil
 	return avg;
   }
 
+  template<class T, int Dim>
+  void getBarycenter(const std::vector<T> &iVec,  T oBarycenter[Dim])
+  {
+    assert(iVec.size()%Dim==0 && Dim>0);
+    int ipoint, npoint=(int)iVec.size()/Dim;
+    int icoord;
+    for (icoord=0; icoord<Dim; icoord++)
+    {
+      oBarycenter[icoord]=0;
+      for (ipoint=0; ipoint<npoint; ipoint++)
+      {
+        oBarycenter[icoord] += iVec[3*ipoint+icoord];
+      }
+    }
+    if (npoint>0)
+    {
+      for (icoord=0; icoord<Dim; icoord++)
+      {
+        oBarycenter[icoord] /= npoint;
+      }
+    }
+  }
+
   template<class T>
-  std::vector<T> sub(const std::vector<T> &iVec, T &iValue)
+  std::vector<T> add(const std::vector<T> &iVec, const T &iValue)
+  {
+    std::vector<T> vec = iVec;
+    size_t ielem, nelem=iVec.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      vec[ielem] += iValue;
+    }
+    return vec;
+  }
+
+  template<class T>
+  std::vector<T> sub(const std::vector<T> &iVec, const T &iValue)
   {
     std::vector<T> vec = iVec;
     size_t ielem, nelem=iVec.size();

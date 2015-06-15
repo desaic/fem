@@ -16,7 +16,10 @@ public:
   exProject();
   virtual ~exProject();
 
-  bool getMaterialParameters(std::vector<Scalar> &oPhysicalParameters, int iLevel);
+  void setFileDirectory(const std::string &iFileDirectory) {m_FileDirectory = iFileDirectory;}
+  void setFileSubdirectories(const std::string &iFileDirectoryX, const std::string &iFileDirectoryY);
+
+  bool getMaterialParameters(std::vector<cfgScalar> &oPhysicalParameters, int iLevel);
 
   QSharedPointer<ElementMesh> computeElementMesh(int iCombIndex, int iLevel);
 
@@ -35,6 +38,9 @@ private:
 
   int m_pickedStructureIndex;
   int m_pickedStructureLevel;
+
+  std::string m_FileDirectory;
+  std::string m_FileSubdirectories;
 };
 
 #endif

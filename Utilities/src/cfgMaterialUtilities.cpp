@@ -36,6 +36,7 @@ bool cfgMaterialUtilities::writeMaterialCombinations(const std::string iFileName
   std::ofstream stream(iFileName);
   if (!stream.is_open())
   {
+    std::cout << "cfgMaterialUtilities::writeMaterialCombinations: invalid fileName" << std::endl;
     return false;
   }
    
@@ -109,32 +110,26 @@ bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Vector3
   {
     stream << iStrains[isample] << " " << iStresses[isample]  << std::endl; 
   }
+  return false;
 }
 
-Scalar cfgMaterialUtilities::computeYoungModulus(const std::vector<Scalar> &iStrains, const std::vector<Scalar>  &iStresses)
+cfgScalar cfgMaterialUtilities::computeYoungModulus(const std::vector<cfgScalar> &iStrains, const std::vector<cfgScalar>  &iStresses)
 {
-  Scalar YoungModulus=0;
-  fitLinearFunction<Scalar>(iStrains, iStresses, YoungModulus);
+  cfgScalar YoungModulus=0;
+  fitLinearFunction<cfgScalar>(iStrains, iStresses, YoungModulus);
   return YoungModulus;
 }
 
 bool cfgMaterialUtilities::computeMaterialParameters(const std::string &iMaterialFile, const std::string iStressStrainFilesDirectories[2], const std::string iStressStrainBaseFileName, int iNbFiles,
-                                                    std::vector<Scalar> &oPhysicalParameters)
+                                                    std::vector<cfgScalar> &oPhysicalParameters, std::vector<std::vector<int> > &oMaterialAssignments)
 {
-  //std::string fileDirectory = "C://Users//melina//Documents//Projects//fem//vc//runtime//Output//";
-  //std::string materialFile = fileDirectory + "Materials_" + std::to_string(prevLevel) + ".txt";
-
   std::vector<std::vector<int> > baseMaterialStructures;
   readMaterialCombinations(iMaterialFile, baseMaterialStructures);
 
-  //std::string subDirectories[2];
-  //subDirectories[0] =  "x_level" + std::to_string(prevLevel) + "//";
-  //subDirectories[1] =  "y_level" + std::to_string(prevLevel) + "//";
-
   oPhysicalParameters.clear(); //YoungModulus, density;
-  std::vector<std::vector<int> > materialAssignments;
-  int icomb, ncomb=iNbFiles; //256;
-  materialAssignments.resize(ncomb);
+  int icomb, ncomb=iNbFiles;
+  oMaterialAssignments.clear();
+  oMaterialAssignments.resize(ncomb);
   int naxis = 2;
   for (icomb=0; icomb<ncomb; icomb++)
   {
@@ -142,15 +137,14 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::string &iMateria
     for (iaxis=0; iaxis<naxis; iaxis++)
     {
       std::string sampleFile = iStressStrainFilesDirectories[iaxis] + iStressStrainBaseFileName + "_" + std::to_string(icomb) + ".txt"; 
-      //std::string sampleFile = fileDirectory + subDirectories[iaxis] + "StressStrain_" + std::to_string(prevLevel) + "_" + std::to_string(blockSize) + "_" + std::to_string(icomb) + ".txt"; 
       Vector3f forceAxis;
       std::vector<int> materials; 
-      std::vector<Scalar> stresses, strains;
+      std::vector<cfgScalar> stresses, strains;
       readData(sampleFile, forceAxis, materials, stresses, strains);
 
       if (iaxis==0)
       {
-        Scalar r=0;
+        cfgScalar r=0;
         int imat, nmat=(int)materials.size();
         for (imat=0; imat<nmat; imat++)
         {
@@ -161,13 +155,13 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::string &iMateria
           {
             r += baseMaterialStructure[icell];
           }
-          materialAssignments[icomb].insert(materialAssignments[icomb].end(), baseMaterialStructure.begin(), baseMaterialStructure.end());
+          oMaterialAssignments[icomb].insert(oMaterialAssignments[icomb].end(), baseMaterialStructure.begin(), baseMaterialStructure.end());
         }
         int ncell = (int)baseMaterialStructures[0].size()*nmat;
-        r /= (Scalar)ncell;
+        r /= (cfgScalar)ncell;
         oPhysicalParameters.push_back(r);
       }
-      Scalar Y = computeYoungModulus(strains, stresses);
+      cfgScalar Y = computeYoungModulus(strains, stresses);
       oPhysicalParameters.push_back(Y);
     }
   }
@@ -222,6 +216,85 @@ void cfgMaterialUtilities::getMaterialAssignment(int nx, int ny, int nz, const s
       }
     }
   }
+}
+
+int cfgMaterialUtilities::getElementIndex(int nx, int ny, int nz, int ii , int jj, int kk)
+{
+  return ii * ny * nz + jj * nz + kk;
+}
+
+//0: Left, 1: Right, 2: Bottom, 3:Top, 4: Back, 5: Front
+void cfgMaterialUtilities::getSideVoxels(int iSide, int nx, int ny, int nz, std::vector<int> &oSideVoxelIndices)
+{
+  oSideVoxelIndices.clear();
+
+   int ii, jj, kk;
+   if (iSide==0) //left
+   {    
+     for(jj=0; jj<ny; jj++)
+     {
+       for(kk=0; kk<nz; kk++)
+       {
+         int indElement = cfgMaterialUtilities::getElementIndex(nx, ny, nz, 0, jj, kk);
+         oSideVoxelIndices.push_back(indElement);
+       }
+     }
+   }
+   else if (iSide==1) //right
+   {
+     for(jj=0; jj<ny; jj++)
+     {
+       for(kk=0; kk<nz; kk++)
+       {
+         int indElement = cfgMaterialUtilities::getElementIndex(nx, ny, nz, nx-1, jj, kk);
+         oSideVoxelIndices.push_back(indElement);
+       }
+     }
+   }
+   else if (iSide==2) //bottom
+   {
+     for(ii=0; ii<nx; ii++)
+     {
+       for(kk=0; kk<nz; kk++)
+       {
+         int indElement = cfgMaterialUtilities::getElementIndex(nx, ny, nz, ii, 0, kk);
+         oSideVoxelIndices.push_back(indElement);
+       }
+     }
+   }
+   else if (iSide==3) //top
+   {
+     for(ii=0; ii<nx; ii++)
+     {
+       for(kk=0; kk<nz; kk++)
+       {
+         int indElement = cfgMaterialUtilities::getElementIndex(nx, ny, nz, ii, ny-1, kk);
+         oSideVoxelIndices.push_back(indElement);
+       }
+     }
+   }
+   else if (iSide==4) //back
+   {
+     for(ii=0; ii<nx; ii++)
+     {
+       for(jj=0; jj<ny; jj++)
+       {
+         int indElement = cfgMaterialUtilities::getElementIndex(nx, ny, nz, ii, jj, 0);
+         oSideVoxelIndices.push_back(indElement);
+       }
+     } 
+   }
+   else if (iSide==5) //front
+   {
+     for(ii=0; ii<nx; ii++)
+     {
+       for(jj=0; jj<ny; jj++)
+       {
+         int indElement = cfgMaterialUtilities::getElementIndex(nx, ny, nz, ii, jj, nz-1);
+         oSideVoxelIndices.push_back(indElement);
+       }
+     }
+   }
 }
 
 //0: Left, 1: Right, 2: Bottom, 3:Top, 4: Back, 5: Front
@@ -552,7 +625,7 @@ void cfgMaterialUtilities::computeDelaundayTriangulation(const std::vector<float
   //qhullUtilities::getBoundaryVertices(qhull, qhull.facetList(), 1.65, *oBoundaryVertices);
 
   std::vector<QhullFacet> smallFacets, largeFacets;
-  qhullUtilities::sortFaces(qhull, qhull.facetList(), 1.65, smallFacets, largeFacets);
+  qhullUtilities::sortFaces(qhull, qhull.facetList(), 1.8, smallFacets, largeFacets);
   qhullUtilities::getBoundaryVertices(smallFacets, oBoundaryVertices, oBoundaryFaces);
 
   oFaceVertices.clear();
@@ -686,7 +759,3 @@ Vector3f cfgMaterialUtilities::getVector3f(int indVertex, const std::vector<floa
   int indPoint = 3*indVertex;
   return Vector3f(iPoints[indPoint], iPoints[indPoint+1], iPoints[indPoint+2]);
 }
-
-
-
-

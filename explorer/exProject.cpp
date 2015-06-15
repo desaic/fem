@@ -26,7 +26,7 @@ bool exProject::readBaseMaterialStructures(int iLevel, std::vector<std::vector<i
 {
   int level = iLevel;
  
-  std::string fileDirectory = "C://Users//melina//Documents//Projects//fem//vc//runtime//Output//";
+  std::string fileDirectory = m_FileDirectory;
   std::string materialFile = fileDirectory + "Materials_" + std::to_string(iLevel) + ".txt";
 
   oBaseMaterialStructures.clear();
@@ -35,7 +35,7 @@ bool exProject::readBaseMaterialStructures(int iLevel, std::vector<std::vector<i
   return true;
 }
 
-bool exProject::getMaterialParameters(std::vector<Scalar> &oPhysicalParameters, int iLevel)
+bool exProject::getMaterialParameters(std::vector<cfgScalar> &oPhysicalParameters, int iLevel)
 {
   oPhysicalParameters.clear();
 
@@ -43,13 +43,22 @@ bool exProject::getMaterialParameters(std::vector<Scalar> &oPhysicalParameters, 
   int level = iLevel;
   int blockSize = m_blockSize;
 
-  std::string fileDirectory = "C://Users//melina//Documents//Projects//fem//vc//runtime//Output//";
+  std::string fileDirectory = m_FileDirectory;
   std::string materialFile = fileDirectory + "Materials_" + std::to_string(level) + ".txt";
 
   std::string stressStrainFilesDir[2];
-  stressStrainFilesDir[0] =  fileDirectory + "x_level" + std::to_string(level) + "//";
-  stressStrainFilesDir[1] =  fileDirectory + "y_level" + std::to_string(level) + "//";
-
+  int nlevel = 2;
+  //if (1)
+  if (iLevel<nlevel)
+  {
+    stressStrainFilesDir[0] =  fileDirectory + "x_level" + std::to_string(level) + "//";
+    stressStrainFilesDir[1] =  fileDirectory + "y_level" + std::to_string(level) + "//";
+  }
+  else
+  {
+    stressStrainFilesDir[0] =  fileDirectory + "x" + "//";
+    stressStrainFilesDir[1] =  fileDirectory + "y" + "//";
+  }
   std::string stressStrainBaseFileName = "StressStrain_" + std::to_string(level) + "_" + std::to_string(blockSize);
   int nbFiles = 0;
   if (level==1)
@@ -58,9 +67,15 @@ bool exProject::getMaterialParameters(std::vector<Scalar> &oPhysicalParameters, 
   }
   else if (level==2)
   {
-    nbFiles = 430;
+    //nbFiles = 430;
+    nbFiles = 1000;
   }
-  bool ResOk = computeMaterialParameters(materialFile, stressStrainFilesDir, stressStrainBaseFileName, nbFiles, oPhysicalParameters);
+  else if (level==3)
+  {
+    nbFiles = 1198;
+  }
+  std::vector<std::vector<int> > MaterialAssignments;
+  bool ResOk = computeMaterialParameters(materialFile, stressStrainFilesDir, stressStrainBaseFileName, nbFiles, oPhysicalParameters, MaterialAssignments);
 
   return true;
 }
@@ -78,7 +93,7 @@ QSharedPointer<ElementMesh> exProject::computeElementMesh(int iCombIndex, int iL
   int blockSize = m_blockSize;
   int indComb = iCombIndex;
 
-  std::string fileDirectory = "C://Users//melina//Documents//Projects//fem//vc//runtime//Output//";
+  std::string fileDirectory = m_FileDirectory;
   std::string stressStrainFilesDir[2];
   stressStrainFilesDir[0] =  fileDirectory + "x_level" + std::to_string(level) + "//";
   stressStrainFilesDir[1] =  fileDirectory + "y_level" + std::to_string(level) + "//";
@@ -87,7 +102,7 @@ QSharedPointer<ElementMesh> exProject::computeElementMesh(int iCombIndex, int iL
   std::string sampleFile = stressStrainFilesDir[0] + stressStrainBaseFileName + "_" + std::to_string(indComb) + ".txt"; 
   Vector3f forceAxis;
   std::vector<int> materialAssignment;
-  std::vector<Scalar> stresses, strains;
+  std::vector<cfgScalar> stresses, strains;
   ResOk = readData(sampleFile, forceAxis, materialAssignment, stresses, strains);
 
   int c = 2*blockSize;

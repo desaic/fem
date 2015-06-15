@@ -20,6 +20,8 @@ StepperNewton::StepperNewton():dense(true),dx_tol(1e-5f),h(1.0f)
 
 int StepperNewton::oneStep()
 {
+  int status = 0;
+
   std::vector<Vector3f> force = m->getForce();
   float E = m->getEnergy();
  
@@ -28,12 +30,14 @@ int StepperNewton::oneStep()
 
   if (dense)
   {
-    compute_dx_dense(m, force, rmRigid, bb);
+    status = compute_dx_dense(m, force, rmRigid, bb);
   }
   else
   {
-    compute_dx_sparse(m, force, rmRigid, bb);
+    status = compute_dx_sparse(m, force, rmRigid, bb);
   }
+  if (status>0)
+    return status;
 
   double totalMag = 0;
   for(int ii = 0;ii<ndof;ii++){
@@ -113,7 +117,7 @@ void fixRigid(MatrixXf & K, float * b,
   }
 }
 
-float StepperNewton::compute_dx_dense(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
+int StepperNewton::compute_dx_dense(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
 {
   int ndof = bb.size();
   assert(iMesh && 3*iMesh->x.size()==ndof);
@@ -146,7 +150,7 @@ float StepperNewton::compute_dx_dense(ElementMesh * iMesh, const std::vector<Vec
   return 0;
 }
 
-float StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
+int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
 {
   bool triangular = true;
 
@@ -210,6 +214,8 @@ float StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Ve
   for(int ii = 0;ii<x.size();ii++){
     bb[ii] = x[ii];
   }
+  if (status<0)
+    return 1;
 
   return 0;
 }
