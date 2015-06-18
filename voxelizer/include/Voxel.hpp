@@ -107,9 +107,9 @@ public:
   void buildGrid(const char * filename);
    ///@brief insert a triangle
   ///@param tidx triangle index
-  void insert(int tidx);
+  void insert(int tidx, Grid & inside);
   ///@brief flood fill the exterior to figure out the interior
-  void floodfill();
+  void floodfill(Grid & inside);
   void saveObj(const char * outfile);
   void computeConnectivity();
   void saveConnectivity(const char * outfile);
@@ -117,11 +117,13 @@ private:
   static Mesh cube;
   int clampIdx(int idx, int dim);
   void bbox(int ii, int * tmn, int * tmx);
-  void rasterize(int tidx, Grid & grid);
+  
+  void rasterize(int tidx, Grid & grid, Grid & inside);
+  
   ///@brief computes grid index given coordinate
   void vec2grid(const Vec3f &v, GridIdx & grid);
-  bool trigCubeIntersect(int tidx,
-                         GridIdx & cube);
+  bool trigCubeIntersect(int tidx, const GridIdx & cube);
+  int  trigCubeSign     (int tidx, const GridIdx & cube);
   //maximum grid size
   Vec3i mg;
   
