@@ -237,7 +237,9 @@ Voxel::Voxel(const char *filename, int _res, int maxx, int maxy, int maxz)
   buildGrid(filename);
 }
 
-///@return 1 if cube center is on the positive half space (outside) of triangle.
+///@return 2 if cube center is on the positive half space (outside) of triangle.
+///@return 1 of tje cube center is on the negative side, but the projection is outside
+///of the triangle.
 int Voxel::trigCubeSign(int tidx, const GridIdx & gi)
 {
 //   std::cout<<gi[0]<<" "<<gi[1]<<" "<<gi[2]<<"\n";
@@ -253,11 +255,25 @@ int Voxel::trigCubeSign(int tidx, const GridIdx & gi)
   Vector3f n = Vector3f::cross(e1,e2);
   Vector3f d = boxcenter - tv[0];
   if(Vector3f::dot(n,d)>0){
+    return 2;
+  }
+  float normn = n.absSquared();
+  d = boxcenter - (Vector3f::dot(n,d)/normn)*n;
+  Vector3f n0 = Vector3f::cross(tv[1] - d, tv[2] - d);
+  if(Vector3f::dot(n0,n)<0){
     return 1;
   }
-//   if(gi[0] == 2 && gi[1] ==1 && gi[2] ==1){
-//     std::cout<<tidx<<"\n";
-//   }
+  
+  Vector3f n1 = Vector3f::cross(tv[2] - d, tv[0] - d);
+  if(Vector3f::dot(n1,n)<0){
+    return 1;
+  }
+  
+  Vector3f n2 = Vector3f::cross(tv[0] - d, tv[1] - d);
+  if(Vector3f::dot(n2,n)<0){
+    return 1;
+  }
+  
   return -1;
 }
 
@@ -266,9 +282,10 @@ bool Voxel::trigCubeIntersect(int tidx, const GridIdx & cube)
   float boxcenter[3]={(float)((0.5+cube[0])*gridlen+orig[0]),
                       (float)((0.5+cube[1])*gridlen+orig[1]),
                       (float)((0.5+cube[2])*gridlen+orig[2])};
-  float boxhalfsize[3]={(float)gridlen/(1.99f),
-                      (float)gridlen/(1.99f),
-                      (float)gridlen/(1.99f)};
+  //inflate cube by half cube size
+  float boxhalfsize[3]={(float)gridlen/(1.01f),
+                      (float)gridlen/(1.01f),
+                      (float)gridlen/(1.01f)};
   float triverts[3][3];
   for(int ii=0;ii<3;ii++){
     for(int jj=0;jj<3;jj++){
@@ -303,13 +320,11 @@ void Voxel::rasterize(int tidx, Grid & grid, Grid & inside)
       for(int iz=tmn[2];iz<=(tmx[2]);iz++){
         GridIdx gi(ix,iy,iz);
         if(trigCubeIntersect(tidx,gi)){
-//           if(ix==2 && iy==1 &&iz==1){
-//             std::cout<<"debug\n";
-//           }
+         //  if(ix==2 && iy==2 &&iz==2){
+           //  std::cout<<"debug\n";
+           //}
           //check if the center of the voxel is in the positive half plane of the triangle
-          if(trigCubeSign(tidx,gi)>0){
-            inside(ix,iy,iz)=false;
-          }else if(grid(ix,iy,iz)==false){
+          if(trigCubeSign(tidx,gi)<0){
             inside(ix,iy,iz)=true;
           }
           grid(ix,iy,iz)=true;
@@ -339,7 +354,7 @@ void Voxel::bbox(int ii, int * tmn, int * tmx)
     }
   }
   for(int ii = 0;ii<VOXEL_DIM;ii++){
-    tmn[ii] = std::max(0,tmn[ii]);
-    tmx[ii] = std::min(grid.size(ii)-1,tmx[ii]);
+    tmn[ii] = std::max(0,tmn[ii]-1);
+    tmx[ii] = std::min(grid.size(ii)-1,tmx[ii]+1);
   }
 }
