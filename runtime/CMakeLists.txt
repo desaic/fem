@@ -1,6 +1,9 @@
 PROJECT (RunTime)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
+#find_package(Eigen3)
+#include_directories (${EIGEN3_INCLUDE_DIR})
+
 add_subdirectory(../femlib       "${CMAKE_CURRENT_BINARY_DIR}/femlib")
 add_subdirectory(../viewer       "${CMAKE_CURRENT_BINARY_DIR}/viewer")
 add_subdirectory(../vecmath      "${CMAKE_CURRENT_BINARY_DIR}/vecmath")
