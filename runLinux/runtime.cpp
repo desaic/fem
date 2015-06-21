@@ -7,14 +7,14 @@
 #include "ElementMeshHier.hpp"
 #include "StepperGrad.hpp"
 #include "StepperNewton.hpp"
-#include "NewtonCuda.hpp"
-#include "LinSolveCusp.hpp"
-#include "ADMM.h"
 #include "AdmmCPU.hpp"
-#include "AdmmNoSpring.hpp"
-#include "NewtonCuda.hpp"
-#include "NewtonCudaHier.hpp"
-//#include "IpoptStepper.hpp"
+//#include "NewtonCuda.hpp"
+//#include "LinSolveCusp.hpp"
+//#include "ADMM.h"
+//#include "AdmmNoSpring.hpp"
+//#include "NewtonCuda.hpp"
+//#include "NewtonCudaHier.hpp"
+#include "IpoptStepper.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
@@ -29,7 +29,7 @@ void runTest()
   stiffnessTest(2);
   //testCoarseDefGrad();
 	//forceTest(0);
-  testCG();
+//  testCG();
   //cudaLinTest();
   system("pause");
   exit(0);
@@ -356,7 +356,7 @@ int runHier(const ConfigFile & conf)
     nSteps = conf.getInt("nSteps");
   }
   
-  stepper = new NewtonCudaHier();
+//  stepper = new NewtonCudaHier();
   //stepper->rmRigid = true;
 
   stepper->nSteps = nSteps;
@@ -471,11 +471,10 @@ int main(int argc, char* argv[])
     stepper = new StepperNewton();
   }
   else if (stepperType == "newtonCuda"){
-    stepper = new NewtonCuda();
+//    stepper = new NewtonCuda();
   }
   else if (stepperType == "ipopt"){
-    //not yet implemented
-    //  stepper = new IpoptStepper();
+    stepper = new IpoptStepper();
   }
   else if (stepperType == "admmCPU"){
     stepper = new AdmmCPU();
@@ -486,7 +485,7 @@ int main(int argc, char* argv[])
   }
   else{
     //stepper = new AdmmNoSpring();
-    stepper = new ADMMStepper();
+//    stepper = new ADMMStepper();
     
   }
   //stepper->rmRigid = true;

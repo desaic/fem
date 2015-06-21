@@ -9,10 +9,10 @@
 #include "MatrixX.hpp"
 #include "Quadrature.hpp"
 #include "StepperNewton.hpp"
-#include "LinSolveCusp.hpp"
+//#include "LinSolveCusp.hpp"
 #include "Timer.hpp"
 
-#include <Eigen\Dense>
+#include <Eigen/Dense>
 #include <iostream>
 #include <fstream>
 
@@ -89,19 +89,19 @@ void cudaLinTest()
     }
   }
   out.close();
-  LinSolveCusp solver;
-  solver.init(I, J);
-  Timer timer;
-  timer.start();
-  solver.solve(val, x);
-  for (unsigned int ii = 0; ii < f.size(); ii++){
-    for (int jj = 0; jj < 3; jj++){
-      f[ii][jj] = x[3 * ii + jj];
-    }
-    std::cout << f[ii][0] << " " << f[ii][1] << " " << f[ii][2] << "\n";
-  }
-  timer.end();
-  std::cout << timer.getSeconds();
+//  LinSolveCusp solver;
+//  solver.init(I, J);
+//  Timer timer;
+//  timer.start();
+//  solver.solve(val, x);
+//  for (unsigned int ii = 0; ii < f.size(); ii++){
+//    for (int jj = 0; jj < 3; jj++){
+//      f[ii][jj] = x[3 * ii + jj];
+//    }
+//    std::cout << f[ii][0] << " " << f[ii][1] << " " << f[ii][2] << "\n";
+//  }
+//  timer.end();
+//  std::cout << timer.getSeconds();
   delete[]x;
 }
 

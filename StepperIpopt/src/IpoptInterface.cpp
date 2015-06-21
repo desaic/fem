@@ -166,9 +166,9 @@ IpoptInterface::eval_h(Index n, const Number* x, bool new_x,
       jCol[ii] = J[ii];
     }
   }else{
-    std::vector<int> I,J;
+//    std::vector<int> I,J;
     std::vector<float> val;
-    ele->getStiffnessSparse(I,J,val);
+    ele->getStiffnessSparse(val);
     for (unsigned int k=0; k<val.size(); k++){
       values[k] = obj_factor*val[k];
     }

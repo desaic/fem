@@ -1,4 +1,4 @@
-PROJECT (RunTime)
+PROJECT (RunLinux)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 #find_package(Eigen3)
