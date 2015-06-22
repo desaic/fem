@@ -11,11 +11,12 @@ using namespace Ipopt;
 int IpoptDynStepper::oneStep()
 {
   // Ask Ipopt to solve the problem
+
   ApplicationReturnStatus status = app->OptimizeTNLP(problem);
 
   if (status == Solve_Succeeded) {
     std::cout << std::endl << std::endl << ": *** The problem solved!" << std::endl;
-    return -1;
+    return 0;
   }
   else {
     std::cout << std::endl << std::endl << ":*** The problem FAILED!" << std::endl;
@@ -28,11 +29,14 @@ void IpoptDynStepper::init(ElementMesh * _m)
   std::cout<<"Init ipopt dyn solver\n";
   m = _m;
   problem = new DynProblem();
-
+  m->computeMass();
   app = IpoptApplicationFactory();
   app->Options()->SetNumericValue("tol", 0.5);
   app->Options()->SetStringValue("mu_strategy", "adaptive");
 //  app->Options()->SetStringValue("hessian_approximation","limited-memory");
+//  app->Options()->SetStringValue("derivative_test","second-order");
+//  app->Options()->SetNumericValue("derivative_test_perturbation",0.01);
+  app->Options()->SetStringValue("hessian_constant","yes");
   app->Options()->SetIntegerValue("max_iter", NSteps);
 //steps each mesh separately
 
@@ -62,6 +66,7 @@ bool DynProblem::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
                             Index& nnz_h_lag,
                             IndexStyleEnum& index_style)
 {
+  std::cout<<"init \n";
   //3 dimensions for each vertex
   n = 3*ele->x.size();
   //no constraints
@@ -77,6 +82,36 @@ bool DynProblem::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
   std::cout<<"nnz "<<nnz_h_lag<<"\n";
   //zero based
   index_style = TNLP::C_STYLE;
+
+  //h*h*K
+  float h = ele->dt;
+  //get full stiffness matrix
+  A = ele->getStiffnessSparse();
+  A=h*h*A;
+//  std::cout<<A<<"\n";
+  //add lumped mass
+  //column first
+  for(int ii = 0; ii<A.cols(); ii++){
+    int vidx = ii/3;
+    for (Eigen::SparseMatrix<float>::InnerIterator it(A, ii); it; ++it){
+//      std::cout<<ii<<" "<<it.row()<<"\n";
+      if(ii==it.row()){
+//        std::cout<<it.value()<<"\n";
+        it.valueRef() += ele->mass[vidx];
+//        std::cout<<it.value()<<"\n";
+      }
+    }
+  }
+  b.resize(3*ele->x.size());
+  std::vector<Vector3f> forces = ele->getForce();
+  for(unsigned int ii =0; ii<forces.size(); ii++){
+    //add momentum and gravity scaled by h
+    Vector3f f = (h*h)*(forces[ii] + ele->mass[ii] * ele->G);
+    f += h*ele->mass[ii] * ele->v[ii];
+    for(int jj =0 ; jj<3; jj++){
+      b[3*ii+jj] = f[jj];
+    }
+  }
   return true;
 }
 
@@ -90,7 +125,7 @@ DynProblem::get_bounds_info(Index n, Number* x_l, Number* x_u,
     //x and z component have lower bound -10 (arbitrary)
     //y component has lower bound 0
     x_l[3*ii] = -10;
-    x_l[3*ii+1] = -10;
+    x_l[3*ii+1] = 0;//-10;
     x_l[3*ii+2] = -10;
 
     //all variables upper bound 10 (arbitrary)
@@ -132,6 +167,7 @@ DynProblem::get_starting_point(Index n, bool init_x, Number* x,
   for(size_t ii = 0;ii<ele->x.size();ii++){
     for(int jj = 0;jj<3;jj++){
       x[ii*3+jj] = ele->x[ii][jj];
+//      std::cout<<x[3*ii+jj]<<"\n";
     }
   }
   return true;
@@ -140,31 +176,32 @@ DynProblem::get_starting_point(Index n, bool init_x, Number* x,
 bool
 DynProblem::eval_f(Index n, const Number* x, bool new_x, Number& obj_value)
 {
+  Eigen::VectorXf delta(3*ele->x.size());
   for(size_t ii = 0 ;ii<ele->x.size();ii++){
     for(int jj = 0;jj<3;jj++){
-      ele->x[ii][jj] = x[3*ii+jj];
+      delta[3*ii+jj] = x[3*ii+jj] - ele->x[ii][jj];
+//      std::cout<<x[3*ii+jj]<<" ";
     }
+//    std::cout<<"\n";
   }
-  obj_value = ele->getEnergy();
+
+  obj_value = delta.dot(0.5*A*delta - b);
   return true;
 }
 
 bool
 DynProblem::eval_grad_f(Index n, const Number* x, bool new_x, Number* grad_f)
 {
+  Eigen::VectorXf delta(3*ele->x.size());
   for(size_t ii = 0 ;ii<ele->x.size();ii++){
     for(int jj = 0;jj<3;jj++){
-      ele->x[ii][jj] = x[3*ii+jj];
+      delta[3*ii+jj] = x[3*ii+jj] - ele->x[ii][jj];
     }
   }
 
-  std::vector<Vector3f> forces = ele->getForce();
-  assert((int)3*forces.size() == n);
-
-  for(size_t ii = 0;ii<forces.size();ii++){
-    for(int jj = 0;jj<3;jj++){
-      grad_f[ii*3+jj] = -forces[ii][jj];
-    }
+  Eigen::VectorXf grad = A*delta - b;
+  for(Index ii = 0; ii<n; ii++){
+    grad_f[ii] = grad[ii];
   }
   return true;
 }
@@ -201,6 +238,7 @@ DynProblem::eval_h(Index n, const Number* x, bool new_x,
 {
   if(values==NULL){
     std::vector<int> I,J;
+    //use only trianglar part
     ele->stiffnessPattern(I,J,true);
     int Jidx = 0;
     for(unsigned int ii = 1;ii<I.size();ii++){
@@ -216,17 +254,15 @@ DynProblem::eval_h(Index n, const Number* x, bool new_x,
   }else{
 
 //    std::vector<int> I,J;
-    std::vector<float> val;
-    std::cout<<val.size()<<" nnz \n";
-
-    ele->getStiffnessSparse(val,true);
-    for (unsigned int k=0; k<val.size(); k++){
-      values[k] = obj_factor*val[k];
-    }
-
-    for (size_t ii=0; ii<ele->x.size(); ii++) {
-      for(int jj = 0;jj<3;jj++){
-        ele->x[ii][jj] = x[3*ii+jj];
+    int k =0 ;
+    for(int ii = 0; ii<A.cols(); ii++){
+      for (Eigen::SparseMatrix<float>::InnerIterator it(A, ii); it; ++it){
+        //only copy triangular part
+        if(it.col()>it.row()){
+          continue;
+        }
+        values[k] = obj_factor*it.value();
+        k++;
       }
     }
 
@@ -245,15 +281,15 @@ DynProblem::finalize_solution(SolverReturn status,
 {
   // here is where we would store the solution to variables, or write to a file, etc
   // so we could use the solution.
-
-  // Copy the solution to the elements.
-  // This is why we need a compiler project.
   for (size_t ii=0; ii<ele->x.size(); ii++) {
     for(int jj = 0;jj<3;jj++){
+      ele->v[ii][jj] = (1.0/ele->dt) * (x[3*ii+jj] - ele->x[ii][jj]);
       ele->x[ii][jj] = x[3*ii+jj];
     }
   }
 
+  std::cout<<"Step: "<<frameCnt<<"\n";
+  frameCnt++;
 #ifdef DEBUG
   std::cout << std::endl << std::endl << "Solution of the bound multipliers, z_L and z_U" << std::endl;
   for (Index i=0; i<n; i++) {

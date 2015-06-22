@@ -7,6 +7,8 @@
 #include "ElementMesh.hpp"
 #include "IpIpoptApplication.hpp"
 
+#include <Eigen/Sparse>
+
 class DynProblem;
 
 class IpoptDynStepper: public Stepper\
@@ -85,6 +87,9 @@ public:
   //@}
   ElementMesh * ele;
 
+  ///@brief solve a QP for the moment
+  Eigen::SparseMatrix<float> A;
+  Eigen::VectorXf b;
 private:
   /**@name Methods to block default compiler methods.
    * The compiler automatically generates the following three methods.
