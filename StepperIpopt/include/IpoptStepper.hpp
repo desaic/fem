@@ -7,8 +7,6 @@
 #include "ElementMesh.hpp"
 #include "IpIpoptApplication.hpp"
 
-class ElementMesh;
-
 class IpoptStepper:public Stepper
 {
 public:

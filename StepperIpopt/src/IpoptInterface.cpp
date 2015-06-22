@@ -167,7 +167,7 @@ IpoptInterface::eval_h(Index n, const Number* x, bool new_x,
       for(int jj =0 ; jj<len; jj++){
         iRow[Jidx] = ii-1;
         jCol[Jidx] = J[Jidx];
-        std::cout<<iRow[Jidx]<<" "<<jCol[Jidx]<<"\n";
+//        std::cout<<iRow[Jidx]<<" "<<jCol[Jidx]<<"\n";
         Jidx++;
       }
     }

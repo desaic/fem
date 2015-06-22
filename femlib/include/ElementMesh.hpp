@@ -4,6 +4,7 @@
 #include "vecmath.h"
 #include "BoundVec3.hpp"
 #include "MatrixX.hpp"
+#include <Eigen/Sparse>
 
 class Element;
 class Material;
@@ -14,11 +15,28 @@ public:
   ///Make copies if needed.
   std::vector<Element*>e;
 
+  ///@brief deformed positions in t-1. used by dynamics(unit m)
+//  std::vector<Vector3f>x0;
+
+  ///@brief deformed positions (unit m)
   std::vector<Vector3f>x;
   
   ///@brief vertex positions at rest pose.
   std::vector<Vector3f>X;
-  
+
+  ///@brief velocity
+  std::vector<Vector3f>v;
+
+  ///@brief time step (unit s)
+  float dt;
+  ///@brief gravitational constant
+  Vector3f G;
+  ///@TODO: change to per element density.
+  ///@brief kg/m3
+  float density;
+  ///@brief lumped mass
+  std::vector<float>mass;
+
   std::vector<Material*>m;
   
   ///@brief material for each element
@@ -51,6 +69,11 @@ public:
 
   ///@param trig if true, return only the upper triangle of the symmetric matrix.
   void getStiffnessSparse(std::vector<float> &val, bool trig = false, bool constrained=false, bool iFixedRigid=false);
+
+  Eigen::SparseMatrix<float> getStiffnessSparse(bool trig = false, bool constrained=false, bool iFixedRigid=false);
+
+  ///@brief precompute lumped maasses.
+  void computeMass();
 
   ///@param I row offsets. I.size() = matrix size + 1. I[size()-1]=number of non-zeros.
   ///@param J column indices.

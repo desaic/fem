@@ -7,6 +7,7 @@
 void ElementMesh::initArrays()
 {
   x=X;
+  v.resize(X.size(), Vector3f(0,0,0));
   fe.resize(X.size());
   fixed.resize(X.size());
   me.resize(e.size());
@@ -84,12 +85,26 @@ std::vector<Vector3f> ElementMesh::getForce()
   return force;
 }
 
+void ElementMesh::computeMass()
+{
+  mass.resize(x.size(), 0);
+  for(unsigned int ii =0 ; ii<e.size(); ii++){
+    float size = X[e[ii]->at(7)][0] - X[e[ii]->at(0)][0];
+    float vol = size*size*size;
+    float nodeMass = 0.125 * vol * density;
+    for(int jj =0 ; jj<e[ii]->nV(); jj++){
+      mass[e[ii]->at(jj)] += nodeMass;
+//      std::cout<<"m: "<<mass[e[ii]->at(jj)]<<"\n";
+    }
+  }
+}
+
 float ElementMesh::eleSize()
 {
   return X[e[0]->at(7)][0] - X[e[0]->at(0)][0];
 }
 
-ElementMesh::ElementMesh():u(0)
+ElementMesh::ElementMesh():u(0),dt(0.01),G(Vector3f(0,-9.8,0)), density(1000)
 {}
 
 ElementMesh::~ElementMesh()

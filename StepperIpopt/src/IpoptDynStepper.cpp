@@ -112,6 +112,15 @@ bool DynProblem::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
       b[3*ii+jj] = f[jj];
     }
   }
+
+  //remove force and constraints after 10 steps
+  if(frameCnt==10){
+    for(unsigned int ii = 0; ii<ele->x.size(); ii++){
+      ele->fe[ii] = Vector3f(0,0,0);
+      ele->fixed[ii] = 0;
+    }
+  }
+
   return true;
 }
 

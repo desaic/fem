@@ -15,6 +15,7 @@
 //#include "NewtonCuda.hpp"
 //#include "NewtonCudaHier.hpp"
 #include "IpoptStepper.hpp"
+#include "IpoptDynStepper.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
@@ -475,6 +476,9 @@ int main(int argc, char* argv[])
   }
   else if (stepperType == "ipopt"){
     stepper = new IpoptStepper();
+  }
+  else if (stepperType == "ipoptDyn"){
+    stepper = new IpoptDynStepper();
   }
   else if (stepperType == "admmCPU"){
     stepper = new AdmmCPU();
