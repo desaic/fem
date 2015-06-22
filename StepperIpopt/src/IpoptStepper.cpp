@@ -6,6 +6,7 @@ using namespace Ipopt;
 
 void IpoptStepper::init(ElementMesh * _m)
 {
+  std::cout<<"Init ipopt solver\n";
   m = _m;
   problem = new IpoptInterface();
 
@@ -26,6 +27,8 @@ void IpoptStepper::init(ElementMesh * _m)
       std::cout << std::endl << std::endl << "*** Error during initialization!" << std::endl;
       return;
     }
+
+    std::cout<<"end init ipoptstepper\n";
 }
 
 int IpoptStepper::oneStep()
