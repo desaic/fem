@@ -36,6 +36,8 @@ int IpoptStepper::oneStep()
     // Ask Ipopt to solve the problem
     ApplicationReturnStatus status = app->OptimizeTNLP(problem);
 
+    //just need to call once for statics
+    return -1;
     if (status == Solve_Succeeded) {
       std::cout << std::endl << std::endl << ": *** The problem solved!" << std::endl;
       return 0;
