@@ -119,7 +119,7 @@ ElementMesh::getStiffnessSparse(bool trig, bool constrained, bool iFixedRigid)
               if (fixed[vk] || fixed[vj]){
                 val = 0;
                 if (vj == vk && dim1 == dim2){
-                  val = 100;
+                  val = 1;
                 }
               }
             }
@@ -127,6 +127,9 @@ ElementMesh::getStiffnessSparse(bool trig, bool constrained, bool iFixedRigid)
             //  val += 1;
             //}
             Tripletf triple(3 * vj + dim1, 3 * vk + dim2, val);
+//            if(3 * vj + dim1 == 3 * vk + dim2){
+//              std::cout<<val<<"\n";
+//            }
             coef.push_back(triple);
           }
         }
@@ -138,6 +141,7 @@ ElementMesh::getStiffnessSparse(bool trig, bool constrained, bool iFixedRigid)
   {
     fixRigid(Ksparse, this);
   }
+//  std::cout<<Ksparse;
   return Ksparse;
 }
 
@@ -175,7 +179,7 @@ void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,
   }
 
   I.push_back(0);
-  for(int ii = 0; ii<Ksparse.rows(); ii++){
+  for(int ii = 0; ii<Ksparse.cols(); ii++){
     for (Eigen::SparseMatrix<float>::InnerIterator it(Ksparse, ii); it; ++it){
      J.push_back(it.row());
    }

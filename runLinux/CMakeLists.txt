@@ -3,13 +3,13 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 #find_package(Eigen3)
 #include_directories (${EIGEN3_INCLUDE_DIR})
+add_definitions( -DPARDISO_AVAILABLE)
 
 add_subdirectory(../femlib       "${CMAKE_CURRENT_BINARY_DIR}/femlib")
 add_subdirectory(../viewer       "${CMAKE_CURRENT_BINARY_DIR}/viewer")
 add_subdirectory(../vecmath      "${CMAKE_CURRENT_BINARY_DIR}/vecmath")
 add_subdirectory(../StepperCPU   "${CMAKE_CURRENT_BINARY_DIR}/StepperCPU")
 add_subdirectory(../StepperIpopt "${CMAKE_CURRENT_BINARY_DIR}/StepperIpopt")
-
 FILE(GLOB EXE_SRC "*.cpp")
 ADD_DEFINITIONS(--std=c++0x)
 INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/../femlib/include")
