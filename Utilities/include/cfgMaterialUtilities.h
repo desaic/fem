@@ -9,6 +9,7 @@
 #include <Vector3f.h>
 
 class ElementRegGrid;
+class ElementRegGrid2D;
 
 namespace cfgMaterialUtilities
 {
@@ -18,8 +19,9 @@ namespace cfgMaterialUtilities
   bool writeMaterialCombinations(const std::string iFileName, const std::vector<std::vector<int> > &iMaterials);
   bool readData(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<int> &oMaterials, std::vector<float> &oStresses, std::vector<float> &oStrains);
   bool writeData(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<int> &iMaterials, const std::vector<float> &iStresses, const std::vector<float> &iStrains);
-  bool computeMaterialParameters(const std::string &iMaterialFile, const std::string iStressStrainFilesDirectories[2], const std::string iStressStrainBaseFileName, int iNbFiles, 
-                                 std::vector<cfgScalar> &oPhysicalParameters, std::vector<std::vector<int> > &oMaterialAssignments);
+  bool computeMaterialParameters(int idim, const std::string &iMaterialFile, const std::string iStressStrainFilesDirectories[2], const std::string iStressStrainBaseFileName, int iNbFiles, 
+                                 std::vector<cfgScalar> &oPhysicalParameters, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<std::vector<int> > &oMaterialAssignments,
+                                 std::vector<std::vector<int> > &oMaterialAssignmentsOneCell);
 
   cfgScalar computeYoungModulus(const std::vector<cfgScalar> &iStrains, const std::vector<cfgScalar>  &iStresses);
 
@@ -34,6 +36,12 @@ namespace cfgMaterialUtilities
   void getExternalVertices(ElementRegGrid * iElementGrid, std::vector<int> &oElemIndices, std::vector<std::vector<int> > &oFaceVertexIndices, std::vector<Vector3f> &oNormals);
   void getVertexValences(const ElementRegGrid * iElementGrid, const std::vector<int> &iElemIndices, const std::vector<std::vector<int> > &iFvIndices, std::map<int,int> &oind2Valence);
 
+  // Hexahedral mesh utilities 2D
+  // ----------------------------
+  void getSideVertices(int iSide, const ElementRegGrid2D * iElementGrid, std::vector<int> &oElemIndices, std::vector<std::vector<int> > &oFaceVertexIndices);
+  void getVertexValences(const ElementRegGrid2D * iElementGrid, const std::vector<int> &iElemIndices, const std::vector<std::vector<int> > &iEvIndices, std::map<int,int> &oind2Valence);
+  void getMaterialAssignment(int nx, int ny, const std::vector<int> &iMaterialCombIndices, int nX, int nY, const std::vector<std::vector<int> > &iBaseCellMaterials, std::vector<int> &oMaterials);
+
   // Point cloud utitlities
   // ----------------------
   void computeConvexHull(const std::vector<float> &iPoints, int iDim, std::vector<int> &oConvexHullVertices);
@@ -42,6 +50,7 @@ namespace cfgMaterialUtilities
   // Triangle mesh utilities
   //------------------------
   float getMeanEdgeLength(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim);
+  Vector3f getMeanEdgeLengthPerAxis(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim);
   float getMinEdgeLength(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim);
   void getEdgesFromTriFaceIndexArray(const std::vector<int> &iTriIndexArray, std::vector<int> &oEdgeIndexArray);
 
@@ -52,6 +61,7 @@ namespace cfgMaterialUtilities
   // Conversion between types
   // -----------------------
   Vector3f getVector3f(int indVertex, const std::vector<float> &iPoints);
+  Vector2f getVector2f(int indVertex, const std::vector<float> &iPoints);
 };
 
 #endif 

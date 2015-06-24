@@ -6,6 +6,8 @@
 
 #include "ElementRegGrid.hpp"
 #include "Element.hpp"
+#include "ElementRegGrid2D.h"
+#include "Element2D.h"
 
 #include "qhullUtilities.h"
 
@@ -120,16 +122,21 @@ cfgScalar cfgMaterialUtilities::computeYoungModulus(const std::vector<cfgScalar>
   return YoungModulus;
 }
 
-bool cfgMaterialUtilities::computeMaterialParameters(const std::string &iMaterialFile, const std::string iStressStrainFilesDirectories[2], const std::string iStressStrainBaseFileName, int iNbFiles,
-                                                    std::vector<cfgScalar> &oPhysicalParameters, std::vector<std::vector<int> > &oMaterialAssignments)
+bool cfgMaterialUtilities::computeMaterialParameters(int idim, const std::string &iMaterialFile, const std::string iStressStrainFilesDirectories[2], const std::string iStressStrainBaseFileName, int iNbFiles,
+                                                    std::vector<cfgScalar> &oPhysicalParameters, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<std::vector<int> > &oMaterialAssignments, 
+                                                    std::vector<std::vector<int> > &oMaterialAssignmentsOneCell)
 {
-  std::vector<std::vector<int> > baseMaterialStructures;
-  readMaterialCombinations(iMaterialFile, baseMaterialStructures);
+  oBaseMaterialStructures.clear();
+  readMaterialCombinations(iMaterialFile,   oBaseMaterialStructures);
+
+  std::vector<std::vector<int> > &baseMaterialStructures = oBaseMaterialStructures;
 
   oPhysicalParameters.clear(); //YoungModulus, density;
   int icomb, ncomb=iNbFiles;
   oMaterialAssignments.clear();
   oMaterialAssignments.resize(ncomb);
+  oMaterialAssignmentsOneCell.clear();
+  oMaterialAssignmentsOneCell.resize(ncomb);
   int naxis = 2;
   for (icomb=0; icomb<ncomb; icomb++)
   {
@@ -144,6 +151,8 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::string &iMateria
 
       if (iaxis==0)
       {
+        oMaterialAssignmentsOneCell[icomb] = materials;
+
         cfgScalar r=0;
         int imat, nmat=(int)materials.size();
         for (imat=0; imat<nmat; imat++)
@@ -210,6 +219,45 @@ void cfgMaterialUtilities::getMaterialAssignment(int nx, int ny, int nz, const s
                   }
                 }
               }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void cfgMaterialUtilities::getMaterialAssignment(int nx, int ny, const std::vector<int> &iMaterialCombIndices, int nX, int nY, const std::vector<std::vector<int> > &iBaseCellMaterials, std::vector<int> &oMaterials)
+{
+  oMaterials.clear();
+  oMaterials.resize(nx*ny, -1);
+
+  int repX = nx/(2*nX);
+  int repY = ny/(2*nY);
+
+  int i,j;
+  for (i=0; i<repX; i++)
+  {
+    for (j=0; j<repY; j++)
+    {
+      int l, m;
+      for (l=0; l<2; l++)
+      {
+        for (m=0; m<2; m++)
+        {
+          int matCombinationIndex = iMaterialCombIndices[l * 2 + m];
+          const std::vector<int> &matCombination = iBaseCellMaterials[matCombinationIndex];
+
+          int ii,jj;
+          for (ii=0; ii<nX; ii++)
+          {
+            for (jj=0; jj<nY; jj++)
+            {
+              int indx = i*(2*nX) + nX*l + ii;
+              int indy = j*(2*nY) + nY*m + jj;
+              int elementIndex = indx * ny + indy;
+
+              oMaterials[elementIndex] = matCombination[ii*nY + jj];
             }
           }
         }
@@ -309,6 +357,7 @@ void cfgMaterialUtilities::getSideVertices(int iSide, const ElementRegGrid * iEl
   int ny = iElementGrid->ny;
   int nz = iElementGrid->nz;
 
+   // [axis][side][face_vertex]
    int externalFaceIndices[3][2][4] = {
     { {0,1,2,3}, {4,5,6,7} },
     { {0,1,4,5}, {2,3,6,7} }, 
@@ -415,6 +464,81 @@ void cfgMaterialUtilities::getSideVertices(int iSide, const ElementRegGrid * iEl
          }
          oFaceVertexIndices.push_back(fvIndices);
        }
+     }
+   }
+}
+
+//0: Left, 1: Right, 2: Bottom, 3:Top
+void cfgMaterialUtilities::getSideVertices(int iSide, const ElementRegGrid2D * iElementGrid, std::vector<int> &oElemIndices, std::vector<std::vector<int> > &oEdgeVertexIndices)
+{
+  assert(iElementGrid);
+  
+  oElemIndices.clear();
+  oEdgeVertexIndices.clear();
+
+  int nx = iElementGrid->nx;
+  int ny = iElementGrid->ny;
+
+  // [axis][side][edge_vertex]
+   int externalFaceIndices[2][2][2] = {
+    { {0,1}, {2,3} },
+    { {0,2}, {1,3} } };
+
+   int ii, jj;
+   if (iSide==0) //left
+   {    
+     for(jj=0; jj<ny; jj++)
+     {
+         int indElement = iElementGrid->GetEleInd(0,jj);
+         oElemIndices.push_back(indElement);
+         std::vector<int> evIndices;
+         for (int ivertex=0; ivertex<2; ivertex++)
+         {
+           evIndices.push_back(externalFaceIndices[0][0][ivertex]);
+         }
+         oEdgeVertexIndices.push_back(evIndices);
+     }
+   }
+   else if (iSide==1) //right
+   {
+     for(jj=0; jj<ny; jj++)
+     {
+       int indElement = iElementGrid->GetEleInd(nx-1,jj);
+       oElemIndices.push_back(indElement);
+       std::vector<int> evIndices;
+       for (int ivertex=0; ivertex<2; ivertex++)
+       {
+         evIndices.push_back(externalFaceIndices[0][1][ivertex]);
+       }
+       oEdgeVertexIndices.push_back(evIndices);
+     }
+   }
+   else if (iSide==2) //bottom
+   {
+     for(ii=0; ii<nx; ii++)
+     {
+       int indElement = iElementGrid->GetEleInd(ii,0);
+       oElemIndices.push_back(indElement);
+       std::vector<int> evIndices;
+       for (int ivertex=0; ivertex<2; ivertex++)
+       {
+         evIndices.push_back(externalFaceIndices[1][0][ivertex]);
+       }
+       oEdgeVertexIndices.push_back(evIndices);
+     }
+   }
+   else if (iSide==3) //top
+   {
+     for(ii=0; ii<nx; ii++)
+     {
+       int indElement = iElementGrid->GetEleInd(ii,ny-1);
+       oElemIndices.push_back(indElement);
+       std::vector<int> evIndices;
+       for (int ivertex=0; ivertex<2; ivertex++)
+       {
+         evIndices.push_back(externalFaceIndices[1][1][ivertex]);
+       }
+       oEdgeVertexIndices.push_back(evIndices);
      }
    }
 }
@@ -552,6 +676,23 @@ void cfgMaterialUtilities::getVertexValences(const ElementRegGrid * iElementGrid
   }
 }
 
+void cfgMaterialUtilities::getVertexValences(const ElementRegGrid2D * iElementGrid, const std::vector<int> &iElemIndices, const std::vector<std::vector<int> > &iEvIndices, std::map<int,int> &oind2Valence)
+{
+  oind2Valence.clear();
+  int ielem=0, nelem=(int)iElemIndices.size();
+  for (ielem=0; ielem<nelem; ielem++)
+  {
+    int indElement = iElemIndices[ielem];
+    int ivertex=0, nvertex=(int)iEvIndices[ielem].size();
+    for (ivertex=0; ivertex<nvertex; ivertex++)
+    {
+      int fvIndex = iEvIndices[ielem][ivertex];
+      int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+      oind2Valence[indVertex]++;
+    }
+  }
+}
+
 
 void cfgMaterialUtilities::computeConvexHull(const std::vector<float> &iPoints, int iDim, std::vector<int> &oConvexHullVertices)
 {
@@ -619,13 +760,24 @@ void cfgMaterialUtilities::computeDelaundayTriangulation(const std::vector<float
   qhullUtilities::getFacetsVertices(qhull.facetList(), allFaceVertices);
   //oFaceVertices = allFaceVertices;
 
+  Vector3f meanLengths = getMeanEdgeLengthPerAxis(iPoints, allFaceVertices, 4);
 
   float meanEdgeLength = getMeanEdgeLength(iPoints, allFaceVertices, 4);
   float minEdgeLength = getMinEdgeLength(iPoints, allFaceVertices, 4);
   //qhullUtilities::getBoundaryVertices(qhull, qhull.facetList(), 1.65, *oBoundaryVertices);
 
   std::vector<QhullFacet> smallFacets, largeFacets;
-  qhullUtilities::sortFaces(qhull, qhull.facetList(), 1.8, smallFacets, largeFacets);
+  //float maxEdgeSize = 1.8; //3D
+  float maxEdgeSize = 2.5; //2D
+  //qhullUtilities::sortFaces(qhull, qhull.facetList(), maxEdgeSize, smallFacets, largeFacets);
+
+  maxEdgeSize = 2.5;
+  std::vector<float> scale;
+  scale.push_back(1.f/meanLengths[0]);
+  scale.push_back(1.f/meanLengths[1]);
+  scale.push_back(1.f/meanLengths[2]);
+  qhullUtilities::sortFaces(qhull, qhull.facetList(), scale, maxEdgeSize, smallFacets, largeFacets);
+
   qhullUtilities::getBoundaryVertices(smallFacets, oBoundaryVertices, oBoundaryFaces);
 
   oFaceVertices.clear();
@@ -652,6 +804,39 @@ void cfgMaterialUtilities::computeDelaundayTriangulation(const std::vector<float
     stream << "\nVertices created by Qhull::runQhull()\n" << vertices;
   }
 }
+
+Vector3f cfgMaterialUtilities::getMeanEdgeLengthPerAxis(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim)
+{
+  assert(iIndexArray.size()%iDim==0);
+
+  Vector3f MeanLength(0.f,0.f,0.f);
+  int nedge=0;
+  int iface=0, nface=(int)iIndexArray.size()/iDim;
+  for (iface=0; iface<nface; iface++)
+  {
+    int ivertex=0;
+    for (ivertex=0; ivertex<iDim; ivertex++)
+    {
+      int indVertex1 = iIndexArray[iDim*iface+ivertex];
+      int indVertex2 = iIndexArray[iDim*iface+(ivertex+1)%iDim];
+
+      Vector3f p1 = getVector3f(indVertex1, iX);
+      Vector3f p2 = getVector3f(indVertex2, iX);
+      int icoord=0;
+      for (icoord=0; icoord<3; icoord++)
+      {
+        float length = fabs(p2[icoord]-p1[icoord]);
+        MeanLength[icoord] += length;
+      }
+      nedge++;
+    }
+  }
+  if (nedge>0)
+    MeanLength /= nedge;
+
+  return MeanLength;
+}
+
 
 float cfgMaterialUtilities::getMeanEdgeLength(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim)
 {
@@ -758,4 +943,11 @@ Vector3f cfgMaterialUtilities::getVector3f(int indVertex, const std::vector<floa
   assert(iPoints.size()%3==0);
   int indPoint = 3*indVertex;
   return Vector3f(iPoints[indPoint], iPoints[indPoint+1], iPoints[indPoint+2]);
+}
+
+Vector2f cfgMaterialUtilities::getVector2f(int indVertex, const std::vector<float> &iPoints)
+{
+  assert(iPoints.size()%2==0);
+  int indPoint = 2*indVertex;
+  return Vector2f(iPoints[indPoint], iPoints[indPoint+1]);
 }

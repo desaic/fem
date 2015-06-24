@@ -21,6 +21,7 @@ public:
 
 	Matrix2f( const Matrix2f& rm ); // copy constructor
 	Matrix2f& operator = ( const Matrix2f& rm ); // assignment operator
+  Matrix2f & operator+=(const Matrix2f & rm);
 	// no destructor necessary
 
 	const float& operator () ( int i, int j ) const;
@@ -34,6 +35,8 @@ public:
 
 	float determinant();
 	Matrix2f inverse( bool* pbIsSingular = NULL, float epsilon = 0.f );
+  float norm2()const;
+  float trace()const;
 
 	void transpose();
 	Matrix2f transposed() const;
@@ -65,5 +68,9 @@ Vector2f operator * ( const Matrix2f& m, const Vector2f& v );
 
 // Matrix-Matrix multiplication
 Matrix2f operator * ( const Matrix2f& x, const Matrix2f& y );
+Matrix2f operator + ( const Matrix2f& x, const Matrix2f& y );
+Matrix2f operator - ( const Matrix2f& x, const Matrix2f& y );
+
+Matrix2f outerProd(const Vector2f & a, const Vector2f & b);
 
 #endif // MATRIX2F_H

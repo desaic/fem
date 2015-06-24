@@ -33,14 +33,18 @@ MainWindow::MainWindow()
   m_matParametersView = new MaterialParametersView();
   setCentralWidget(m_matParametersView);
 
-  m_project = new exProject();
-  m_project->setFileDirectory("..//..//Output//");
+  int dim = 2;
+  m_project = new exProject(dim);
+  //m_project->setFileDirectory("..//..//Output//");
   //m_project->setFileDirectory("..//..//Output//test_1_0//");
   //m_project->setFileDirectory("..//..//Output//test_1_0.5//");
   //m_project->setFileDirectory("..//..//Output//test_1_1//");
   // m_project->setFileDirectory("..//..//Output//test_1_0.1//");
   //m_project->setFileDirectory("..//..//Output//test_pairs_boundary//");
   //m_project->setFileDirectory("..//..//Output//test_boundaryMismatch//");
+
+   m_project->setFileDirectory("..//..//Output//2D/");
+
   m_matParametersView->setProject(m_project);
   m_materialStructureView->setProject(m_project);
 }

@@ -2,6 +2,7 @@
 #include <numeric>
 #include <set>
 #include <vector>
+#include <map>
 
 namespace cfgUtil
 {
@@ -29,6 +30,9 @@ namespace cfgUtil
   template<class T>
   std::set<T> toStdSet(const std::vector<T> &iVec);
 
+  template<class T>
+  std::map<std::vector<T>, int> computeVector2IndexMap(const std::vector<std::vector<T> > &iVec);
+
   /*-------------------------------------------------------------------------------------*/
   // numerics
   /*-------------------------------------------------------------------------------------*/
@@ -45,6 +49,12 @@ namespace cfgUtil
   //substract iValue to every element in iVec
   template<class T>
   std::vector<T> sub(const std::vector<T> &iVec, const T &iValue); 
+
+  template<class T>
+  std::vector<T> mult(const std::vector<T> &iVec, const T &iValue); 
+
+  template<class T, int Dim>
+  std::vector<T> mult(const std::vector<T> &iVec, const T iValue[Dim]); 
 
   template<class T>
   T innerProd(const std::vector<T> &iVec1, const std::vector<T> &iVec2);
@@ -177,12 +187,24 @@ namespace cfgUtil
   std::set<T> toStdSet(const std::vector<T> &iVec)
   {
     std::set<T> Set;
-    /*std::vector<T>::const_iterator it, it_end=iVec.end();
+    std::vector<T>::const_iterator it, it_end=iVec.end();
     for (it=iVec.begin(); it!=it_end; it++)
     {
       Set.insert(*it);
-    }*/ 
+    }
     return Set;
+  }
+
+  template<class T>
+  std::map<std::vector<T>, int> computeVector2IndexMap(const std::vector<std::vector<T> > &iVec)
+  {
+    std::map<std::vector<T>, int> mapVec2Index;
+    int ielem, nelem=(int)iVec.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      mapVec2Index[iVec[ielem]] = ielem;
+    }
+    return mapVec2Index;
   }
 
   template<class T>
@@ -206,7 +228,7 @@ namespace cfgUtil
       oBarycenter[icoord]=0;
       for (ipoint=0; ipoint<npoint; ipoint++)
       {
-        oBarycenter[icoord] += iVec[3*ipoint+icoord];
+        oBarycenter[icoord] += iVec[Dim*ipoint+icoord];
       }
     }
     if (npoint>0)
@@ -238,6 +260,36 @@ namespace cfgUtil
     for (ielem=0; ielem<nelem; ielem++)
     {
       vec[ielem] -= iValue;
+    }
+    return vec;
+  }
+
+  template<class T>
+  std::vector<T> mult(const std::vector<T> &iVec, const T &iValue)
+  {
+    std::vector<T> vec = iVec;
+    size_t ielem, nelem=iVec.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      vec[ielem] *= iValue;
+    }
+    return vec;
+  }
+
+  template<class T, int Dim>
+  std::vector<T> mult(const std::vector<T> &iVec, const T iValue[Dim])
+  {
+    assert(iVec.size()%Dim==0 && Dim>0);
+
+    std::vector<T> vec = iVec;
+    int ipoint, npoint=(int)iVec.size()/Dim;
+    int icoord;
+    for (icoord=0; icoord<Dim; icoord++)
+    {
+      for (ipoint=0; ipoint<npoint; ipoint++)
+      {
+        vec[Dim*ipoint+icoord] *= iValue[Dim];
+      }
     }
     return vec;
   }

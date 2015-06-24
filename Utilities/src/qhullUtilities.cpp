@@ -128,6 +128,68 @@ void qhullUtilities::sortFaces(const Qhull &iHull, const QhullFacetList &iFacets
   }
 }
 
+void qhullUtilities::sortFaces(const Qhull &iHull, const QhullFacetList &iFacets, const std::vector<float> &iScale, float iMaxEdgeLength, std::vector<QhullFacet> &oSmallFacets, std::vector<QhullFacet> &oLargeFacets)
+{
+  oSmallFacets.clear();
+  oLargeFacets.clear();
+
+  QhullPoints points = iHull.points();
+  QhullFacetList::const_iterator f_it, f_end=iFacets.end();
+  for (f_it=iFacets.begin(); f_it!=f_end; ++f_it)
+  {
+    if ((*f_it).isGood())
+    {
+      std::vector<std::vector<int> > ridges;
+      getRidges((*f_it), ridges);
+
+      bool longEdgeFound = false;
+
+      int iridge=0, nridge=(int)ridges.size();
+      for (iridge=0; iridge<nridge; iridge++)
+      {
+        const std::vector<int> & ridgeVertices = ridges[iridge];
+        int ivertex=0, nvertex=(int)ridgeVertices.size();
+        for (ivertex=0; ivertex<nvertex; ivertex++)
+        {
+          int indP1 = ridgeVertices[ivertex];
+          int indP2 = ridgeVertices[(ivertex+1)%nvertex];
+
+          QhullPoint p1 = points.at(indP1);
+          QhullPoint p2 = points.at(indP2);
+
+          Vector3f q1(p1[0],p1[1],p1[2]);
+          Vector3f q2(p2[0],p2[1],p2[2]);
+
+          Vector3f q12 = q1-q2;
+          q12[0] *= iScale[0];
+          q12[1] *= iScale[1];
+          q12[2] *= iScale[2];
+
+          float length = (q1-q2).abs();
+          if (length>iMaxEdgeLength)
+          {
+            longEdgeFound = true;
+
+            /*oFaceVertices.push_back(indP1);
+            oFaceVertices.push_back(indP2);
+
+            oFaceVertices.push_back(indP1);
+            oFaceVertices.push_back(indP2);*/ 
+          }
+        }
+      }
+      if (longEdgeFound)
+      {
+        oLargeFacets.push_back(*f_it);
+      }
+      else
+      {
+        oSmallFacets.push_back(*f_it);
+      }
+    }
+  }
+}
+
 void qhullUtilities::addFacetVertices(const QhullFacet &iFacet, std::vector<int> &ioFaceVertices)
 {
   QhullVertexSet fv = iFacet.vertices();

@@ -86,11 +86,6 @@ vtkSmartPointer<vtkPolyData> MaterialStructureView::createVtkPolyData(const Elem
 {
   assert(iElementMesh);
 
-  int externalFaceIndices[3][2][4] = {
-    { {0,1,3,2}, {5,4,6,7} },
-    { {1,0,4,5}, {2,3,7,6} }, 
-    { {4,0,2,6}, {1,5,7,3} } };
-
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   vtkSmartPointer<vtkCellArray> faces = vtkSmartPointer<vtkCellArray>::New();
 
@@ -99,6 +94,11 @@ vtkSmartPointer<vtkPolyData> MaterialStructureView::createVtkPolyData(const Elem
   vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
   colors->SetNumberOfComponents(4);
   colors->SetName("Colors");
+
+  int externalFaceIndices[3][2][4] = {
+    { {0,1,3,2}, {5,4,6,7} },
+    { {1,0,4,5}, {2,3,7,6} }, 
+    { {4,0,2,6}, {1,5,7,3} } };
 
   int indPoint = 0;
   int ielement=0, nelement=(int)iElementMesh->e.size();

@@ -57,6 +57,7 @@ public:
 	Vector2f& operator += ( const Vector2f& v );
 	Vector2f& operator -= ( const Vector2f& v );
 	Vector2f& operator *= ( float f );
+  Vector2f& operator /= (float f );
 
     static float dot( const Vector2f& v0, const Vector2f& v1 );
 
@@ -71,7 +72,6 @@ private:
 
 };
 
-// component-wise operators
 Vector2f operator + ( const Vector2f& v0, const Vector2f& v1 );
 Vector2f operator - ( const Vector2f& v0, const Vector2f& v1 );
 Vector2f operator * ( const Vector2f& v0, const Vector2f& v1 );

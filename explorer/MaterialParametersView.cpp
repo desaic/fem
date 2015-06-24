@@ -118,22 +118,56 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
 
   Q_ASSERT(m_project);
   // read data
-  int nlevel = 2;
+  int nlevel = 3;
   std::vector<std::vector<cfgScalar> > physicalParametersPerLevel(nlevel);
   std::vector<cfgScalar> physicalParameters;
 
+  m_baseMaterials.clear();
+  m_baseMaterials.resize(nlevel);
+
+  m_baseMaterials2Indices.clear();
+  m_baseMaterials2Indices.resize(nlevel);
+
+  m_materialAssignements.clear();
+  m_materialAssignements.resize(nlevel);
+
+  int nparam = 3;
+
   int ilevel=0;
+  for (ilevel=1; ilevel<nlevel; ilevel++)
+  {
+    bool ResOk = m_project->getMaterialParameters(ilevel, physicalParametersPerLevel[ilevel], m_baseMaterials[ilevel], m_materialAssignements[ilevel]);
+    m_baseMaterials2Indices[ilevel] = computeVector2IndexMap(m_baseMaterials[ilevel]);
+  }
+  m_baseMaterials[0] = m_baseMaterials[1];
+  std::vector<int> mat1, mat2;
+  mat1.push_back(0);
+  mat2.push_back(1);
+  m_materialAssignements[0].push_back(mat1);
+  m_materialAssignements[0].push_back(mat2);
+  int iparam=0;
+  for (iparam=0; iparam<nparam; iparam++)
+  {
+    physicalParametersPerLevel[0].push_back(physicalParametersPerLevel[1][iparam]);
+  }
+  int shift = physicalParametersPerLevel[1].size()-nparam;
+  for (iparam=0; iparam<nparam; iparam++)
+  {
+    physicalParametersPerLevel[0].push_back(physicalParametersPerLevel[1][iparam+shift]);
+  }
+
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
-     bool ResOk = m_project->getMaterialParameters(physicalParametersPerLevel[ilevel], ilevel+1);
     physicalParameters.insert(physicalParameters.end(), physicalParametersPerLevel[ilevel].begin(), physicalParametersPerLevel[ilevel].end());
   }
+
+  m_physicalParameters = physicalParameters;
 
   std::vector<vtkVector3i> colors;
   std::vector<int> levels;
 
-  int nparam = 3;
   std::vector<vtkVector3i> matColors;
+  matColors.push_back(vtkVector3i(0, 0, 0));
   matColors.push_back(vtkVector3i(255, 0, 0));
   matColors.push_back(vtkVector3i(0, 0, 255));
   matColors.push_back(vtkVector3i(0, 255, 255));
@@ -143,9 +177,10 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
   {
     nrow += (int)physicalParametersPerLevel[ilevel].size()/nparam;
     colors.resize(nrow, matColors[ilevel]);
-    levels.resize(nrow, ilevel+1);
+    levels.resize(nrow, ilevel);
     m_lastPointIndices.push_back(nrow-1);
   }
+  m_levels = levels;
  
   vtkSmartPointer<cfgChartXYZ> chart = vtkSmartPointer<cfgChartXYZ>::New();
 
@@ -154,16 +189,19 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
   vtkSmartPointer<cfgPlotPoints3D> points3D = createPointPlot3D(table, "Y1", "Y2", "Density", colors);
   chart->AddPlot(points3D);
   m_table = table;
+  m_plotMaterialPoints = points3D;
 
   std::vector<int> convexHull, boundaryVertices, boundaryFaces;
   //computeBoundaryPoints(physicalParametersPerLevel[0], 3, convexHull);
   //computeDelaundayTriangulation(physicalParametersPerLevel[1], 3, convexHull, boundaryVertices, boundaryFaces);
   std::vector<cfgScalar> parameterPoints;
-  parameterPoints.insert(parameterPoints.end(), physicalParameters.begin(), physicalParameters.begin()+ 3*m_lastPointIndices[0]+3);
+  parameterPoints.insert(parameterPoints.end(), physicalParameters.begin(), physicalParameters.begin()+ 3*m_lastPointIndices[2]+3);
+  std::cout << "Computing delaunay triangulation... " << std::endl;
   computeDelaundayTriangulation(parameterPoints, 3, convexHull, boundaryVertices, boundaryFaces);
 
   if (boundaryVertices.size()>0)
   {
+    std::cout << "# boundary points = " << boundaryVertices.size() << std::endl;
     vtkSmartPointer<vtkTable> table =  createTable(physicalParameters, levels, 3, 1, labels, &boundaryVertices);
     vtkSmartPointer<cfgPlotPoints3D> boundaryPlot = createPointPlot3D(table, "Y1", "Y2", "Density", vtkVector3i(0,255,0), 10);
     chart->AddPlot(boundaryPlot);
@@ -183,7 +221,7 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
     vtkSmartPointer<vtkTable> facesTable =  createTable(physicalParameters, levels, 3, 1, labels, &boundaryFaces);
     vtkSmartPointer<cfgPlotSurface> surfacePlot = createSurfacePlot3D(facesTable, "Y1", "Y2", "Density", vtkVector3i(255,0,0), 10);
     chart->AddPlot(surfacePlot);
-  }
+  } 
 
   GetRenderWindow();
   int width = this->width();
@@ -228,16 +266,59 @@ int MaterialParametersView::getStructureIndex(int iPointIndex)
   return indStructure;
 }
 
+int MaterialParametersView::getParameterIndex(int iStructureIndex, int iLevel)
+{
+  int matIndex = iStructureIndex;
+  if (iLevel>0)
+  {
+    matIndex += m_lastPointIndices[iLevel-1]+1;
+  }
+  return matIndex;
+}
+
 void MaterialParametersView::mouseReleaseEvent(QMouseEvent * iMouseEvent)
 {  
   QVTKWidget::mouseReleaseEvent(iMouseEvent);
-
   int pickedPointIndex = m_chart->pickedPointIndex();
   if (pickedPointIndex>=0)
   {
     int pickedStructureLevel = m_table->GetValue(pickedPointIndex, 3).ToInt();
     int pickedStructureIndex = getStructureIndex(pickedPointIndex);
-    m_project->setPickedStructure(pickedStructureIndex, pickedStructureLevel);
+
+    std::vector<int> pickedStructurebaseMaterials;
+    m_project->setPickedStructure(pickedStructureIndex, pickedStructureLevel, pickedStructurebaseMaterials);
+
+    int prevLevelIndex = pickedStructureLevel-1;
+    
+    const std::vector<int> & materials = m_materialAssignements[pickedStructureLevel][pickedStructureIndex];
+    int imat=0, nmat=(int)materials.size();
+    for (imat=0; imat<nmat; imat++)
+    {
+      int indMat = materials[imat];
+      const std::vector<int> & baseMaterials = m_baseMaterials[pickedStructureLevel][indMat];
+      int baseMaterialIndex = m_baseMaterials2Indices[pickedStructureLevel][baseMaterials];
+      int pointIndex = getParameterIndex(baseMaterialIndex, prevLevelIndex);
+      pickedStructurebaseMaterials.push_back(pointIndex);
+    }
+    highlighPoints(pickedStructurebaseMaterials);
+    m_project->setPickedStructure(pickedStructureIndex, pickedStructureLevel, pickedStructurebaseMaterials); 
+  } 
+}
+
+void MaterialParametersView::highlighPoints(const std::vector<int> &iPointIndices)
+{
+  if (m_plotHighLightedPoints.Get() == NULL)
+  {
+    std::string labels[4]= {"Density", "Y1", "Y2", "Level"};
+    m_tableHighLightedPoints =  createTable(m_physicalParameters, m_levels, 3, 1, labels, &iPointIndices);
+    m_plotHighLightedPoints = createPointPlot3D(m_tableHighLightedPoints, "Y1", "Y2", "Density", vtkVector3i(0,0,0), 20);
+    m_chart->AddPlot(m_plotHighLightedPoints);
+  }
+  else
+  {
+    std::string labels[4]= {"Density", "Y1", "Y2", "Level"};
+    m_tableHighLightedPoints = createTable(m_physicalParameters, m_levels, 3, 1, labels, &iPointIndices);
+    m_plotHighLightedPoints->SetInputData(m_tableHighLightedPoints, "Y1", "Y2", "Density");
   }
 }
 

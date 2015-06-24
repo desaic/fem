@@ -168,6 +168,13 @@ Vector2f& Vector2f::operator *= ( float f )
 	return *this;
 }
 
+Vector2f& Vector2f::operator /= ( float f )
+{
+  m_elements[ 0 ] /= f;
+  m_elements[ 1 ] /= f;
+  return *this;
+}
+
 // static
 float Vector2f::dot( const Vector2f& v0, const Vector2f& v1 )
 {

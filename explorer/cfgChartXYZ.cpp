@@ -50,6 +50,7 @@ bool cfgChartXYZ::MouseButtonReleaseEvent(const vtkContextMouseEvent &mouse)
   return vtkChartXYZ::MouseButtonReleaseEvent(mouse);
 }
 
+
 bool cfgChartXYZ::MouseButtonPressEvent(const vtkContextMouseEvent &mouse)
 {
    m_pickingMode = false;

@@ -4,14 +4,21 @@
 #include <assert.h>
 
 #include "ElementRegGrid.hpp"
+#include "ElementRegGrid2D.h"
 #include "Element.hpp"
+#include "Element2D.h"
 
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
 
+#include "MaterialQuad2D.h"
+#include "StrainLin2D.h"
+
 #include "Stepper.hpp"
 #include "StepperNewton.hpp"
+#include "Stepper2D.h"
+#include "StepperNewton2D.h"
 #include "AdmmCPU.hpp"
 #include "StepperGrad.hpp"
 
@@ -24,9 +31,12 @@ using namespace cfgUtil;
 using namespace cfgMaterialUtilities;
 
 
-SamplesGeneratorImpl::SamplesGeneratorImpl()
+SamplesGeneratorImpl::SamplesGeneratorImpl(int iDim)
 {
   m_UseLinearMaterial = true;
+  assert(iDim==2||iDim==3);
+  m_dim = iDim;
+  m_blockRep = 3;
 }
 
 SamplesGeneratorImpl::~SamplesGeneratorImpl()
@@ -68,6 +78,43 @@ float SamplesGeneratorImpl::computeStrain(const ElementRegGrid * iElementGrid, i
   float strain = (Barycenters[0]-Barycenters[1]).abs()-1;
   return strain;
 }
+
+float SamplesGeneratorImpl::computeStrain(const ElementRegGrid2D * iElementGrid, int iAxis)
+{
+  //writeVector2File(iElementGrid->x, m_OutputDirectory + "x.m");
+
+  Vector2f Barycenters[2];
+
+  int iside;
+  for (iside=0; iside<2; iside++)
+  {
+    std::vector<int> elemIndices;
+    std::vector<std::vector<int> > evIndices;
+    getSideVertices(2*iAxis+iside, iElementGrid, elemIndices, evIndices);
+
+    std::map<int,int> ind2Valence;
+    getVertexValences(iElementGrid, elemIndices, evIndices, ind2Valence);
+
+    
+    int ielem=0, nelem=(int)elemIndices.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      int indElement = elemIndices[ielem];
+      int ivertex=0, nvertex=(int)evIndices[ielem].size();
+      for (ivertex=0; ivertex<nvertex; ivertex++)
+      {
+        int fvIndex = evIndices[ielem][ivertex];
+        int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+        float weight = 1.f/ind2Valence[indVertex];
+        Barycenters[iside] += weight*iElementGrid->x[indVertex];
+      }
+    }
+    Barycenters[iside] /= (float)ind2Valence.size();
+  }
+  float strain = (Barycenters[0]-Barycenters[1]).abs()-1;
+  return strain;
+}
+
 
 void SamplesGeneratorImpl::setExternalForces(ElementRegGrid * iElementGrid, int iAxis, int iSide, float iForceMagnitude)
 {
@@ -117,6 +164,55 @@ void SamplesGeneratorImpl::setExternalForces(ElementRegGrid * iElementGrid, int 
   }
 }
 
+void SamplesGeneratorImpl::setExternalForces(ElementRegGrid2D * iElementGrid, int iAxis, int iSide, float iForceMagnitude)
+{
+  assert(iElementGrid);
+
+  ElementRegGrid2D * em = iElementGrid;
+  std::vector<int> elemIndices;
+  std::vector<std::vector<int> > fvIndices;
+  getSideVertices(2*iAxis+iSide, em, elemIndices, fvIndices);
+
+  int n[2];
+  n[0] = em->nx;
+  n[1] = em->ny;
+
+  double thickness = 1.;
+
+  Vector2f ff;
+  ff[iAxis] = (1.f/(n[(iAxis+1)%2]*thickness)) * iForceMagnitude;
+
+  int ielem=0, nelem=(int)elemIndices.size();
+  for (ielem=0; ielem<nelem; ielem++)
+  {
+    int indElement = elemIndices[ielem];
+    int ivertex=0, nvertex=(int)fvIndices[ielem].size();
+    for (ivertex=0; ivertex<nvertex; ivertex++)
+    {
+      int FvIndex = fvIndices[ielem][ivertex];
+      int VertexIndex =em->e[indElement]->at(FvIndex);
+      em->fe[VertexIndex] += ff;
+    }
+  }
+
+  // Constraints
+  std::vector<int> elemIndicesOppositeSide;
+  std::vector<std::vector<int> > fvIndicesOppositeSide;
+  getSideVertices(2*iAxis+1-iSide, em, elemIndicesOppositeSide, fvIndicesOppositeSide);
+  int nelemOppositeSide=(int)elemIndicesOppositeSide.size();
+  for (ielem=0; ielem<nelemOppositeSide; ielem++)
+  {
+    int indElement = elemIndicesOppositeSide[ielem];
+    int ivertex=0, nvertex=(int)fvIndicesOppositeSide[ielem].size();
+    for (ivertex=0; ivertex<nvertex; ivertex++)
+    {
+      int FvIndex = fvIndicesOppositeSide[ielem][ivertex];
+      int VertexIndex =em->e[indElement]->at(FvIndex);
+      em->fixed[VertexIndex] = 1;
+    }
+  }
+}
+
 ElementRegGrid * SamplesGeneratorImpl::createPhysicalSystem(int iN[3], std::vector<MaterialQuad> &iMaterials)
 {
   ElementRegGrid * em = new ElementRegGrid(iN[0],iN[1],iN[2]);
@@ -131,6 +227,21 @@ ElementRegGrid * SamplesGeneratorImpl::createPhysicalSystem(int iN[3], std::vect
   return em;
 }
 
+ElementRegGrid2D * SamplesGeneratorImpl::createPhysicalSystem(int iN[2], std::vector<MaterialQuad2D> &iMaterials)
+{
+  ElementRegGrid2D * em = new ElementRegGrid2D(iN[0],iN[1]);
+
+  // Materials
+  int imat=0, nmat=(int)iMaterials.size();
+  for (imat=0; imat<nmat; imat++)
+  {
+    em->addMaterial(&iMaterials[imat]);
+  }
+  em->check();
+  return em;
+}
+
+/*
 ElementRegGrid * SamplesGeneratorImpl::createPhysicalSystem(int iN[3], Vector3f iForce, std::vector<MaterialQuad> &iMaterials)
 {
   ElementRegGrid * em = new ElementRegGrid(iN[0],iN[1],iN[2]);
@@ -187,9 +298,20 @@ ElementRegGrid * SamplesGeneratorImpl::createPhysicalSystem(int iN[3], Vector3f 
   }
   em->check();
   return em;
-}
+}*/ 
 
 bool SamplesGeneratorImpl::computeEquilibrium(Stepper * iStepper, ElementRegGrid * iElementGrid, int iNumberOfSteps, bool &oConverged)
+{
+  assert(iStepper);
+
+  iStepper->nSteps = iNumberOfSteps;
+  iStepper->init(iElementGrid);
+  int status = iStepper->step();
+  oConverged = status<0;
+  return status<=0;
+}
+
+bool SamplesGeneratorImpl::computeEquilibrium(Stepper2D * iStepper, ElementRegGrid2D * iElementGrid, int iNumberOfSteps, bool &oConverged)
 {
   assert(iStepper);
 
@@ -223,9 +345,41 @@ bool SamplesGeneratorImpl::computeForceDeformationSample(ElementRegGrid * iEleme
   }
   else{
     //stepper = new AdmmNoSpring();
-   
-    //stepper = new ADMMStepper();
-    
+    //stepper = new ADMMStepper();  
+  }
+  //stepper->rmRigid = true;
+  bool Converged = false;
+  bool ResOk = computeEquilibrium(stepper, iElementGrid, iNumberOfSteps, oConverged);
+  
+  delete(stepper);
+
+  return ResOk;
+}
+
+bool SamplesGeneratorImpl::computeForceDeformationSample(ElementRegGrid2D * iElementGrid, std::string iStepperType, int iNumberOfSteps, bool &oConverged)
+{
+  Stepper2D * stepper = 0;
+  if (iStepperType == "newton"){
+    stepper = new StepperNewton2D();
+  }
+  else if (iStepperType == "newtonCuda"){
+ //   stepper = new NewtonCuda();
+ //   ((NewtonCuda*)stepper)->m_fixRigidMotion = false;
+  }
+  else if (iStepperType == "ipopt"){
+    //not yet implemented
+    //  stepper = new IpoptStepper();
+  }
+  else if (iStepperType == "admmCPU"){
+   // stepper = new AdmmCPU();
+   // ((AdmmCPU*)stepper)->ro0 = 10;
+  }
+  else if (iStepperType == "grad"){
+  //  stepper = new StepperGrad();
+  }
+  else{
+    //stepper = new AdmmNoSpring();
+    //stepper = new ADMMStepper();  
   }
   //stepper->rmRigid = true;
   bool Converged = false;
@@ -401,6 +555,48 @@ bool SamplesGeneratorImpl::sampleDeformation(int iN[3], std::vector<MaterialQuad
   return ResOk;
 }
 
+bool SamplesGeneratorImpl::sampleDeformation(int iN[2], std::vector<MaterialQuad2D> &iMaterial, const std::string iStepperType, float iMaxForce, int iForceAxis, int iNumberOfSample, const std::vector<int> & iMaterials,
+                                             std::vector<float> &oStresses, std::vector<float> &oStrains)
+{
+  bool ResOk = true;
+
+  oStresses.clear();
+  oStrains.clear();
+
+  std::vector<Vector2f> xinit;
+  int isample;
+  for (isample=0; isample<iNumberOfSample && ResOk; isample++)
+  {
+    float forceMagnitude = (isample+1.f)*iMaxForce/iNumberOfSample;
+
+    ElementRegGrid2D * em = createPhysicalSystem(iN, iMaterial);
+    setExternalForces(em, iForceAxis, 1, forceMagnitude);
+    em->me = iMaterials;
+    //assignMaterials(em, iMaterials);
+
+    if (isample>0)
+    {
+      em->x = xinit;
+    }
+    bool Converged = false;
+    ResOk = computeForceDeformationSample(em, iStepperType, 100, Converged);
+    if (ResOk)
+    {
+      float strain = computeStrain(em, iForceAxis);
+      xinit = em->x;
+
+      //writeVector2File(em->me, m_OutputDirectory + "materials.m");
+      std::cout << "Strain = " << strain << std::endl;
+
+      delete em;
+
+      oStresses.push_back(forceMagnitude);
+      oStrains.push_back(strain);
+    }
+  }
+  return ResOk;
+}
+
 void SamplesGeneratorImpl::int2Comb(std::vector<int> &oMaterials, int idx, int nMat, int nVox)
 {
   oMaterials.resize(nVox);
@@ -469,68 +665,25 @@ void SamplesGeneratorImpl::vectorMat2MatrixMat(const std::vector<int> &iVecMater
   }
 }
 
-void SamplesGeneratorImpl::getMaterialAssignment(int nx, int ny, int nz, const std::vector<int> &iMaterialCombIndices, int nX, int nY, int nZ, const std::vector<std::vector<int> > &iBaseCellMaterials, std::vector<int> &oMaterials)
+int SamplesGeneratorImpl::computeMaterialParameters(std::string iStepperType , const std::vector<std::vector<int> > &iMaterialAssignments, 
+                                                    const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3], int iLevel, int iBlockRep)
 {
-  oMaterials.clear();
-  oMaterials.resize(nx*ny*nz, -1);
+  int c = 2*iBlockRep;
+  int n[3] = {c*iBaseMatStructureSize[0], c*iBaseMatStructureSize[1], c*iBaseMatStructureSize[2]};
+  int N[3] = {iBaseMatStructureSize[0], iBaseMatStructureSize[1], iBaseMatStructureSize[2]};
 
-  int repX = nx/(2*nX);
-  int repY = ny/(2*nY);
-  int repZ = nz/(2*nZ);
-
-  int i,j,k;
-  for (i=0; i<repX; i++)
-  {
-    for (j=0; j<repY; j++)
-    {
-      for (k=0; k<repZ; k++)
-      {
-        int l, m, n;
-        for (l=0; l<2; l++)
-        {
-          for (m=0; m<2; m++)
-          {
-            for (n=0; n<2; n++)
-            {
-              int matCombinationIndex = iMaterialCombIndices[l* 4 + m * 2 + n];
-              const std::vector<int> &matCombination = iBaseCellMaterials[matCombinationIndex];
-
-              int ii,jj,kk;
-              for (ii=0; ii<nX; ii++)
-              {
-                for (jj=0; jj<nY; jj++)
-                {
-                  for (kk=0; kk<nZ; kk++)
-                  {
-                    int indx = i*(2*nX) + nX*l + ii;
-                    int indy = j*(2*nY) + nY*m + jj;
-                    int indz = k*(2*nZ) + nZ*n + kk;
-                    int elementIndex = indx * ny*nz + indy * nz + indz;
-
-                    oMaterials[elementIndex] = matCombination[ii*nY*nZ + jj*nZ + kk];
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-int SamplesGeneratorImpl::computeMaterialParameters(std::vector<MaterialQuad> &iMaterials, std::string iStepperType , 
-                                                    const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3], int iLevel, int iBlockRep)
-{
   int icomb, ncomb=(int)iMaterialAssignments.size();
   for (icomb=0; icomb<ncomb; icomb++)
   {
-    int c = 2*iBlockRep;
-    int n[3] = {c*iBaseMatStructureSize[0], c*iBaseMatStructureSize[1], c*iBaseMatStructureSize[2]};
-
     std::vector<int> cellMaterials;
-    getMaterialAssignment(n[0], n[1], n[2], iMaterialAssignments[icomb], iBaseMatStructureSize[0], iBaseMatStructureSize[1], iBaseMatStructureSize[2], iBaseMaterialStructures, cellMaterials);
-
+    if (m_dim==3)
+    {
+      getMaterialAssignment(n[0], n[1], n[2], iMaterialAssignments[icomb], N[0], N[1], N[2], iBaseMaterialStructures, cellMaterials);
+    }
+    else
+    {
+       getMaterialAssignment(n[0], n[1], iMaterialAssignments[icomb], N[0], N[1], iBaseMaterialStructures, cellMaterials);
+    }
     int iaxis=0;
     for (iaxis=0; iaxis<2; iaxis++)
     {
@@ -546,7 +699,15 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::vector<MaterialQuad> &i
       std::string FileName = m_OutputDirectory + strAxis  + "StressStrain_" + std::to_string(iLevel) + '_' + std::to_string(3) + "_" + std::to_string(icomb) + ".txt";
 
       std::vector<float> stresses, strains;
-      bool ResOk = sampleDeformation(n, iMaterials, iStepperType, forceMagnitude, axis, NumberOfSample, cellMaterials, stresses, strains);
+      bool ResOk = true;
+      if (m_dim==3)
+      {
+        sampleDeformation(n, m_mat, iStepperType, forceMagnitude, axis, NumberOfSample, cellMaterials, stresses, strains);
+      }
+      else
+      {
+        sampleDeformation(n, m_mat2D, iStepperType, forceMagnitude, axis, NumberOfSample, cellMaterials, stresses, strains);
+      }
       if (ResOk)
       {
         writeData(FileName, forceAxis, iMaterialAssignments[icomb], stresses, strains);
@@ -557,7 +718,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::vector<MaterialQuad> &i
   return 0;
 }
 
-int SamplesGeneratorImpl::computeMaterialParametersLevel1(std::vector<MaterialQuad> & iMaterials, std::string & iStepperType)
+int SamplesGeneratorImpl::computeMaterialParametersLevel1(std::string & iStepperType)
 {
   // level 0
   std::vector<std::vector<int> > baseMaterialStructures;
@@ -568,7 +729,7 @@ int SamplesGeneratorImpl::computeMaterialParametersLevel1(std::vector<MaterialQu
 
   // level 1
   int level = 1;
-  int nVoxCoarse = 8;
+  int nVoxCoarse = pow(2, m_dim);
   int nmat = 2;
   int ncomb=pow(nmat,nVoxCoarse);
   std::vector<std::vector<int> > materialAssignments(ncomb);
@@ -581,18 +742,17 @@ int SamplesGeneratorImpl::computeMaterialParametersLevel1(std::vector<MaterialQu
   std::string FileNameMaterialsBaseStructure = m_OutputDirectory + "Materials_" + std::to_string(level)  + ".txt";
   bool ResOk = writeMaterialCombinations(FileNameMaterialsBaseStructure,  baseMaterialStructures);
 
-  int blockRep = 3;
-  computeMaterialParameters(iMaterials, iStepperType, materialAssignments, baseMaterialStructures, N, level, blockRep);
+  computeMaterialParameters(iStepperType, materialAssignments, baseMaterialStructures, N, level, m_blockRep);
 
   return 0;
 }
 
-int SamplesGeneratorImpl::computeMaterialParameters(std::vector<MaterialQuad> & iMaterials, std::string & iStepperType, int iLevel, int iNbCombPrevLevel)
+int SamplesGeneratorImpl::computeMaterialParameters(std::string & iStepperType, int iLevel, int iNbCombPrevLevel)
 {
   assert(iLevel>=2);
 
   int prevLevel = iLevel-1;
-  int blockSize = 3;
+  int blockSize = m_blockRep;
 
   std::string subDirectories[2];
   subDirectories[0] =  m_OutputDirectory + "x_level" + std::to_string(prevLevel) + "//";
@@ -602,23 +762,23 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::vector<MaterialQuad> & 
   int NbFiles = iNbCombPrevLevel;
 
   std::vector<cfgScalar> physicalParameters; //YoungModulus, density;
-  std::vector<std::vector<int> > materialAssignments;
+  std::vector<std::vector<int> > materialAssignments, materialAssignmentsOneCell, baseMaterialStructures;
 
   std::string materialFile = m_OutputDirectory + "Materials_" + std::to_string(prevLevel) + ".txt";
-  bool ResOk = cfgMaterialUtilities::computeMaterialParameters(materialFile, subDirectories, baseFileName, NbFiles, physicalParameters, materialAssignments);
+  bool ResOk = cfgMaterialUtilities::computeMaterialParameters(m_dim, materialFile, subDirectories, baseFileName, NbFiles, physicalParameters, baseMaterialStructures, materialAssignments, materialAssignmentsOneCell);
 
   int naxis = 2;
   int nparam = naxis + 1;
-   std::vector<int> convexHull, convexHullVertices, convexHullFaces;
+  std::vector<int> convexHull, boundaryVertices, convexHullFaces;
   std::vector<cfgScalar> parameterPoints;
   parameterPoints.insert(parameterPoints.end(), physicalParameters.begin(), physicalParameters.end());
   //parameterPoints.insert(parameterPoints.end(), physicalParameters.begin(), physicalParameters.begin()+ 3*m_lastPointIndices[1]+3);
-  computeDelaundayTriangulation(parameterPoints, nparam, convexHull, convexHullVertices, convexHullFaces);
+  computeDelaundayTriangulation(parameterPoints, nparam, convexHull, boundaryVertices, convexHullFaces);
 
   //computeConvexHull(physicalParameters, nparam, convexHullVertices);
   if (1)
   {
-    writeVector2File(convexHullVertices, m_OutputDirectory + "convexHull.m");
+    writeVector2File(boundaryVertices, m_OutputDirectory + "convexHull.m");
   }
   std::vector<std::vector<int> > newBaseMaterialStructures;
 
@@ -626,11 +786,11 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::vector<MaterialQuad> & 
   int N[3] = {sideSize,sideSize,sideSize};
   std::vector<std::vector<int> > newMaterialAssignments;
 
-  int version=0;
+  int version=2;
   if (version==0)
   {
     int nVoxCoarse = 8;
-    int nmat = (int)convexHullVertices.size();
+    int nmat = (int)boundaryVertices.size();
     //int nNewComb=pow(nmat,nVoxCoarse);
     int nNewComb = 3*nmat*nmat-2;
     newMaterialAssignments.resize(nNewComb);
@@ -640,7 +800,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::vector<MaterialQuad> & 
       //int2Comb(newMaterialAssignments[icomb], icomb, nmat, nVoxCoarse);
       int2Comb_biMaterialStructures(newMaterialAssignments[icomb], icomb, nmat, N);
     }
-    newBaseMaterialStructures = getSubVector(materialAssignments, convexHullVertices);
+    newBaseMaterialStructures = getSubVector(materialAssignments, boundaryVertices);
     int borderSimilarity = 0;
     float avgBorderSimilarity = 0;
     for (int icomb=0; icomb<nNewComb; icomb++)
@@ -654,7 +814,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::vector<MaterialQuad> & 
   {
     int nNewComb = 1000;
     std::vector<int> BaseMaterialStructuresIndices;
-    getNewCombinations(convexHullVertices, physicalParameters, N, materialAssignments, nNewComb, newMaterialAssignments, BaseMaterialStructuresIndices);
+    getNewCombinations(boundaryVertices, physicalParameters, N, materialAssignments, nNewComb, newMaterialAssignments, BaseMaterialStructuresIndices);
     //newBaseMaterialStructures = getSubVector(materialAssignments, BaseMaterialStructuresIndices);
     newBaseMaterialStructures = materialAssignments;
 
@@ -667,12 +827,32 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::vector<MaterialQuad> & 
     }
     avgBorderSimilarity /= (float)nNewComb;
   }
+  else if (version==2) //exhaustive search
+  {
+    int nmat = (int)materialAssignments.size();
+    int nVoxCoarse = pow(2, m_dim);
+    int nNewComb=pow(nmat,nVoxCoarse);
+    newMaterialAssignments.resize(nNewComb);
+    int icomb;
+    for (icomb=0; icomb<nNewComb; icomb++)
+    {
+      int2Comb(newMaterialAssignments[icomb], icomb, nmat, nVoxCoarse);
+    }
+    newBaseMaterialStructures = materialAssignments;
+  }
+  else if (version==3)
+  {
+    /*int nNewComb = 1000;
+    std::vector<int> BaseMaterialStructuresIndices;
+    getNewCombinationsV2(boundaryVertices, physicalParameters, N, materialAssignments, nNewComb, newMaterialAssignments, BaseMaterialStructuresIndices);
+    newBaseMaterialStructures = materialAssignments;*/ 
+  }
 
   std::string FileNameMaterials = m_OutputDirectory + "Materials_" + std::to_string(iLevel)  + ".txt";
   writeMaterialCombinations(FileNameMaterials,  newBaseMaterialStructures);
 
   int blockRep = 3;
-  computeMaterialParameters(iMaterials, iStepperType, newMaterialAssignments, newBaseMaterialStructures, N, iLevel, blockRep);
+  computeMaterialParameters(iStepperType, newMaterialAssignments, newBaseMaterialStructures, N, iLevel, blockRep);
 
   return 0;
 }
@@ -820,7 +1000,14 @@ int SamplesGeneratorImpl::getClosestPoint(Vector3f &iP, const std::vector<cfgSca
 
 int SamplesGeneratorImpl::run()
 {
-   srand(0);
+  srand(0);
+
+  //std::vector<StrainEneNeo> ene(2);
+  std::vector<StrainLin2D> ene2D(2);
+  ene2D[0].param[0] = 1;
+  ene2D[0].param[1] = 10;
+  ene2D[1].param[0] = 10;
+  ene2D[1].param[1] = 100;
 
   //std::vector<StrainEneNeo> ene(2);
   std::vector<StrainLin> ene(2);
@@ -828,10 +1015,26 @@ int SamplesGeneratorImpl::run()
   ene[0].param[1] = 10;
   ene[1].param[0] = 10;
   ene[1].param[1] = 100;
-  std::vector<MaterialQuad> material(ene.size());
-  for (unsigned int ii = 0; ii < material.size(); ii++){
-    for (unsigned int jj = 0; jj < material[ii].e.size(); jj++){
-      material[ii].e[jj] = &ene[ii];
+
+  if (m_dim==2)
+  {
+    m_mat2D.clear();
+    m_mat2D.resize(ene2D.size());
+    for (unsigned int ii = 0; ii < m_mat2D.size(); ii++){
+      for (unsigned int jj = 0; jj < m_mat2D[ii].e.size(); jj++){
+        m_mat2D[ii].e[jj] = &ene2D[ii];
+      }
+    }
+  }
+  else
+  {
+   
+    m_mat.clear();
+    m_mat.resize(ene.size());
+    for (unsigned int ii = 0; ii < m_mat.size(); ii++){
+      for (unsigned int jj = 0; jj < m_mat[ii].e.size(); jj++){
+        m_mat[ii].e[jj] = &ene[ii];
+      }
     }
   }
   //std::string stepperType = "newtonCuda";
@@ -839,9 +1042,11 @@ int SamplesGeneratorImpl::run()
 
   if (1)
   {
-    //computeMaterialParametersLevel1(material, stepperType);
-    //computeMaterialParameters(material, stepperType, 2, 256);
-    computeMaterialParameters(material, stepperType, 3, 586);
+    //computeMaterialParametersLevel1(stepperType);
+    //computeMaterialParameters(stepperType, 2, (m_dim==2?16:256));
+    computeMaterialParameters(stepperType, 3, 20);
+
+    //computeMaterialParameters(material, stepperType, 3, 586);
     //computeMaterialParameters(material, stepperType, 3, 429);
 
     return 0 ;
@@ -893,7 +1098,7 @@ int SamplesGeneratorImpl::run()
     }
   }
 
-  int iHLevel;
+  /*int iHLevel;
   for (iHLevel=MinHierarchyLevel; iHLevel<=MaxHierarchyLevel; iHLevel++)
   {
     std::string FileNameMaterials =  m_OutputDirectory + "Materials_" + std::to_string(iHLevel)  + ".txt";
@@ -948,7 +1153,7 @@ int SamplesGeneratorImpl::run()
       }
     }
     materialCombinations = newmaterialCombinations;
-  }
+  }*/ 
 
   /*World * world = new World();
   world->em.push_back(em);

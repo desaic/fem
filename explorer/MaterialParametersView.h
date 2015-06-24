@@ -4,6 +4,7 @@
 #include <QVTKWidget.h> 
 #include <vtkSmartPointer.h>
 #include <QPointer>
+#include <map>
 
 class vtkRenderer;
 class vtkRenderView;
@@ -35,14 +36,30 @@ private:
   vtkSmartPointer<cfgPlotLine3D> createLinePlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, vtkVector3i &iColor, float iWidth=1);
   vtkSmartPointer<cfgPlotSurface> createSurfacePlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, vtkVector3i &iColor, int iAlpha=255);
 
+  void highlighPoints(const std::vector<int> &iPointIndices);
+
+  int getParameterIndex(int iStructureIndex, int iLevel);
+
 private:
   vtkContextView * m_vtkView;
 
   vtkSmartPointer<cfgChartXYZ> m_chart;
   vtkSmartPointer<vtkTable> m_table;
-  std::vector<int> m_lastPointIndices;
+  vtkSmartPointer<cfgPlotPoints3D> m_plotMaterialPoints;
 
+  std::vector<int> m_lastPointIndices;
+  
   QPointer<exProject> m_project;
+
+  std::vector<std::vector<std::vector<int> > > m_baseMaterials;
+  std::vector<std::map<std::vector<int>, int> > m_baseMaterials2Indices;
+  std::vector<std::vector<std::vector<int> > > m_materialAssignements;
+
+  std::vector<float> m_physicalParameters;
+  std::vector<int> m_levels;
+
+  vtkSmartPointer<vtkTable> m_tableHighLightedPoints;
+  vtkSmartPointer<cfgPlotPoints3D> m_plotHighLightedPoints;
 };
 
 #endif 
