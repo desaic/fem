@@ -33,14 +33,25 @@ int StepperNewtonDyn::oneStep()
   int ndof = 3*(int)m->x.size();
   std::vector<float> bb(ndof);
 
-
   for(unsigned int ii =0 ; ii<force.size(); ii++){
 //    add gravity
     force[ii] += m->mass[ii] * m->G;
     force[ii] = h*h*force[ii] + h*m->mass[ii]*m->v[ii];
   }
 
-  compute_dx_sparse(m, force, bb);
+  compute_dx_sparse(m, force, std::vector<bool>(0), bb);
+  std::vector<bool> collide(m->x.size(),false);
+  bool hasCollision = false;
+  //hard-coded collision detection.
+  for(unsigned int ii = 0; ii<m->x.size(); ii++){
+    if( bb[3*ii+1] + m->x[ii][1] < 0 ){
+      collide[ii] = true;
+      hasCollision = true;
+    }
+  }
+  if(hasCollision){
+    compute_dx_sparse(m, force, collide, bb);
+  }
 
   for(unsigned int ii =0; ii<force.size(); ii++){
     for(int jj =0 ; jj<3; jj++){
@@ -50,10 +61,10 @@ int StepperNewtonDyn::oneStep()
   }
 
   //remove forces after 10 steps
-  if(frameCnt==10){
+  if(frameCnt*h>=0.1){
     for(unsigned int ii =0; ii<force.size(); ii++){
       m->fe[ii] = Vector3f(0,0,0);
-      m->fixed[ii] = false;
+//      m->fixed[ii] = false;
     }
   }
 
@@ -61,11 +72,13 @@ int StepperNewtonDyn::oneStep()
   return 0;
 }
 
-float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, std::vector<float> &bb)
+float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh,
+                                          const std::vector<Vector3f> &iForces,
+                                          const std::vector<bool> & collide,
+                                          std::vector<float> &bb)
 {
   bool triangular = true;
-  if (!m_Init)
-  {
+  if (!m_Init){
     m_I.clear();
     m_J.clear();
     iMesh->stiffnessPattern(m_I, m_J, triangular);
@@ -105,11 +118,9 @@ float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh, const std::vector
 
     //for (Eigen::SparseMatrix<float>::InnerIterator it(K, col); it; ++it){
     //    int row = it.row();
-    for (int i=m_I[col]; i<m_I[col+1]; i++)
-    {
+    for (int i=m_I[col]; i<m_I[col+1]; i++){
       int row = m_J[indVal];
-      if(triangular && col>row)
-      {
+      if(triangular && col>row){
         continue;
       }
       ja.push_back(row);
@@ -124,65 +135,33 @@ float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh, const std::vector
   }
   ia[nrow] = indVal;
 
-  int status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
-
-  std::cout<< "sparse solve " << status << "\n";
-
-  std::vector<bool> collide(m->x.size(),false);
-  //hard-coded collision detection.
-  for(unsigned int ii = 0; ii<m->x.size(); ii++){
-    if( bb[3*ii+1] + m->x[ii][1]<0  ){
-      collide[ii] = true;
-//      std::cout<<collide[ii]<<"\n";
-      if(m->x[ii][1] <0){
-        m->x[ii][1] =0;
-      }
-      for(int jj =0 ; jj<3;jj++){
-        rhs[3*ii+jj] = 0;
-      }
-      if(bb[3*ii+1]<1e-6&& m->x[ii][1]>0){
-        float ydist = -m->x[ii][1]/bb[3*ii+1];
-//        std::cout<<"ydist "<<ydist<<"\n";
-        for(int jj =0 ; jj<3; jj++){
-//          std::cout<<ii<<" "<<jj<<" "<<"\n";
-//          std::cout<<rhs[3*ii+jj]<<"\n";
-          rhs[3*ii+jj] = 10*rhs[3*ii+jj] * ydist;
-//          std::cout<<rhs[3*ii+jj]<<"\n";
-        }
-      }
-//      m->v[ii] = Vector3f(0,0,0);
-    }
-  }
-
   //collision correction
-  indVal = 0;
-  for (int col=0; col<ncol;col++){
-    ia[col] = indVal;
-    int vcol = col/3;
-
-    for (int i=m_I[col]; i<m_I[col+1]; i++)
-    {
-      int row = m_J[indVal];
-      if(triangular && col>row)
-      {
-        continue;
-      }
-      ja[indVal]=row;
-      int vrow = row/3;
-      if(collide[vrow] || collide [vcol]){
-        Kvalues[indVal]=0;
-        if(row == col){
-          Kvalues[indVal] = 10;
+  if(collide.size() == iMesh->x.size()){
+    indVal = 0;
+    for (int col=0; col<ncol;col++){
+      ia[col] = indVal;
+      int vcol = col/3;
+      for (int i=m_I[col]; i<m_I[col+1]; i++){
+        int row = m_J[indVal];
+       if(triangular && col>row){
+          continue;
+       }
+        ja[indVal]=row;
+        int vrow = row/3;
+        if(collide[vrow] || collide [vcol]){
+          Kvalues[indVal]=0;
+          if(row == col){
+            Kvalues[indVal] = 10;
+          }
+          val[indVal] = Kvalues[indVal];
         }
-        val[indVal] = Kvalues[indVal];
+        indVal++;
       }
-
-      indVal++;
     }
+    ia[nrow] = indVal;
   }
-  ia[nrow] = indVal;
 
-  status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
+  int status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
   std::cout<< "sparse solve " << status << "\n";
 
   for(int ii = 0;ii<x.size();ii++){

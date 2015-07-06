@@ -16,7 +16,10 @@ public:
 
   int frameCnt;
 private:
-  float compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, std::vector<float> &bb);
+  ///@param collide. Pass in empty array if no collision
+  float compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces,
+                          const std::vector<bool> &collide,
+                          std::vector<float> &bb);
 
 private:
   std::vector<int> m_I, m_J;
