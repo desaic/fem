@@ -43,18 +43,18 @@ int main(int argc, char * argv[])
       int centerIdx = varIdx(ii, jj, gridSize);
       double centerVal = 0;
       std::vector<ColVal> pairs;
+      int nbrCnt = 0;
       for(int nn = 0; nn<STENCIL_SIZE; nn++){
         int ni = ii + nbr[nn][0];
         int nj = jj + nbr[nn][1];
-        int nbrCnt = 0;
         if(inBound(ni, nj, gridSize)){
           int nbrIdx = varIdx( ni, nj, gridSize);
           nbrCnt++;
           pairs.push_back(ColVal(nbrIdx, -1));
         }
-        centerVal = nbrCnt;
-        pairs.push_back(ColVal(centerIdx, centerVal));
       }
+      centerVal = nbrCnt;
+      pairs.push_back(ColVal(centerIdx, centerVal));
       std::sort(pairs.begin(), pairs.end(), cmp);
       std::vector<unsigned int> indices(pairs.size());
       std::vector<double> values (pairs.size());
