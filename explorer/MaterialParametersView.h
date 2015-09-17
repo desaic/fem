@@ -15,11 +15,13 @@ class vtkTable;
 class vtkVector3i;
 class cfgPlotLine3D;
 class cfgPlotSurface;
+class vtkPlot3D;
 
 class exProject;
 
 class MaterialParametersView: public QVTKWidget
 {
+  Q_OBJECT
 public:
   MaterialParametersView();
   virtual ~MaterialParametersView();
@@ -30,6 +32,7 @@ public:
   int getStructureIndex(int iPointIndex);
 
 private:
+  vtkSmartPointer<vtkTable> createTable(const std::vector<float> &iValues1, int idim1, std::string *iLabels, const std::vector<int> *iPointIndices);
   vtkSmartPointer<vtkTable> createTable(const std::vector<float> &iValues1, const std::vector<int> &iValues2, int idim1, int idim2, std::string *iLabels, const std::vector<int> *iPointIndices=NULL);
   vtkSmartPointer<cfgPlotPoints3D> createPointPlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, std::vector<vtkVector3i> colors, float iWidth=5);
   vtkSmartPointer<cfgPlotPoints3D> createPointPlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, vtkVector3i &iColor, float iWidth=5);
@@ -40,14 +43,22 @@ private:
 
   int getParameterIndex(int iStructureIndex, int iLevel);
 
+  void updateChart();
+
+  private slots:
+    void onLevelVisibilityModified();
+
 private:
   vtkContextView * m_vtkView;
 
   vtkSmartPointer<cfgChartXYZ> m_chart;
-  vtkSmartPointer<vtkTable> m_table;
-  vtkSmartPointer<cfgPlotPoints3D> m_plotMaterialPoints;
+  vtkSmartPointer<vtkTable> m_tablePoint3D;
+  std::vector<std::vector<vtkSmartPointer<vtkPlot3D> > > m_plotsPerLevel;
 
   std::vector<int> m_lastPointIndices;
+  std::vector<int> m_plots2Levels;
+  std::vector<int> m_plots2PlotIndex;
+  std::vector<std::vector<std::vector<int> > > m_plotPointIndices;
   
   QPointer<exProject> m_project;
 

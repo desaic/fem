@@ -6,11 +6,12 @@
 class StrainLin2D :public StrainEne2D{
 public:
 	StrainLin2D();
-  virtual float getEnergy(const Matrix2f & F);
-  virtual Matrix2f getPK1(const Matrix2f & F);
-  virtual Matrix2f getdPdx(const Matrix2f & F, const Matrix2f & dF);
-
-	virtual Eigen::MatrixXf EMatrix();
+  virtual cfgScalar getEnergy(const Matrix2S & F);
+  virtual Matrix2S getPK1(const Matrix2S & F);
+  virtual Matrix2S getdPdx(const Matrix2S & F, const Matrix2S & dF);
+  virtual Matrix2S getStressTensor(const Matrix2S & F);
+  virtual Matrix2S getStrainTensor(const Matrix2S & F);
+  virtual MatrixXS getElasticityTensor();
 };
 
 #endif

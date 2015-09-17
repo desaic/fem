@@ -23,6 +23,8 @@ namespace qhullUtilities
   void getRidgeVertices(const QhullFacet &iFacet, std::vector<std::set<int> > &oRidgeVertices);
   void getRidgeOrderedVertices(const QhullFacet &iFacet, std::vector<std::vector<int> > &oRidgeVertices);
   void getRidges(const QhullFacet &iFacet, std::vector<std::vector<int> > &oRidges);
+
+  float distToClosestFacet(QhullPoint &iPoint, const std::vector<QhullFacet> &iFacets);
 };
 
 #endif 

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "vecmath.h"
+#include "cfgDefs.h"
 
 class Element2D
 {
@@ -12,6 +13,8 @@ public:
   
   Element2D(int _n=0);
   Element2D(const Element2D & e);
+  Element2D(const std::vector<int> &inodes);
+
   ///@brief number of vertices
   virtual int nV() const;
 
@@ -26,25 +29,25 @@ public:
 
   ///@param X Reference vertex positions.
   ///@param x global array of Deformed vertex positions.
-  Matrix2f defGrad(Vector2f p,
-    const std::vector<Vector2f> & X, const std::vector<Vector2f> & x) const;
+  Matrix2S defGrad(Vector2S p,
+    const std::vector<Vector2S> & X, const std::vector<Vector2S> & x) const;
 
   ///@param p natural coordinates.
   ///@return interpolation weight for each dof.
-  virtual std::vector<float> shapeFun(const Vector2f & p) const=0;
+  virtual std::vector<cfgScalar> shapeFun(const Vector2S & p) const=0;
 
   ///@param ii index of basis function.
   ///@param xx point in natural coordinates.
   ///@param X global array of rest positions.
-  virtual Vector2f shapeFunGrad(int ii, const Vector2f & xx,
-    const std::vector<Vector2f> & X) const=0;
+  virtual Vector2S shapeFunGrad(int ii, const Vector2S & xx,
+    const std::vector<Vector2S> & X) const=0;
 
   virtual std::vector<std::array<int,2> > getEdges();
   
-  virtual float getVol(const std::vector<Vector2f> & X);
+  virtual cfgScalar getVol(const std::vector<Vector2S> & X);
 
-  virtual Vector2f getDisp(const Vector2f & p, const std::vector<Vector2f> & X,
-    const std::vector<Vector2f>x);
+  virtual Vector2S getDisp(const Vector2S & p, const std::vector<Vector2S> & X,
+    const std::vector<Vector2S>x);
 
   const std::vector<int> & getNodeIndices()const{ return n; }
 private:

@@ -1,46 +1,53 @@
 #include "Element2D.h"
 #include "femError.hpp"
 
-float Element2D::getVol(const std::vector<Vector2f> & X)
-{
-  return 0;
-}
-
-Vector2f Element2D::getDisp(const Vector2f & p, const std::vector<Vector2f> & X,
-    const std::vector<Vector2f>x)
-{
-  std::vector<float> w = shapeFun(p);
-  Vector2f u(0,0);
-  for(unsigned int ii = 0; ii<w.size(); ii++){
-    u += w[ii]*(x[ii] - X[ii]);
-  }
-  return u;
-}
-
-Matrix2f
-Element2D::defGrad(Vector2f p, const std::vector<Vector2f> & X,
-  const std::vector<Vector2f> & x) const
-{
-  Matrix2f F=Matrix2f::identity();
-  for(int ii = 0; ii<nV(); ii++){
-    int vi = at(ii);
-    Vector2f gradN = shapeFunGrad(ii,p,X);
-    //outer product
-    F += outerProd((x[vi] - X[vi]) , gradN);
-  }
-  //fem_error = FEM_OK;
-  if(F.determinant()<0){
-    fem_error = FEM_ERROR_INVERT;
-  }
-  return F;
-}
-
 Element2D::Element2D(int _n):n(_n)
 {}
 
 Element2D::Element2D(const Element2D & e) : n(e.getNodeIndices())
 {}
   
+Element2D::Element2D(const std::vector<int> &inodes)
+{
+  n = inodes;
+}
+
+cfgScalar Element2D::getVol(const std::vector<Vector2S> & X)
+{
+  return 0;
+}
+
+Vector2S Element2D::getDisp(const Vector2S & p, const std::vector<Vector2S> & X,
+    const std::vector<Vector2S>x)
+{
+  std::vector<cfgScalar> w = shapeFun(p);
+  Vector2S u(0,0);
+  for(unsigned int ii = 0; ii<w.size(); ii++){
+    u += w[ii]*(x[ii] - X[ii]);
+  }
+  return u;
+}
+
+Matrix2S
+Element2D::defGrad(Vector2S p, const std::vector<Vector2S> & X,
+  const std::vector<Vector2S> & x) const
+{
+  Matrix2S F=Matrix2S::Identity();
+  for(int ii = 0; ii<nV(); ii++){
+    int vi = at(ii);
+    Vector2S gradN = shapeFunGrad(ii,p,X);
+    //outer product
+    F += (x[vi] - X[vi])*gradN.transpose();
+  }
+  //fem_error = FEM_OK;
+  cfgScalar det = F(0,0)*F(1,1)-F(0,1)*F(1,0);
+  //if(F.determinant()<0)
+  if (det<0)
+  {
+    fem_error = FEM_ERROR_INVERT;
+  }
+  return F;
+}
 
 std::vector<std::array<int,2> >
 Element2D::getEdges()

@@ -35,9 +35,9 @@ ElementRegGrid2D::GetEleInd(int ii , int jj)const
 }
 
 int
-ElementRegGrid2D::GetEleInd(const Vector2f & p)
+ElementRegGrid2D::GetEleInd(const Vector2S & p)
 {
-  Vector2f lp = p - origin;
+  Vector2S lp = p - origin;
   int ii = (int)( lp[0]/dx);
   int jj = (int)( lp[1]/dx);
 //  ii = clamp(ii, 0, nx - 1);
@@ -46,9 +46,9 @@ ElementRegGrid2D::GetEleInd(const Vector2f & p)
 }
 
 int
-ElementRegGrid2D::GetEleInd_clamp(const Vector2f & p)
+ElementRegGrid2D::GetEleInd_clamp(const Vector2S & p)
 {
-  Vector3f lp = p - origin;
+  Vector2S lp = p - origin;
   int ii = (int)( lp[0]/dx);
   int jj = (int)( lp[1]/dx);
   ii = clamp(ii, 0, nx - 1);
@@ -61,7 +61,7 @@ ElementRegGrid2D::rmEmptyVert()
 {
   vertIdx.resize(X.size());
   std::fill(vertIdx.begin(), vertIdx.end(), -1);
-  std::vector<Vector2f> newNodes;
+  std::vector<Vector2S> newNodes;
   int vCnt =0;
   for(unsigned int ii = 0;ii<e.size(); ii++){
     Element2D * ele = e[ii];
@@ -102,7 +102,7 @@ void ElementRegGrid2D::allocate()
   int NY = ny + 1;
   for (int ii = 0; ii <= nx; ii++) {
     for (int jj = 0; jj <= ny; jj++) {
-      X.push_back(dx * Vector2f((float)ii, (float)jj));
+      X.push_back(dx * Vector2S((cfgScalar)ii, (cfgScalar)jj));
     }
   }
   for (int ii = 0; ii < nx; ii++) {

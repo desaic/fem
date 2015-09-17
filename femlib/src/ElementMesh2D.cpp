@@ -3,13 +3,15 @@
 #include "Element2D.h"
 #include "femError.hpp"
 #include <iostream>
+#include "MeshUtilities.h"
+#include "ElementRegGrid2D.h"
 
-typedef Eigen::Triplet<float> Tripletf;
+typedef Eigen::Triplet<cfgScalar> TripletS;
 
 void ElementMesh2D::initArrays()
 {
   x=X;
-  fe.resize(X.size());
+  fe.resize(X.size(), Vector2S(0,0));
   fixed.resize(X.size());
   me.resize(e.size());
 }
@@ -45,9 +47,9 @@ int ElementMesh2D::check()
   return 0;
 }
 
-float ElementMesh2D::getEnergy()
+cfgScalar ElementMesh2D::getEnergy()
 {
-  float ene = 0;
+  cfgScalar ene = 0;
   for(unsigned int ii = 0;ii<e.size();ii++){
     ene += getEnergy(ii);
     if(fem_error){
@@ -56,26 +58,26 @@ float ElementMesh2D::getEnergy()
   }
   //energy from external forces
   for(unsigned int ii = 0;ii<fe.size();ii++){
-    ene -= Vector2f::dot(fe[ii], x[ii]);
+    ene -= fe[ii].dot(x[ii]);
   }
   return ene;
 }
 
-float ElementMesh2D::getEnergy(int eIdx)
+cfgScalar ElementMesh2D::getEnergy(int eIdx)
 {
   return m[me[eIdx]]->getEnergy(e[eIdx], this);
 }
 
-std::vector<Vector2f> ElementMesh2D::getForce(int eIdx)
+std::vector<Vector2S> ElementMesh2D::getForce(int eIdx)
 {
   return m[me[eIdx]]->getForce(e[eIdx], this);
 }
 
-std::vector<Vector2f> ElementMesh2D::getForce()
+std::vector<Vector2S> ElementMesh2D::getForce()
 {
-  std::vector<Vector2f> force(x.size());
+  std::vector<Vector2S> force(x.size(), Vector2S(0,0));
   for(unsigned int ii = 0;ii<e.size();ii++){
-    std::vector<Vector2f> fele = getForce(ii);
+    std::vector<Vector2S> fele = getForce(ii);
     for(int jj = 0; jj<e[ii]->nV(); jj++){
       force[ e[ii]->at(jj) ] += fele[jj];
     }
@@ -86,7 +88,7 @@ std::vector<Vector2f> ElementMesh2D::getForce()
   return force;
 }
 
-float ElementMesh2D::eleSize()
+cfgScalar ElementMesh2D::eleSize()
 {
   return X[e[0]->at(7)][0] - X[e[0]->at(0)][0];
 }
@@ -103,54 +105,246 @@ ElementMesh2D::~ElementMesh2D()
 
 
 ///@brief add rows to K and b to constrain 6 degrees of freedom.
-void ElementMesh2D::fixRigid(Eigen::SparseMatrix<float> & K,  ElementMesh2D * mesh)
+void ElementMesh2D::fixRigid(Eigen::SparseMatrix<cfgScalar> & K,  bool iTriangular, ElementMesh2D * mesh)
 {
-  int row = K.rows();
-  K.conservativeResize(row + 3, K.cols()+3);
-  Eigen::SparseMatrix<float> KConstraint(row + 3,row + 3);
+  int nrow = K.rows();
+  int ncol = K.cols();
+  int nconstraints = 3;
 
-  Eigen::Vector2f center = Eigen::Vector2f::Zero();
+  K.conservativeResize(nrow + nconstraints, ncol + nconstraints);
+  Eigen::SparseMatrix<cfgScalar> KConstraint(nrow + nconstraints, nrow + nconstraints);
+
+  Vector2S center = Vector2S::Zero();
   for(int ii = 0;ii<mesh->x.size();ii++){
-    center += (Eigen::Vector2f) mesh->x[ii];
+    center += (Vector2S) mesh->x[ii];
   }
-  center /= mesh->x.size();
-  float cScale = 1000;
-  std::vector<Tripletf> triplets;
-  for(int ii = 0;ii<mesh->x.size();ii++){
+  center /= (cfgScalar)mesh->x.size();
+  //cfgScalar cScale = 1000;
+  cfgScalar cScale = 1;
+  std::vector<TripletS> triplets;
+  for(int ii = 0;ii<mesh->x.size();ii++)
+  {
     int col = 2*ii;
     //relative position to center
-    Eigen::Vector2f rel = (Eigen::Vector2f) mesh->x[ii] - center;
-    //cross product matrix
-   /* Eigen::Matrix3f c;
-    c <<       0, -rel[2],  rel[1],
-          rel[2],       0, -rel[0],
-         -rel[1],  rel[0],       0;
+    Vector2S rel = (Vector2S) mesh->x[ii] - center;
+    Vector2S c(-rel[1], rel[0]);  // no rotation
     c = -cScale * c;
-    for(int kk = 0; kk<3; kk++){
-      triplets.push_back( Tripletf(row + kk+3,   col + kk, -cScale ));
-//      triplets.push_back( Tripf(col + kk  , row + kk+3, cScale ));
-      for(int ll = 0; ll<3;ll++){
-        triplets.push_back( Tripletf(row + kk, col + ll, c(kk,ll)) );
-//        triplets.push_back( Tripf(col + ll, row + kk, c(kk,ll)) );
+
+     //fix translation
+    for(int kk=0; kk<2; kk++)
+    {
+      assert(!iTriangular || nrow+kk >= col+kk);
+      triplets.push_back( TripletS(nrow+kk,   col+kk, -cScale));    
+      if (!iTriangular)
+      {
+        triplets.push_back( TripletS(col+kk, nrow+kk, cScale));    
       }
-    }*/ 
+    }
+    int shift = 2;
+
+    // fix rotation
+    for(int ll=0; ll<2;ll++)
+    {
+      assert(!iTriangular || nrow+shift >= col + ll);
+      triplets.push_back( TripletS(nrow+shift, col + ll, c(ll)) );
+      if (!iTriangular)
+      {
+        triplets.push_back( TripletS(col + ll, nrow+shift, -c(ll)));
+      }
+    }
   }
-  for(int ii = 0;ii<3;ii++){
-    triplets.push_back(Tripletf(row+ii, row + ii,0.f));
+  for(int ii = 0;ii<nconstraints;ii++){
+    triplets.push_back(TripletS(nrow+ii, nrow+ii,0.f));
   }
   KConstraint.setFromTriplets(triplets.begin(), triplets.end());
   K += KConstraint;
 }
 
-void ElementMesh2D::getStiffnessSparse(std::vector<float> &val, bool trig, bool constrained, bool iFixedRigid)
+void ElementMesh2D::fixTranslation(Eigen::SparseMatrix<cfgScalar> & K,  bool iTriangular, ElementMesh2D * mesh)
+{
+  int nrow = K.rows();
+  int ncol = K.cols();
+  int nconstraints = 2;
+
+  K.conservativeResize(nrow + nconstraints, ncol + nconstraints);
+  Eigen::SparseMatrix<cfgScalar> KConstraint(nrow + nconstraints, nrow + nconstraints);
+
+  Vector2S center = Vector2S::Zero();
+  for(int ii = 0;ii<mesh->x.size();ii++){
+    center += (Vector2S) mesh->x[ii];
+  }
+  center /= (cfgScalar)mesh->x.size();
+  cfgScalar cScale = 1;
+  std::vector<TripletS> triplets;
+  for(int ii = 0;ii<mesh->x.size();ii++)
+  {
+    int col = 2*ii;
+    //relative position to center
+    Vector2S rel = (Vector2S) mesh->x[ii] - center;
+   
+     //fix translation
+    for(int kk=0; kk<2; kk++)
+    {
+      assert(!iTriangular || nrow+kk >= col+kk);
+      triplets.push_back( TripletS(nrow+kk,   col+kk, -cScale));    
+      if (!iTriangular)
+      {
+        triplets.push_back( TripletS(col+kk, nrow+kk, cScale));    
+      }
+    }
+  }
+  for(int ii = 0;ii<nconstraints;ii++){
+    triplets.push_back(TripletS(nrow+ii, nrow+ii,0.f));
+  }
+  KConstraint.setFromTriplets(triplets.begin(), triplets.end());
+  K += KConstraint;
+}
+
+void ElementMesh2D::fixRotation(Eigen::SparseMatrix<cfgScalar> & K,  bool iTriangular, ElementMesh2D * mesh)
+{
+  int nrow = K.rows();
+  int ncol = K.cols();
+  int nconstraints = 1;
+
+  K.conservativeResize(nrow + nconstraints, ncol + nconstraints);
+  Eigen::SparseMatrix<cfgScalar> KConstraint(nrow + nconstraints, nrow + nconstraints);
+
+  Vector2S center = Vector2S::Zero();
+  for(int ii = 0;ii<mesh->x.size();ii++){
+    center += (Vector2S) mesh->x[ii];
+  }
+  center /= (cfgScalar)mesh->x.size();
+  cfgScalar cScale = 1;
+  std::vector<TripletS> triplets;
+  for(int ii = 0;ii<mesh->x.size();ii++)
+  {
+    int col = 2*ii;
+    //relative position to center
+    Vector2S rel = (Vector2S) mesh->x[ii] - center;
+    Vector2S c(-rel[1], rel[0]);  // no rotation
+    c = -cScale * c;
+
+    // fix rotation
+    for(int ll=0; ll<2;ll++)
+    {
+      assert(!iTriangular || nrow >= col + ll);
+      triplets.push_back( TripletS(nrow, col + ll, c(ll)) );
+      if (!iTriangular)
+      {
+        triplets.push_back( TripletS(col + ll, nrow, -c(ll)));
+      }
+    }
+  }
+  for(int ii = 0;ii<nconstraints;ii++){
+    triplets.push_back(TripletS(nrow+ii, nrow+ii,0.f));
+  }
+  KConstraint.setFromTriplets(triplets.begin(), triplets.end());
+  K += KConstraint;
+}
+
+void ElementMesh2D::enforcePeriodicity(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh2D * mesh)
+{
+  std::vector<int> sideVertexIndices[4];
+  int iside;
+  for (iside=0; iside<4; iside++)
+  {
+    meshUtil::getSideVertices(iside, (const ElementRegGrid2D*)this, sideVertexIndices[iside]);
+  }
+  int nconstraints = 2*((int)sideVertexIndices[1].size()-1 + (int)sideVertexIndices[3].size()-2);
+
+  int nrow = K.rows();
+  int ncol = K.cols();
+
+  int nrowInit = nrow;
+  int ncolInit = ncol;
+
+  K.conservativeResize(nrow + nconstraints, ncol + nconstraints);
+  Eigen::SparseMatrix<cfgScalar> KConstraint(nrow + nconstraints, nrow + nconstraints);
+
+  std::vector<TripletS> triplets;
+  cfgScalar cScale = 1;
+
+  int indCorner0 = sideVertexIndices[0][0];
+  int indCorner1 = sideVertexIndices[1][0]; // right
+  int indCorner3 = sideVertexIndices[3][0]; // top
+
+  int ivertex, nvertex=(int)sideVertexIndices[1].size();
+  for (ivertex=1; ivertex<nvertex; ivertex++)
+  {
+    int indVertex0 =  sideVertexIndices[0][ivertex];
+    int indVertex1 =  sideVertexIndices[1][ivertex];
+
+    for (int icoord=0; icoord<2; icoord++)
+    {
+      int row = nrow+icoord;
+
+      int col0 = 2*indCorner0 + icoord;
+      int col1 = 2*indCorner1 + icoord;
+      int col2 = 2*indVertex0 + icoord;
+      int col3 = 2*indVertex1 + icoord;
+
+      assert(!iTriangular || (row >= col0 && row >= col1 && row>= col2 && row>= col3));
+      triplets.push_back( TripletS(row,   col0, -cScale)); 
+      triplets.push_back( TripletS(row,   col1, cScale)); 
+      triplets.push_back( TripletS(row,   col2, cScale)); 
+      triplets.push_back( TripletS(row,   col3, -cScale)); 
+      if (!iTriangular)
+      {
+        triplets.push_back( TripletS(col0, row, cScale));
+        triplets.push_back( TripletS(col1, row, -cScale));    
+        triplets.push_back( TripletS(col2, row, -cScale));    
+        triplets.push_back( TripletS(col3, row, cScale));    
+      }
+    }
+    nrow += 2;
+  }
+  nvertex = (int)sideVertexIndices[3].size()-1;
+  for (ivertex=1; ivertex<nvertex; ivertex++)
+  {
+    int indVertex0 =  sideVertexIndices[2][ivertex];
+    int indVertex1 =  sideVertexIndices[3][ivertex];
+
+    for (int icoord=0; icoord<2; icoord++)
+    {
+      int row = nrow+icoord;
+
+      int col0 = 2*indCorner0 + icoord;
+      int col1 = 2*indCorner3 + icoord;
+      int col2 = 2*indVertex0 + icoord;
+      int col3 = 2*indVertex1 + icoord;
+
+      assert(!iTriangular || (row >= col0 && row >= col1 && row>= col2 && row>= col3));
+      triplets.push_back( TripletS(row,   col0, -cScale)); 
+      triplets.push_back( TripletS(row,   col1, cScale)); 
+      triplets.push_back( TripletS(row,   col2, cScale)); 
+      triplets.push_back( TripletS(row,   col3, -cScale)); 
+      if (!iTriangular)
+      {
+        triplets.push_back( TripletS(col0, row, cScale));
+        triplets.push_back( TripletS(col1, row, -cScale));    
+        triplets.push_back( TripletS(col2, row, -cScale));    
+        triplets.push_back( TripletS(col3, row, cScale));    
+      }
+    }
+    nrow += 2;
+  }
+
+  for(int ii = 0;ii<nconstraints;ii++){
+    triplets.push_back(TripletS(nrowInit+ii, nrowInit+ii,0.f));
+  }
+  KConstraint.setFromTriplets(triplets.begin(), triplets.end());
+  K += KConstraint;
+}
+
+void ElementMesh2D::getStiffnessSparse(std::vector<cfgScalar> &val, bool trig, bool constrained, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic)
 {
   int N = 2* (int)x.size();
-  std::vector<Tripletf> coef;
-  Eigen::SparseMatrix<float> Ksparse(N,N);
+  std::vector<TripletS> coef;
+  Eigen::SparseMatrix<cfgScalar> Ksparse(N,N);
   for(unsigned int ii = 0;ii<e.size();ii++){
     Element2D * ele = e[ii];
     int nV = ele->nV();
-    MatrixXf K  = getStiffness(ii);
+    MatrixXS K  = getStiffness(ii);
     for(int jj = 0; jj<nV; jj++){
       int vj = ele->at(jj);
       for(int kk = 0; kk<nV; kk++){
@@ -160,7 +354,7 @@ void ElementMesh2D::getStiffnessSparse(std::vector<float> &val, bool trig, bool 
             if(trig && (2*vk+dim2 > 2*vj+dim1)) {
               continue;
             }
-            float val = K(2 * jj + dim1, 2 * kk + dim2);
+            cfgScalar val = K(2 * jj + dim1, 2 * kk + dim2);
             if (constrained){
               if (fixed[vk] || fixed[vj]){
                 val = 0;
@@ -172,7 +366,7 @@ void ElementMesh2D::getStiffnessSparse(std::vector<float> &val, bool trig, bool 
             //if (vk == vj && dim1 == dim2){
             //  val += 1;
             //}
-            Tripletf triple(2 * vj + dim1, 2 * vk + dim2, val);
+            TripletS triple(2 * vj + dim1, 2 * vk + dim2, val);
             coef.push_back(triple);
           }
         }
@@ -180,23 +374,39 @@ void ElementMesh2D::getStiffnessSparse(std::vector<float> &val, bool trig, bool 
     }
   }
   Ksparse.setFromTriplets(coef.begin(), coef.end());
-  if (iFixedRigid)
+  //if (iFixedRigid)
+  if (iFixedTranslation && iFixedRotation)
   {
-    fixRigid(Ksparse, this);
+    //fixRigid(Ksparse, trig, this);
+    fixTranslation(Ksparse, trig, this);
+    fixRotation(Ksparse, trig, this);
   }
+  else if (iFixedTranslation)
+  {
+    fixTranslation(Ksparse, trig, this);
+  }
+  else if (iFixedRotation)
+  {
+    fixRotation(Ksparse, trig, this);
+  }
+  if (iPeriodic)
+  {
+    enforcePeriodicity(Ksparse, trig, this);
+  }
+
   for(int ii = 0; ii<Ksparse.rows(); ii++){
-    for (Eigen::SparseMatrix<float>::InnerIterator it(Ksparse, ii); it; ++it){
+    for (Eigen::SparseMatrix<cfgScalar>::InnerIterator it(Ksparse, ii); it; ++it){
      val.push_back(it.value());
    }
   }
  
 }
 
-void ElementMesh2D::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,  bool trig, bool iFixedRigid)
+void ElementMesh2D::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,  bool trig, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic)
 {
   int N = 2* (int)x.size();
-  std::vector<Tripletf> coef;
-  Eigen::SparseMatrix<float> Ksparse(N,N);
+  std::vector<TripletS> coef;
+  Eigen::SparseMatrix<cfgScalar> Ksparse(N,N);
 
   for(unsigned int ii = 0;ii<e.size();ii++){
     Element2D * ele = e[ii];
@@ -209,7 +419,7 @@ void ElementMesh2D::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,
             if(trig&&(2*vk+dim2 > 2*vj+dim1)){
               continue;
             }
-            Tripletf triple(2*vj+dim1,2*vk+dim2,1);
+            TripletS triple(2*vj+dim1,2*vk+dim2,1);
             coef.push_back(triple);
           }
         }
@@ -218,14 +428,29 @@ void ElementMesh2D::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,
   }
 
   Ksparse.setFromTriplets(coef.begin(), coef.end());
-  if (iFixedRigid)
+   //if (iFixedRigid)
+  if (iFixedTranslation && iFixedRotation)
   {
-    fixRigid(Ksparse, this);
+    //fixRigid(Ksparse, trig, this);
+    fixTranslation(Ksparse, trig, this);
+    fixRotation(Ksparse, trig, this);
+  }
+  else if (iFixedTranslation)
+  {
+    fixTranslation(Ksparse, trig, this);
+  }
+  else if (iFixedRotation)
+  {
+    fixRotation(Ksparse, trig, this);
+  }
+  if (iPeriodic)
+  {
+    enforcePeriodicity(Ksparse, trig, this);
   }
 
   I.push_back(0);
   for(int ii = 0; ii<Ksparse.rows(); ii++){
-    for (Eigen::SparseMatrix<float>::InnerIterator it(Ksparse, ii); it; ++it){
+    for (Eigen::SparseMatrix<cfgScalar>::InnerIterator it(Ksparse, ii); it; ++it){
      J.push_back(it.row());
    }
     I.push_back((int)J.size());
@@ -233,19 +458,19 @@ void ElementMesh2D::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,
 }
 
 
-MatrixXf ElementMesh2D::getStiffness(int eIdx)
+MatrixXS ElementMesh2D::getStiffness(int eIdx)
 {
-  MatrixXf K = m[me[eIdx]]->getStiffness(e[eIdx],this);
+  MatrixXS K = m[me[eIdx]]->getStiffness(e[eIdx],this);
   return K;
 }
 
-MatrixXf ElementMesh2D::getStiffness()
+MatrixXS ElementMesh2D::getStiffness()
 {
   int matSize = 2 * (int)x.size();
-  MatrixXf Kglobal(matSize,matSize);
+  MatrixXS Kglobal(matSize,matSize);
   Kglobal.fill(0);
   for(unsigned int ii = 0;ii<e.size();ii++){
-    MatrixXf K = getStiffness(ii);
+    MatrixXS K = getStiffness(ii);
     for(int jj = 0; jj<e[ii]->nV(); jj++){
       int vj = e[ii]->at(jj);
       for(int kk = 0; kk<e[ii]->nV(); kk++){

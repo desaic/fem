@@ -52,9 +52,11 @@ void MaterialStructureView::setProject(QPointer<exProject> iProject)
 void MaterialStructureView::onPickedStructureModified()
 {
   int pickedStructureIndex = m_project->getPickedStructureIndex();
+  cout << "MaterialStructureView::onPickedStructureModified()   pickedStructureIndex = " << pickedStructureIndex << std::endl;  
   if (pickedStructureIndex>=0)
   {
     int pickedStructureLevel = m_project->getPickedStructureLevel();
+    cout << "MaterialStructureView::onPickedStructureModified()   updateMesh" << std::endl;  
     updateMesh(pickedStructureIndex, pickedStructureLevel);
   }
   update();
@@ -62,7 +64,8 @@ void MaterialStructureView::onPickedStructureModified()
 
 void MaterialStructureView::updateMesh(int iCombIndex, int iLevel)
 {
-  QSharedPointer<ElementMesh> elementMesh = m_project->computeElementMesh(iCombIndex, iLevel);
+  //QSharedPointer<ElementMesh> elementMesh = m_project->computeElementMesh(iCombIndex, iLevel);
+  QSharedPointer<ElementMesh> elementMesh = m_project->computeElementMeshIncr(iCombIndex, iLevel);
   vtkSmartPointer<vtkPolyData> polyData = createVtkPolyData(elementMesh.data());
 
   vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();

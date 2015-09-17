@@ -23,10 +23,10 @@ public:
   int run();
 
 private:
-  int computeMaterialParameters(std::string & iStepperType, int iLevel, int iNbCombPrevLevel);
-  int computeMaterialParametersLevel1(std::string & iStepperType);
+  int computeMaterialParameters(std::string & iStepperType, int iLevel, int iNbCombPrevLevel, bool iReadSingleFile, bool iWriteSingleFile, bool iReadFullDeformation, bool iWriteFullDeformation);
+  int computeMaterialParametersLevel1(std::string & iStepperType, bool iWriteSingleFile, bool iWriteFullDeformation);
   int computeMaterialParameters(std::string iStepperType,  const std::vector<std::vector<int> > &iMaterialAssignments, 
-                                const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3], int iLevel, int iBlockRep);
+                                const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3], int iLevel, int iBlockRep, bool iWriteSingleFile, bool iWriteFullDeformation);
 
   void vectorMat2MatrixMat(const std::vector<int> &iVecMaterials, int oMatrixMaterials[2][2][2]);
   void assignMaterials(ElementRegGrid * iElementGrid, int iMacroStructureMaterials[2][2][2]);
@@ -38,6 +38,8 @@ private:
                          std::vector<float> &oStresses, std::vector<float> &oStrains);
   bool sampleDeformation(int iN[2], std::vector<MaterialQuad2D> &iMaterial, const std::string iStepperType, float iMaxForce, int iForceAxis, int iNumberOfSample, const std::vector<int> & iMaterials,
                          std::vector<float> &oStresses, std::vector<float> &oStrains);
+  bool sampleDeformation(int iN[2], std::vector<MaterialQuad2D> &iMaterial, const std::string iStepperType, float iMaxForce, int iForceAxis, int iNumberOfSample, const std::vector<int> & iMaterials,
+                         std::vector<float> &oStresses, std::vector<std::vector<float> > &oDeformations);
 
   void sampleMaterialSpace();
   int checkBorderSimilarity(const std::vector<int> &iMaterialAssignment, int N[3], const std::vector<std::vector<int> > &iBaseMaterialStructures);
@@ -56,13 +58,30 @@ private:
 
   void getNewCombinations(const std::vector<int> &iBoundaryPoints, const std::vector<cfgScalar> &iPoints, int N[3], const std::vector<std::vector<int> > &iBaseMaterialStructures, int iNbCombinations,
                           std::vector<std::vector<int> > &oNewMaterialAssignments, std::vector<int> &oNewBaseMaterialStructures);
+  void getNewCombinationsV2(const std::vector<int> &iBoundaryPoints, const std::vector<cfgScalar> &iPoints, int N[3], int iNbCombinations, std::vector<std::vector<int> > &oNewMaterialAssignments, std::vector<int> &oNewBaseMaterialStructures);
+  void getNewCombinationsV3(const std::vector<int> &iBoundaryPoints, const std::vector<cfgScalar> &iPoints, int N[3], int iNbCombinations, std::vector<std::vector<int> > &oNewMaterialAssignments, std::vector<int> &oNewBaseMaterialStructures);
+  void getNewCombinationsV4(const std::vector<int> &iBoundaryPoints, const std::vector<cfgScalar> &iPoints, int N[3], int iNbCombinations, std::vector<std::vector<int> > &oNewMaterialAssignments, 
+                            const std::vector<std::vector<int> >  &iNewBaseMaterialStructures);
+  void getNewCombinationsV5(const std::vector<int> &iBoundaryPoints, const std::vector<cfgScalar> &iPoints, int N[3], int iNbCombinations, std::vector<std::vector<int> > &oNewMaterialAssignments, 
+                            const std::vector<std::vector<int> >  &iNewBaseMaterialStructures);
+
+  int computeMaterialParametersIncremental(std::string & iStepperType, int iLevel);
+  int computeMaterialParameters(std::string iStepperType , const std::vector<std::vector<int> > &iMaterialAssignments, int iNewMatStructureSize[3],
+                                const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3], int iLevel, int iBlockRep, bool iWriteSingleFile, bool iWriteFullDeformation, const std::string &iPostfix ="");
+
+  void growStructure(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments);
+
   int getClosestPoint(Vector3f &iP, const std::vector<cfgScalar> &iPoints);
+  int getRandomMatWithLinearProba(std::multimap<float, int> &iDist2MatIndex, float eps, float r);
+
+  int computeVariations(std::string & iStepperType, int iLevel);
 
 private:
   std::string m_OutputDirectory;
   bool m_UseLinearMaterial;
   int m_dim;
   int m_blockRep;
+  int m_nbSubdivisions;
   std::vector<MaterialQuad> m_mat;
   std::vector<MaterialQuad2D> m_mat2D;
 };

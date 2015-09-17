@@ -2,11 +2,13 @@
 #define QUADRATURE2D_HPP
 #include <vector>
 #include "vecmath.h"
+#include "cfgDefs.h"
+
 class Quadrature2D
 {
 public:
-  std::vector<Vector2f> x;
-  std::vector<float> w;
+  std::vector<Vector2S> x;
+  std::vector<cfgScalar> w;
   Quadrature2D();
   
   static const Quadrature2D Gauss2;

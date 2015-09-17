@@ -40,6 +40,33 @@ MaterialParametersView::~MaterialParametersView()
 {
 }
 
+vtkSmartPointer<vtkTable> MaterialParametersView::createTable(const std::vector<float> &iValues1, int idim1, std::string *iLabels, const std::vector<int> *iPointIndices)
+{
+  vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+
+  assert(idim1>=3);
+  int npoint = (int)(iPointIndices? iPointIndices->size(): iValues1.size()/idim1);
+  int icol=0;
+  for (icol=0; icol<idim1; icol++)
+  {
+    table->AddColumn(vtkSmartPointer<vtkFloatArray>::New());
+    table->GetColumn(icol)->SetName(iLabels[icol].c_str());
+  }
+  table->SetNumberOfRows(npoint);
+
+  assert(iValues1.size()%idim1==0);
+  int ipoint=0;
+  for (ipoint=0; ipoint<npoint; ipoint++)
+  {
+    int indPoint = (iPointIndices? (*iPointIndices)[ipoint]: ipoint);
+    for (icol=0; icol<idim1; icol++)
+    {
+      table->SetValue(ipoint, icol,  iValues1[idim1*indPoint + icol]);
+    }
+  }
+  return table;
+}
+
 vtkSmartPointer<vtkTable> MaterialParametersView::createTable(const std::vector<float> &iValues1, const std::vector<int> &iValues2, int idim1, int idim2, std::string *iLabels, const std::vector<int> *iPointIndices)
 {
   vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
@@ -115,10 +142,13 @@ vtkSmartPointer<cfgPlotSurface> MaterialParametersView::createSurfacePlot3D(vtkS
 void MaterialParametersView::setProject(QPointer<exProject> iProject)
 {
   m_project = iProject;
-
   Q_ASSERT(m_project);
+
+  connect(m_project, SIGNAL(levelVisibilityModified()), this, SLOT(onLevelVisibilityModified()));
+
   // read data
-  int nlevel = 3;
+  int maxlevel = m_project->getMaxLevel();
+  int nlevel = maxlevel+1;
   std::vector<std::vector<cfgScalar> > physicalParametersPerLevel(nlevel);
   std::vector<cfgScalar> physicalParameters;
 
@@ -131,14 +161,45 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
   m_materialAssignements.clear();
   m_materialAssignements.resize(nlevel);
 
+  m_plotsPerLevel.resize(nlevel);
+  m_plotPointIndices.resize(nlevel);
+
   int nparam = 3;
+
+  bool writeBinary=false;
+  bool readBinary=!writeBinary;
+  int nextralevel =  13 ;//14; //8;
 
   int ilevel=0;
   for (ilevel=1; ilevel<nlevel; ilevel++)
   {
-    bool ResOk = m_project->getMaterialParameters(ilevel, physicalParametersPerLevel[ilevel], m_baseMaterials[ilevel], m_materialAssignements[ilevel]);
+    bool ResOk = true;
+    std::string fileRootName = m_project->getFileDirectory() + "level" + std::to_string(ilevel) + "_";
+    std::string fileExtension = ".bin";
+    if (readBinary && ilevel<nlevel)
+    {
+      cfgUtil::readBinary<float>(fileRootName + "params" + fileExtension, physicalParametersPerLevel[ilevel]);
+      cfgUtil::readBinary<int>(fileRootName + "baseMat" + fileExtension, m_baseMaterials[ilevel]);
+      cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, m_materialAssignements[ilevel]);
+    }
+    else
+    {
+      ResOk = m_project->getMaterialParameters(ilevel, physicalParametersPerLevel[ilevel], m_baseMaterials[ilevel], m_materialAssignements[ilevel]);
+      if (ResOk /*&& writeBinary*/ )
+      {
+        cfgUtil::writeBinary<float>(fileRootName + "params" + fileExtension, physicalParametersPerLevel[ilevel]);
+        cfgUtil::writeBinary<int>(fileRootName + "baseMat" + fileExtension, m_baseMaterials[ilevel]);
+        cfgUtil::writeBinary<int>(fileRootName + "matAssignments" + fileExtension, m_materialAssignements[ilevel]);
+      }
+    }
+   
     m_baseMaterials2Indices[ilevel] = computeVector2IndexMap(m_baseMaterials[ilevel]);
+    if (!ResOk)
+    {
+      std::cout << "Cannot read file for level " << ilevel << std::endl;
+    }
   }
+ 
   m_baseMaterials[0] = m_baseMaterials[1];
   std::vector<int> mat1, mat2;
   mat1.push_back(0);
@@ -156,21 +217,37 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
     physicalParametersPerLevel[0].push_back(physicalParametersPerLevel[1][iparam+shift]);
   }
 
+  /*m_materialAssignements[1] = m_materialAssignements[0];
+  physicalParametersPerLevel[1] = physicalParametersPerLevel[0];
+  std::string fileRootName = m_project->getFileDirectory() + "level" + std::to_string(1) + "_";
+  std::string fileExtension = ".bin";
+  cfgUtil::writeBinary<float>(fileRootName + "params" + fileExtension, physicalParametersPerLevel[1]);
+  cfgUtil::writeBinary<int>(fileRootName + "baseMat" + fileExtension, m_baseMaterials[1]);
+  cfgUtil::writeBinary<int>(fileRootName + "matAssignments" + fileExtension, m_materialAssignements[1]);*/ 
+
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
     physicalParameters.insert(physicalParameters.end(), physicalParametersPerLevel[ilevel].begin(), physicalParametersPerLevel[ilevel].end());
   }
-
   m_physicalParameters = physicalParameters;
 
   std::vector<vtkVector3i> colors;
   std::vector<int> levels;
 
   std::vector<vtkVector3i> matColors;
-  matColors.push_back(vtkVector3i(0, 0, 0));
+  /*matColors.push_back(vtkVector3i(0, 0, 0));
   matColors.push_back(vtkVector3i(255, 0, 0));
   matColors.push_back(vtkVector3i(0, 0, 255));
-  matColors.push_back(vtkVector3i(0, 255, 255));
+  matColors.push_back(vtkVector3i(255, 0, 255)); 
+  matColors.push_back(vtkVector3i(255, 255, 0)); */ 
+  for (ilevel=0; ilevel<nlevel; ilevel++)
+  {
+    QColor colHSV = QColor::fromHsv(ilevel*255/(nlevel-1), 255, 255);
+    QColor colRGB = colHSV.toRgb();
+
+    matColors.push_back(vtkVector3i(colRGB.red(), colRGB.green(), colRGB.blue()));
+    //matColors.push_back(vtkVector3i(0, 0, ilevel*255/nlevel));
+  }
   
   int nrow=0;
   for (ilevel=0; ilevel<nlevel; ilevel++)
@@ -181,58 +258,110 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
     m_lastPointIndices.push_back(nrow-1);
   }
   m_levels = levels;
- 
-  vtkSmartPointer<cfgChartXYZ> chart = vtkSmartPointer<cfgChartXYZ>::New();
 
   std::string labels[4]= {"Density", "Y1", "Y2", "Level"};
   vtkSmartPointer<vtkTable> table =  createTable(physicalParameters, levels, 3, 1, labels);
   vtkSmartPointer<cfgPlotPoints3D> points3D = createPointPlot3D(table, "Y1", "Y2", "Density", colors);
-  chart->AddPlot(points3D);
-  m_table = table;
-  m_plotMaterialPoints = points3D;
+  m_tablePoint3D = table;
 
-  std::vector<int> convexHull, boundaryVertices, boundaryFaces;
-  //computeBoundaryPoints(physicalParametersPerLevel[0], 3, convexHull);
-  //computeDelaundayTriangulation(physicalParametersPerLevel[1], 3, convexHull, boundaryVertices, boundaryFaces);
-  std::vector<cfgScalar> parameterPoints;
-  parameterPoints.insert(parameterPoints.end(), physicalParameters.begin(), physicalParameters.begin()+ 3*m_lastPointIndices[2]+3);
-  std::cout << "Computing delaunay triangulation... " << std::endl;
-  computeDelaundayTriangulation(parameterPoints, 3, convexHull, boundaryVertices, boundaryFaces);
-
-  if (boundaryVertices.size()>0)
+  for (ilevel=0; ilevel<nlevel; ilevel++)
   {
-    std::cout << "# boundary points = " << boundaryVertices.size() << std::endl;
-    vtkSmartPointer<vtkTable> table =  createTable(physicalParameters, levels, 3, 1, labels, &boundaryVertices);
-    vtkSmartPointer<cfgPlotPoints3D> boundaryPlot = createPointPlot3D(table, "Y1", "Y2", "Density", vtkVector3i(0,255,0), 10);
-    chart->AddPlot(boundaryPlot);
-  }
- 
-  if (convexHull.size()>0)
-  {
-    std::vector<int> edgeIndices;
-    //getEdgesFromTetFaceIndexArray(convexHull, edgeIndices);
+    bool computeTriangulation = false; //(ilevel>1);
+    std::vector<int> convexHull, boundaryVertices, boundaryFaces;
+    if (computeTriangulation && ilevel<nlevel-nextralevel)
+    {
+      //computeBoundaryPoints(physicalParametersPerLevel[0], 3, convexHull);
+      //computeDelaundayTriangulation(physicalParametersPerLevel[1], 3, convexHull, boundaryVertices, boundaryFaces);
 
-    getEdgesFromTriFaceIndexArray(boundaryFaces, edgeIndices);
+      /*computeConvexHull(physicalParametersPerLevel[indLevelBoundary], nparam, boundaryVertices);
+      std::vector<int> newBoundaryVertices;
+      getClosestPoints(physicalParametersPerLevel[indLevelBoundary], 3, boundaryVertices, 1.e-3, newBoundaryVertices);*/ 
 
-    vtkSmartPointer<vtkTable> edgesTable =  createTable(physicalParameters, levels, 3, 1, labels, &edgeIndices);
-    vtkSmartPointer<cfgPlotLine3D> edgesPlot = createLinePlot3D(edgesTable, "Y1", "Y2", "Density", vtkVector3i(0,0,0));
-    chart->AddPlot(edgesPlot);
+      std::vector<cfgScalar> parameterPoints;
 
-    vtkSmartPointer<vtkTable> facesTable =  createTable(physicalParameters, levels, 3, 1, labels, &boundaryFaces);
-    vtkSmartPointer<cfgPlotSurface> surfacePlot = createSurfacePlot3D(facesTable, "Y1", "Y2", "Density", vtkVector3i(255,0,0), 10);
-    chart->AddPlot(surfacePlot);
+      parameterPoints.insert(parameterPoints.end(), physicalParameters.begin(), physicalParameters.begin()+ 3*m_lastPointIndices[ilevel]+3);
+      std::cout << "Computing delaunay triangulation... " << std::endl;
+      //computeDelaundayTriangulation(parameterPoints, 3, convexHull, boundaryVertices, boundaryFaces);
+
+      computeDelaundayTriangulation(physicalParametersPerLevel[ilevel], 3, convexHull, boundaryVertices, boundaryFaces);
+      boundaryVertices = add(boundaryVertices, m_lastPointIndices[ilevel-1]+1); 
+      boundaryFaces = add(boundaryFaces, m_lastPointIndices[ilevel-1]+1); 
+      std::cout << "# params = " << physicalParametersPerLevel[ilevel].size() << ", # boundary points = " << boundaryVertices.size() << std::endl;
+      //writeVector2File(physicalParametersPerLevel[indLevelBoundary], m_project->getFileDirectory() + "params.m");
+    }
+    else if (ilevel>0)
+    {
+      int ipoint, npoint = physicalParametersPerLevel[ilevel].size()/3;
+      for (ipoint=0; ipoint<npoint; ipoint++)
+      {
+        boundaryVertices.push_back(ipoint);
+      }
+      boundaryVertices = add(boundaryVertices, m_lastPointIndices[ilevel-1]+1); 
+    }
+    bool computeDistToBoundary = false;
+    if (computeDistToBoundary)
+    {
+      int indLevel = maxlevel;
+      std::vector<cfgScalar> sampledBoundary;
+      sampleMesh(physicalParameters, boundaryFaces, 1000, sampledBoundary);
+      std::vector<cfgScalar> distToBoundary;
+      computeDistancesToPointCloud(physicalParametersPerLevel[indLevel], sampledBoundary, distToBoundary);
+      cfgScalar maxDist = *std::max_element(distToBoundary.begin(), distToBoundary.end()); 
+      distToBoundary = cfgUtil::mult<cfgScalar>(distToBoundary, 1./maxDist);
+
+      shift = m_lastPointIndices[indLevel-1]+1;
+      int ipoint=0, npoint=m_lastPointIndices[indLevel]-m_lastPointIndices[indLevel-1];
+      for (ipoint=0; ipoint<npoint; ipoint++)
+      {
+        cfgScalar w = 1-distToBoundary[ipoint];
+        vtkVector3i matColor(w*matColors[indLevel][0] + (1-w)*255, w*matColors[indLevel][1] + (1-w)*255, w*matColors[indLevel][2] + (1-w)*255);
+        colors[ipoint+shift] = matColor;
+      }
+    }
+    bool displayInsidePoints = false;
+    if (displayInsidePoints)
+    {
+
+    }
+
+    if (boundaryVertices.size()>0)
+    {
+      vtkSmartPointer<vtkTable> table =  createTable(physicalParameters, levels, 3, 1, labels, &boundaryVertices);
+      vtkVector3i col = matColors[ilevel];
+      //vtkVector3i col = vtkVector3i(0,255,0);
+      vtkSmartPointer<cfgPlotPoints3D> boundaryPlot = createPointPlot3D(table, "Y1", "Y2", "Density", col, 10);
+      m_plotsPerLevel[ilevel].push_back(boundaryPlot);
+      m_plotPointIndices[ilevel].push_back(boundaryVertices);
+    } 
+    if (convexHull.size()>0)
+    {
+      std::vector<int> edgeIndices;
+      //getEdgesFromTetFaceIndexArray(convexHull, edgeIndices);
+
+      getEdgesFromTriFaceIndexArray(boundaryFaces, edgeIndices);
+
+      vtkSmartPointer<vtkTable> edgesTable =  createTable(physicalParameters, levels, 3, 1, labels, &edgeIndices);
+      vtkSmartPointer<cfgPlotLine3D> edgesPlot = createLinePlot3D(edgesTable, "Y1", "Y2", "Density", vtkVector3i(0,0,0));
+      m_plotsPerLevel[ilevel].push_back(edgesPlot);
+      m_plotPointIndices[ilevel].push_back(edgeIndices);
+
+      vtkSmartPointer<vtkTable> facesTable =  createTable(physicalParameters, levels, 3, 1, labels, &boundaryFaces);
+      vtkVector3i col = matColors[ilevel];
+      //vtkVector3i col = vtkVector3i(255,0,0);
+      vtkSmartPointer<cfgPlotSurface> surfacePlot = createSurfacePlot3D(facesTable, "Y1", "Y2", "Density", col, 10);
+      m_plotsPerLevel[ilevel].push_back(surfacePlot);
+      m_plotPointIndices[ilevel].push_back(boundaryFaces);
+    }
+    /*if (sampledBoundary.size()>0)
+    {
+      vtkSmartPointer<vtkTable> sampledBoundaryTable =  createTable(sampledBoundary, 3, labels, NULL);
+      vtkSmartPointer<cfgPlotPoints3D> sampledBoundaryPlot = createPointPlot3D(sampledBoundaryTable, "Y1", "Y2", "Density", vtkVector3i(0,0,0), 5);
+      m_plotsPerLevel[ilevel].push_back(sampledBoundaryPlot);
+    }*/ 
   } 
 
   GetRenderWindow();
-  int width = this->width();
-  int height = this->height();
-  int size = std::min(width, height);
-  int x = width/2 - size/2;
-  int y = height/2 - size/2;
 
-  chart->SetGeometry(vtkRectf(x, y, size, size));
-
-  m_chart = chart;
   m_vtkView = vtkContextView::New();
   m_vtkView->SetInteractor(GetInteractor());
   SetRenderWindow(m_vtkView->GetRenderWindow());
@@ -240,10 +369,45 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
   vtkRenderer * renderer = m_vtkView->GetRenderer();
   renderer->SetBackground(1,1,1);
 
-  m_vtkView->GetScene()->AddItem(chart.GetPointer());
+  int width = this->width();
+  int height = this->height();
+  int size = std::min(width, height);
+  int x = width/2 - size/2;
+  int y = height/2 - size/2;
+
+  vtkSmartPointer<cfgChartXYZ> chart = vtkSmartPointer<cfgChartXYZ>::New();
+  chart->SetGeometry(vtkRectf(x, y, size, size));
+  m_vtkView->GetScene()->AddItem(chart.GetPointer()); 
+  m_chart = chart;
+  updateChart();
 
   m_vtkView->GetRenderWindow()->SetMultiSamples(10);
   m_vtkView->GetRenderWindow()->Render();
+}
+
+void MaterialParametersView::updateChart()
+{
+  m_chart->ClearPlots();
+
+  m_plots2Levels.clear();
+  m_plots2PlotIndex.clear();
+
+  int ilevel, nlevel=(int)m_plotsPerLevel.size();
+  for (ilevel=0; ilevel<nlevel; ilevel++)
+  {
+    bool levelVisiblity = m_project->getLevelVisibility(ilevel);
+    if (levelVisiblity==true)
+    {
+      int iplot, nplot=(int)m_plotsPerLevel[ilevel].size();
+      for (iplot=0; iplot<nplot; iplot++)
+      {
+        m_chart->AddPlot(m_plotsPerLevel[ilevel][iplot]);
+        m_plots2Levels.push_back(ilevel);
+        m_plots2PlotIndex.push_back(iplot);
+      }
+    }
+  }
+  update();
 }
 
 int MaterialParametersView::getStructureIndex(int iPointIndex)
@@ -282,11 +446,26 @@ void MaterialParametersView::mouseReleaseEvent(QMouseEvent * iMouseEvent)
   int pickedPointIndex = m_chart->pickedPointIndex();
   if (pickedPointIndex>=0)
   {
-    int pickedStructureLevel = m_table->GetValue(pickedPointIndex, 3).ToInt();
-    int pickedStructureIndex = getStructureIndex(pickedPointIndex);
+    //int pickedStructureLevel = m_tablePoint3D->GetValue(pickedPointIndex, 3).ToInt();
+    //int pickedStructureIndex = getStructureIndex(pickedPointIndex);
+
+    int pickedPlotIndex = m_chart->pickedPlotIndex();
+    cout << "pickedPlotIndex " << pickedPlotIndex << std::endl;
+    int pickedStructureLevel = m_plots2Levels[pickedPlotIndex];
+    cout << "pickedStructureLevel " << pickedStructureLevel << std::endl;
+    int indPlot = m_plots2PlotIndex[pickedPlotIndex];
+    cout << "indPlot " << indPlot << std::endl;
+    int pickedStructureIndex = m_plotPointIndices[pickedStructureLevel][indPlot][pickedPointIndex];
+    pickedStructureIndex = getStructureIndex(pickedStructureIndex);
+    cout << "picked structure : " << pickedStructureIndex << std::endl;
+
+    cout << m_plotPointIndices.size() << std::endl;
+    cout << m_plotPointIndices[pickedStructureLevel].size() << std::endl;
+    cout << m_plotPointIndices[pickedStructureLevel][indPlot].size() << std::endl;
 
     std::vector<int> pickedStructurebaseMaterials;
     m_project->setPickedStructure(pickedStructureIndex, pickedStructureLevel, pickedStructurebaseMaterials);
+    cout << "picked structure : " << pickedStructureIndex << std::endl;
 
     int prevLevelIndex = pickedStructureLevel-1;
     
@@ -300,7 +479,7 @@ void MaterialParametersView::mouseReleaseEvent(QMouseEvent * iMouseEvent)
       int pointIndex = getParameterIndex(baseMaterialIndex, prevLevelIndex);
       pickedStructurebaseMaterials.push_back(pointIndex);
     }
-    highlighPoints(pickedStructurebaseMaterials);
+    //highlighPoints(pickedStructurebaseMaterials);
     m_project->setPickedStructure(pickedStructureIndex, pickedStructureLevel, pickedStructurebaseMaterials); 
   } 
 }
@@ -322,5 +501,7 @@ void MaterialParametersView::highlighPoints(const std::vector<int> &iPointIndice
   }
 }
 
-
-
+void MaterialParametersView::onLevelVisibilityModified()
+{
+  updateChart();
+}

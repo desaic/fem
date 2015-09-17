@@ -13,11 +13,11 @@ public:
   ///@brief remove unused vertices
   void rmEmptyVert();
   
-  int GetEleInd(const Vector2f & p);
+  int GetEleInd(const Vector2S & p);
 
   ///@brief 
   int GetEleInd(int ii , int jj)const;
-  int GetEleInd_clamp(const Vector2f & p);
+  int GetEleInd_clamp(const Vector2S & p);
   int GetVertInd(int ii , int jj);
   int toArrInd(int ii , int jj)const{return ii * ny + jj;}
 
@@ -26,8 +26,8 @@ public:
   //map from  grid index to vertex index in array X and x.
   std::vector<int> vertIdx;
   int nx,ny;
-  float dx;
+  cfgScalar dx;
 
-  Vector2f origin;
+  Vector2S origin;
 };
 #endif /* ElementRegGrid2D_HPP_ */
