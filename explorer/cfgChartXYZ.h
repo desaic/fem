@@ -18,6 +18,18 @@ public:
   int pickedPointIndex() {return m_pickedPoint;}
   int pickedPlotIndex() {return m_pickedPlot;}
 
+  
+// Description:
+  // Key press event.  This allows the user to snap the chart to one of three
+  // different 2D views.  "x" changes the view so we're looking down the X axis.
+  // Similar behavior occurs for "y" or "z".
+  virtual bool KeyPressEvent(const vtkContextKeyEvent &key);
+
+protected:
+  // Description:
+  // Adjust the rotation of the chart so that we are looking down the X axis.
+  void LookDownX();
+
 private:
   int pickPoint(const vtkContextMouseEvent &mouse, int &oPickedPlot);
 

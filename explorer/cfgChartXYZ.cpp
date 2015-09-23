@@ -10,6 +10,7 @@
 #include <vtkFloatArray.h>
 #include <vtkContextScene.h>
 #include <vtkCommand.h>
+#include <vtkContextKeyEvent.h>
 
 #include "cfgPlotPoints3D.h"
 
@@ -40,14 +41,15 @@ bool cfgChartXYZ::MouseButtonReleaseEvent(const vtkContextMouseEvent &mouse)
     if (m_pickedPoint>=0 && m_pickedPlot>=0)
     {
       cfgPlotPoints3D * plot = (cfgPlotPoints3D*)Plots[m_pickedPlot];
-      m_savedColor = plot->getColor(m_pickedPoint);
-      plot->setColor(m_pickedPoint, vtkVector3i(0, 255, 0));
+      //m_savedColor = plot->getColor(m_pickedPoint);
+      //plot->setColor(m_pickedPoint, vtkVector3i(0, 255, 0));
     } 
     this->Scene->SetDirty(true);
     this->InvokeEvent(vtkCommand::InteractionEvent);
   }
   return vtkChartXYZ::MouseButtonReleaseEvent(mouse);
 }
+
 
 bool cfgChartXYZ::MouseButtonPressEvent(const vtkContextMouseEvent &mouse)
 {
@@ -120,4 +122,26 @@ int cfgChartXYZ::pickPoint(const vtkContextMouseEvent &mouse, int &oPickedPlot)
     }
   }
   return closestPointIndex;
+}
+
+bool cfgChartXYZ::KeyPressEvent(const vtkContextKeyEvent &key)
+{
+  if (0) //key.GetKeyCode()=='x')
+  {
+    LookDownX();
+  }
+  else
+  {
+    return  vtkChartXYZ::KeyPressEvent(key);
+  }
+  return true;
+}
+
+void cfgChartXYZ::LookDownX()
+{
+  this->InvokeEvent(vtkCommand::InteractionEvent);
+  this->Rotation->Identity();
+  this->Rotation->RotateX(-90.0);
+  //this->Rotation->RotateZ(-45.0);
+  this->Scene->SetDirty(true);
 }

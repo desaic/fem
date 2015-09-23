@@ -53,6 +53,17 @@ Matrix2f& Matrix2f::operator = ( const Matrix2f& rm )
 	return *this;
 }
 
+Matrix2f &Matrix2f :: operator+=(const Matrix2f & rm)
+{
+  for(int i = 0;i<2;i++){
+    for(int j = 0;j<2;j++){
+      (*this)(i,j) += rm(i,j);
+    }
+  }
+  return *this;
+}
+
+
 const float& Matrix2f::operator () ( int i, int j ) const
 {
 	return m_elements[ j * 2 + i ];
@@ -155,6 +166,11 @@ Matrix2f Matrix2f::transposed() const
 
 }
 
+float Matrix2f::trace()const
+{
+  return m_elements[0] + m_elements[3];
+}
+
 Matrix2f::operator float* ()
 {
 	return m_elements;
@@ -195,6 +211,16 @@ Matrix2f Matrix2f::identity()
 	m( 1, 1 ) = 1;
 
 	return m;
+}
+
+float Matrix2f::norm2()const
+{
+	float norm = 0;
+	for (int i = 0; i < 4; ++i)
+	{
+		norm += m_elements[i] * m_elements[i];
+	}
+	return norm;
 }
 
 // static
@@ -265,4 +291,37 @@ Matrix2f operator * ( const Matrix2f& x, const Matrix2f& y )
 	}
 
 	return product;
+}
+
+Matrix2f operator + ( const Matrix2f& x, const Matrix2f& y )
+{
+  Matrix2f sum;
+  for(int i = 0;i<2;i++){
+    for(int j=0;j<2;j++){
+      sum(i,j) = x(i,j) + y(i,j);
+    }
+  }
+  return sum;
+}
+
+Matrix2f operator - ( const Matrix2f& x, const Matrix2f& y )
+{
+  Matrix2f diff;
+  for(int i = 0;i<2;i++){
+    for(int j=0;j<2;j++){
+      diff(i,j) = x(i,j) - y(i,j);
+    }
+  }
+  return diff;
+}
+
+Matrix2f outerProd(const Vector2f & a, const Vector2f & b)
+{
+  Matrix2f prod;
+  for(int i = 0;i<2;i++){
+    for(int j=0;j<2;j++){
+      prod(i,j) = a[i] * b[j];
+    }
+  }
+  return prod;
 }

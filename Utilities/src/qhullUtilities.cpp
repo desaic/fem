@@ -128,6 +128,79 @@ void qhullUtilities::sortFaces(const Qhull &iHull, const QhullFacetList &iFacets
   }
 }
 
+void qhullUtilities::sortFaces(const Qhull &iHull, const QhullFacetList &iFacets, const std::vector<float> &iScale, float iMaxEdgeLength, std::vector<QhullFacet> &oSmallFacets, std::vector<QhullFacet> &oLargeFacets)
+{
+  oSmallFacets.clear();
+  oLargeFacets.clear();
+
+  QhullPoints points = iHull.points();
+  QhullFacetList::const_iterator f_it, f_end=iFacets.end();
+  for (f_it=iFacets.begin(); f_it!=f_end; ++f_it)
+  {
+    if ((*f_it).isGood())
+    {
+      std::vector<std::vector<int> > ridges;
+      getRidges((*f_it), ridges);
+
+      bool longEdgeFound = false;
+
+      int iridge=0, nridge=(int)ridges.size();
+      for (iridge=0; iridge<nridge; iridge++)
+      {
+        const std::vector<int> & ridgeVertices = ridges[iridge];
+        int ivertex=0, nvertex=(int)ridgeVertices.size();
+        for (ivertex=0; ivertex<nvertex; ivertex++)
+        {
+          int indP1 = ridgeVertices[ivertex];
+          int indP2 = ridgeVertices[(ivertex+1)%nvertex];
+
+          QhullPoint p1 = points.at(indP1);
+          QhullPoint p2 = points.at(indP2);
+
+          Vector3f q1(p1[0],p1[1],p1[2]);
+          Vector3f q2(p2[0],p2[1],p2[2]);
+
+          Vector3f q12 = q1-q2;
+          q12[0] *= iScale[0];
+          q12[1] *= iScale[1];
+          q12[2] *= iScale[2];
+
+          int version=0;
+          if (version==0)
+          {
+            if (abs(q12[0])>iMaxEdgeLength || abs(q12[1])>iMaxEdgeLength || abs(q12[2])>iMaxEdgeLength)
+            {
+              longEdgeFound = true;
+            }
+          }
+          else
+          {
+            float length = q12.abs();
+            if (length>iMaxEdgeLength)
+            {
+              longEdgeFound = true;
+
+              /*oFaceVertices.push_back(indP1);
+              oFaceVertices.push_back(indP2);
+
+              oFaceVertices.push_back(indP1);
+              oFaceVertices.push_back(indP2);*/ 
+            }
+          }
+        }
+      }
+      if (longEdgeFound)
+      {
+        oLargeFacets.push_back(*f_it);
+      }
+      else
+      {
+        oSmallFacets.push_back(*f_it);
+      }
+    }
+  }
+}
+
 void qhullUtilities::addFacetVertices(const QhullFacet &iFacet, std::vector<int> &ioFaceVertices)
 {
   QhullVertexSet fv = iFacet.vertices();
@@ -231,7 +304,7 @@ void qhullUtilities::getRidges(const QhullFacet &iFacet, std::vector<std::vector
   for (iface=0; iface<4; iface++)
   {
     int ipoint=0;
-    for (ipoint=0; ipoint<4; ipoint++)
+    for (ipoint=0; ipoint<3; ipoint++)
     {
       int indVertex = tetfaces[iface][ipoint%3];
       oRidges[iface].push_back(facetVertices[indVertex]);
@@ -338,5 +411,26 @@ void qhullUtilities::getBoundaryVertices(const QhullFacet &iFacet, const std::ve
   }
 }
 
+float qhullUtilities::distToClosestFacet(QhullPoint &iPoint, const std::vector<QhullFacet> &iFacets)
+{
+  float minDist = FLT_MAX;
 
+  std::vector<QhullFacet>::const_iterator f_it, f_end=iFacets.end();
+  for (f_it=iFacets.begin(); f_it!=f_end; ++f_it)
+  {
+    if ((*f_it).isGood())
+    {
+      facetT * facet = (*f_it).getFacetT();
+      pointT * point = iPoint.coordinates();
+
+      double dist = 0;
+      qh_distplane(point, facet, &dist); 
+      if (dist < minDist)
+      {
+        minDist = dist;
+      }
+    }
+  }
+  return minDist;
+}
 

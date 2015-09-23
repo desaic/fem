@@ -6,6 +6,8 @@
 
 #include "ui_explorer.h"
 
+class QCheckBox;
+
 class MaterialParametersView;
 class exProject;
 
@@ -18,9 +20,17 @@ public:
   virtual ~MainWindow();
 
 private:
+  void addLevelCheckBox(QWidget * iParent);
+
+private slots:
+  void levelCheckBoxModified();
+
+private:
   MaterialParametersView * m_matParametersView;
 
   QPointer<exProject> m_project;
+
+  std::vector<QCheckBox *> m_levelCheckBoxes;
 };
 
 #endif 

@@ -19,7 +19,7 @@ void cfgPlotPoints3D::setColor(int ipoint, vtkVector3i iColor)
   const unsigned char constRGB[3] = { iColor[0], iColor[1], iColor[2] };
   for (int ic=0; ic<3; ic++)
   {
-    this->Colors->SetTupleValue(3*ipoint+ic, &constRGB[ic]);
+    //this->Colors->SetTupleValue(3*ipoint+ic, &constRGB[ic]);
   }
 }
 

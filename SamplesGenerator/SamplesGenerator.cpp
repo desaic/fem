@@ -3,7 +3,10 @@
 
 int main(int argc, char* argv[])
 {
-  SamplesGeneratorImpl samplesGenerator;
+  int dim=2;
+  SamplesGeneratorImpl samplesGenerator(dim);
+  samplesGenerator.setOutputDirectory("..//..//Output//");
+
   int status = samplesGenerator.run();
   return status;
   return 0;

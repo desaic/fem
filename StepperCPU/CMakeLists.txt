@@ -11,4 +11,8 @@ INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/../femlib/include")
 INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/../vecmath/include")
 INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/../include")
 
+if (${IS_PARDISO_AVAILABLE})
+	add_definitions(-DPARDISO_AVAILABLE)
+endif()
+
 SET(LIB_TYPE STATIC)	#set the lib type
