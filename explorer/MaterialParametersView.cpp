@@ -166,7 +166,7 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
 
   int nparam = 3;
 
-  bool writeBinary=false;
+  bool writeBinary=true;
   bool readBinary=!writeBinary;
   int nextralevel =  13 ;//14; //8;
 
@@ -178,9 +178,11 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
     std::string fileExtension = ".bin";
     if (readBinary && ilevel<nlevel)
     {
-      cfgUtil::readBinary<float>(fileRootName + "params" + fileExtension, physicalParametersPerLevel[ilevel]);
-      cfgUtil::readBinary<int>(fileRootName + "baseMat" + fileExtension, m_baseMaterials[ilevel]);
-      cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, m_materialAssignements[ilevel]);
+      ResOk = cfgUtil::readBinary<float>(fileRootName + "params" + fileExtension, physicalParametersPerLevel[ilevel]);
+      if (ResOk)
+        ResOk = cfgUtil::readBinary<int>(fileRootName + "baseMat" + fileExtension, m_baseMaterials[ilevel]);
+      if (ResOk)
+      ResOk = cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, m_materialAssignements[ilevel]);
     }
     else
     {
@@ -192,12 +194,11 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
         cfgUtil::writeBinary<int>(fileRootName + "matAssignments" + fileExtension, m_materialAssignements[ilevel]);
       }
     }
-   
-    m_baseMaterials2Indices[ilevel] = computeVector2IndexMap(m_baseMaterials[ilevel]);
     if (!ResOk)
     {
       std::cout << "Cannot read file for level " << ilevel << std::endl;
     }
+    m_baseMaterials2Indices[ilevel] = computeVector2IndexMap(m_baseMaterials[ilevel]);
   }
  
   m_baseMaterials[0] = m_baseMaterials[1];
@@ -318,6 +319,47 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
         colors[ipoint+shift] = matColor;
       }
     }
+    bool displayClusters = false; //ilevel>0;
+    if (displayClusters/* && ilevel==5*/)
+    {
+      int npoints = 100;
+
+      std::vector<cfgScalar> points = physicalParametersPerLevel[ilevel];
+      std::vector<cfgScalar> lengths(3, 1);
+      rescaleData(points, 3, lengths);
+
+      int nbIter = 10;
+      std::vector<std::vector<int> > clusters;
+      std::vector<int> pointIndices; 
+
+      getKMeans(nbIter, npoints, points, 3, clusters, &pointIndices);
+
+      int icluster, ncluster=(int)clusters.size();
+      for (icluster=0; icluster<ncluster; icluster++)
+      {
+        std::vector<int> pointIndices = clusters[icluster];
+        pointIndices = add(pointIndices, m_lastPointIndices[ilevel-1]+1); 
+
+        vtkSmartPointer<vtkTable> table =  createTable(physicalParameters, levels, 3, 1, labels, &pointIndices);
+        vtkVector3i col = matColors[icluster%matColors.size()];
+        vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Density", col, 15);
+        m_plotsPerLevel[ilevel].push_back(plot);
+        m_plotPointIndices[ilevel].push_back(pointIndices);
+      }
+
+      if (0)
+      {
+        //getFurthestPointsGreedy(npoints, points, 3, pointIndices);
+        pointIndices = add(pointIndices, m_lastPointIndices[ilevel-1]+1); 
+
+        vtkSmartPointer<vtkTable> table =  createTable(physicalParameters, levels, 3, 1, labels, &pointIndices);
+        vtkVector3i col = vtkVector3i(255,0,255);
+        vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Density", col, 15);
+        m_plotsPerLevel[ilevel].push_back(plot);
+        m_plotPointIndices[ilevel].push_back(pointIndices);
+      }
+    }
+
     bool displayInsidePoints = false;
     if (displayInsidePoints)
     {

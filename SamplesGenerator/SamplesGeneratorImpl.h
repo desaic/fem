@@ -70,6 +70,7 @@ private:
                                 const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3], int iLevel, int iBlockRep, bool iWriteSingleFile, bool iWriteFullDeformation, const std::string &iPostfix ="");
 
   void growStructure(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments);
+  void growStructureDoubleSize(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments);
 
   int getClosestPoint(Vector3f &iP, const std::vector<cfgScalar> &iPoints);
   int getRandomMatWithLinearProba(std::multimap<float, int> &iDist2MatIndex, float eps, float r);

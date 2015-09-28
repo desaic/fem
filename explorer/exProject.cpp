@@ -14,7 +14,7 @@ exProject::exProject(int idim)
   m_blockSize = 1;
   Q_ASSERT(idim==2 || idim==3);
   m_dim = idim;
-  m_maxLevel = 32;
+  m_maxLevel = 9;
   m_readSingleFile = true;
   m_readFullDeformation = true;
 

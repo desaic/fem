@@ -45,7 +45,7 @@ ElementHex2D::shapeFun(const Vector2S & p)const
 
 Vector2S ElementHex2D::shapeFunGrad(int ii, const Vector2S & xx, const std::vector<Vector2S> & X) const
 {
-  Vector2S size=4*(X[at(3)] - X[at(0)]);
+  Vector2S size=2*(X[at(3)] - X[at(0)]);
   Vector2S grad;
   size[0] = 1.0f/(size[0]);
   size[1] = 1.0f/(size[1]);

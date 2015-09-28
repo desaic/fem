@@ -35,7 +35,7 @@ MainWindow::MainWindow()
   m_matParametersView = new MaterialParametersView();
   setCentralWidget(m_matParametersView);
 
-  int ilevel, nlevel=34;
+  int ilevel, nlevel=37;
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
     addLevelCheckBox(dockWidgetContents);
@@ -43,13 +43,13 @@ MainWindow::MainWindow()
 
   int dim = 2;
   m_project = new exProject(dim);
-  //m_project->setFileDirectory("..//..//Output//");
+  m_project->setFileDirectory("..//..//Output//");
   //m_project->setFileDirectory("..//..//Output//Stress_Deformation_8x8_1000_samples_Ratio10//");
   //m_project->setFileDirectory("..//..//Output//Stress_Deformation_8x8_1000_samples_Ratio1000//");
 
   //m_project->setFileDirectory("..//..//Output//Test1_Y1_Y2_Density_RatioStiffSoft10//");
   //m_project->setFileDirectory("..//..//Output//Test2_Nu1_Nu2_Density_RatioStiffSoft10//");
-  m_project->setFileDirectory("..//..//Output//Test3_Y1_Y2_Density_RatioStiffSoft1000//");
+  //m_project->setFileDirectory("..//..//Output//Test3_Y1_Y2_Density_RatioStiffSoft1000//");
   //m_project->setFileDirectory("..//..//Output//Test4_Nu1_Nu2_Density_RatioStiffSoft1000//");
 
   //m_project->setFileDirectory("..//..//Output//test_1_0//");

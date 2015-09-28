@@ -530,6 +530,9 @@ namespace cfgUtil
   bool readBinary(const std::string &iFileName, std::vector<T> &oVec)
   {
     std::ifstream file (iFileName, std::ios::in | std::ios::binary);
+    if (!file.is_open())
+      return false;
+
     int nelem;
     file.read((char*)&nelem, sizeof(int));
     oVec.resize(nelem);
@@ -559,6 +562,9 @@ namespace cfgUtil
   bool readBinary(const std::string &iFileName, std::vector<std::vector<T> > &oVec)
   {
     std::ifstream file (iFileName, std::ios::in | std::ios::binary);
+    if (!file.is_open())
+      return false;
+
     int nvec;
     file.read((char*)&nvec, sizeof(int));
     oVec.resize(nvec);

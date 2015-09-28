@@ -79,6 +79,11 @@ namespace cfgMaterialUtilities
   void computeConvexHull(const std::vector<float> &iPoints, int iDim, std::vector<int> &oConvexHullVertices);
   void computeDelaundayTriangulation(const std::vector<float> &iPoints, int iDim, std::vector<int> &oFaces, std::vector<int> &oBoundaryVertices, std::vector<int> &oBoundaryFaces, std::vector<float> *oDistancesToBoundary=NULL);
   void getClosestPoints(const std::vector<float> &iPoints, int iDim, std::vector<int> &iRefPointIndices, float iRange, std::vector<int> &oPoints);
+  void getFurthestPointsGreedy(int iOutputNbPoints, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<int> &oPointIndices);
+  void getKMeans(int iNbIterations, int iNbClusters, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<std::vector<int> > &oClusters, std::vector<int> *oCenters=NULL);
+
+  void getBoundingBox(const std::vector<cfgScalar> &iPoints, int iDim, std::vector<cfgScalar> oBox[2]);
+  void rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths);
 
   // Triangle mesh utilities
   //------------------------
@@ -108,6 +113,7 @@ namespace cfgMaterialUtilities
 
   std::vector<Vector2f> toVector2f(const std::vector<float> &iPoints);
   std::vector<Vector2S> toVector2S(const std::vector<cfgScalar> &iPoints);
+  std::vector<Vector3f> toVector3f(const std::vector<float> &iPoints);
 };
 
 #endif 

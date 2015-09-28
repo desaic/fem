@@ -22,6 +22,8 @@ using namespace cfgUtil;
 
 #include "DistanceTool.h"
 
+#include <list>
+
 bool cfgMaterialUtilities::readMaterialCombinations(const std::string iFileName, std::vector<std::vector<int> > &oMaterials)
 {
   std::ifstream stream(iFileName);
@@ -1092,6 +1094,171 @@ void cfgMaterialUtilities::getClosestPoints(const std::vector<float> &iPoints, i
   }
 }
 
+void cfgMaterialUtilities::getFurthestPointsGreedy(int iOutputNbPoints, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<int> &oPointIndices)
+{
+  oPointIndices.clear();
+
+  std::set<int> points;
+  int ipoint, npoint=(int)iPoints.size()/iDim;
+  for (ipoint=1; ipoint<npoint; ipoint++)
+  {
+    points.insert(ipoint);
+  }
+  int pointIndex = 0;
+  oPointIndices.push_back(pointIndex);
+ 
+  for (ipoint=1; ipoint<iOutputNbPoints && points.size()>0; ipoint++)
+  {
+    cfgScalar maxDist = 0;
+    int furthestPoint = *points.begin();
+    std::set<int>::iterator it, it_end=points.end();
+    for (it=points.begin(); it!=it_end; it++)
+    {
+      int indVertex = *it;
+      Vector3f p = getVector3f(indVertex, iPoints);
+
+      cfgScalar currentMinDist = FLT_MAX;
+      int jpoint, njpoint=(int)oPointIndices.size();
+      for (jpoint=0; jpoint<njpoint; jpoint++)
+      {
+        int indPoint2 = oPointIndices[jpoint];
+        Vector3f q = getVector3f(indPoint2, iPoints);
+        cfgScalar dist = (p-q).absSquared();
+        if (dist < currentMinDist)
+        {
+           currentMinDist = dist;
+        }
+      }
+      if (currentMinDist > maxDist)
+      {
+        maxDist = currentMinDist;
+        furthestPoint = indVertex;
+      }
+    }
+    oPointIndices.push_back(furthestPoint);
+    points.erase(furthestPoint);
+  }
+}
+
+void cfgMaterialUtilities::getBoundingBox(const std::vector<cfgScalar> &iPoints, int iDim, std::vector<cfgScalar> oBox[2])
+{
+  assert(iPoints.size()%iDim==0);
+
+  oBox[0].resize(iDim, FLT_MAX);
+  oBox[1].resize(iDim, FLT_MIN);
+
+  int ipoint, npoint=(int)iPoints.size()/iDim;
+  for (ipoint=0; ipoint<npoint; ipoint++)
+  {
+    Vector3f p = getVector3f(ipoint, iPoints);
+    int icoord;
+    for (icoord=0; icoord<iDim; icoord++)
+    {
+      cfgScalar val = p[icoord];
+      if (val < oBox[0][icoord])
+      {
+        oBox[0][icoord] = val;
+      }
+      if (val > oBox[1][icoord])
+      {
+        oBox[1][icoord] = val;
+      }
+    }
+  }
+}
+
+void cfgMaterialUtilities::rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths)
+{
+  assert(iTargetBoxLengths.size()==iDim);
+
+  cfgScalar eps = (cfgScalar)1.e-6;
+  std::vector<cfgScalar> box[2];
+  getBoundingBox(ioPoints, iDim, box);
+  std::vector<cfgScalar> scaleFactors;
+  int icoord;
+  for (icoord=0; icoord<iDim; icoord++)
+  {
+    double length = box[1][icoord]-box[0][icoord];
+    double target_length = iTargetBoxLengths[icoord];
+    double scale = (length>eps? target_length/length: 0);
+    scaleFactors.push_back(scale);
+  }
+  int ipoint, npoint=(int)ioPoints.size()/iDim;
+  for (ipoint=0; ipoint<npoint; ipoint++)
+  {
+    Vector3f p = getVector3f(ipoint, ioPoints);
+    for (icoord=0; icoord<iDim; icoord++)
+    {
+      p[icoord] = scaleFactors[icoord]*(p[icoord]-box[0][icoord]);
+      ioPoints[iDim*ipoint+icoord] = p[icoord];
+    }
+  }
+}
+
+void cfgMaterialUtilities::getKMeans(int iNbIterations, int iNbClusters, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<std::vector<int> > &oClusters, std::vector<int> *oCenters)
+{
+  oClusters.clear();
+
+  std::vector<int> centers;
+  int nbClusters = std::min(iNbClusters, (int)iPoints.size()/iDim);
+
+  getFurthestPointsGreedy(nbClusters, iPoints, iDim, centers);
+  std::vector<double> centerPositions = convertVec<cfgScalar,double>(getSubVector(iPoints, iDim, centers));
+
+  std::vector<std::vector<int> > clusters;
+  int iter;
+  for (iter=0; iter<iNbIterations; iter++)
+  {
+    clusters.clear();
+    clusters.resize(nbClusters);
+
+    DistanceTool distanceTool(centerPositions);
+
+    int ipoint, npoint=(int)iPoints.size()/iDim;
+    for (ipoint=0; ipoint<npoint; ipoint++)
+    {
+      double p[3] = {iPoints[3*ipoint], iPoints[3*ipoint+1], iPoints[3*ipoint+2]};
+      int closestCenter = distanceTool.getClosestPointIndex(p);
+      clusters[closestCenter].push_back(ipoint);
+    }
+    centerPositions.clear();
+    int icluster;
+    for (icluster=0; icluster<nbClusters; icluster++)
+    {
+      std::vector<double> clusterPoints = convertVec<cfgScalar,double>(getSubVector(iPoints, iDim, clusters[icluster]));
+      double center[3];
+      cfgUtil::getBarycenter<double, 3>(clusterPoints, center);
+      int icoord;
+      for (icoord=0; icoord<3; icoord++)
+      {
+        centerPositions.push_back(center[icoord]);
+      }
+    }
+  }
+  int icluster;
+  for (icluster=0; icluster<nbClusters; icluster++)
+  {
+    if (clusters[icluster].size()>0)
+    {
+      oClusters.push_back(clusters[icluster]);
+    }
+  }
+
+  if (oCenters)
+  {
+    oCenters->clear();
+    std::vector<double> points = convertVec<cfgScalar,double>(iPoints);
+    DistanceTool distanceTool(points);
+    int icluster;
+    for (icluster=0; icluster<nbClusters; icluster++)
+    {
+      double p[3] = {centerPositions[3*icluster], centerPositions[3*icluster+1], centerPositions[3*icluster+2]};
+      int closestPoint = distanceTool.getClosestPointIndex(p);
+      oCenters->push_back(closestPoint);
+    }
+  }
+}
+
 void cfgMaterialUtilities::computeConvexHull(const std::vector<float> &iPoints, int iDim, std::vector<int> &oConvexHullVertices)
 {
   assert(iPoints.size()%iDim==0);
@@ -1524,6 +1691,18 @@ Vector2S cfgMaterialUtilities::getVector2S(int indVertex, const std::vector<cfgS
    for (ipoint=0; ipoint<npoint; ipoint++)
    {
      vec.push_back(Vector2f(iPoints[2*ipoint], iPoints[2*ipoint+1]));
+   }
+   return vec;
+ }
+
+ std::vector<Vector3f> cfgMaterialUtilities::toVector3f(const std::vector<float> &iPoints)
+ {
+   std::vector<Vector3f> vec;
+   assert(iPoints.size()%2==0);
+   int ipoint=0, npoint=(int)iPoints.size()/3;
+   for (ipoint=0; ipoint<npoint; ipoint++)
+   {
+     vec.push_back(Vector3f(iPoints[3*ipoint], iPoints[3*ipoint+1], iPoints[3*ipoint+2]));
    }
    return vec;
  }
