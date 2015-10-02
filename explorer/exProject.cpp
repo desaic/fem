@@ -14,7 +14,7 @@ exProject::exProject(int idim)
   m_blockSize = 1;
   Q_ASSERT(idim==2 || idim==3);
   m_dim = idim;
-  m_maxLevel = 9;
+  m_maxLevel = 4;
   m_readSingleFile = true;
   m_readFullDeformation = true;
 
@@ -276,7 +276,7 @@ QSharedPointer<ElementMesh> exProject::computeElementMeshIncr(int iCombIndex, in
 
   if (N[0]>=20)
   {
-    N[0] = 10; N[1] = 10;
+    N[0] = 10; N[1] = 8;
   }
   int blockSize = 3;
   int c = blockSize;

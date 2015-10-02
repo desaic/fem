@@ -65,9 +65,11 @@ private:
   void getNewCombinationsV5(const std::vector<int> &iBoundaryPoints, const std::vector<cfgScalar> &iPoints, int N[3], int iNbCombinations, std::vector<std::vector<int> > &oNewMaterialAssignments, 
                             const std::vector<std::vector<int> >  &iNewBaseMaterialStructures);
 
-  int computeMaterialParametersIncremental(std::string & iStepperType, int iLevel);
+  int computeMaterialParametersIncremental(std::string & iStepperType, int iLevel, std::vector<std::vector<int> > &oNewMaterialAssignments);
   int computeMaterialParameters(std::string iStepperType , const std::vector<std::vector<int> > &iMaterialAssignments, int iNewMatStructureSize[3],
                                 const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3], int iLevel, int iBlockRep, bool iWriteSingleFile, bool iWriteFullDeformation, const std::string &iPostfix ="");
+  int computeMaterialParameters(std::string iStepperType , const std::vector<std::vector<int> > &iMaterialAssignments, int iMatStructureSize[3], const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3],
+                                std::vector<std::vector<float> > oStresses[2], std::vector<std::vector<float> > oStrains[2], std::vector<std::vector<std::vector<float> > > oX[2]);
 
   void growStructure(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments);
   void growStructureDoubleSize(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments);
@@ -76,6 +78,11 @@ private:
   int getRandomMatWithLinearProba(std::multimap<float, int> &iDist2MatIndex, float eps, float r);
 
   int computeVariations(std::string & iStepperType, int iLevel);
+  int computeVariationsV2(std::string & iStepperType, int iLevel, int SubLevel, std::vector<std::vector<int> > &oNewMaterialAssignments);
+
+  int readParameters(int iLevel, std::vector<std::vector<int> > &oMaterialAssignments, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<float> &oPhysicalParameters); 
+
+  void writeStressDeformationFile(const std::vector<std::vector<int> > &iMaterialAssignments, int iMatStructureSize[3], const std::vector<std::vector<float> > iStresses[2], const std::vector<std::vector<std::vector<float> > > iX[2], std::string iPostfix="");
 
 private:
   std::string m_OutputDirectory;
