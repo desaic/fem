@@ -1,4 +1,5 @@
 #include "ElementHex.hpp"
+#include <iostream>
 
 const int cubeEdges[12][2] =
 {
@@ -72,11 +73,12 @@ ElementHex::shapeFunGrad(int ii, const Vector3f & xx,
                                  const std::vector<Vector3f> & X) const
 {
   Vector3f size=4*(X[at(7)] - X[at(0)]);
+//  std::cout<<size[0]<<"\n";
+
   Vector3f grad;
   size[0] = 1.0f/(size[0]);
   size[1] = 1.0f/(size[1]);
   size[2] = 1.0f/(size[2]);
-
   grad[0] = sw[ii][0] * size[0] * (1 + sw[ii][1] * xx[1]) * (1 + sw[ii][2] * xx[2]);
   grad[1] = sw[ii][1] * size[1] * (1 + sw[ii][0] * xx[0]) * (1 + sw[ii][2] * xx[2]);
   grad[2] = sw[ii][2] * size[2] * (1 + sw[ii][0] * xx[0]) * (1 + sw[ii][1] * xx[1]);
@@ -190,7 +192,9 @@ Eigen::MatrixXf ElementHex::BMatrix(const Vector3f & xx, const std::vector<Vecto
 float ElementHex::getVol(const std::vector<Vector3f> & X)
 {
   Vector3f size = X[at(7)] - X[at(0)];
-  return size[0] * size[1] * size[2];
+  float vol = size[0] * size[1] * size[2];
+//  std::cout<<vol<<"\n";
+  return vol;
 }
 
 ElementHex::ElementHex():Element(8)

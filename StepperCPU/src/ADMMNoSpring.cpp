@@ -1,4 +1,4 @@
-#include "AdmmNoSpring.hpp"
+#include "ADMMNoSpring.hpp"
 #include "Element.hpp"
 #include "ElementHex.hpp"
 #include "ElementMesh.hpp"

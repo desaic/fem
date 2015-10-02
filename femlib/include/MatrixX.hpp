@@ -29,7 +29,7 @@ struct MatrixX
     }
   }
 
-  MatrixX & MatrixX::operator=(const MatrixX & ma){
+  MatrixX & operator=(const MatrixX & ma){
     if (mm * nn != ma.mm * ma.nn && M != 0){
       delete[]M;
       M = 0;

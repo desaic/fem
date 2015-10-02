@@ -22,11 +22,11 @@ bool IpoptInterface::get_nlp_info(Index& n, Index& m, Index& nnz_jac_g,
   nnz_jac_g = 0;
 
   std::vector<int> I,J;
-  ele->stiffnessPattern(I,J);
+  ele->stiffnessPattern(I,J,true);
   // the Hessian's number of nonzeros
   //This matrix is symmetric - specify the lower diagonal only
-  nnz_h_lag = I.size();
-  //std::cout<<"nnz "<<nnz_h_lag<<"\n";
+  nnz_h_lag = J.size();
+  std::cout<<"nnz "<<nnz_h_lag<<"\n";
   //zero based
   index_style = TNLP::C_STYLE;
   return true;
@@ -160,15 +160,25 @@ IpoptInterface::eval_h(Index n, const Number* x, bool new_x,
   timeSeq.push_back(tt/(CLOCKS_PER_SEC/1000.0));
   if(values==NULL){
     std::vector<int> I,J;
-    ele->stiffnessPattern(I,J);
-    for(unsigned int ii = 0;ii<I.size();ii++){
-      iRow[ii] = I[ii];
-      jCol[ii] = J[ii];
+    ele->stiffnessPattern(I,J,true);
+    int Jidx = 0;
+    for(unsigned int ii = 1;ii<I.size();ii++){
+      int len = I[ii] - I[ii-1];
+      for(int jj =0 ; jj<len; jj++){
+        iRow[Jidx] = ii-1;
+        jCol[Jidx] = J[Jidx];
+//        std::cout<<iRow[Jidx]<<" "<<jCol[Jidx]<<"\n";
+        Jidx++;
+      }
     }
+    std::cout<<Jidx<<" nnz pattern\n";
   }else{
-    std::vector<int> I,J;
+
+//    std::vector<int> I,J;
     std::vector<float> val;
-    ele->getStiffnessSparse(I,J,val);
+    std::cout<<val.size()<<" nnz \n";
+
+    ele->getStiffnessSparse(val,true);
     for (unsigned int k=0; k<val.size(); k++){
       values[k] = obj_factor*val[k];
     }

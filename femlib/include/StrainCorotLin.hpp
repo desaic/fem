@@ -2,7 +2,7 @@
 #define STRAINCOROTLIN_HPP
 #include "StrainLin.hpp"
 
-#include <Eigen\Dense>
+#include <Eigen/Dense>
 
 class StrainCorotLin :public StrainLin{
 public:

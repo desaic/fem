@@ -75,7 +75,9 @@ MatrixXf MaterialQuad::getStiffness(Element* ele, ElementMesh * mesh)
     K += q->w[ii] * stiffness(ii, this, ele, mesh);
   }
   float vol = ele->getVol(mesh->X);
+//  std::cout<<K<<"\n";
   K *= vol;
+//  std::cout<<K<<"\n";
   MatrixXf Kret(ndof, ndof);
   copyMat(K, Kret, ndof, ndof);
   return Kret;

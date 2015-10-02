@@ -1,5 +1,5 @@
 #include "StrainCorotLin.hpp"
-#include <Eigen\dense>
+#include <Eigen/Dense>
 #include <vector>
 
 #include <iostream>
