@@ -1,25 +1,8 @@
 #include "MainWindow.h"
 
 #include <QCheckBox.h>
-
-#include <QVTKWidget.h> 
-#include <vtkRenderView.h>
-#include <vtkContextView.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindow.h>
-
-#include <vtkContextScene.h>
-
-#include <vtkChartXYZ.h>
-#include <vtkFloatArray.h>
-#include <vtkTable.h>
-#include <vtkPlotSurface.h>
-#include <vtkPlotPoints3D.h>
-#include <vtkChart.h>
-
-#include <vtkPointPicker.h>
-#include <vtkPolyData.h>
-#include <vtkIdTypeArray.h>
+#include <QDropEvent>
+#include <QUrl>
 
 #include "cfgMaterialUtilities.h"
 using namespace cfgMaterialUtilities;
@@ -35,11 +18,13 @@ MainWindow::MainWindow()
   m_matParametersView = new MaterialParametersView();
   setCentralWidget(m_matParametersView);
 
-  int ilevel, nlevel=37;
-  for (ilevel=0; ilevel<nlevel; ilevel++)
+  setAcceptDrops(true);
+
+ /* int ilevel, nlevel=65 ;
+  for (ilevel=1; ilevel<nlevel; ilevel*=2)
   {
-    addLevelCheckBox(dockWidgetContents);
-  }
+      addLevelCheckBox(dockWidgetContents, ilevel);
+  }*/ 
 
   int dim = 2;
   m_project = new exProject(dim);
@@ -74,16 +59,26 @@ MainWindow::~MainWindow()
   delete m_project;
 }
 
-void MainWindow::addLevelCheckBox(QWidget * iParent)
+void MainWindow::addLevelCheckBox(QWidget * iParent, int iLevel, QString iLabel)
 {
   int nboxes = (int)m_levelCheckBoxes.size();
-
   QCheckBox * checkBox = new QCheckBox(iParent);
   //checkBox->setChecked(Qt::Checked);
   checkBox->setChecked(Qt::Unchecked);
   checkBox->setGeometry(QRect(10, 10 + nboxes*30, 80, 20));
-  checkBox->setText("level" + QString::number(nboxes));
+  if (!iLabel.isEmpty())
+  {
+    checkBox->setText(iLabel);
+  }
+  else
+  {
+    checkBox->setText("level" + QString::number(iLevel));
+  }
+  //checkBox->setProperty("idx", iLevel);
   checkBox->setProperty("idx", nboxes);
+  checkBox->setChecked(true);
+  checkBox->show();
+
   m_levelCheckBoxes.push_back(checkBox);
 
   connect(checkBox, SIGNAL(clicked()), this, SLOT(levelCheckBoxModified()));
@@ -97,5 +92,31 @@ void MainWindow::levelCheckBoxModified()
   m_project->setLevelVisibility(idx, isVisible);
 }
 
+void MainWindow::dropEvent(QDropEvent *iEvent)
+{
+  const QMimeData* mimeData = iEvent->mimeData();
+  if (mimeData->hasUrls())
+  {
+    QStringList pathList;
+    QList<QUrl> urlList = mimeData->urls();
+    int ifile=0, nfile=urlList.size();
+    for (ifile=0; ifile<nfile; ifile++)
+    {
+      QString file = urlList.at(ifile).toLocalFile();
+      QString label;
+      int level=0;
+      bool resOk = m_project->loadFile(file, level, label);
+      if (resOk)
+      {
+        addLevelCheckBox(dockWidgetContents, level, label);
+      }
+    }
+  }
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *iEvent)
+{
+  iEvent->accept();
+}
 
 

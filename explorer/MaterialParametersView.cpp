@@ -139,13 +139,49 @@ vtkSmartPointer<cfgPlotSurface> MaterialParametersView::createSurfacePlot3D(vtkS
   return plot;
 }
 
+void MaterialParametersView::updatePlots()
+{
+  Q_ASSERT(m_project);
+
+  const std::vector<std::vector<cfgScalar> > & physicalParametersPerLevel = m_project->getPhysicalParameters();
+  int ilevel, nlevel=(int)physicalParametersPerLevel.size();
+
+  std::vector<vtkVector3i> matColors(nlevel, vtkVector3i(0, 0, 255));
+  if (nlevel>1)
+  {
+    for (ilevel=0; ilevel<nlevel; ilevel++)
+    {
+      QColor colHSV = QColor::fromHsv(ilevel*255/(nlevel-1), 255, 255);
+      QColor colRGB = colHSV.toRgb();
+      matColors[ilevel] = vtkVector3i(colRGB.red(), colRGB.green(), colRGB.blue());
+    }
+  }
+
+  m_plotsPerLevel.clear();
+  m_plotsPerLevel.resize(nlevel);
+
+  std::string labels[4]= {"Density", "Y1", "Y2", "Level"};
+  for (ilevel=0; ilevel<nlevel; ilevel++)
+  {
+    int npoints = (int)physicalParametersPerLevel[ilevel].size()/3;
+    std::vector<int> levels(npoints, ilevel);
+    vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, 3, 1, labels);
+    vtkVector3i col = matColors[ilevel];
+    vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Density", col, 10);
+    m_plotsPerLevel[ilevel].push_back(plot);
+  }
+  updateChart();
+}
+
 void MaterialParametersView::setProject(QPointer<exProject> iProject)
 {
   m_project = iProject;
   Q_ASSERT(m_project);
 
   connect(m_project, SIGNAL(levelVisibilityModified()), this, SLOT(onLevelVisibilityModified()));
+  connect(m_project, SIGNAL(levelsModified()), this, SLOT(onLevelsModified()));
 
+#if 0
   // read data
   int maxlevel = m_project->getMaxLevel();
   int nlevel = maxlevel+1;
@@ -166,7 +202,7 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
 
   int nparam = 3;
 
-  bool writeBinary=true;
+  bool writeBinary=false;
   bool readBinary=!writeBinary;
   int nextralevel =  13 ;//14; //8;
 
@@ -401,6 +437,7 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
       m_plotsPerLevel[ilevel].push_back(sampledBoundaryPlot);
     }*/ 
   } 
+#endif 
 
   GetRenderWindow();
 
@@ -486,7 +523,14 @@ void MaterialParametersView::mouseReleaseEvent(QMouseEvent * iMouseEvent)
 {  
   QVTKWidget::mouseReleaseEvent(iMouseEvent);
   int pickedPointIndex = m_chart->pickedPointIndex();
+  int pickedPlotIndex = m_chart->pickedPlotIndex();
   if (pickedPointIndex>=0)
+  {
+    int indLevel = m_plots2Levels[pickedPlotIndex];
+    m_project->setPickedStructure(pickedPointIndex, indLevel);
+  }
+
+  /*if (pickedPointIndex>=0)
   {
     //int pickedStructureLevel = m_tablePoint3D->GetValue(pickedPointIndex, 3).ToInt();
     //int pickedStructureIndex = getStructureIndex(pickedPointIndex);
@@ -523,12 +567,12 @@ void MaterialParametersView::mouseReleaseEvent(QMouseEvent * iMouseEvent)
     }
     //highlighPoints(pickedStructurebaseMaterials);
     m_project->setPickedStructure(pickedStructureIndex, pickedStructureLevel, pickedStructurebaseMaterials); 
-  } 
+  } */ 
 }
 
 void MaterialParametersView::highlighPoints(const std::vector<int> &iPointIndices)
 {
-  if (m_plotHighLightedPoints.Get() == NULL)
+  /*if (m_plotHighLightedPoints.Get() == NULL)
   {
     std::string labels[4]= {"Density", "Y1", "Y2", "Level"};
     m_tableHighLightedPoints =  createTable(m_physicalParameters, m_levels, 3, 1, labels, &iPointIndices);
@@ -540,10 +584,16 @@ void MaterialParametersView::highlighPoints(const std::vector<int> &iPointIndice
     std::string labels[4]= {"Density", "Y1", "Y2", "Level"};
     m_tableHighLightedPoints = createTable(m_physicalParameters, m_levels, 3, 1, labels, &iPointIndices);
     m_plotHighLightedPoints->SetInputData(m_tableHighLightedPoints, "Y1", "Y2", "Density");
-  }
+  }*/ 
 }
 
 void MaterialParametersView::onLevelVisibilityModified()
 {
   updateChart();
 }
+
+void MaterialParametersView::onLevelsModified()
+{
+  updatePlots();
+}
+

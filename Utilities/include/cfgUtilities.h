@@ -536,7 +536,10 @@ namespace cfgUtil
     int nelem;
     file.read((char*)&nelem, sizeof(int));
     oVec.resize(nelem);
-    file.read((char*)&oVec[0], nelem*sizeof(T));
+    if (nelem>0)
+    {
+      file.read((char*)&oVec[0], nelem*sizeof(T));
+    }
     file.close();
     return true;
   }

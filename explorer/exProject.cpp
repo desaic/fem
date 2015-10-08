@@ -9,28 +9,25 @@ using namespace cfgUtil;
 
 #include <assert.h>
 
+#include <QStringList>
+
 exProject::exProject(int idim)
 {
   m_blockSize = 1;
   Q_ASSERT(idim==2 || idim==3);
   m_dim = idim;
-  m_maxLevel = 4;
   m_readSingleFile = true;
   m_readFullDeformation = true;
-
-  int defaultVisibility = 0;
-  m_levelVisibility.resize(m_maxLevel+1, defaultVisibility);
 }
 
 exProject::~exProject()
 {
 }
 
-void exProject::setPickedStructure(int iStructureIndex, int iStructureLevel, const std::vector<int> &iBaseMaterials) 
+void exProject::setPickedStructure(int iStructureIndex, int iStructureLevel) 
 {
   m_pickedStructureIndex = iStructureIndex; 
   m_pickedStructureLevel = iStructureLevel;
-  m_pickedStructureBaseMaterials = iBaseMaterials;
 
   emit pickedStructureModified();
 }
@@ -48,6 +45,61 @@ bool exProject::readBaseMaterialStructures(int iLevel, std::vector<std::vector<i
   return true;
 }
 
+bool exProject::loadFile(const QString &iFileName, int &oLevel, QString &oLabel)
+{
+  bool resOk = true;
+  QString str = iFileName.section("level", 1, 1);
+  if (!str.isEmpty())
+  {
+    QString strLevel = str.section('_', 0, 0);
+    int level = strLevel.toInt();
+
+    QStringList substrings = iFileName.split('_');
+    QString stringEnd = substrings.last();
+    QString stringRoot = iFileName.section(stringEnd, 0, 0);
+
+    std::string fileRootName = stringRoot.toStdString();
+    std::string fileExtension = ".bin";
+
+    std::vector<cfgScalar> physicalParameters;
+    std::vector<std::vector<int> > baseMaterials, materialAssignments;
+    resOk = cfgUtil::readBinary<float>(fileRootName + "params" + fileExtension, physicalParameters);
+    if (resOk)
+      resOk = cfgUtil::readBinary<int>(fileRootName + "baseMat" + fileExtension, baseMaterials);
+    if (resOk)
+      resOk = cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, materialAssignments);
+
+    if (resOk)
+    {
+      oLevel = level;
+
+      QString str = iFileName.section("level", 0, 0);
+      oLabel = stringRoot;
+      oLabel.chop(1);
+      oLabel.remove(str);
+
+      addLevelData(level, baseMaterials, materialAssignments, physicalParameters);
+    }
+  }
+  return resOk;
+}
+
+void exProject::addLevelData(int ilevel, const std::vector<std::vector<int> > &iBaseMaterials, const std::vector<std::vector<int> > &iMaterialAssignments, std::vector<cfgScalar> &iPhysicalParameters)
+{
+  m_levels.push_back(ilevel);
+  m_baseMaterials.push_back(iBaseMaterials);
+  m_materialAssignments.push_back(iMaterialAssignments);
+  m_physicalParametersPerLevel.push_back(iPhysicalParameters);
+
+  int defaultVisibility = 1;
+  m_levelVisibility.push_back(defaultVisibility);
+
+  emit levelsModified();
+
+  //m_baseMaterials2Indices.clear();
+  //m_baseMaterials2Indices.resize(nlevel);
+}
+
 bool exProject::getMaterialParameters(int iLevel, std::vector<cfgScalar> &oPhysicalParameters, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<std::vector<int> > &oMaterialAssignmentOneCell)
 {
   oPhysicalParameters.clear();
@@ -58,7 +110,7 @@ bool exProject::getMaterialParameters(int iLevel, std::vector<cfgScalar> &oPhysi
   bool readSingleFile = m_readSingleFile;
   bool readFullDeformation = m_readFullDeformation;
 
-  int nlevel = m_maxLevel+1;
+  int nlevel = m_levels.size()+1;
 
   std::cout << "reading material parameters for level " << iLevel << std::endl;
 
@@ -219,6 +271,9 @@ QSharedPointer<ElementMesh> exProject::computeElementMesh(int iCombIndex, int iL
 
 QSharedPointer<ElementMesh> exProject::computeElementMeshIncr(int iCombIndex, int iLevel)
 {
+#if 0
+  int N[3] = {iLevel,iLevel,iLevel};
+
   std::vector<std::vector<int> > baseMaterialStructures;
   bool ResOk = readBaseMaterialStructures(iLevel,baseMaterialStructures);
 
@@ -273,11 +328,13 @@ QSharedPointer<ElementMesh> exProject::computeElementMeshIncr(int iCombIndex, in
     std::vector<cfgScalar> stresses, strains;
     ResOk = readData(sampleFile, forceAxis, materialAssignment, stresses, strains);
   }
+#endif 
 
-  if (N[0]>=20)
-  {
-    N[0] = 10; N[1] = 8;
-  }
+  int level = m_levels[iLevel];
+  int N[3] = {level,level,level};
+
+  const std::vector<int> & materialAssignment = m_materialAssignments[iLevel][iCombIndex];
+
   int blockSize = 3;
   int c = blockSize;
   int n[3] = {c*N[0], c*N[1], c*N[2]};
@@ -300,7 +357,7 @@ QSharedPointer<ElementMesh> exProject::computeElementMeshIncr(int iCombIndex, in
   return elementMesh;
 }
 
-void exProject::setLevelVisibility(int ilevel, bool isVisible)
+void exProject::setLevelVisibility(int ilevel, bool isVisible) 
 {
   int visibility = (isVisible? 1: 0);
   bool updateView = (m_levelVisibility[ilevel] != visibility);

@@ -44,9 +44,11 @@ private:
   int getParameterIndex(int iStructureIndex, int iLevel);
 
   void updateChart();
+  void updatePlots();
 
   private slots:
     void onLevelVisibilityModified();
+    void onLevelsModified();
 
 private:
   vtkContextView * m_vtkView;
@@ -62,12 +64,12 @@ private:
   
   QPointer<exProject> m_project;
 
-  std::vector<std::vector<std::vector<int> > > m_baseMaterials;
+  /*std::vector<std::vector<std::vector<int> > > m_baseMaterials;
   std::vector<std::map<std::vector<int>, int> > m_baseMaterials2Indices;
   std::vector<std::vector<std::vector<int> > > m_materialAssignements;
 
   std::vector<float> m_physicalParameters;
-  std::vector<int> m_levels;
+  std::vector<int> m_levels;*/ 
 
   vtkSmartPointer<vtkTable> m_tableHighLightedPoints;
   vtkSmartPointer<cfgPlotPoints3D> m_plotHighLightedPoints;

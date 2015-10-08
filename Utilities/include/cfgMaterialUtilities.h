@@ -70,6 +70,7 @@ namespace cfgMaterialUtilities
   void insertLayer(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &iNewLayerElements, int iIndex, int iDim, std::vector<int> &oNewStructureElements);
 
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis);
+  void computeStrain(int n[2], const std::vector<std::vector<std::vector<cfgScalar> > > iX[2], std::vector<std::vector<cfgScalar> > oStrains[2][2]);
  
   int getMaterialSignature(int nx, int ny, const std::vector<int> &icellMaterials, const std::vector<int> &iIndicesToUse);
   void clusterByBoundary(int nx, int ny, const std::vector<std::vector<int> > &icellMaterials, int iNbMat, std::vector<std::vector<int> > &oClusters);
@@ -98,6 +99,10 @@ namespace cfgMaterialUtilities
   // Tet mesh utilities
   // ------------------
   void getEdgesFromTetFaceIndexArray(const std::vector<int> &iTetIndexArray, std::vector<int> &oEdgeIndexArray);
+
+  // Conversion between material parameters
+  void fromLamesParametersToYoungModulusPoissonRatio(cfgScalar iLambda, cfgScalar iMu, cfgScalar &oYoungModulus, cfgScalar &oPoissonRatio);
+  void fromYoungModulusPoissonRatioToLamesParameters(cfgScalar iYoungModulus, cfgScalar iPoissonRatio, cfgScalar &oLambda, cfgScalar &oMu);
 
   // Conversion between types
   // -----------------------

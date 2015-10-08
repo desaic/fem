@@ -19,8 +19,12 @@ public:
   MainWindow();
   virtual ~MainWindow();
 
+protected:
+  void dropEvent(QDropEvent *iEvent);
+  void dragEnterEvent(QDragEnterEvent *iEvent);
+
 private:
-  void addLevelCheckBox(QWidget * iParent);
+  void addLevelCheckBox(QWidget * iParent, int iLevel, QString iLabel="");
 
 private slots:
   void levelCheckBoxModified();

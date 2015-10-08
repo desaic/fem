@@ -449,6 +449,28 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::string &iMateria
   return true;
 }
 
+void cfgMaterialUtilities::computeStrain(int n[2], const std::vector<std::vector<std::vector<float> > > iX[2], std::vector<std::vector<cfgScalar> > oStrains[2][2])
+{
+  int icomb=0, ncomb=(int)iX[0].size();
+  for (int iaxis=0; iaxis<2; iaxis++)
+  {
+    int jaxis;
+    for (int jaxis=0; jaxis<2; jaxis++)
+    {
+      oStrains[iaxis][jaxis].resize(ncomb);
+      for (icomb=0; icomb<ncomb; icomb++)
+      {
+        int isample=0, nsample=(int)iX[iaxis][icomb].size();
+        for (isample=0; isample<nsample; isample++)
+        {
+          cfgScalar strain = computeStrain(convertVec<float, cfgScalar>(iX[iaxis][icomb][isample]), n[0], n[1], jaxis);
+          oStrains[iaxis][jaxis][icomb].push_back(strain);
+        }
+      }
+    }
+  }
+}
+
 bool cfgMaterialUtilities::computeMaterialParametersFromDeformations(const std::string &iMaterialFile, const std::string iStressDeformationFileNames[2], bool iBinary,
                                                                      std::vector<cfgScalar> &oPhysicalParameters, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<std::vector<int> > &oMaterialAssignmentsOneCell)
 {
@@ -638,6 +660,8 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vect
                                                      const std::vector<std::vector<cfgScalar> > iStresses[2], const std::vector<std::vector<cfgScalar> > iStrains[2][2],
                                                      std::vector<cfgScalar> &oPhysicalParameters)
 {
+  oPhysicalParameters.clear();
+
   int iVersion=1; // 0: Density Yx Yy; 1: Density Nux Nuy
 
   int naxis = 2;
@@ -1252,9 +1276,12 @@ void cfgMaterialUtilities::getKMeans(int iNbIterations, int iNbClusters, const s
     int icluster;
     for (icluster=0; icluster<nbClusters; icluster++)
     {
-      double p[3] = {centerPositions[3*icluster], centerPositions[3*icluster+1], centerPositions[3*icluster+2]};
-      int closestPoint = distanceTool.getClosestPointIndex(p);
-      oCenters->push_back(closestPoint);
+      if (clusters[icluster].size()>0)
+      {
+        double p[3] = {centerPositions[3*icluster], centerPositions[3*icluster+1], centerPositions[3*icluster+2]};
+        int closestPoint = distanceTool.getClosestPointIndex(p);
+        oCenters->push_back(closestPoint);
+      }
     }
   }
 }
@@ -1592,6 +1619,17 @@ void cfgMaterialUtilities::getEdgesFromTetFaceIndexArray(const std::vector<int> 
       }
     }
   }
+}
+void cfgMaterialUtilities::fromLamesParametersToYoungModulusPoissonRatio(cfgScalar iLambda, cfgScalar iMu, cfgScalar &oYoungModulus, cfgScalar &oPoissonRatio)
+{
+  oYoungModulus = iMu*(3*iLambda+2*iMu)/(iLambda+iMu);
+  oPoissonRatio = iLambda/(2*(iLambda+iMu));
+}
+
+void cfgMaterialUtilities::fromYoungModulusPoissonRatioToLamesParameters(cfgScalar iYoungModulus, cfgScalar iPoissonRatio, cfgScalar &oLambda, cfgScalar &oMu)
+{
+  oLambda = iYoungModulus*iPoissonRatio/((1+iPoissonRatio)*(1-2*iPoissonRatio));
+  oMu = iYoungModulus/(2*(1+iPoissonRatio));
 }
 
 Vector3f cfgMaterialUtilities::getVector3f(int indVertex, const std::vector<float> &iPoints)
