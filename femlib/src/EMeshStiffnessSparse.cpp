@@ -65,16 +65,10 @@ void ElementMesh::getStiffnessSparse(std::vector<float> &val, bool trig, bool co
             }
             float val = K(3 * jj + dim1, 3 * kk + dim2);
             if (constrained){
-              if (fixed[vk] || fixed[vj]){
+              if ((fixed[vk] || fixed[vj]) && (3 * jj + dim1) != (3 * kk + dim2)){
                 val = 0;
-                if (vj == vk && dim1 == dim2){
-                  val = 100;
-                }
               }
             }
-            //if (vk == vj && dim1 == dim2){
-            //  val += 1;
-            //}
             Tripletf triple(3 * vj + dim1, 3 * vk + dim2, val);
             coef.push_back(triple);
           }
@@ -116,20 +110,11 @@ ElementMesh::getStiffnessSparse(bool trig, bool constrained, bool iFixedRigid)
             }
             float val = K(3 * jj + dim1, 3 * kk + dim2);
             if (constrained){
-              if (fixed[vk] || fixed[vj]){
+              if ( (fixed[vk] || fixed[vj]) && (3 * jj + dim1 ) != (3 * kk + dim2) ){
                 val = 0;
-                if (vj == vk && dim1 == dim2){
-                  val = 1;
-                }
               }
             }
-            //if (vk == vj && dim1 == dim2){
-            //  val += 1;
-            //}
             Tripletf triple(3 * vj + dim1, 3 * vk + dim2, val);
-//            if(3 * vj + dim1 == 3 * vk + dim2){
-//              std::cout<<val<<"\n";
-//            }
             coef.push_back(triple);
           }
         }
@@ -141,7 +126,6 @@ ElementMesh::getStiffnessSparse(bool trig, bool constrained, bool iFixedRigid)
   {
     fixRigid(Ksparse, this);
   }
-//  std::cout<<Ksparse;
   return Ksparse;
 }
 

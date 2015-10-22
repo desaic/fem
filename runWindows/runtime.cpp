@@ -55,15 +55,15 @@ int main(int argc, char* argv[])
   }
   
   
-  int refine = 0;
+  int refine = 1;
   if (conf.hasOpt("refine")){
     refine = conf.getInt("refine");
   }
   int res = (int)std::pow(2, refine);
-  int nx = res, ny=res, nz=res;
+  int nx = res, ny=4*res, nz=res;
   //int nx = 32, ny = 80, nz = 32;
   //int nx = 16, ny = 40, nz = 16;
-  Vector3f ff(5, -10000, 0);
+  Vector3f ff(5, -100, 0);
   //per element pushing force
   ff = (1.0f / (nx*nz)) * ff;
 
