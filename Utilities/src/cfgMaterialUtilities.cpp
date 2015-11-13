@@ -449,7 +449,7 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::string &iMateria
   return true;
 }
 
-void cfgMaterialUtilities::computeStrain(int n[2], const std::vector<std::vector<std::vector<float> > > iX[2], std::vector<std::vector<cfgScalar> > oStrains[2][2])
+void cfgMaterialUtilities::computeStrain(int n[2], const std::vector<std::vector<std::vector<cfgScalar> > > iX[2], std::vector<std::vector<cfgScalar> > oStrains[2][2])
 {
   int icomb=0, ncomb=(int)iX[0].size();
   for (int iaxis=0; iaxis<2; iaxis++)
@@ -463,7 +463,7 @@ void cfgMaterialUtilities::computeStrain(int n[2], const std::vector<std::vector
         int isample=0, nsample=(int)iX[iaxis][icomb].size();
         for (isample=0; isample<nsample; isample++)
         {
-          cfgScalar strain = computeStrain(convertVec<float, cfgScalar>(iX[iaxis][icomb][isample]), n[0], n[1], jaxis);
+          cfgScalar strain = computeStrain(convertVec<cfgScalar, cfgScalar>(iX[iaxis][icomb][isample]), n[0], n[1], jaxis);
           oStrains[iaxis][jaxis][icomb].push_back(strain);
         }
       }
@@ -1653,7 +1653,28 @@ Vector2S cfgMaterialUtilities::getVector2S(int indVertex, const std::vector<cfgS
   return Vector2S(iPoints[indPoint], iPoints[indPoint+1]);
 }
 
- std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Vector3f> &iPoints)
+Vector3S cfgMaterialUtilities::getVector3S(int indVertex, const std::vector<cfgScalar> &iPoints)
+{
+  assert(iPoints.size()%3==0);
+  int indPoint = 3*indVertex;
+  return Vector3S(iPoints[indPoint], iPoints[indPoint+1], iPoints[indPoint+2]);
+}
+
+Vector3d cfgMaterialUtilities::getVector3d(int indVertex, const std::vector<double> &iPoints)
+{
+  assert(iPoints.size()%3==0);
+  int indPoint = 3*indVertex;
+  return Vector3d(iPoints[indPoint], iPoints[indPoint+1], iPoints[indPoint+2]);
+}
+
+Vector2d cfgMaterialUtilities::getVector2d(int indVertex, const std::vector<double> &iPoints)
+{
+  assert(iPoints.size()%2==0);
+  int indPoint = 2*indVertex;
+  return Vector2d(iPoints[indPoint], iPoints[indPoint+1]);
+}
+
+std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Vector3f> &iPoints)
  {
    std::vector<float> vec;
    vec.reserve(iPoints.size()*3);
@@ -1755,6 +1776,38 @@ Vector2S cfgMaterialUtilities::getVector2S(int indVertex, const std::vector<cfgS
      vec.push_back(Vector2S(iPoints[2*ipoint], iPoints[2*ipoint+1]));
    }
    return vec;
+ }
+
+ MatrixXS cfgMaterialUtilities::toMatrixScalar(const MatrixEXd &iMatrix)
+ {
+   int nrow = iMatrix.rows();
+   int ncol = iMatrix.cols();
+
+   MatrixXS mat(nrow, ncol);
+   for (int irow=0; irow<nrow; irow++)
+   {
+     for (int icol=0; icol<ncol; icol++)
+     {
+       mat(irow, icol) = (cfgScalar)iMatrix(irow, icol);
+     }
+   }
+   return mat;
+ }
+
+ MatrixEXd cfgMaterialUtilities::toMatrixDouble(const MatrixXS &iMatrix)
+ {
+   int nrow = iMatrix.rows();
+   int ncol = iMatrix.cols();
+
+   MatrixEXd mat(nrow, ncol);
+   for (int irow=0; irow<nrow; irow++)
+   {
+     for (int icol=0; icol<ncol; icol++)
+     {
+       mat(irow, icol) = (cfgScalar)iMatrix(irow, icol);
+     }
+   }
+   return mat;
  }
 
 void cfgMaterialUtilities::sampleMesh(const std::vector<float> &iPoints, const std::vector<int> &iTriIndexArray, int iNbSamplesPerFace, std::vector<float> &oPoints)
@@ -1884,6 +1937,18 @@ int cfgMaterialUtilities::getMaterialSignature(int nx, int ny, const std::vector
   }
   return signature;
 }
+
+std::vector<int> cfgMaterialUtilities::genIncrementalSequence(int iMin, int iMax, int iStep)
+{
+  std::vector<int> values;
+  for (int ival=iMin; ival<=iMax; ival+=iStep)
+  {
+    values.push_back(ival);
+  }
+  return values;
+}
+
+
 
 
 

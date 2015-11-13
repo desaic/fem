@@ -2,6 +2,7 @@
 #define SamplesGeneratorImpl_h
 
 #include "cfgDefs.h"
+#include <set>
 
 class MaterialQuad;
 class MaterialQuad2D;
@@ -72,7 +73,8 @@ private:
                         std::vector<std::vector<float> > oStresses[2], std::vector<std::vector<std::vector<float> > > oX[2]);
 
   void growStructure(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments);
-  void growStructureDoubleSize(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments);
+  void growStructureDoubleSize(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments, int iRowToDuplicate=-1, int iColToDuplicate=-1);
+  void growStructureDoubleSize(int N[2], const std::vector<int> &matAssignment, std::set<std::vector<int> > &ioNewMaterialAssignments, int iRowToDuplicate, int iColToDuplicate);
 
   int getClosestPoint(Vector3f &iP, const std::vector<cfgScalar> &iPoints);
   int getRandomMatWithLinearProba(std::multimap<float, int> &iDist2MatIndex, float eps, float r);
@@ -80,6 +82,10 @@ private:
   int computeVariations(std::string & iStepperType, int iLevel);
   int computeVariationsV2(int iLevel, int iSubLevel, const std::vector<std::vector<std::vector<int> > > &iMaterialAssignmentsPreviousLevels, const std::vector<std::vector<std::vector<int> > > &iBaseMaterialStructuresPreviousLevels, 
                           const std::vector<std::vector<float> > &iPhysicalParametersPreviousLevels, std::vector<std::vector<int> > &oNewMaterialAssignments);
+  int computeVariationsV3(int iLevel, int iSubLevel, const std::vector<std::vector<std::vector<int> > > &iMaterialAssignmentsPreviousLevels, const std::vector<std::vector<std::vector<int> > > &iBaseMaterialStructuresPreviousLevels, 
+                          const std::vector<std::vector<float> > &iPhysicalParametersPreviousLevels, std::vector<std::vector<int> > &oNewMaterialAssignments);
+  void computeVariationsSMC(int iLevel, std::string & iStepperType, const std::vector<std::vector<std::vector<int> > > &iMaterialAssignmentsPreviousLevels, const std::vector<std::vector<std::vector<int> > > &iBaseMaterialStructuresPreviousLevels, 
+                           const std::vector<std::vector<float> > &iPhysicalParametersPreviousLevels, std::vector<std::vector<int> > &oNewMaterialAssignments, std::vector<cfgScalar> &oNewPhysicalParameters);
 
   void writeStressDeformationFile(const std::vector<std::vector<int> > &iMaterialAssignments, int iMatStructureSize[3], const std::vector<std::vector<float> > iStresses[2], const std::vector<std::vector<std::vector<float> > > iX[2], std::string iPostfix="");
 

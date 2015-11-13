@@ -24,9 +24,14 @@ public:
 
   void setProject(QPointer<exProject> iProject);
 
+protected:
+  // From QWidget:
+  virtual void keyPressEvent(QKeyEvent *pEvent);
+
 private:
   vtkSmartPointer<vtkPolyData> createVtkPolyData(const ElementMesh * iElementMesh);
   void updateMesh(int iCombIndex, int iLevel);
+  void saveStructure();
 
   private slots:
     void onPickedStructureModified();

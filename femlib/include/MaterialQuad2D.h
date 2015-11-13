@@ -40,6 +40,7 @@ public:
 
 private:
   MatrixXS stiffness(int qi, const MaterialQuad2D * mat, Element2D* ele, ElementMesh2D * mesh);
+  bool m_planeStress;
 };
 
 #endif

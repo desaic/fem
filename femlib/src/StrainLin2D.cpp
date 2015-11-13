@@ -55,6 +55,7 @@ MatrixXS StrainLin2D::getElasticityTensor()
   cfgScalar E = mu*(3*lambda+2*mu)/(lambda+mu);
   cfgScalar nu = lambda/(2*(lambda+mu));
 
+  // plane stress
   cfgScalar coeff = E/(1-nu*nu);
   C(0,0) = 1;
   C(0,1) = nu;
@@ -62,6 +63,13 @@ MatrixXS StrainLin2D::getElasticityTensor()
   C(1,1) = 1;
   C(2,2) = (1-nu)/2;
   C *= coeff;
+
+  // plane strain
+  /*C(0,0) = 2*mu+lambda;
+  C(0,1) = lambda;
+  C(1,0) = lambda;
+  C(1,1) = 2*mu+lambda;
+  C(2,2) = mu;*/ 
 
   return C;
 }

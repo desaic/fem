@@ -72,6 +72,9 @@ namespace cfgUtil
   std::vector<T> mult(const std::vector<T> &iVec, const T iValue[Dim]); 
 
   template<class T>
+  std::vector<T> mult(const std::vector<T> &iVec1, std::vector<T> &iVec2); 
+
+  template<class T>
   T innerProd(const std::vector<T> &iVec1, const std::vector<T> &iVec2);
 
   template<class T>
@@ -357,6 +360,19 @@ namespace cfgUtil
       {
         vec[Dim*ipoint+icoord] *= iValue[Dim];
       }
+    }
+    return vec;
+  }
+
+  template<class T>
+  std::vector<T> mult(const std::vector<T> &iVec1, std::vector<T> &iVec2)
+  {
+    assert(iVec1.size()==iVec2.size());
+    std::vector<T> vec = iVec1;
+    size_t ielem, nelem=iVec1.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      vec[ielem] *= iVec2[ielem];
     }
     return vec;
   }

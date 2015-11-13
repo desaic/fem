@@ -31,6 +31,9 @@ using namespace cfgMaterialUtilities;
 #include <cfgUtilities.h>
 using namespace cfgUtil;
 
+#include "ScoringFunction.h"
+#include "Resampler.h"
+
 MaterialParametersView::MaterialParametersView()
   :QVTKWidget()
 {
@@ -139,6 +142,20 @@ vtkSmartPointer<cfgPlotSurface> MaterialParametersView::createSurfacePlot3D(vtkS
   return plot;
 }
 
+std::vector<cfgScalar> computeScores(const std::vector<cfgScalar> &iPoints, int iDim)
+{
+  std::vector<cfgScalar> scores;
+
+  int ipoint, npoint=(int)iPoints.size()/iDim;
+  for (ipoint=0; ipoint<npoint; ipoint++)
+  {
+    Vector3S P = getVector3S(ipoint, iPoints);
+    cfgScalar score = (P[0]+P[1]+P[2]);
+    scores.push_back(score);
+  }
+  return scores;
+}
+
 void MaterialParametersView::updatePlots()
 {
   Q_ASSERT(m_project);
@@ -163,12 +180,35 @@ void MaterialParametersView::updatePlots()
   std::string labels[4]= {"Density", "Y1", "Y2", "Level"};
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
+    vtkVector3i col = matColors[ilevel];
+
     int npoints = (int)physicalParametersPerLevel[ilevel].size()/3;
     std::vector<int> levels(npoints, ilevel);
     vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, 3, 1, labels);
-    vtkVector3i col = matColors[ilevel];
-    vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Density", col, 10);
+
+    ScoringFunction scoringFunction(3);
+    //scoringFunction.setDensityRadius(0.083);
+    std::vector<cfgScalar> scores = scoringFunction.computeScores(physicalParametersPerLevel[ilevel]);
+
+    int nTargetParticules = 300;
+    std::vector<int> newparticules;
+    Resampler resampler;
+    resampler.resample(scores, nTargetParticules, newparticules);
+   
+    std::vector<vtkVector3i> colors;
+    for (int ipoint=0; ipoint<npoints; ipoint++)
+    {
+      cfgScalar w = scores[ipoint];
+      vtkVector3i matColor(w*col[0] + (1-w)*255, w*col[1] + (1-w)*255, w*col[2] + (1-w)*255);
+      colors.push_back(matColor);
+    }
+    vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Density", colors, 10);
     m_plotsPerLevel[ilevel].push_back(plot);
+    
+    vtkVector3i red(255, 0, 0);
+    vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, 3, 1, labels, &newparticules);
+    vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Y2", "Density", red, 15);
+    //m_plotsPerLevel[ilevel].push_back(plot2);
   }
   updateChart();
 }

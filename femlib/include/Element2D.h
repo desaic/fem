@@ -50,6 +50,8 @@ public:
     const std::vector<Vector2S>x);
 
   const std::vector<int> & getNodeIndices()const{ return n; }
+
+  virtual MatrixXS getMatrixB(const Vector2S & xx, const std::vector<Vector2S> & X)=0;
 private:
 
   ///@brief nodal indices

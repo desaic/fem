@@ -61,3 +61,31 @@ cfgScalar ElementHex2D::getVol(const std::vector<Vector2S> & X)
   Vector2S size = X[at(3)] - X[at(0)];
   return size[0] * size[1] * m_thickness;
 }
+
+MatrixXS ElementHex2D::getMatrixB(int ii, const Vector2S & xx, const std::vector<Vector2S> & X)
+{
+  Vector2S gradN = shapeFunGrad(ii, xx, X);
+  MatrixXS B = MatrixXS::Zero(3, 2);
+  B(0,0) = gradN[0];
+  B(1,1) = gradN[1];
+  B(2,0) = gradN[1];
+  B(2,1) = gradN[0];
+  return B;
+}
+
+MatrixXS ElementHex2D::getMatrixB(const Vector2S & xx, const std::vector<Vector2S> & X)
+{
+  MatrixXS B = MatrixXS::Zero(3, 8);
+
+  int inode;
+  int shift = 0;
+  for (inode=0; inode<4; inode++, shift+=2)
+  {
+    Vector2S gradN = shapeFunGrad(inode, xx, X);
+    B(0,shift) = gradN[0];
+    B(1,shift+1) = gradN[1];
+    B(2,shift) = gradN[1];
+    B(2,shift+1) = gradN[0];
+  }
+  return B;
+}

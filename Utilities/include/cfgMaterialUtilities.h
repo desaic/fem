@@ -108,7 +108,10 @@ namespace cfgMaterialUtilities
   // -----------------------
   Vector3f getVector3f(int indVertex, const std::vector<float> &iPoints);
   Vector2f getVector2f(int indVertex, const std::vector<float> &iPoints);
+  Vector3S getVector3S(int indVertex, const std::vector<cfgScalar> &iPoints);
   Vector2S getVector2S(int indVertex, const std::vector<cfgScalar> &iPoints);
+  Vector3d getVector3d(int indVertex, const std::vector<double> &iPoints);
+  Vector2d getVector2d(int indVertex, const std::vector<double> &iPoints);
 
   std::vector<float> toVectorFloat(const std::vector<Vector3f> &iPoints);
   std::vector<float> toVectorFloat(const std::vector<Vector2f> &iPoints);
@@ -119,6 +122,13 @@ namespace cfgMaterialUtilities
   std::vector<Vector2f> toVector2f(const std::vector<float> &iPoints);
   std::vector<Vector2S> toVector2S(const std::vector<cfgScalar> &iPoints);
   std::vector<Vector3f> toVector3f(const std::vector<float> &iPoints);
+
+  MatrixXS toMatrixScalar(const MatrixEXd &iMatrix);
+  MatrixEXd toMatrixDouble(const MatrixXS &iMatrix);
+
+  // Misc
+  // ----
+  std::vector<int> genIncrementalSequence(int iMin, int iMax, int iStep=1);
 };
 
 #endif 

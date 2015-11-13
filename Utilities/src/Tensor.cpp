@@ -1,6 +1,7 @@
 #include "Tensor.h"
 
 #include <assert.h>
+#include <iostream>
 
 // A_ijkl = iA[k][l](i,j); B_klab = iB[a][b](i,j); C_ijab = A_ijkl B_klab
 void Tensor::doubleContraction(const std::vector<std::vector<Matrix2S> > &iA, const std::vector<std::vector<Matrix2S> > &iB, std::vector<std::vector<Matrix2S> > &oC)
@@ -97,6 +98,9 @@ MatrixXS Tensor::toVoigtRepresentation(const MatrixXS &iA)
 MatrixXS Tensor::toVoigtRepresentation(const std::vector<std::vector<Matrix2S> > &iA)
 {
   MatrixXS M1 = Tensor::toMatrixRepresentation(iA);
+  std::cout << M1 << std::endl;
+
+
   MatrixXS M2 = Tensor::toVoigtRepresentation(M1);
   return M2;
 }

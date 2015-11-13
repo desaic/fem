@@ -1,6 +1,8 @@
 
 #include "MaterialStructureView.h"
 
+#include <QKeyEvent>
+
 #include <vtkContextView.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
@@ -19,6 +21,12 @@
 #include <array>
 
 #include "exProject.h"
+
+#include "ExplorerUtilities.h"
+using namespace ExplorerUtilities;
+
+#include "cfgMaterialUtilities.h"
+using namespace cfgMaterialUtilities;
 
 MaterialStructureView::MaterialStructureView()
   :QVTKWidget()
@@ -163,3 +171,33 @@ vtkSmartPointer<vtkPolyData> MaterialStructureView::createVtkPolyData(const Elem
 
   return polyData;
 }
+
+void MaterialStructureView::keyPressEvent(QKeyEvent *pEvent)
+{
+  switch (pEvent->key()) 
+  {
+  case Qt::Key_S:
+    saveStructure();
+    break;
+  default:
+    QVTKWidget::keyPressEvent(pEvent);
+  }
+}
+
+void MaterialStructureView::saveStructure()
+{
+  int pickedStructureIndex = m_project->getPickedStructureIndex();
+  if (pickedStructureIndex>=0)
+  {
+    int pickedStructureLevel = m_project->getPickedStructureLevel();
+    const std::vector<std::vector<std::vector<int> > > & materialAssignments = m_project->getMaterialAssignments();
+    const std::vector<int> & matAssignment = materialAssignments[pickedStructureLevel][pickedStructureIndex];
+    const std::vector<int> & levels = m_project->getLevels();
+
+    int n = levels[pickedStructureLevel];
+    std::string fileName = m_project->getFileDirectory() + "MaterialAssignment_" + std::to_string(n) + "_" + std::to_string(pickedStructureIndex) + ".txt";
+
+    saveMicrostructure(fileName, n, n, matAssignment);
+  }
+}
+

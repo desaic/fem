@@ -587,17 +587,27 @@ void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid2D &iElementGrid, 
     Matrix2S coarseF = coarseElem.defGrad(Vector2S(0,0), iElementGrid.X, x);
     Matrix2S currentStrainTensor = strainLin.getStrainTensor(coarseF);
     coarseStrainTensors.push_back(currentStrainTensor);
-    std::cout << "strain = " << currentStrainTensor(0,0) << " " << currentStrainTensor(0,1) << " " << currentStrainTensor(1,1) << std::endl;
+    //std::cout << "strain = " << currentStrainTensor(0,0) << " " << currentStrainTensor(0,1) << " " << currentStrainTensor(1,1) << std::endl;
   }
 
-  std::vector<std::vector<Matrix2S> > coarseG(2);
+  /*std::vector<std::vector<Matrix2S> > coarseG(2);
   coarseG[0].push_back(coarseStrainTensors[0]);
   coarseG[0].push_back(coarseStrainTensors[2]);
   coarseG[1].push_back(coarseStrainTensors[2]);
   coarseG[1].push_back(coarseStrainTensors[1]);
 
-  MatrixXS coarseGv = Tensor::toVoigtRepresentation(coarseG);
+  MatrixXS coarseGv = Tensor::toVoigtRepresentation(coarseG);*/ 
+
+  MatrixXS coarseGv = MatrixXS::Zero(3,3);
+  for (idisp=0; idisp<ndisp; idisp++)
+  {
+    coarseGv(idisp, 0) = coarseStrainTensors[idisp](0,0);
+    coarseGv(idisp, 1) = coarseStrainTensors[idisp](1,1);
+    coarseGv(idisp, 2) = coarseStrainTensors[idisp](0,1);
+  }
+
   MatrixXS invCoarseGv = coarseGv.inverse();
+  //std::cout << "G = " << coarseGv << std::endl;
 
   MatrixXS Gt_C_G = MatrixXS::Zero(3, 3);
 
@@ -629,14 +639,25 @@ void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid2D &iElementGrid, 
     int itensor, ntensor=(int)strainTensors[0].size();
     for (itensor=0; itensor<ntensor; itensor++)
     {
-      std::vector<std::vector<Matrix2S> > G(2);
+      /*std::vector<std::vector<Matrix2S> > G(2);
       G[0].push_back(strainTensors[0][itensor]);
       G[0].push_back(strainTensors[2][itensor]);
       G[1].push_back(strainTensors[2][itensor]);
       G[1].push_back(strainTensors[1][itensor]);
 
-      MatrixXS Gv = Tensor::toVoigtRepresentation(G);
+      MatrixXS Gv = Tensor::toVoigtRepresentation(G);*/ 
+
+      MatrixXS Gv = MatrixXS::Zero(3,3);
+      for (idisp=0; idisp<ndisp; idisp++)
+      {
+        Gv(idisp, 0) = strainTensors[idisp][itensor](0,0);
+        Gv(idisp, 1) = strainTensors[idisp][itensor](1,1);
+        Gv(idisp, 2) = strainTensors[idisp][itensor](0,1);
+      }
+
       Gt_C_G += w[itensor]*Gv.transpose()*C[itensor]*Gv;
+
+      //std::cout << "Gv = " << Gv << std::endl;
     }
   }
   oCoarsenedTensor = (1.f/nelem) * invCoarseGv.transpose() * Gt_C_G * invCoarseGv;

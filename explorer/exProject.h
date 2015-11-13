@@ -38,6 +38,8 @@ public:
   bool getLevelVisibility(int ilevel);
 
   const std::vector<std::vector<cfgScalar> > & getPhysicalParameters() {return m_physicalParametersPerLevel;}
+  const std::vector<std::vector<std::vector<int> > > & getMaterialAssignments() {return m_materialAssignments;}
+  const std::vector<int>  & getLevels() {return m_levels;}
 
 signals:
   void pickedStructureModified();

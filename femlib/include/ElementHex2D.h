@@ -25,6 +25,9 @@ public:
   void setThickness(cfgScalar iThickness) {m_thickness = iThickness;};
   cfgScalar getThickness() {return m_thickness;};
 
+  MatrixXS getMatrixB(int ii, const Vector2S & xx, const std::vector<Vector2S> & X);
+  virtual MatrixXS getMatrixB(const Vector2S & xx, const std::vector<Vector2S> & X);
+
 private:
   cfgScalar m_thickness;
 };

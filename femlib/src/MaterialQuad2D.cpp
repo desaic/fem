@@ -14,6 +14,7 @@ MaterialQuad2D::MaterialQuad2D(StrainEne2D * ene, Quadrature2D * _q ):q(_q)
     q = &(Quadrature2D::Gauss2);
   }
   e.resize(q->x.size(), ene);
+  m_planeStress = true;
 }
 
 MaterialQuad2D::MaterialQuad2D(const std::vector<StrainEne2D *> & ene, Quadrature2D * _q )
@@ -22,6 +23,7 @@ MaterialQuad2D::MaterialQuad2D(const std::vector<StrainEne2D *> & ene, Quadratur
     q = &(Quadrature2D::Gauss2);
   }
   e=ene;
+  m_planeStress = true;
 }
 
 void MaterialQuad2D::init(ElementMesh2D * m)
@@ -39,11 +41,30 @@ void MaterialQuad2D::init(ElementMesh2D * m)
 cfgScalar MaterialQuad2D::getEnergy(Element2D* ele, ElementMesh2D * mesh)
 {
   cfgScalar energy = 0;
-  for(int ii = 0; ii<q->x.size();ii++){
-    Matrix2S F = ele->defGrad(q->x[ii], mesh->X, mesh->x);
-    energy += q->w[ii] * e[ii]->getEnergy(F);
+  if (m_planeStress==false)
+  {
+    for(int ii = 0; ii<q->x.size();ii++){
+      Matrix2S F = ele->defGrad(q->x[ii], mesh->X, mesh->x);
+      energy += q->w[ii] * e[ii]->getEnergy(F);
+    }
+    energy *= ele->getVol(mesh->X);
   }
-  return ele->getVol(mesh->X) * energy;
+  else
+  {
+    MatrixXS K = getStiffness(ele, mesh);
+
+    Eigen::Matrix<cfgScalar, 8, 1> u;
+
+    for(int ii = 0; ii<ele->nV(); ii++)
+    {
+      int vi = ele->at(ii);
+      Vector2S ui = mesh->x[vi] - mesh->X[vi];
+      u(2*ii) = ui[0];
+      u(2*ii+1) = ui[1];
+    }
+    energy = 0.5*u.transpose()*K*u;
+  }
+  return energy;
 }
 
 std::vector<MatrixXS> MaterialQuad2D::getElasticityTensors()
@@ -89,16 +110,40 @@ std::vector<Matrix2S> MaterialQuad2D::getStrainTensors(Element2D* ele, ElementMe
 std::vector<Vector2S> MaterialQuad2D::getForce(Element2D* ele, ElementMesh2D * mesh)
 {
   std::vector<Vector2S> f(ele->nV(), Vector2S::Zero());
-  std::vector<Matrix2S> P(q->w.size());
-  for(unsigned int ii = 0; ii<q->x.size(); ii++){
-    Matrix2S F = ele->defGrad(q->x[ii],mesh->X, mesh->x);
-    P[ii] = e[ii]->getPK1(F);
+
+  if (m_planeStress==false)
+  {
+    std::vector<Matrix2S> P(q->w.size());
+    for(unsigned int ii = 0; ii<q->x.size(); ii++){
+      Matrix2S F = ele->defGrad(q->x[ii],mesh->X, mesh->x);
+      P[ii] = e[ii]->getPK1(F);
+    }
+
+    cfgScalar vol = ele->getVol(mesh->X);
+    for(unsigned int jj = 0; jj<q->x.size(); jj++){
+      for(int ii = 0; ii<ele->nV(); ii++){
+        f[ii] -= vol * q->w[jj] * (P[jj]*gradN[ii][jj]);
+      }
+    }
   }
-  
-  cfgScalar vol = ele->getVol(mesh->X);
-  for(unsigned int jj = 0; jj<q->x.size(); jj++){
-    for(int ii = 0; ii<ele->nV(); ii++){
-      f[ii] -= vol * q->w[jj] * (P[jj]*gradN[ii][jj]);
+  else
+  {
+    MatrixXS K = getStiffness(ele, mesh);
+
+    Eigen::Matrix<cfgScalar, 8, 1> u, ff;
+
+    for(int ii = 0; ii<ele->nV(); ii++)
+    {
+      int vi = ele->at(ii);
+      Vector2S ui = mesh->x[vi] - mesh->X[vi];
+      u(2*ii) = ui[0];
+      u(2*ii+1) = ui[1];
+    }
+    ff = K*u;
+    for(int ii = 0; ii<ele->nV(); ii++)
+    {
+      f[ii][0] -= ff[2*ii];
+      f[ii][1] -= ff[2*ii+1];
     }
   }
   return f;
@@ -113,6 +158,7 @@ MatrixXS MaterialQuad2D::getStiffness(Element2D* ele, ElementMesh2D * mesh)
   {
     K += q->w[ii] * stiffness(ii, this, ele, mesh);
   }
+  //std::cout << K <<std::endl << std::endl;
   cfgScalar vol = ele->getVol(mesh->X);
   K *= vol;
   MatrixXS Kret(ndof, ndof);
@@ -127,22 +173,38 @@ MatrixXS MaterialQuad2D::stiffness(int qi, const MaterialQuad2D * mat, Element2D
   Vector2S p = mat->q->x[qi];
 
   MatrixXS K = MatrixXS::Zero(ndof, ndof);
-  Matrix2S F = ele->defGrad(p,mesh->X,mesh->x);
-  
-  for(int ii = 0;ii<4;ii++){
-    for(int jj = 0;jj<2;jj++){
-      Matrix2S dF = Matrix2S::Zero();
-      dF.row(jj) = mat->gradN[ii][qi];
-      //dF.setRow(jj, mat->gradN[ii][qi]);
-      Matrix2S dP = mat->e[ii]->getdPdx(F,dF);
-      for(int vv = 0;vv<4;vv++){
-        Vector2S dfdxi = dP*mat->gradN[vv][qi];
-        int col = 2*ii+jj;
-        for(int kk = 0;kk<2;kk++){
-          K(2*vv+kk, col) = dfdxi[kk];
+  if (m_planeStress==false)
+  {
+    Matrix2S F = ele->defGrad(p,mesh->X,mesh->x);
+
+    for(int ii = 0;ii<4;ii++){
+      for(int jj = 0;jj<2;jj++){
+        Matrix2S dF = Matrix2S::Zero();
+        dF.row(jj) = mat->gradN[ii][qi];
+        //dF.setRow(jj, mat->gradN[ii][qi]);
+        Matrix2S dP = mat->e[ii]->getdPdx(F,dF);
+        for(int vv = 0;vv<4;vv++){
+          Vector2S dfdxi = dP*mat->gradN[vv][qi];
+          int col = 2*ii+jj;
+          for(int kk = 0;kk<2;kk++){
+            K(2*vv+kk, col) = dfdxi[kk];
+          }
         }
       }
     }
+    //std::cout << K <<std::endl << std::endl;
+  }
+  else
+  {
+    K = MatrixXS::Zero(ndof, ndof);
+
+    MatrixXS B = ele->getMatrixB(p, mesh->X);
+    MatrixXS elasticityTensor = e[qi]->getElasticityTensor();
+    K = B.transpose()*elasticityTensor*B;
+
+    //std::cout << K <<std::endl << std::endl;
+    //std::cout << B <<std::endl << std::endl;
+    //std::cout << elasticityTensor <<std::endl << std::endl;
   }
   return K;
 }
