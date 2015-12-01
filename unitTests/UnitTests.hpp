@@ -3,6 +3,4 @@
 void forceTest(int matModel);
 void stiffnessTest(int matModel);
 void cudaLinTest();
-void ElementCoarseTest();
-void testCoarseDefGrad();
 #endif

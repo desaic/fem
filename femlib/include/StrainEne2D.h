@@ -2,7 +2,7 @@
 #define STRAINENE2D_HPP
 #include "vecmath.h"
 #include <vector>
-#include <Eigen\Dense>
+#include <Eigen/Dense>
 #include "cfgDefs.h"
 
 ///@brief abstract class for strain energy functions, i.e. function of deformation gradient

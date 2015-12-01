@@ -2,7 +2,7 @@
 #define MATERIALQUAD2D_HPP
 #include "vecmath.h"
 #include "Material2D.h"
-#include <Eigen\Dense>
+#include <Eigen/Dense>
 
 class StrainEne2D;
 class Quadrature2D;
