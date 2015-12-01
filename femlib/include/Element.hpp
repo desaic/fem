@@ -12,6 +12,8 @@ public:
   
   Element(int _n=0);
   Element(const Element & e);
+  Element(const std::vector<int> &inodes);
+
   ///@brief number of vertices
   virtual int nV() const;
 

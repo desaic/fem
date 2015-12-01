@@ -3,6 +3,7 @@
 #include "vecmath.h"
 #include <vector>
 #include "MatrixX.hpp"
+#include <Eigen\Dense>
 
 class Element;
 class ElementMesh;
@@ -17,6 +18,8 @@ public:
   virtual ~Material();
 
   virtual void init(ElementMesh * mesh){};
+  virtual std::vector<Eigen::MatrixXf> getElasticityTensors()=0;
+  virtual std::vector<Matrix3f> getStrainTensors(Element* ele, ElementMesh* mesh, const std::vector<Vector3f> &ix)=0;
   
   std::vector<float> param;
 };

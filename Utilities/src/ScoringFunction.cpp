@@ -16,7 +16,6 @@ using namespace cfgMaterialUtilities;
 
 ScoringFunction::ScoringFunction(int iDim)
 {
-  assert(iDim==3);
   m_dim = iDim;
   m_densityRadius = 0;
 }
@@ -60,8 +59,15 @@ std::vector<cfgScalar> ScoringFunction::computePropertiesScores(const std::vecto
   int ipoint, npoint=(int)iPoints.size()/m_dim;
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
-    Vector3S P = getVector3S(ipoint, iPoints);
-    cfgScalar score = -(P[0]+P[1]+P[2]);
+  /*  cfgScalar score = -(iPoints[m_dim*ipoint]+iPoints[m_dim*ipoint+1]+iPoints[m_dim*ipoint+2]);
+    if (m_dim==4)
+      score -= iPoints[m_dim*ipoint+3];
+    scores.push_back(score);
+    */ 
+    // Favors materials with lower density but higher Young modulus
+    cfgScalar score = -iPoints[m_dim*ipoint]+iPoints[m_dim*ipoint+1]+iPoints[m_dim*ipoint+2];
+    if (m_dim==4)
+      score += iPoints[m_dim*ipoint+3];
     scores.push_back(score);
   }
   return scores;
@@ -85,12 +91,15 @@ std::vector<cfgScalar> ScoringFunction::computeScores(const std::vector<cfgScala
 
   cfgScalar minProba = 0.01;
   
-  for (ipoint=0; ipoint<npoint; ipoint++)
+  if (scoreMax-scoreMin > 1.e-6)
   {
-    scores[ipoint] = (scores[ipoint]-scoreMin)/(scoreMax-scoreMin);
-    scores[ipoint] *= densities[ipoint];
+    for (ipoint=0; ipoint<npoint; ipoint++)
+    {
+      scores[ipoint] = (scores[ipoint]-scoreMin)/(scoreMax-scoreMin);
+      scores[ipoint] *= densities[ipoint];
 
-    scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
+      scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
+    }
   }
   return scores;
 }

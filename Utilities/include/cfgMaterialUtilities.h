@@ -37,6 +37,9 @@ namespace cfgMaterialUtilities
   bool computeMaterialParameters(const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<int> > &iBaseMaterialStructures,
                                  const std::vector<std::vector<cfgScalar> > iStresses[2], const std::vector<std::vector<cfgScalar> > iStrains[2][2], std::vector<cfgScalar> &oPhysicalParameters);
 
+   bool computeMaterialParameters(const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<int> > &iBaseMaterialStructures,
+                                 const std::vector<std::vector<cfgScalar> > iStresses[3], const std::vector<std::vector<cfgScalar> > iStrains[3][3], std::vector<cfgScalar> &oPhysicalParameters);
+
   bool getMaterialAssignment(int iDim, std::string iMaterialFile, const std::vector<int> &iMaterialsCombination, int iBlockRep, int iNbSubdiv, std::vector<int> &oCellMaterials);
 
   cfgScalar computeYoungModulus(const std::vector<cfgScalar> &iStrains, const std::vector<cfgScalar>  &iStresses);
@@ -50,27 +53,37 @@ namespace cfgMaterialUtilities
   void getMaterialAssignment(int nx, int ny, int nz, const std::vector<int> &iMaterialCombIndices, int nX, int nY, int nZ, const std::vector<std::vector<int> > &iBaseCellMaterials, int repX, int repY, int repZ, int iNbSubdivisions, 
                              std::vector<int> &oMaterials);
 
-  // Hexahedral mesh utilities 2D
+  // Hexahedral mesh utilities 2D/3D
   // ----------------------------
   int getGridToVectorIndex(int i, int j, int nx, int ny);
+  int getGridToVectorIndex(int i, int j, int k, int nx, int ny, int nz);
   void getVectorIndexToGrid(int iIndex, int nx, int ny, int &oIndex_i, int &oIndex_j);
 
   //0: Left, 1: Right, 2: Bottom, 3:Top
   void getSideElements(int iSide, int nx, int ny, std::vector<int> &oElementIndices);
   void getSideVertices(int iSide, int nx, int ny, std::vector<int> &oVertexIndices);
+  void getSideVertices(int iSide, int nx, int ny, int nz, std::vector<int> &oVertexIndices);
   void getBoundaryCellIndices(int nx, int ny, std::vector<int> &oCellIndices);
   void getMaterialAssignment(int nx, int ny, const std::vector<int> &iMaterialCombIndices, int nX, int nY, const std::vector<std::vector<int> > &iBaseCellMaterials, int repX, int repY, int iNbSubdivisions, std::vector<int> &oMaterials);
 
   void repMaterialAssignment(int nx, int ny, const std::vector<int> &iMaterialCombIndices, int iNbSubdivions, int repX, int repY, std::vector<int> &oMaterials);
+  void repMaterialAssignment(int nx, int ny, int nz, const std::vector<int> &iMaterialCombIndices, int repX, int repY, int repZ, int iNbSubdivisions, std::vector<int> &oMaterials);
   bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, int iNbCellsToCheck);
   bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials);
+  bool isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, int nX, int nY, int nZ);
   void updateMaterialSubstructure(std::vector<int> &ioMaterialAsssignment, int nx, int ny, const std::vector<int> &iSubMaterialStructure, int Nx, int Ny, int iSubMatStructLocation);
   
   void getLayer(int Nx, int NY, const std::vector<int> &iStructureElements, int iIndex, int iDim, std::vector<int> &oNewLayerElements);
+  void getLayer(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, int iIndex, int iDim, std::vector<int> &oNewLayerElements);
   void insertLayer(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &iNewLayerElements, int iIndex, int iDim, std::vector<int> &oNewStructureElements);
 
+  void mirrorStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
+  void mirrorStructure(int Nx, int Ny, int NZ, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
+
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis);
+  cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int nz, int iAxis);
   void computeStrain(int n[2], const std::vector<std::vector<std::vector<cfgScalar> > > iX[2], std::vector<std::vector<cfgScalar> > oStrains[2][2]);
+  void computeStrain3D(int n[3], const std::vector<std::vector<std::vector<cfgScalar> > > iX[3], std::vector<std::vector<cfgScalar> > oStrains[3][3]);
  
   int getMaterialSignature(int nx, int ny, const std::vector<int> &icellMaterials, const std::vector<int> &iIndicesToUse);
   void clusterByBoundary(int nx, int ny, const std::vector<std::vector<int> > &icellMaterials, int iNbMat, std::vector<std::vector<int> > &oClusters);

@@ -10,8 +10,8 @@
 // ******************
 // global definitions
 // ******************
-double*						g_queryOffsets = new double[3];
-double					g_queryPosition[3];
+double*						g_queryOffsets = new double[MAX_DIM];
+double					g_queryPosition[MAX_DIM];
 
 KdTree::KdTree(const double *positions, int idim, const unsigned int nOfPositions, const unsigned int maxBucketSize) {
   m_dim = idim;
@@ -31,7 +31,7 @@ KdTree::KdTree(const double *positions, int idim, const unsigned int nOfPosition
 	}
 	computeEnclosingBoundingBox(m_boundingBoxLowCorner, m_boundingBoxHighCorner);
 	m_root = new KdNode();
-	double maximum[3], minimum[3];
+	double maximum[MAX_DIM], minimum[MAX_DIM];
 	getSpread(m_points, nOfPositions, maximum, minimum);
 	createTree(*m_root, 0, nOfPositions, maximum, minimum);
 	setNOfNeighbours(1);
@@ -49,64 +49,36 @@ void KdTree::computeEnclosingBoundingBox(double *lowCorner, double *hiCorner) {
 	copyPosition(hiCorner, m_points[0].pos);
   copyPosition(lowCorner, m_points[0].pos);
 
-	for (unsigned int i=1; i<m_nOfPositions; i++) {
+	for (unsigned int i=1; i<m_nOfPositions; i++) 
+  {
 		tmp = m_positions + m_dim*i;
-		if (hiCorner[0] < tmp[0]) {
-			hiCorner[0] = tmp[0];
-		}
-		else if (lowCorner[0] > tmp[0]) {
-			lowCorner[0] = tmp[0];
-		}
-		if (hiCorner[1] < tmp[1]) {
-			hiCorner[1] = tmp[1];
-		}
-		else if (lowCorner[1] > tmp[1]) {
-			lowCorner[1] = tmp[1];
-		}
-    if (m_dim>2)
+    for (int coord=0; coord<m_dim; coord++)
     {
-      if (hiCorner[2] < tmp[2]) {
-        hiCorner[2] = tmp[2];
+      if (hiCorner[coord] < tmp[coord]) {
+        hiCorner[coord] = tmp[coord];
       }
-      else if (lowCorner[2] > tmp[2]) {
-        lowCorner[2] = tmp[2];
+      else if (lowCorner[coord] > tmp[coord]) {
+        lowCorner[coord] = tmp[coord];
       }
     }
-  }		 
+  }
 }
 
 double KdTree::computeBoxDistance(const double *q, const double *lo, const double *hi) {
 	register double dist = 0.0;
 	register double t;
 
-	if (q[0] < lo[0]) {
-		t = lo[0] - q[0];
-		dist = t*t;
-	}
-	else if (q[0] > hi[0]) {
-		t = q[0] - hi[0];
-		dist = t*t;
-	}
-	if (q[1] < lo[1]) {
-		t = lo[1] - q[1];
-		dist += t*t;
-	}
-	else if (q[1] > hi[1]) {
-		t = q[1] - hi[1];
-		dist += t*t;
-	}
-  if (m_dim>2)
+  for (int coord=0; coord<m_dim; coord++)
   {
-    if (q[2] < lo[2]) {
-      t = lo[2] - q[2];
+    if (q[coord] < lo[coord]) {
+      t = lo[coord] - q[coord];
       dist += t*t;
     }
-    else if (q[2] > hi[2]) {
-      t = q[2] - hi[2];
+    else if (q[coord] > hi[coord]) {
+      t = q[coord] - hi[coord];
       dist += t*t;
     }
   }
-
   return dist;
 }
 
@@ -114,7 +86,7 @@ void KdTree::queryPosition(const double *position) {
 	if (m_neighbours.size() == 0) {
 		return;
 	}
-	g_queryOffsets[0] = g_queryOffsets[1] = g_queryOffsets[2] = 0.0;
+  memset(g_queryOffsets, 0, MAX_DIM*sizeof(double));
 	m_queryPriorityQueue->init();
 	m_queryPriorityQueue->insert(-1, DBL_MAX);
 	copyPosition(g_queryPosition, position);
@@ -137,7 +109,7 @@ void KdTree::queryRange(const double *position, const double maxSqrDistance) {
 	if (m_neighbours.size() == 0) {
 		return;
 	}
-	g_queryOffsets[0] = g_queryOffsets[1] = g_queryOffsets[2] = 0.0;
+	memset(g_queryOffsets, 0, MAX_DIM*sizeof(double));
 	m_queryPriorityQueue->init();
 	m_queryPriorityQueue->insert(-1, maxSqrDistance);
 	copyPosition(g_queryPosition, position);
@@ -172,12 +144,23 @@ void KdTree::createTree(KdNode &node, int start, int end, double *maximum, doubl
 	int	mid;
 
 	int n = end-start;
-	double diff[3];
+	double diff[MAX_DIM];
   for (int icoord=0; icoord<m_dim; icoord++)
   {
     diff[icoord] = maximum[icoord] - minimum[icoord];
   }
-	short dim;
+  short dim = 0;
+  double max_diff = diff[dim];
+  for (int icoord=1; icoord<m_dim; icoord++)
+  {
+    if (diff[icoord] > max_diff)
+    {
+      dim = icoord;
+      max_diff = diff[icoord];
+    }
+  }
+
+	/*short dim;
 	// get longest axe
 	if (diff[0] > diff[1]) {
 		if (m_dim < 3 || diff[0] > diff[2]) {
@@ -194,7 +177,7 @@ void KdTree::createTree(KdNode &node, int start, int end, double *maximum, doubl
 		else {
 			dim = 2;	// z-axe is longest axe
 		}
-	}
+	}*/ 
 	
 	node.m_dim = (unsigned char)dim;
 	double bestCut = (maximum[dim]+minimum[dim])/2.0f;
@@ -260,25 +243,13 @@ void KdTree::getSpread(KdTreePoint* points, int nOfPoints, double *maximum, doub
 	points++;
 	for (int i = 1; i < nOfPoints; i++) {
 		pos = points->pos;
-		if (pos[0] < minimum[0]) {
-			minimum[0] = pos[0];
-		}
-		if (pos[0] > maximum[0]) {
-			maximum[0] = pos[0];
-		}
-		if (pos[1] < minimum[1]) {
-			minimum[1] = pos[1];
-		}
-		if (pos[1] > maximum[1]) {
-			maximum[1] = pos[1];
-		}
-    if (m_dim>2)
+    for (int icoord=0; icoord<m_dim; icoord++)
     {
-      if (pos[2] < minimum[2]) {
-        minimum[2] = pos[2];
+      if (pos[icoord] < minimum[icoord]) {
+        minimum[icoord] = pos[icoord];
       }
-      if (pos[2] > maximum[2]) {
-        maximum[2] = pos[2];
+      if (pos[icoord] > maximum[icoord]) {
+        maximum[icoord] = pos[icoord];
       }
     }
     points++;

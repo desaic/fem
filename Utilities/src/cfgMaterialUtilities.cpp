@@ -454,7 +454,6 @@ void cfgMaterialUtilities::computeStrain(int n[2], const std::vector<std::vector
   int icomb=0, ncomb=(int)iX[0].size();
   for (int iaxis=0; iaxis<2; iaxis++)
   {
-    int jaxis;
     for (int jaxis=0; jaxis<2; jaxis++)
     {
       oStrains[iaxis][jaxis].resize(ncomb);
@@ -463,7 +462,28 @@ void cfgMaterialUtilities::computeStrain(int n[2], const std::vector<std::vector
         int isample=0, nsample=(int)iX[iaxis][icomb].size();
         for (isample=0; isample<nsample; isample++)
         {
-          cfgScalar strain = computeStrain(convertVec<cfgScalar, cfgScalar>(iX[iaxis][icomb][isample]), n[0], n[1], jaxis);
+          cfgScalar strain = computeStrain(iX[iaxis][icomb][isample], n[0], n[1], jaxis);
+          oStrains[iaxis][jaxis][icomb].push_back(strain);
+        }
+      }
+    }
+  }
+}
+
+void cfgMaterialUtilities::computeStrain3D(int n[3], const std::vector<std::vector<std::vector<cfgScalar> > > iX[3], std::vector<std::vector<cfgScalar> > oStrains[3][3])
+{
+  int icomb=0, ncomb=(int)iX[0].size();
+  for (int iaxis=0; iaxis<3; iaxis++)
+  {
+    for (int jaxis=0; jaxis<3; jaxis++)
+    {
+      oStrains[iaxis][jaxis].resize(ncomb);
+      for (icomb=0; icomb<ncomb; icomb++)
+      {
+        int isample=0, nsample=(int)iX[iaxis][icomb].size();
+        for (isample=0; isample<nsample; isample++)
+        {
+          cfgScalar strain = computeStrain(iX[iaxis][icomb][isample], n[0], n[1], n[2], jaxis);
           oStrains[iaxis][jaxis][icomb].push_back(strain);
         }
       }
@@ -664,7 +684,46 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vect
 
   int iVersion=1; // 0: Density Yx Yy; 1: Density Nux Nuy
 
-  int naxis = 2;
+  int naxis = 3;
+  int icomb, ncomb = (int)iMaterials.size();
+  for (icomb=0; icomb<ncomb; icomb++)
+  {
+    cfgScalar r = computeMaterialRatio(iMaterials[icomb], iBaseMaterialStructures);
+    oPhysicalParameters.push_back(r);
+
+    if (iVersion==0)
+    {
+      int iaxis;
+      for (iaxis=0; iaxis<naxis; iaxis++)
+      {
+        cfgScalar Y = computeYoungModulus(iStrains[iaxis][iaxis][icomb], iStresses[iaxis][icomb]);
+        oPhysicalParameters.push_back(Y);
+      }
+    }
+    else
+    {
+      cfgScalar poissonRatio_xy = computePoissonRatio(iStrains[0][0][icomb], iStrains[0][1][icomb]); 
+      oPhysicalParameters.push_back(poissonRatio_xy);
+
+      cfgScalar poissonRatio_xz = computePoissonRatio(iStrains[0][0][icomb], iStrains[0][2][icomb]); 
+      oPhysicalParameters.push_back(poissonRatio_xy);
+
+      cfgScalar poissonRatio_yz = computePoissonRatio(iStrains[1][1][icomb], iStrains[1][2][icomb]); 
+      oPhysicalParameters.push_back(poissonRatio_xy);
+    }
+  }
+  return true;
+}
+
+bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<int> > &iBaseMaterialStructures,
+                                                     const std::vector<std::vector<cfgScalar> > iStresses[3], const std::vector<std::vector<cfgScalar> > iStrains[3][3],
+                                                     std::vector<cfgScalar> &oPhysicalParameters)
+{
+  oPhysicalParameters.clear();
+
+  int iVersion=0; // 0: Density Yx Yy; 1: Density Nux Nuy
+
+  int naxis = 3;
   int icomb, ncomb = (int)iMaterials.size();
   for (icomb=0; icomb<ncomb; icomb++)
   {
@@ -785,7 +844,7 @@ void cfgMaterialUtilities::repMaterialAssignment(int nx, int ny, const std::vect
   {
     for (n=0; n<ny; n++)
     {
-      int matCombinationIndex = iMaterialCombIndices[m*ny + n];
+      int matCombinationIndex = iMaterialCombIndices[getGridToVectorIndex(m, n, nx, ny)];
 
       int i,j;
       for (i=0; i<repX; i++)
@@ -808,6 +867,49 @@ void cfgMaterialUtilities::repMaterialAssignment(int nx, int ny, const std::vect
     }
   }
 }
+
+void cfgMaterialUtilities::repMaterialAssignment(int nx, int ny, int nz, const std::vector<int> &iMaterialCombIndices, int repX, int repY, int repZ, int iNbSubdivisions, std::vector<int> &oMaterials)
+{
+  oMaterials.clear();
+  oMaterials.resize(nx*ny*nz*repX*repY*repZ*iNbSubdivisions*iNbSubdivisions*iNbSubdivisions, -1);
+
+  int m, n, p;
+  for (m=0; m<nx; m++)
+  {
+    for (n=0; n<ny; n++)
+    {
+      for (p=0; p<nz; p++)
+      {
+        int matCombinationIndex = iMaterialCombIndices[getGridToVectorIndex(m, n, p, nx, ny, nz)];
+        int i,j,k;
+        for (i=0; i<repX; i++)
+        {
+          for (j=0; j<repY; j++)
+          {
+            for (k=0; k<repZ; k++)
+            {
+              int kk,ll,mm;
+              for (kk=0; kk<iNbSubdivisions; kk++)
+              {
+                for (ll=0; ll<iNbSubdivisions; ll++)
+                {
+                  for (mm=0; mm<iNbSubdivisions; mm++)
+                  {
+                    int indx = i*iNbSubdivisions*nx + m*iNbSubdivisions + kk;
+                    int indy = j*iNbSubdivisions*ny + n*iNbSubdivisions + ll;
+                    int indz = k*iNbSubdivisions*nz + p*iNbSubdivisions + mm;
+                    int elementIndex = getGridToVectorIndex(indx, indy, indz, repX*nx*iNbSubdivisions, repY*ny*iNbSubdivisions, repZ*nz*iNbSubdivisions);
+                    oMaterials[elementIndex] = matCombinationIndex;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} 
 
 void cfgMaterialUtilities::getMaterialAssignment(int nx, int ny, const std::vector<int> &iMaterialCombIndices, int nX, int nY, const std::vector<std::vector<int> > &iBaseCellMaterials, int repX, int repY, 
                                                  int iNbSubdivisions, std::vector<int> &oMaterials)
@@ -858,6 +960,12 @@ void cfgMaterialUtilities::getMaterialAssignment(int nx, int ny, const std::vect
 int cfgMaterialUtilities::getGridToVectorIndex(int i, int j, int nx, int ny)
 {
   int index =  i*ny+ j;
+  return index;
+}
+
+int cfgMaterialUtilities::getGridToVectorIndex(int i, int j, int k, int nx, int ny, int nz)
+{
+  int index =  i*ny*nz + j*nz +k;
   return index;
 }
 
@@ -914,6 +1022,82 @@ void cfgMaterialUtilities::getSideVertices(int iSide, int nx, int ny, std::vecto
    }
 }
 
+//0: Left, 1: Right, 2: Bottom, 3:Top, 4: Back, 5: Front
+void cfgMaterialUtilities::getSideVertices(int iSide, int nx, int ny, int nz, std::vector<int> &oVertexIndices)
+{
+  oVertexIndices.clear();
+
+  int nxvertex = nx+1, nyvertex = ny+1, nzvertex = nz+1;
+
+   int ii, jj, kk;
+   if (iSide==0) //left
+   {    
+     for(jj=0; jj<nyvertex; jj++)
+     {
+       for (kk=0; kk<nzvertex; kk++)
+       {
+        int indVertex = getGridToVectorIndex(0, jj, kk, nxvertex, nyvertex, nzvertex);
+        oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==1) //right
+   {
+     for(jj=0; jj<nyvertex; jj++)
+     {
+       for (kk=0; kk<nzvertex; kk++)
+       {
+         int indVertex = getGridToVectorIndex(nxvertex-1, jj, kk, nxvertex, nyvertex, nzvertex);
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==2) //bottom
+   {
+     for(ii=0; ii<nxvertex; ii++)
+     {
+       for (kk=0; kk<nzvertex; kk++)
+       {
+         int indVertex = getGridToVectorIndex(ii, 0, kk, nxvertex, nyvertex, nzvertex);
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==3) //top
+   {
+     for(ii=0; ii<nxvertex; ii++)
+     {
+       for (kk=0; kk<nzvertex; kk++)
+       {
+         int indVertex = getGridToVectorIndex(ii, nyvertex-1, kk, nxvertex, nyvertex, nzvertex);   
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==4) // back
+   {
+     for(ii=0; ii<nxvertex; ii++)
+     {
+       for (jj=0; jj<nyvertex; jj++)
+       {
+         int indVertex = getGridToVectorIndex(ii, jj, 0, nxvertex, nyvertex, nzvertex);   
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==5) // front
+   {
+     for(ii=0; ii<nxvertex; ii++)
+     {
+       for (jj=0; jj<nyvertex; jj++)
+       {
+         int indVertex = getGridToVectorIndex(ii, jj, nzvertex-1, nxvertex, nyvertex, nzvertex);   
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+}
+
 void cfgMaterialUtilities::updateMaterialSubstructure(std::vector<int> &ioMaterialAsssignment, int nx, int ny, const std::vector<int> &iSubMaterialStructure, int Nx, int Ny, int iSubMatStructLocation)
 {
   int Cx, Cy;
@@ -932,6 +1116,131 @@ void cfgMaterialUtilities::updateMaterialSubstructure(std::vector<int> &ioMateri
       ioMaterialAsssignment[index] = newMat;
     }
   }
+}
+
+bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, int nX, int nY, int nZ)
+{
+  bool isManifold = true;
+
+  int nxComb = nx/nX;
+  int nyComb = ny/nY;
+  int nzComb = nz/nZ;
+
+  int icomb, jcomb, kcomb;
+  for (icomb=0; icomb<nxComb && isManifold; icomb++)
+  {
+    for (jcomb=0; jcomb<nyComb && isManifold; jcomb++)
+    {
+      for (kcomb=0; kcomb<nzComb && isManifold; kcomb++)
+      {
+        int icell;
+        for (icell=0; icell<nX && isManifold; icell++)
+        {
+          int x = nX*icomb + icell;
+          int y = nY*jcomb;
+          int z = nZ*kcomb;
+
+          int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
+          int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
+          int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
+          int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
+          int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
+          int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+          int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
+          int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+
+          int mat111 = iMaterials[indMat111];
+          int mat121 = iMaterials[indMat121];
+          int mat211 = iMaterials[indMat211];
+          int mat221 = iMaterials[indMat221];
+          int mat112 = iMaterials[indMat112];
+          int mat122 = iMaterials[indMat122];
+          int mat212 = iMaterials[indMat212];
+          int mat222 = iMaterials[indMat222];
+
+          isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
+          isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
+          isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
+          isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
+          isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
+          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+          isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || mat111==mat211);
+        }
+
+        int jcell;
+        for (jcell=1; jcell<nY && isManifold; jcell++)
+        {
+          int x = nX*icomb;
+          int y = nY*jcomb + jcell;
+          int z = nZ*kcomb;
+
+          int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
+          int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
+          int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
+          int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
+          int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
+          int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+          int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
+          int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+
+          int mat111 = iMaterials[indMat111];
+          int mat121 = iMaterials[indMat121];
+          int mat211 = iMaterials[indMat211];
+          int mat221 = iMaterials[indMat221];
+          int mat112 = iMaterials[indMat112];
+          int mat122 = iMaterials[indMat122];
+          int mat212 = iMaterials[indMat212];
+          int mat222 = iMaterials[indMat222];
+
+          isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
+          isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
+          isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
+          isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
+          isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
+          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+          isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || mat111==mat211);
+        }
+
+        int kcell;
+        for (kcell=1; kcell<nZ && isManifold; kcell++)
+        {
+          int x = nX*icomb;
+          int y = nY*jcomb;
+          int z = nZ*kcomb + kcell;
+
+          int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
+          int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
+          int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
+          int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
+          int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
+          int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+          int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
+          int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+
+          int mat111 = iMaterials[indMat111];
+          int mat121 = iMaterials[indMat121];
+          int mat211 = iMaterials[indMat211];
+          int mat221 = iMaterials[indMat221];
+          int mat112 = iMaterials[indMat112];
+          int mat122 = iMaterials[indMat122];
+          int mat212 = iMaterials[indMat212];
+          int mat222 = iMaterials[indMat222];
+
+          isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
+          isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
+          isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
+          isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
+          isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
+          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+          isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || mat111==mat211);
+        }
+      }
+    }
+  }
+  return isManifold;
 }
 
 bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, int iNbCellsToCheck)
@@ -1039,6 +1348,28 @@ void cfgMaterialUtilities::getLayer(int Nx, int Ny, const std::vector<int> &iStr
   }
 }
 
+void cfgMaterialUtilities::getLayer(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, int iIndex, int iDim, std::vector<int> &oNewLayerElements)
+{
+  oNewLayerElements.clear();
+
+  int min[3] = {0, 0};
+  int max[3] = {Nx, Ny, Nz};
+  min[iDim]=iIndex;
+  max[iDim]=iIndex+1;
+
+  for (int i=min[0]; i<max[0]; i++)
+  {
+    for (int j=min[1]; j<max[1]; j++)
+    {
+      for (int k=min[2]; k<max[2]; k++)
+      {
+        int indMat = getGridToVectorIndex(i, j, k, Nx, Ny ,Nz);
+        oNewLayerElements.push_back(iStructureElements[indMat]);
+      }
+    }
+  }
+}
+
 void cfgMaterialUtilities::insertLayer(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &iNewLayerElements, int iIndex, int iDim, std::vector<int> &oNewStructureElements)
 {
   int n[2] = {Nx, Ny};
@@ -1075,6 +1406,75 @@ void cfgMaterialUtilities::insertLayer(int Nx, int Ny, const std::vector<int> &i
   }
 }
 
+void cfgMaterialUtilities::mirrorStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
+{
+  int n[2] = {2*Nx, 2*Ny};
+  oNewStructureElements.resize(n[0]*n[1]);
+
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<Ny; j++)
+    {
+      int indMat = getGridToVectorIndex(i, j, Nx, Ny);
+      int mat = iStructureElements[indMat];
+
+      int indMat1 = getGridToVectorIndex(i, j, n[0], n[1]);
+      oNewStructureElements[indMat1] = mat;
+
+      int indMat2 = getGridToVectorIndex(i, Ny-1-j + Ny, n[0], n[1]);
+      oNewStructureElements[indMat2] = mat;
+
+      int indMat3 = getGridToVectorIndex(Nx-1-i + Nx, j, n[0], n[1]);
+      oNewStructureElements[indMat3] = mat;
+
+      int indMat4 = getGridToVectorIndex(Nx-1-i + Nx, Ny-1-j + Ny, n[0], n[1]);
+      oNewStructureElements[indMat4] = mat;
+    }
+  }
+}
+
+void cfgMaterialUtilities::mirrorStructure(int Nx, int Ny, int Nz ,const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
+{
+  int n[3] = {2*Nx, 2*Ny, 2*Nz};
+  oNewStructureElements.resize(n[0]*n[1]*n[2]);
+
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<Ny; j++)
+    {
+      for (int k=0; k<Nz; k++)
+      {
+        int indMat = getGridToVectorIndex(i, j, k, Nx, Ny, Nz);
+        int mat = iStructureElements[indMat];
+
+        int indMat1 = getGridToVectorIndex(i, j, k, n[0], n[1], n[2]);
+        oNewStructureElements[indMat1] = mat;
+
+        int indMat2 = getGridToVectorIndex(i, Ny-1-j + Ny, k, n[0], n[1], n[2]);
+        oNewStructureElements[indMat2] = mat;
+
+        int indMat3 = getGridToVectorIndex(Nx-1-i + Nx, j, k, n[0], n[1], n[2]);
+        oNewStructureElements[indMat3] = mat;
+
+        int indMat4 = getGridToVectorIndex(Nx-1-i + Nx, Ny-1-j + Ny, k, n[0], n[1], n[2]);
+        oNewStructureElements[indMat4] = mat;
+
+        int indMat5 = getGridToVectorIndex(i, j, Nz-1-k + Nz, n[0], n[1], n[2]);
+        oNewStructureElements[indMat5] = mat;
+
+        int indMat6 = getGridToVectorIndex(i, Ny-1-j + Ny, Nz-1-k + Nz, n[0], n[1], n[2]);
+        oNewStructureElements[indMat6] = mat;
+
+        int indMat7 = getGridToVectorIndex(Nx-1-i + Nx, j, Nz-1-k + Nz, n[0], n[1], n[2]);
+        oNewStructureElements[indMat7] = mat;
+
+        int indMat8 = getGridToVectorIndex(Nx-1-i + Nx, Ny-1-j + Ny, Nz-1-k + Nz, n[0], n[1], n[2]);
+        oNewStructureElements[indMat8] = mat;
+      }
+    }
+  }
+}
+
 cfgScalar cfgMaterialUtilities::computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis)
 {
   Vector2S Barycenters[2];
@@ -1090,11 +1490,32 @@ cfgScalar cfgMaterialUtilities::computeStrain(const std::vector<cfgScalar> &ix, 
     int ivertex=0, nvertex=(int)vertexIndices.size();
     for (ivertex=0; ivertex<nvertex; ivertex++)
     {
-      for (ivertex=0; ivertex<nvertex; ivertex++)
-      {
-        int indVertex = vertexIndices[ivertex];
-        Barycenters[iside] += getVector2S(indVertex, ix);
-      }
+      int indVertex = vertexIndices[ivertex];
+      Barycenters[iside] += getVector2S(indVertex, ix);
+    }
+    Barycenters[iside] /= (cfgScalar)nvertex;
+  }
+  float strain = (Barycenters[0]-Barycenters[1]).norm()-1;
+  return strain;
+}
+
+cfgScalar cfgMaterialUtilities::computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int nz, int iAxis)
+{
+  Vector3S Barycenters[2];
+
+  int iside;
+  for (iside=0; iside<2; iside++)
+  {
+    Barycenters[iside] = Vector3S::Zero();
+
+    std::vector<int> vertexIndices;
+    getSideVertices(2*iAxis+iside, nx, ny, nz, vertexIndices);
+
+    int ivertex=0, nvertex=(int)vertexIndices.size();
+    for (ivertex=0; ivertex<nvertex; ivertex++)
+    {
+      int indVertex = vertexIndices[ivertex];
+      Barycenters[iside] += getVector3S(indVertex, ix);
     }
     Barycenters[iside] /= (cfgScalar)nvertex;
   }
@@ -1169,16 +1590,14 @@ void cfgMaterialUtilities::getBoundingBox(const std::vector<cfgScalar> &iPoints,
   assert(iPoints.size()%iDim==0);
 
   oBox[0].resize(iDim, FLT_MAX);
-  oBox[1].resize(iDim, FLT_MIN);
+  oBox[1].resize(iDim, -FLT_MAX);
 
   int ipoint, npoint=(int)iPoints.size()/iDim;
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
-    Vector3f p = getVector3f(ipoint, iPoints);
-    int icoord;
-    for (icoord=0; icoord<iDim; icoord++)
+    for (int icoord=0; icoord<iDim; icoord++)
     {
-      cfgScalar val = p[icoord];
+      cfgScalar val = iPoints[iDim*ipoint+icoord];
       if (val < oBox[0][icoord])
       {
         oBox[0][icoord] = val;
@@ -1757,7 +2176,7 @@ std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Vector3
  std::vector<Vector3f> cfgMaterialUtilities::toVector3f(const std::vector<float> &iPoints)
  {
    std::vector<Vector3f> vec;
-   assert(iPoints.size()%2==0);
+   assert(iPoints.size()%3==0);
    int ipoint=0, npoint=(int)iPoints.size()/3;
    for (ipoint=0; ipoint<npoint; ipoint++)
    {

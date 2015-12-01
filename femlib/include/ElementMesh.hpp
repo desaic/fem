@@ -76,6 +76,7 @@ public:
 
   ///@param trig if true, return only the upper triangle of the symmetric matrix.
   void getStiffnessSparse(std::vector<float> &val, bool trig = false, bool constrained=false, bool iFixedRigid=false);
+  void getStiffnessSparse(std::vector<float> &val, bool trig, bool constrained, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic);
 
   Eigen::SparseMatrix<float> getStiffnessSparse(bool trig = false, bool constrained=false, bool iFixedRigid=false);
 
@@ -85,12 +86,18 @@ public:
   ///@param I row offsets. I.size() = matrix size + 1. I[size()-1]=number of non-zeros.
   ///@param J column indices.
   void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig = false, bool iFixedRigid=false);
+  void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic);
 
   MatrixXf getStiffness();
   
   float eleSize();
 
   virtual ~ElementMesh();
+
+private:
+  void fixTranslation(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
+  void fixRotation(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
+  void enforcePeriodicity(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
 };
 
 

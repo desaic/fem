@@ -3,6 +3,7 @@
 #include "MatrixX.hpp"
 #include "ArrayUtil.hpp"
 #include "femError.hpp"
+#include "ElementRegGrid.hpp"
 
 #include "LinSolve.hpp"
 #include "SparseLin.hpp"
@@ -12,10 +13,28 @@
 #include <assert.h>
 
 StepperNewton::StepperNewton():dense(true),dx_tol(1e-5f),h(1.0f)
-  ,rmRigid(false)
 {
   m_Init = false;
   dense = false;
+
+  m_periodic = false;
+  m_noTranslation = false;
+  m_noRotation = false;
+}
+
+void StepperNewton::enforcePeriodicity(bool iOn)
+{
+  m_periodic = iOn;
+}
+
+void StepperNewton::removeTranslation(bool iOn)
+{
+  m_noTranslation = iOn;
+}
+
+void StepperNewton::removeRotation(bool iOn)
+{
+  m_noRotation = iOn;
 }
 
 int StepperNewton::oneStep()
@@ -24,9 +43,27 @@ int StepperNewton::oneStep()
 
   std::vector<Vector3f> force = m->getForce();
   float E = m->getEnergy();
- 
+
   int ndof = 3*(int)m->x.size();
-  std::vector<float> bb(ndof);
+  int nconstraint = 0;
+  if (m_noTranslation)
+  {
+    nconstraint +=3;
+  }
+  if (m_noRotation)
+  {
+    nconstraint +=3;
+  }
+  if (m_periodic)
+  {
+    int nx = ((ElementRegGrid*)m)->nx+1;
+    int ny = ((ElementRegGrid*)m)->ny+1;
+    int nz = ((ElementRegGrid*)m)->nz+1;
+    nconstraint += 3*(ny*nz-1 + (nx-1)*nz-1 + (nx-1)*(ny-1)-1);
+  }
+  std::vector<float> bb(ndof+nconstraint);
+
+  bool rmRigid = m_noTranslation && m_noRotation;
 
   if (dense)
   {
@@ -34,7 +71,14 @@ int StepperNewton::oneStep()
   }
   else
   {
-    status = compute_dx_sparse(m, force, rmRigid, bb);
+    if (!m_periodic)
+    {
+      status = compute_dx_sparse(m, force, rmRigid, bb);
+    }
+    else
+    {
+      status = compute_dx_sparse(m, force, m_noTranslation, m_noRotation, m_periodic, bb);
+    }
   }
   if (status>0)
     return status;
@@ -211,6 +255,80 @@ int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vect
 
   int status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
       std::cout<< "sparse solve " << status << "\n";
+  for(int ii = 0;ii<x.size();ii++){
+    bb[ii] = x[ii];
+  }
+  if (status<0)
+    return 1;
+
+  return 0;
+}
+
+int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRemoveTranslation, bool iRemoveRotation, bool iPeriodic, std::vector<float> &bb)
+{
+  bool triangular = true;
+
+  if (!m_Init)
+  {
+    m_I.clear();
+    m_J.clear();
+    iMesh->stiffnessPattern(m_I, m_J, triangular, iRemoveTranslation, iRemoveRotation, iPeriodic);
+    sparseInit();
+    m_Init = true;
+  }
+
+  assert(iMesh);
+  int ndof = (int)(3*iMesh->x.size());
+ 
+  std::vector<float> Kvalues;
+  iMesh->getStiffnessSparse(Kvalues, triangular, true, iRemoveTranslation, iRemoveRotation, iPeriodic);
+   
+  for(unsigned int ii = 0;ii<m->x.size(); ii++){
+    for(int jj = 0;jj<3;jj++){
+      int row = 3*ii + jj;
+      if(m->fixed[ii]){
+        bb[ row ] = 0;
+      }else{
+        bb[ row ] = iForces[ii][jj];
+      }
+    }
+  }
+  int irow, nrow=(int)bb.size();
+  for (irow=ndof; irow<nrow; irow++)
+  {
+    bb [irow] = 0;
+  }
+
+  int ncol = nrow;
+  std::vector<int> ia(nrow+1),ja;
+  std::vector<double> val ;
+  std::vector<double> rhs(nrow);
+  std::vector<double> x(nrow,0);
+  int indVal = 0;
+  //starting index of a row
+  //only upper triangle is needed
+  for (int col=0; col<ncol;col++){
+    rhs[col] = bb[col];
+    ia[col] = indVal;
+
+    //for (Eigen::SparseMatrix<cfgScalar>::InnerIterator it(K, col); it; ++it){
+    //    int row = it.row();
+    for (int i=m_I[col]; i<m_I[col+1]; i++)
+    {
+      int row = m_J[indVal];
+      if(triangular && col>row)
+      {
+        continue;
+      }
+      ja.push_back(row);
+      val.push_back(Kvalues[indVal]);
+      indVal++;
+    }
+  }
+  ia[nrow] = indVal;
+
+  int status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
+   //   std::cout<< "sparse solve " << status << "\n";
   for(int ii = 0;ii<x.size();ii++){
     bb[ii] = x[ii];
   }

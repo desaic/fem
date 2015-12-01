@@ -108,3 +108,29 @@ Eigen::MatrixXf stiffness(int qi, const MaterialQuad * mat, Element* ele, Elemen
   }
   return K;
 }
+
+std::vector<Eigen::MatrixXf> MaterialQuad::getElasticityTensors()
+{
+  std::vector<Eigen::MatrixXf> elasticityTensors;
+  for(unsigned int ii = 0; ii<q->x.size(); ii++){
+    Eigen::MatrixXf elasticityTensor = e[ii]->EMatrix();
+    elasticityTensors.push_back(elasticityTensor);
+  }
+  return elasticityTensors;
+}
+
+std::vector<Matrix3f> MaterialQuad::getStrainTensors(Element* ele, ElementMesh * mesh, const std::vector<Vector3f> &ix)
+{
+  assert(ix.size()==mesh->x.size());
+
+  std::vector<Matrix3f> strainTensors;
+  for(unsigned int ii = 0; ii<q->x.size(); ii++)
+  {
+    Matrix3f F = ele->defGrad(q->x[ii],mesh->X, ix);
+    Matrix3f strainTensor = e[ii]->getStrainTensor(F);
+    strainTensors.push_back(strainTensor);
+  }
+  return strainTensors;
+}
+
+

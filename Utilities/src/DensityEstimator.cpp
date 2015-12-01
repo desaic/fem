@@ -53,23 +53,32 @@ cfgScalar DensityEstimator::estimateRadius()
   return radius;
 }
 
-cfgScalar DensityEstimator::evalKernel(const Vector3S &x, const Vector3S &xi)
+cfgScalar DensityEstimator::evalKernel(const cfgScalar *x, const cfgScalar *xi)
 {
-  cfgScalar y = (x-xi).squaredNorm()/(m_radius*m_radius);
+  cfgScalar y = 0;
+  for (int icoord=0; icoord<m_dim; icoord++)
+  {
+    cfgScalar diff = x[icoord]-xi[icoord];
+    y += diff*diff;
+  }
+  y /= (m_radius*m_radius);
   cfgScalar t = 1-y;
   cfgScalar phi = t*t*t*t;
   return phi;
 }
 
-void DensityEstimator::getNeighbours(const Vector3S &iP, std::vector<int> &oInds)
+void DensityEstimator::getNeighbours(const cfgScalar *iP, std::vector<int> &oInds)
 {
   assert(m_distanceTool);
   const std::set<int> pointsToIgnore;
-  double p[3] = {iP[0],iP[1],iP[2]};
+  double * p = new double[m_dim];
+  for (int icoord=0; icoord<m_dim; icoord++)
+    p[icoord] = iP[icoord];
   m_distanceTool->getClosestPointIndices(&p[0], m_radius, pointsToIgnore, oInds);
+  delete [] p;
 }
 
-cfgScalar DensityEstimator::computeDensity(const Vector3S &iP)
+cfgScalar DensityEstimator::computeDensity(const cfgScalar *iP)
 {
   double density = 0;
   std::vector<int> neighbours;
@@ -78,7 +87,7 @@ cfgScalar DensityEstimator::computeDensity(const Vector3S &iP)
   for (ivertex=0; ivertex<nvertex; ivertex++)
   {
     int indVertex = neighbours[ivertex];
-    Vector3S Pi = getVector3S(indVertex, m_x);
+    cfgScalar * Pi = &m_x[indVertex*m_dim];
     double phi = evalKernel(iP, Pi);
     density += phi;
   }
@@ -91,7 +100,7 @@ std::vector<cfgScalar> DensityEstimator::computeDensities()
   int ipoint=0, npoint=(int)m_x.size()/m_dim;
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
-    Vector3S P = getVector3S(ipoint, m_x);
+    cfgScalar * P = &m_x[m_dim*ipoint];
     cfgScalar density = computeDensity(P);
     densities.push_back(density);
   }

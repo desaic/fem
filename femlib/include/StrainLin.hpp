@@ -11,6 +11,8 @@ public:
   virtual Matrix3f getdPdx(const Matrix3f & F, const Matrix3f & dF);
 
 	virtual Eigen::MatrixXf EMatrix();
+
+  virtual Matrix3f getStrainTensor(const Matrix3f & F);
 };
 
 #endif

@@ -10,6 +10,8 @@ class ElementHex:public Element
 public:
   ElementHex();
   ElementHex(const ElementHex & e);
+  ElementHex(const std::vector<int> &iNodes);
+
   int nV() const override{ return 8; }
 
   int nF() const override{ return 6; }

@@ -22,6 +22,9 @@ public:
   
   MatrixXf getStiffness(Element* ele, ElementMesh * mesh);
 
+  virtual std::vector<Eigen::MatrixXf> getElasticityTensors();
+  virtual std::vector<Matrix3f> getStrainTensors(Element* ele, ElementMesh * mesh, const std::vector<Vector3f> &ix);
+
   std::vector<StrainEne*> e;
   const Quadrature * q;
 

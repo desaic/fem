@@ -43,7 +43,7 @@ MaterialParametersView::~MaterialParametersView()
 {
 }
 
-vtkSmartPointer<vtkTable> MaterialParametersView::createTable(const std::vector<float> &iValues1, int idim1, std::string *iLabels, const std::vector<int> *iPointIndices)
+vtkSmartPointer<vtkTable> MaterialParametersView::createTable(const std::vector<float> &iValues1, int idim1, const std::vector<std::string> &iLabels, const std::vector<int> *iPointIndices)
 {
   vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
 
@@ -70,7 +70,7 @@ vtkSmartPointer<vtkTable> MaterialParametersView::createTable(const std::vector<
   return table;
 }
 
-vtkSmartPointer<vtkTable> MaterialParametersView::createTable(const std::vector<float> &iValues1, const std::vector<int> &iValues2, int idim1, int idim2, std::string *iLabels, const std::vector<int> *iPointIndices)
+vtkSmartPointer<vtkTable> MaterialParametersView::createTable(const std::vector<float> &iValues1, const std::vector<int> &iValues2, int idim1, int idim2, const std::vector<std::string> &iLabels, const std::vector<int> *iPointIndices)
 {
   vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
 
@@ -177,16 +177,33 @@ void MaterialParametersView::updatePlots()
   m_plotsPerLevel.clear();
   m_plotsPerLevel.resize(nlevel);
 
-  std::string labels[4]= {"Density", "Y1", "Y2", "Level"};
+  int paramdim = m_project->getDim()+1;
+
+  std::vector<std::string> labels;
+  if (paramdim==3)
+  {
+    labels.push_back("Density");
+    labels.push_back("Y1");
+    labels.push_back("Y2");
+    labels.push_back("Level");
+  }
+  else if (paramdim==4)
+  {
+    labels.push_back("Density");
+    labels.push_back("Y1");
+    labels.push_back("Y2");
+    labels.push_back("Y3");
+    labels.push_back("Level");
+  }
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
     vtkVector3i col = matColors[ilevel];
 
-    int npoints = (int)physicalParametersPerLevel[ilevel].size()/3;
+    int npoints = (int)physicalParametersPerLevel[ilevel].size()/paramdim;
     std::vector<int> levels(npoints, ilevel);
-    vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, 3, 1, labels);
+    vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels);
 
-    ScoringFunction scoringFunction(3);
+    ScoringFunction scoringFunction(paramdim);
     //scoringFunction.setDensityRadius(0.083);
     std::vector<cfgScalar> scores = scoringFunction.computeScores(physicalParametersPerLevel[ilevel]);
 
@@ -198,7 +215,7 @@ void MaterialParametersView::updatePlots()
     std::vector<vtkVector3i> colors;
     for (int ipoint=0; ipoint<npoints; ipoint++)
     {
-      cfgScalar w = scores[ipoint];
+      cfgScalar w = 1 ;//scores[ipoint];
       vtkVector3i matColor(w*col[0] + (1-w)*255, w*col[1] + (1-w)*255, w*col[2] + (1-w)*255);
       colors.push_back(matColor);
     }
@@ -206,7 +223,7 @@ void MaterialParametersView::updatePlots()
     m_plotsPerLevel[ilevel].push_back(plot);
     
     vtkVector3i red(255, 0, 0);
-    vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, 3, 1, labels, &newparticules);
+    vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
     vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Y2", "Density", red, 15);
     //m_plotsPerLevel[ilevel].push_back(plot2);
   }

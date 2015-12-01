@@ -38,13 +38,12 @@ DistanceTool::DistanceTool(int idim)
 
 DistanceTool::DistanceTool(const std::vector<double> &iX, int idim)
 {
-  assert(idim==2||idim==3);
   m_dim = idim;
 
   m_KDTree = NULL;
   m_positions = NULL;
 
-  assert(m_X.size()%m_dim == 0);
+  assert(iX.size()%m_dim == 0);
   m_X = iX;
 
   int ivertex=0, nvertex=(int)iX.size()/m_dim;

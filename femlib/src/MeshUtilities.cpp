@@ -5,11 +5,14 @@
 #include "ElementRegGrid2D.h"
 #include "Element2D.h"
 #include "Material2D.h"
+#include "Material.hpp"
 #include "cfgMaterialUtilities.h"
 #include <Eigen/Dense>
 #include "Tensor.h"
 #include "ElementHex2D.h"
+#include "ElementHex.hpp"
 #include "StrainLin2D.h"
+#include "StrainLin.hpp"
 #include "MaterialQuad2D.h"
 #include "Quadrature2D.h"
 #include "cfgUtilities.h"
@@ -211,6 +214,230 @@ void meshUtil::getSideVertices(int iSide, const ElementRegGrid * iElementGrid, s
            fvIndices.push_back(externalFaceIndices[2][1][ivertex]);
          }
          oFaceVertexIndices.push_back(fvIndices);
+       }
+     }
+   }
+}
+
+//0: Left, 1: Right, 2: Bottom, 3:Top, 4: Back, 5: Front
+void meshUtil::getSideVertices(int iSide, const ElementRegGrid * iElementGrid, std::vector<int> &oVertexIndices)
+{
+  assert(iElementGrid);
+  
+  oVertexIndices.clear();
+
+  int nx = iElementGrid->nx;
+  int ny = iElementGrid->ny;
+  int nz = iElementGrid->nz;
+
+   // [axis][side][face_vertex]
+   int externalFaceIndices[3][2][4] = {
+    { {0,1,2,3}, {4,5,6,7} },
+    { {0,4,1,5}, {2,6,3,7} }, 
+    { {0,2,4,6}, {1,3,5,7} } };
+
+   int ii, jj, kk;
+   if (iSide==0) //left
+   {    
+     for(jj=0; jj<ny; jj++)
+     {
+       for(kk=0; kk<nz; kk++)
+       {
+         int indElement = iElementGrid->GetEleInd(0,jj,kk);
+
+         int fvIndex = externalFaceIndices[0][0][0];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+         if (kk==nz-1)
+         {
+           int fvIndex = externalFaceIndices[0][0][1];
+           int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+           oVertexIndices.push_back(indVertex);
+         }
+       }
+     }
+     for(kk=0; kk<nz; kk++)
+     {
+       int indElement = iElementGrid->GetEleInd(0,ny-1,kk);
+
+       int fvIndex = externalFaceIndices[0][0][2];
+       int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+       oVertexIndices.push_back(indVertex);
+       if (kk==nz-1)
+       {
+         int fvIndex = externalFaceIndices[0][0][3];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==1) //right
+   {
+     for(jj=0; jj<ny; jj++)
+     {
+       for(kk=0; kk<nz; kk++)
+       {
+         int indElement = iElementGrid->GetEleInd(nx-1,jj,kk);
+
+         int fvIndex = externalFaceIndices[0][1][0];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+         if (kk==nz-1)
+         {
+           int fvIndex = externalFaceIndices[0][1][1];
+           int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+           oVertexIndices.push_back(indVertex);
+         }
+       }
+     }
+     for(kk=0; kk<nz; kk++)
+     {
+       int indElement = iElementGrid->GetEleInd(nx-1,ny-1,kk);
+
+       int fvIndex = externalFaceIndices[0][1][2];
+       int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+       oVertexIndices.push_back(indVertex);
+       if (kk==nz-1)
+       {
+         int fvIndex = externalFaceIndices[0][1][3];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==2) //bottom
+   {
+     for(kk=0; kk<nz; kk++)
+     {
+       for(ii=0; ii<nx; ii++)
+       {
+         int indElement = iElementGrid->GetEleInd(ii,0,kk);
+
+         int fvIndex = externalFaceIndices[1][0][0];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+          if (ii==nx-1)
+         {
+           int fvIndex = externalFaceIndices[1][0][1];
+           int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+           oVertexIndices.push_back(indVertex);
+         }
+       }
+     }
+     for(ii=0; ii<nx; ii++)
+     {
+       int indElement = iElementGrid->GetEleInd(ii,0,nz-1);
+
+       int fvIndex = externalFaceIndices[1][0][2];
+       int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+       oVertexIndices.push_back(indVertex);
+       if (ii==nx-1)
+       {
+         int fvIndex = externalFaceIndices[1][0][3];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==3) //top
+   {
+     for(kk=0; kk<nz; kk++) 
+     {
+       for(ii=0; ii<nx; ii++)
+       {
+         int indElement = iElementGrid->GetEleInd(ii,ny-1,kk);
+
+         int fvIndex = externalFaceIndices[1][1][0];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+         if (ii==nx-1)
+         {
+           int fvIndex = externalFaceIndices[1][1][1];
+           int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+           oVertexIndices.push_back(indVertex);
+         }
+       }
+     }
+     for(ii=0; ii<nx; ii++)
+     {
+       int indElement = iElementGrid->GetEleInd(ii,ny-1,nz-1);
+
+       int fvIndex = externalFaceIndices[1][1][2];
+       int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+       oVertexIndices.push_back(indVertex);
+       if (ii==nx-1)
+       {
+         int fvIndex = externalFaceIndices[1][1][3];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==4) //back
+   {
+     for(ii=0; ii<nx; ii++)
+     {
+       for(jj=0; jj<ny; jj++)
+       {
+         int indElement = iElementGrid->GetEleInd(ii,jj,0);
+
+         int fvIndex = externalFaceIndices[2][0][0];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+         if (jj==ny-1)
+         {
+           int fvIndex = externalFaceIndices[2][0][1];
+           int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+           oVertexIndices.push_back(indVertex);
+         }
+       }
+     } 
+     for(jj=0; jj<ny; jj++)
+     {
+       int indElement = iElementGrid->GetEleInd(nx-1,jj,0);
+
+       int fvIndex = externalFaceIndices[2][0][2];
+       int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+       oVertexIndices.push_back(indVertex);
+       if (jj==ny-1)
+       {
+         int fvIndex = externalFaceIndices[2][0][3];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+       }
+     }
+   }
+   else if (iSide==5) //front
+   {
+     for(ii=0; ii<nx; ii++)
+     {
+       for(jj=0; jj<ny; jj++)
+       {
+         int indElement = iElementGrid->GetEleInd(ii,jj,nz-1);
+
+         int fvIndex = externalFaceIndices[2][1][0];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
+         if (jj==ny-1)
+         {
+           int fvIndex = externalFaceIndices[2][1][1];
+           int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+           oVertexIndices.push_back(indVertex);
+         }
+       }
+     }
+     for(jj=0; jj<ny; jj++)
+     {
+       int indElement = iElementGrid->GetEleInd(nx-1,jj,nz-1);
+
+       int fvIndex = externalFaceIndices[2][1][2];
+       int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+       oVertexIndices.push_back(indVertex);
+       if (jj==ny-1)
+       {
+         int fvIndex = externalFaceIndices[2][1][3];
+         int indVertex = iElementGrid->e[indElement]->at(fvIndex);
+         oVertexIndices.push_back(indVertex);
        }
      }
    }
@@ -601,9 +828,9 @@ void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid2D &iElementGrid, 
   MatrixXS coarseGv = MatrixXS::Zero(3,3);
   for (idisp=0; idisp<ndisp; idisp++)
   {
-    coarseGv(idisp, 0) = coarseStrainTensors[idisp](0,0);
-    coarseGv(idisp, 1) = coarseStrainTensors[idisp](1,1);
-    coarseGv(idisp, 2) = coarseStrainTensors[idisp](0,1);
+    coarseGv(0, idisp) = coarseStrainTensors[idisp](0,0);
+    coarseGv(1, idisp) = coarseStrainTensors[idisp](1,1);
+    coarseGv(2, idisp) = coarseStrainTensors[idisp](0,1);
   }
 
   MatrixXS invCoarseGv = coarseGv.inverse();
@@ -650,9 +877,9 @@ void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid2D &iElementGrid, 
       MatrixXS Gv = MatrixXS::Zero(3,3);
       for (idisp=0; idisp<ndisp; idisp++)
       {
-        Gv(idisp, 0) = strainTensors[idisp][itensor](0,0);
-        Gv(idisp, 1) = strainTensors[idisp][itensor](1,1);
-        Gv(idisp, 2) = strainTensors[idisp][itensor](0,1);
+        Gv(0, idisp) = strainTensors[idisp][itensor](0,0);
+        Gv(1, idisp) = strainTensors[idisp][itensor](1,1);
+        Gv(2, idisp) = strainTensors[idisp][itensor](0,1);
       }
 
       Gt_C_G += w[itensor]*Gv.transpose()*C[itensor]*Gv;
@@ -662,6 +889,106 @@ void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid2D &iElementGrid, 
   }
   oCoarsenedTensor = (1.f/nelem) * invCoarseGv.transpose() * Gt_C_G * invCoarseGv;
 }
+
+void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid &iElementGrid, const std::vector<std::vector<cfgScalar> > &iHarmonicDisplacements, MatrixXS &oCoarsenedTensor)
+{
+  int nx = iElementGrid.nx;
+  int ny = iElementGrid.ny;
+  int nz = iElementGrid.nz;
+
+  std::vector<int> corners;
+  corners.push_back(iElementGrid.GetVertInd(0, 0, 0));
+  corners.push_back(iElementGrid.GetVertInd(0, 0, nz));
+  corners.push_back(iElementGrid.GetVertInd(0, ny, 0));
+  corners.push_back(iElementGrid.GetVertInd(0, ny, nz));
+  corners.push_back(iElementGrid.GetVertInd(nx, 0, 0));
+  corners.push_back(iElementGrid.GetVertInd(nx, 0, nz));
+  corners.push_back(iElementGrid.GetVertInd(nx, ny, 0));
+  corners.push_back(iElementGrid.GetVertInd(nx, ny, nz));
+  ElementHex coarseElem(corners);
+  StrainLin strainLin;
+  
+  std::vector<Matrix3f> coarseStrainTensors;
+  int idisp, ndisp=(int)iHarmonicDisplacements.size();
+  assert(ndisp==6);
+  for (idisp=0; idisp<ndisp; idisp++)
+  {
+    std::vector<Vector3f> h = cfgMaterialUtilities::toVector3f(iHarmonicDisplacements[idisp]);
+    std::vector<Vector3f> x = cfgUtil::add(iElementGrid.X, h);
+    Matrix3f coarseF = coarseElem.defGrad(Vector3f(0,0,0), iElementGrid.X, x);
+    Matrix3f currentStrainTensor = strainLin.getStrainTensor(coarseF);
+    coarseStrainTensors.push_back(currentStrainTensor);
+    //std::cout << "strain = " << currentStrainTensor(0,0) << " " << currentStrainTensor(0,1) << " " << currentStrainTensor(1,1) << std::endl;
+  }
+
+  MatrixXS coarseGv = MatrixXS::Zero(6,6);
+  for (idisp=0; idisp<ndisp; idisp++)
+  {
+    coarseGv(0, idisp) = coarseStrainTensors[idisp](0,0);
+    coarseGv(1, idisp) = coarseStrainTensors[idisp](1,1);
+    coarseGv(2, idisp) = coarseStrainTensors[idisp](2,2);
+    coarseGv(3, idisp) = coarseStrainTensors[idisp](1,2);
+    coarseGv(4, idisp) = coarseStrainTensors[idisp](0,2);
+    coarseGv(5, idisp) = coarseStrainTensors[idisp](0,1);
+  }
+
+  MatrixXS invCoarseGv = coarseGv.inverse();
+  //std::cout << "G = " << coarseGv << std::endl;
+
+  MatrixXS Gt_C_G = MatrixXS::Zero(6, 6);
+
+  int ielem, nelem=(int)iElementGrid.e.size();
+  for (ielem=0; ielem<nelem; ielem++)
+  {
+    int matIndex = iElementGrid.me[ielem];
+    Material * mat = iElementGrid.m[matIndex];
+    assert(mat);
+
+    Element* element = iElementGrid.e[ielem];
+    assert(element);
+
+    std::vector<MatrixXS> C = mat->getElasticityTensors();
+    if (0)
+    {
+      std::cout << "C = " <<  C[0] << std::endl;
+    }
+
+    std::vector<std::vector<Matrix3f> > strainTensors;
+    int idisp, ndisp=(int)iHarmonicDisplacements.size();
+    assert(ndisp==6);
+    for (idisp=0; idisp<ndisp; idisp++)
+    {
+      std::vector<Vector3f> h = cfgMaterialUtilities::toVector3f(iHarmonicDisplacements[idisp]);
+      std::vector<Vector3f> x = cfgUtil::add(iElementGrid.X, h);
+      std::vector<Matrix3f> currentStrainTensors = mat->getStrainTensors(element, &iElementGrid, x);
+      strainTensors.push_back(currentStrainTensors);
+    }
+
+    std::vector<cfgScalar> w = ((MaterialQuad2D*)mat)->q->w;
+
+    int itensor, ntensor=(int)strainTensors[0].size();
+    for (itensor=0; itensor<ntensor; itensor++)
+    {
+      MatrixXS Gv = MatrixXS::Zero(6,6);
+      for (idisp=0; idisp<ndisp; idisp++)
+      {
+        Gv(0, idisp) = strainTensors[idisp][itensor](0,0);
+        Gv(1, idisp) = strainTensors[idisp][itensor](1,1);
+        Gv(2, idisp) = strainTensors[idisp][itensor](2,2);
+        Gv(3, idisp) = strainTensors[idisp][itensor](1,2);
+        Gv(4, idisp) = strainTensors[idisp][itensor](0,2);
+        Gv(5, idisp) = strainTensors[idisp][itensor](0,1); 
+      }
+      Gt_C_G += w[itensor]*Gv.transpose()*C[itensor]*Gv;
+
+      //std::cout << "Gv = " << Gv << std::endl;
+    }
+  }
+  oCoarsenedTensor = (1.f/nelem) * invCoarseGv.transpose() * Gt_C_G * invCoarseGv;
+}
+
+
+
 
 
 

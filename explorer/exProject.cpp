@@ -335,6 +335,8 @@ QSharedPointer<ElementMesh> exProject::computeElementMeshIncr(int iCombIndex, in
 
   const std::vector<int> & materialAssignment = m_materialAssignments[iLevel][iCombIndex];
 
+  bool isManifold = cfgMaterialUtilities::isStructureManifold(N[0], N[1], N[2], materialAssignment, N[0], N[1], N[2]);
+
   int blockSize = 3;
   int c = blockSize;
   int n[3] = {c*N[0], c*N[1], c*N[2]};
@@ -348,7 +350,7 @@ QSharedPointer<ElementMesh> exProject::computeElementMeshIncr(int iCombIndex, in
   }
   else
   {
-    //getMaterialAssignment(n[0], n[1], n[2], materialAssignment, N[0], N[1], N[2], baseMaterialStructures, cellMaterials);
+    repMaterialAssignment(N[0], N[1], N[2], materialAssignment, blockSize, blockSize, blockSize, 1, cellMaterials);
   }
   ElementRegGrid * em = new ElementRegGrid(n[0], n[1], n[2]);
   em->me = cellMaterials;

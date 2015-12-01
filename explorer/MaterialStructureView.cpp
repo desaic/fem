@@ -100,7 +100,7 @@ vtkSmartPointer<vtkPolyData> MaterialStructureView::createVtkPolyData(const Elem
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   vtkSmartPointer<vtkCellArray> faces = vtkSmartPointer<vtkCellArray>::New();
 
-  unsigned char colMat[2][4] =  {{255, 255, 255, 120}, {0, 0, 255, 255}};
+  unsigned char colMat[2][4] =  {{200, 200, 200, 120}, {0, 0, 255, 255}};
 
   vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
   colors->SetNumberOfComponents(4);

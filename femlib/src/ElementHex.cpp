@@ -202,3 +202,8 @@ ElementHex::ElementHex():Element(8)
 
 ElementHex::ElementHex(const ElementHex & e) :Element(e)
 {}
+
+ElementHex::ElementHex(const std::vector<int> &iNodes)
+  :Element(iNodes)
+{
+}

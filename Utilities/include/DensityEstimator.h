@@ -15,14 +15,14 @@ public:
   void setPoints(const std::vector<cfgScalar> &iPoints);
   void init();
 
-  cfgScalar computeDensity(const Vector3S &iP);
+  cfgScalar computeDensity(const cfgScalar *iP);
   std::vector<cfgScalar> computeDensities();
 
   cfgScalar estimateRadius();
 
 private:
-  cfgScalar evalKernel(const Vector3S &x, const Vector3S &xi);
-  void getNeighbours(const Vector3S &iP, std::vector<int> &oInds);
+  cfgScalar evalKernel(const cfgScalar *x, const cfgScalar *xi);
+  void getNeighbours(const cfgScalar *iP, std::vector<int> &oInds);
 
 private:
   int m_dim;

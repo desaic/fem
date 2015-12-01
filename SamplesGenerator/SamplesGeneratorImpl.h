@@ -37,6 +37,8 @@ private:
   void int2Comb(std::vector<int> &oMaterials, int idx, int nMat, int nVox);
   bool sampleDeformation(int iN[3], std::vector<MaterialQuad> &iMaterial, const std::string iStepperType, float iMaxForce, int iForceAxis, int iNumberOfSample, const std::vector<int> & iMaterials,
                          std::vector<float> &oStresses, std::vector<float> &oStrains);
+  bool sampleDeformation(int iN[3], std::vector<MaterialQuad> &iMaterial, const std::string iStepperType, float iMaxForce, int iForceAxis, int iNumberOfSample, const std::vector<int> & iMaterials,
+                          std::vector<float> &oStresses, std::vector<std::vector<float> > &oDeformations);
   bool sampleDeformation(int iN[2], std::vector<MaterialQuad2D> &iMaterial, const std::string iStepperType, float iMaxForce, int iForceAxis, int iNumberOfSample, const std::vector<int> & iMaterials,
                          std::vector<float> &oStresses, std::vector<float> &oStrains);
   bool sampleDeformation(int iN[2], std::vector<MaterialQuad2D> &iMaterial, const std::string iStepperType, float iMaxForce, int iForceAxis, int iNumberOfSample, const std::vector<int> & iMaterials,
@@ -70,11 +72,12 @@ private:
   int computeMaterialParameters(std::string iStepperType , const std::vector<std::vector<int> > &iMaterialAssignments, int iNewMatStructureSize[3],
                                 const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3], int iLevel, int iBlockRep, bool iWriteSingleFile, bool iWriteFullDeformation, const std::string &iPostfix ="");
   int computeDeformation(std::string iStepperType , const std::vector<std::vector<int> > &iMaterialAssignments, int iMatStructureSize[3], const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3],
-                        std::vector<std::vector<float> > oStresses[2], std::vector<std::vector<std::vector<float> > > oX[2]);
+                        std::vector<std::vector<float> > oStresses[3], std::vector<std::vector<std::vector<float> > > oX[3]);
 
   void growStructure(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments);
   void growStructureDoubleSize(int N[2], const std::vector<std::vector<int> > &materialAssignments, std::vector<std::vector<int> > &oNewMaterialAssignments, int iRowToDuplicate=-1, int iColToDuplicate=-1);
   void growStructureDoubleSize(int N[2], const std::vector<int> &matAssignment, std::set<std::vector<int> > &ioNewMaterialAssignments, int iRowToDuplicate, int iColToDuplicate);
+  void growStructureDoubleSize(int N[3], const std::vector<int> &matAssignment, std::set<std::vector<int> > &ioNewMaterialAssignments, int iLayerXToDuplicate, int iLayerYToDuplicate, int iLayerZToDuplicate);
 
   int getClosestPoint(Vector3f &iP, const std::vector<cfgScalar> &iPoints);
   int getRandomMatWithLinearProba(std::multimap<float, int> &iDist2MatIndex, float eps, float r);
@@ -90,7 +93,7 @@ private:
   void writeStressDeformationFile(const std::vector<std::vector<int> > &iMaterialAssignments, int iMatStructureSize[3], const std::vector<std::vector<float> > iStresses[2], const std::vector<std::vector<std::vector<float> > > iX[2], std::string iPostfix="");
 
   void computeParameters(std::string & iStepperType, const std::vector<std::vector<int> > &iMaterialAssignments, int n[3], const std::vector<std::vector<int> > &iBaseMaterialAssignments, int N[3], 
-                         std::vector<cfgScalar> &oParameters, std::vector<std::vector<std::vector<float> > > oX[2]);
+                         std::vector<cfgScalar> &oParameters, std::vector<std::vector<std::vector<float> > > oX[3]);
   void writeFiles(int iLevel, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<int> > &iBaseMaterialStructures, const std::vector<cfgScalar> &iParameters, const std::vector<std::vector<std::vector<float> > > iX[2],
                   const std::string iPostFix="");
   bool readFiles(int iLevel, std::vector<std::vector<int> > &oMaterialAssignments, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<cfgScalar> &oParameters);
@@ -103,6 +106,7 @@ private:
   int m_nbSubdivisions;
   std::vector<MaterialQuad> m_mat;
   std::vector<MaterialQuad2D> m_mat2D;
+  bool m_orthotropicOnly;
 };
 
 #endif

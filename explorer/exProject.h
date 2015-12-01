@@ -41,6 +41,8 @@ public:
   const std::vector<std::vector<std::vector<int> > > & getMaterialAssignments() {return m_materialAssignments;}
   const std::vector<int>  & getLevels() {return m_levels;}
 
+  int getDim() {return m_dim;}
+
 signals:
   void pickedStructureModified();
   void levelVisibilityModified();

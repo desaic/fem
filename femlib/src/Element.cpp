@@ -41,6 +41,10 @@ Element::Element(int _n):n(_n)
 Element::Element(const Element & e) : n(e.getNodeIndices())
 {}
   
+Element::Element(const std::vector<int> &inodes)
+{
+  n = inodes;
+}
 
 std::vector<std::array<int,2> >
 Element::getEdges()

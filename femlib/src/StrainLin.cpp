@@ -52,3 +52,10 @@ Eigen::MatrixXf StrainLin::EMatrix()
 	}
 	return c*E;
 }
+
+Matrix3f StrainLin::getStrainTensor(const Matrix3f & F)
+{
+  Matrix3f I = Matrix3f::identity();
+	Matrix3f eps = 0.5*(F + F.transposed()) - I;
+  return eps;
+}

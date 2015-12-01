@@ -5,12 +5,13 @@
 #include "PriorityQueue.h"
 
 #define SQR(x) (x*x)
+#define MAX_DIM 4
 
 typedef MaxPriorityQueue<int, double> PQueue;
 typedef PQueue::Element Neighbour;
 
 typedef struct kdTreePoint {
-	double pos[3];
+	double pos[MAX_DIM];
 	int			index;
 } KdTreePoint;
 
@@ -269,8 +270,8 @@ private:
 								m_nOfNeighbours,
 								m_nOfPositions;
 	PQueue*						m_queryPriorityQueue;
-	double m_boundingBoxLowCorner[3];
-	double m_boundingBoxHighCorner[3];
+	double m_boundingBoxLowCorner[MAX_DIM];
+	double m_boundingBoxHighCorner[MAX_DIM];
   int m_dim;
 
 	// gets the minimum and maximum value of all points at dimension dim
