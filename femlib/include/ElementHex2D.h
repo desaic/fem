@@ -2,7 +2,7 @@
 #define ELEMENTHEX2D_HPP
 #include "Element2D.h"
 
-#include <Eigen\Dense>
+#include <Eigen/Dense>
 
 class ElementHex2D:public Element2D
 {

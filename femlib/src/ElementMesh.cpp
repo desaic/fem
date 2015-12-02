@@ -53,21 +53,6 @@ void ElementMesh::load(std::istream & in, float scale)
 void ElementMesh::initArrays()
 {
   x=X;
-  Vector3f minPos(1,1,1);
-  Vector3f maxPos(0,0,0);
-
-  for(int ii =0 ; ii<(int)x.size(); ii++){
-    for(int jj =0 ; jj<3; jj++){
-      if(minPos[jj]>x[ii][jj]){
-        minPos[jj] = x[ii][jj];
-      }
-      if(maxPos[jj]<x[ii][jj]){
-        maxPos[jj] = x[ii][jj];
-      }
-    }
-  }
-  std::cout<<minPos[0]<<" "<<minPos[1]<<" "<<minPos[2]<<"\n";
-  std::cout<<maxPos[0]<<" "<<maxPos[1]<<" "<<maxPos[2]<<"\n";
   v.resize(X.size(), Vector3f(0,0,0));
   fe.resize(X.size(), Vector3f(0,0,0));
   fixed.resize(X.size(),false);

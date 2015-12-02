@@ -218,7 +218,7 @@ namespace cfgUtil
   std::vector<T> toStdVector(const std::set<T> &iSet)
   {
     std::vector<T> vec;
-    std::set<T>::const_iterator it, it_end=iSet.end();
+    typename std::set<T>::const_iterator it, it_end=iSet.end();
     for (it=iSet.begin(); it!=it_end; it++)
     {
       vec.push_back(*it);
@@ -230,7 +230,7 @@ namespace cfgUtil
   std::set<T> toStdSet(const std::vector<T> &iVec)
   {
     std::set<T> Set;
-    std::vector<T>::const_iterator it, it_end=iVec.end();
+    typename std::vector<T>::const_iterator it, it_end=iVec.end();
     for (it=iVec.begin(); it!=it_end; it++)
     {
       Set.insert(*it);
@@ -425,15 +425,15 @@ namespace cfgUtil
   void serialize(std::ostream &oStream, const std::vector<T> iVec[n], const std::string &iString)
   {
     size_t ielem, nelem=iVec.size();
-    ioStream << nelem << " ";
+    oStream << nelem << " ";
     for (ielem=0; ielem<nelem; ielem++)
     {
       int  icol;
       for (icol=0; icol<n; icol++)
       {
-        ioStream << iVec[ielem][icol] << " "; 
+        oStream << iVec[ielem][icol] << " "; 
       }
-      ioStream << std::endl;
+      oStream << std::endl;
     }
   }
 
@@ -441,10 +441,10 @@ namespace cfgUtil
   void serialize(std::ostream &oStream, const std::vector<std::vector<T> > &iVec, const std::string &iString)
   {
     size_t ielem, nelem=iVec.size();
-    ioStream << nelem << " " << std::endl;
+    oStream << nelem << " " << std::endl;
     for (ielem=0; ielem<nelem; ielem++)
     {
-      serializeVec(ioStream, iVec[ielem], "");
+      serializeVec(oStream, iVec[ielem], "");
     }
   }
 
@@ -452,12 +452,12 @@ namespace cfgUtil
   void serialize(std::ostream &oStream, const T *iArray, int iArraySize, const std::string &iString)
   {
     int ielem;
-    ioStream << iArraySize << " ";
-    for (ielem=0; ielem<nelem; ielem++)
+    oStream << iArraySize << " ";
+    for (ielem=0; ielem<iArraySize; ielem++)
     {
-      ioStream << iArray[ielem] << " "; 
+      oStream << iArray[ielem] << " "; 
     }
-    ioStream << std::endl;
+    oStream << std::endl;
   }
 
   template<class T>

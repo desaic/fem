@@ -16,7 +16,6 @@
 #include <iostream>
 #include <fstream>
 
-
 void forceTestHelper(StrainEne * ene);
 void stiffnessTestHelper(StrainEne * ene);
 
@@ -121,8 +120,8 @@ void stiffnessTest(int matModel)
     break;
   case 2:
     ene = new StrainEneNeo();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   default:
     return;
@@ -137,6 +136,7 @@ void stiffnessTestHelper(StrainEne * ene)
   float h = 0.001f;
   ElementRegGrid * grid = new ElementRegGrid(1, 1, 1);
   MaterialQuad * material = new MaterialQuad(ene);
+  material->init(grid);
   grid->m.push_back(material);
  // grid->x[1][0] += 0.1f;
   //grid->x[3][1] += 0.2f;

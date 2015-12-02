@@ -2,7 +2,7 @@
 #define STRAIN_LIN_2D_HPP
 #include "StrainEne2D.h"
 #include <vecmath.h>
-#include <Eigen\Dense>
+#include <Eigen/Dense>
 class StrainLin2D :public StrainEne2D{
 public:
 	StrainLin2D();
