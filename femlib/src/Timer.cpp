@@ -1,4 +1,7 @@
 #include "Timer.hpp"
+
+#include<iostream>
+
 Timer::Timer() :t0(0), t1(0)
 {}
 
@@ -30,4 +33,21 @@ float Timer::getMilliseconds()
 clock_t Timer::getClocks()
 {
   return t1 - t0;
+}
+
+void Timer::startWall()
+{
+  clock_gettime(CLOCK_MONOTONIC, &start_t);
+}
+
+void Timer::endWall()
+{
+  clock_gettime(CLOCK_MONOTONIC, &finish_t);
+}
+
+double Timer::getSecondsWall()
+{
+  double elapsed = finish_t.tv_sec - start_t.tv_sec;
+  elapsed += (finish_t.tv_nsec - start_t.tv_nsec)/1.0e9;
+  return elapsed;
 }

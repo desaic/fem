@@ -12,7 +12,17 @@ public:
   float getSeconds();
   float getMilliseconds();
   clock_t getClocks();
+
+  void   startWall();
+  void   endWall();
+  double getSecondsWall();
+
 private:
   clock_t t0, t1;
+
+  struct timespec start_t;
+  struct timespec finish_t;
+
 };
+
 #endif
