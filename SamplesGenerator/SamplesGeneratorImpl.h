@@ -107,6 +107,7 @@ private:
   std::vector<MaterialQuad> m_mat;
   std::vector<MaterialQuad2D> m_mat2D;
   bool m_orthotropicOnly;
+  bool m_cubicOnly;
 };
 
 #endif

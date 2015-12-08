@@ -335,7 +335,7 @@ QSharedPointer<ElementMesh> exProject::computeElementMeshIncr(int iCombIndex, in
 
   const std::vector<int> & materialAssignment = m_materialAssignments[iLevel][iCombIndex];
 
-  bool isManifold = cfgMaterialUtilities::isStructureManifold(N[0], N[1], N[2], materialAssignment, N[0], N[1], N[2]);
+  //bool isManifold = cfgMaterialUtilities::isStructureManifold(N[0], N[1], N[2], materialAssignment, 1, 1, 1, true);
 
   int blockSize = 3;
   int c = blockSize;

@@ -40,6 +40,8 @@ int StepperNewton2D::oneStep()
 {
   int status = 0;
 
+  fem_error = FEM_OK;
+
   std::vector<Vector2S> force = m->getForce();
   cfgScalar E = m->getEnergy();
  

@@ -42,9 +42,11 @@ namespace cfgMaterialUtilities
 
   bool getMaterialAssignment(int iDim, std::string iMaterialFile, const std::vector<int> &iMaterialsCombination, int iBlockRep, int iNbSubdiv, std::vector<int> &oCellMaterials);
 
+  cfgScalar computeYoungModulus(cfgScalar iStrain, cfgScalar iStress);
   cfgScalar computeYoungModulus(const std::vector<cfgScalar> &iStrains, const std::vector<cfgScalar>  &iStresses);
   cfgScalar computeMaterialRatio(const std::vector<int> &iMaterialAssignment, const std::vector<std::vector<int> > &iBaseMaterialStructures);
   cfgScalar computePoissonRatio(const std::vector<cfgScalar> &iStrainsAxialDir, const std::vector<cfgScalar> &iStrainsTransversalDir);
+  cfgScalar computePoissonRatio(cfgScalar &iStrainsAxialDir, cfgScalar&iStrainsTransversalDir);
   cfgScalar computeVonMisesStress(std::vector<cfgScalar> &iStresses);  // iStresses = [sigma_xx sigma_yy sigma_zz sigma_xy sigma_yz sigma_zx]
   cfgScalar computeVonMisesStress2D(std::vector<cfgScalar> &iStresses); //iStresses = [sigma_xx sigma_yy sigma_xy]
 
@@ -68,9 +70,9 @@ namespace cfgMaterialUtilities
 
   void repMaterialAssignment(int nx, int ny, const std::vector<int> &iMaterialCombIndices, int iNbSubdivions, int repX, int repY, std::vector<int> &oMaterials);
   void repMaterialAssignment(int nx, int ny, int nz, const std::vector<int> &iMaterialCombIndices, int repX, int repY, int repZ, int iNbSubdivisions, std::vector<int> &oMaterials);
-  bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, int iNbCellsToCheck);
-  bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials);
-  bool isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, int nX, int nY, int nZ);
+  bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, bool isStructuredMirrored, int iNbCellsToCheck);
+  bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, bool isStructuredMirrored);
+  bool isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, int nX, int nY, int nZ);
   void updateMaterialSubstructure(std::vector<int> &ioMaterialAsssignment, int nx, int ny, const std::vector<int> &iSubMaterialStructure, int Nx, int Ny, int iSubMatStructLocation);
   
   void getLayer(int Nx, int NY, const std::vector<int> &iStructureElements, int iIndex, int iDim, std::vector<int> &oNewLayerElements);
@@ -79,6 +81,12 @@ namespace cfgMaterialUtilities
 
   void mirrorStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
   void mirrorStructure(int Nx, int Ny, int NZ, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
+  void mirrorStructureAlongDiagonal(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
+  void mirrorStructureAlongDiagonal(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
+  int getDiagonalStructureNumberOfElements(int N, int iDim);
+
+  void getQuarter(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
+  void getQuarter(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
 
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis);
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int nz, int iAxis);

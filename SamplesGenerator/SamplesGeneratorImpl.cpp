@@ -41,10 +41,12 @@ SamplesGeneratorImpl::SamplesGeneratorImpl(int iDim)
 {
   m_UseLinearMaterial = true;
   assert(iDim==2||iDim==3);
-  m_dim = iDim;
-  m_blockRep = 1;
-  m_nbSubdivisions = 4;
+  //m_dim = iDim;
+  m_dim = 3;
+  m_blockRep = (m_dim==2? 8: 4);
+  m_nbSubdivisions = 1;
   m_orthotropicOnly = true;
+  m_cubicOnly = false;
 }
 
 SamplesGeneratorImpl::~SamplesGeneratorImpl()
@@ -699,7 +701,7 @@ bool SamplesGeneratorImpl::sampleDeformation(int iN[2], std::vector<MaterialQuad
       em->x = xinit;
     }
     bool Converged = false;
-    ResOk = computeForceDeformationSample(em, iStepperType, 100, Converged);
+    ResOk = computeForceDeformationSample(em, iStepperType, 1, Converged);
     if (ResOk)
     {
       xinit = em->x;
@@ -1178,6 +1180,7 @@ int SamplesGeneratorImpl::computeMaterialParametersLevel1(std::string & iStepper
   int ncomb=pow(nmat,nVoxCoarse);
   //std::vector<std::vector<int> > materialAssignments(ncomb);
   std::vector<std::vector<int> > materialAssignments;
+  bool mirroredStructure = m_orthotropicOnly||m_cubicOnly;
   int icomb;
   for (icomb=0; icomb<ncomb; icomb++)
   {
@@ -1188,7 +1191,7 @@ int SamplesGeneratorImpl::computeMaterialParametersLevel1(std::string & iStepper
     std::vector<int> cellMaterials;
     getMaterialAssignment(2, 2, matAssignment, N[0], N[1], baseMaterialStructures, 1, 1, m_nbSubdivisions, cellMaterials);
 
-    if (isStructureManifold(n[0], n[1], cellMaterials, N[0], N[1], 0))
+    if (isStructureManifold(n[0], n[1], cellMaterials, N[0], N[1], mirroredStructure, 0))
     {
       materialAssignments.push_back(matAssignment);
     }
@@ -1279,6 +1282,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::string & iStepperType, 
   clusterByBoundary(N[0], N[1], newBaseMaterialStructures, 2, clusters);
 
   std::vector<std::vector<int> > newMaterialAssignments;
+  bool mirroredStructure = m_orthotropicOnly||m_cubicOnly;
 
   int version=5;
   if (version==0)
@@ -1352,7 +1356,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::string & iStepperType, 
       std::vector<int> cellMaterials;
       getMaterialAssignment(2, 2, matAssignment, N[0], N[1], newBaseMaterialStructures, m_blockRep, m_blockRep, m_nbSubdivisions, cellMaterials);
 
-      if (isStructureManifold(n[0], n[1], cellMaterials, N[0], N[1], 4))
+      if (isStructureManifold(n[0], n[1], cellMaterials, N[0], N[1], mirroredStructure, 4))
       {
         newMaterialAssignments.push_back(matAssignment);
       }
@@ -1785,44 +1789,114 @@ int SamplesGeneratorImpl::computeMaterialParametersIncremental(std::string & iSt
     int n_prev[3] = {prevLevel, prevLevel, prevLevel};  
     newBaseMaterialStructures = baseMaterialStructures;
 
-    if (iLevel==2)
+    if (m_cubicOnly)
     {
-      int nVoxCoarse = pow(2, m_dim);
+      int nprev[3] = {prevLevel, prevLevel, prevLevel};
+      int nVoxCoarse = getDiagonalStructureNumberOfElements(prevLevel, m_dim);
       int nmat = 2;
       int ncomb=pow(nmat,nVoxCoarse);
-      int icomb;
-      for (icomb=0; icomb<ncomb; icomb++)
+      std::cout << "** Nb comb = " << ncomb << std::endl;
+      for (int icomb=0; icomb<ncomb; icomb++)
       {
         std::vector<int> matAssignment;
         int2Comb(matAssignment, icomb, nmat, nVoxCoarse);
         if (m_dim==2)
         {
-          if (isStructureManifold(n[0], n[1], matAssignment, N[0], N[1], 0))
+          std::vector<int> matAssignmentMirroredAlongDiag;
+          mirrorStructureAlongDiagonal(nprev[0], nprev[1], matAssignment, matAssignmentMirroredAlongDiag);
+          if (isStructureManifold(nprev[0], nprev[1], matAssignmentMirroredAlongDiag, N[0], N[1], true, 0))
           {
-            newMaterialAssignments.push_back(matAssignment);
+            std::vector<int> matAssignmentMirrored;
+            mirrorStructure(nprev[0], nprev[1], matAssignmentMirroredAlongDiag, matAssignmentMirrored);
+            newMaterialAssignments.push_back(matAssignmentMirrored);
           }
         }
         else
         {
-          if (isStructureManifold(n[0], n[1], n[2], matAssignment, N[0], N[1], N[2]))
+          std::vector<int> matAssignmentMirroredAlongDiag;
+          mirrorStructureAlongDiagonal(nprev[0], nprev[1], nprev[2], matAssignment, matAssignmentMirroredAlongDiag);
+          if (isStructureManifold(nprev[0], nprev[1], nprev[2], matAssignmentMirroredAlongDiag, N[0], N[1], N[2], true))
           {
-            newMaterialAssignments.push_back(matAssignment);
+            std::vector<int> matAssignmentMirrored;
+            mirrorStructure(nprev[0], nprev[1], nprev[2], matAssignmentMirroredAlongDiag, matAssignmentMirrored);
+            newMaterialAssignments.push_back(matAssignmentMirrored);
+          }
+        }
+      } 
+    }
+    else if (m_orthotropicOnly)
+    {
+      int nprev[3] = {prevLevel, prevLevel, prevLevel};
+      int nVoxCoarse = pow(prevLevel, m_dim);
+      int nmat = 2;
+      int ncomb=pow(nmat,nVoxCoarse);
+      std::cout << "** Nb comb = " << ncomb << std::endl;
+      for (int icomb=0; icomb<ncomb; icomb++)
+      {
+        std::vector<int> matAssignment;
+        int2Comb(matAssignment, icomb, nmat, nVoxCoarse);
+        if (m_dim==2)
+        {
+          if (isStructureManifold(nprev[0], nprev[1], matAssignment, N[0], N[1], true, 0))
+          {
+            std::vector<int> matAssignmentMirrored;
+            mirrorStructure(nprev[0], nprev[1], matAssignment, matAssignmentMirrored);
+            newMaterialAssignments.push_back(matAssignmentMirrored);
+          }
+        }
+        else
+        {
+          if (isStructureManifold(nprev[0], nprev[1], nprev[2], matAssignment, N[0], N[1], N[2], true))
+          {
+            std::vector<int> matAssignmentMirrored;
+            mirrorStructure(nprev[0], nprev[1], nprev[2], matAssignment, matAssignmentMirrored);
+            newMaterialAssignments.push_back(matAssignmentMirrored);
           }
         }
       } 
     }
     else
     {
-      if (doubleSize)
+      if (iLevel==2)
       {
-        growStructureDoubleSize(n_prev,  materialAssignments, newMaterialAssignments);
+        int nVoxCoarse = pow(2, m_dim);
+        int nmat = 2;
+        int ncomb=pow(nmat,nVoxCoarse);
+        int icomb;
+        for (icomb=0; icomb<ncomb; icomb++)
+        {
+          std::vector<int> matAssignment;
+          int2Comb(matAssignment, icomb, nmat, nVoxCoarse);
+          if (m_dim==2)
+          {
+            if (isStructureManifold(n[0], n[1], matAssignment, N[0], N[1], 0, false))
+            {
+              newMaterialAssignments.push_back(matAssignment);
+            }
+          }
+          else
+          {
+            if (isStructureManifold(n[0], n[1], n[2], matAssignment, N[0], N[1], N[2], false))
+            {
+              newMaterialAssignments.push_back(matAssignment);
+            }
+          }
+        } 
       }
       else
       {
-        growStructure(n_prev, materialAssignments, newMaterialAssignments);
+        if (doubleSize)
+        {
+          growStructureDoubleSize(n_prev,  materialAssignments, newMaterialAssignments);
+        }
+        else
+        {
+          growStructure(n_prev, materialAssignments, newMaterialAssignments);
+        }
       }
     }
   }
+  std::cout << "** Nb manifold comb = " << newMaterialAssignments.size() << std::endl;
   oNewMaterialAssignments = newMaterialAssignments;
 
   return ResOk;
@@ -1875,7 +1949,7 @@ int SamplesGeneratorImpl::computeVariations(std::string & iStepperType, int iLev
       dist2Mat[ilevel].insert(std::pair<float,int>(distToBoundary[ipoint],ipoint));
     }
   }
-
+  bool mirroredStructure = m_orthotropicOnly||m_cubicOnly;
   std::vector<std::vector<int> > newMaterialAssignments;
   int level = nlevel;
   int istruct=0, nstruct=(int)materialAssignments[level].size();
@@ -1913,7 +1987,7 @@ int SamplesGeneratorImpl::computeVariations(std::string & iStepperType, int iLev
       {
         std::vector<int> &subMaterialStructure = materialAssignments[subLevel][matIndex];
         updateMaterialSubstructure(materialAsssignment, n[0], n[1], subMaterialStructure, nsub[0], nsub[1], voxelIndex);
-        if (materialAsssignment != initMaterialAsssignment && isStructureManifold(n[0], n[1], materialAsssignment))
+        if (materialAsssignment != initMaterialAsssignment && isStructureManifold(n[0], n[1], materialAsssignment, mirroredStructure))
         {
           newMaterialAssignments.push_back(materialAsssignment);
           isample++;
@@ -2032,7 +2106,7 @@ int SamplesGeneratorImpl::computeVariationsV2(int iLevel, int iSubLevel,
   }
 
   int level = nlevel;
-
+  bool mirroredStructure = m_orthotropicOnly||m_cubicOnly;
   int icluster=0, ncluster=(int)clusters[level].size();
   std::cout << "Nb clusters = " << ncluster << std::endl;
   for (icluster=0; icluster<ncluster; icluster++)
@@ -2064,7 +2138,7 @@ int SamplesGeneratorImpl::computeVariationsV2(int iLevel, int iSubLevel,
         {
           const std::vector<int> &subMaterialStructure = materialAssignments[subLevel][matIndex];
           updateMaterialSubstructure(materialAsssignment, n[0], n[1], subMaterialStructure, nsub[0], nsub[1], voxelIndex);
-          if (materialAsssignment != initMaterialAsssignment && isStructureManifold(n[0], n[1], materialAsssignment))
+          if (materialAsssignment != initMaterialAsssignment && isStructureManifold(n[0], n[1], materialAsssignment, mirroredStructure))
           {
             oNewMaterialAssignments.push_back(materialAsssignment);
             isample++;
@@ -2119,7 +2193,7 @@ int SamplesGeneratorImpl::computeVariationsV3(int iLevel, int iSubLevel,
   }
 
   int level = nlevel/2;
-
+  bool mirroredStructure = m_orthotropicOnly||m_cubicOnly;
   int icluster=0, ncluster=(int)clusters[level].size();
   std::cout << "Nb clusters = " << ncluster << std::endl;
   for (icluster=0; icluster<ncluster; icluster++)
@@ -2159,7 +2233,7 @@ int SamplesGeneratorImpl::computeVariationsV3(int iLevel, int iSubLevel,
         {
           const std::vector<int> &subMaterialStructure = materialAssignments[subLevel][matIndex];
           updateMaterialSubstructure(materialAsssignment, n[0], n[1], subMaterialStructure, nsub[0], nsub[1], voxelIndex);
-          if (materialAsssignment != initMaterialAsssignment && isStructureManifold(n[0], n[1], materialAsssignment))
+          if (materialAsssignment != initMaterialAsssignment && isStructureManifold(n[0], n[1], materialAsssignment, mirroredStructure))
           {
             oNewMaterialAssignments.push_back(materialAsssignment);
             isample++;
@@ -2236,6 +2310,8 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
   std::vector<std::vector<std::vector<float> > > x[2];
   writeFiles(iLevel, materialAssignments, baseMaterialStructures[prevLevel], physicalParameters, x, "SMC_init");
 
+  bool mirroredStructure = m_orthotropicOnly||m_cubicOnly;
+
   std::set<int> particulesToProcess = toStdSet(genIncrementalSequence(0, nparticule-1));
   int icycle=0;
   while (particulesToProcess.size())
@@ -2261,7 +2337,7 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
         if (oldMat != newMat)
         {
           newMaterialAssignment[indVoxel] = newMat;
-          if ((m_dim==2 && isStructureManifold(n[0], n[1], newMaterialAssignment)) || (m_dim==3 && isStructureManifold(n[0], n[1], n[2], newMaterialAssignment, n[0], n[1], n[2])) )
+          if ((m_dim==2 && isStructureManifold(n[0], n[1], newMaterialAssignment, mirroredStructure)) || (m_dim==3 && isStructureManifold(n[0], n[1], n[2], newMaterialAssignment, n[0], n[1], n[2], mirroredStructure)) )
           {
             newParticuleGenerated = true;
           }
@@ -2718,6 +2794,7 @@ void SamplesGeneratorImpl::getNewCombinationsV4(const std::vector<int> &iBoundar
   {
     voxelIndices.push_back(ivox);
   }
+  bool mirroredStructure = m_orthotropicOnly||m_cubicOnly;
   while (oNewMaterialAssignments.size()<iNbCombinations)
   {
     materialAssignement.clear();
@@ -2749,7 +2826,7 @@ void SamplesGeneratorImpl::getNewCombinationsV4(const std::vector<int> &iBoundar
       std::vector<int> cellMaterials;
       getMaterialAssignment(2, 2, materialAssignement, N[0], N[1], iNewBaseMaterialStructures, m_blockRep, m_blockRep, m_nbSubdivisions, cellMaterials);
 
-      if (isStructureManifold(n[0], n[1], cellMaterials, N[0], N[1], 4))
+      if (isStructureManifold(n[0], n[1], cellMaterials, N[0], N[1], 4, mirroredStructure))
       {
         oNewMaterialAssignments.push_back(materialAssignement);
       }
@@ -2806,7 +2883,7 @@ void SamplesGeneratorImpl::getNewCombinationsV5(const std::vector<int> &iBoundar
   {
     voxelIndices.push_back(ivox);
   }
-
+  bool mirroredStructure = m_orthotropicOnly||m_cubicOnly;
   int indBoundary = 0;
   while (oNewMaterialAssignments.size()<iNbCombinations)
   {
@@ -2894,7 +2971,7 @@ void SamplesGeneratorImpl::getNewCombinationsV5(const std::vector<int> &iBoundar
           std::vector<int> cellMaterials;
           getMaterialAssignment(2, 2, materialAssignement, N[0], N[1], iNewBaseMaterialStructures, m_blockRep, m_blockRep, m_nbSubdivisions, cellMaterials);
 
-          if (isStructureManifold(n[0], n[1], cellMaterials, N[0], N[1], 4))
+          if (isStructureManifold(n[0], n[1], cellMaterials, N[0], N[1], 4, mirroredStructure))
           {
             oNewMaterialAssignments.push_back(materialAssignement);
             BaseMaterials.insert(matIndex);
@@ -3121,7 +3198,7 @@ int SamplesGeneratorImpl::run()
   // compute homogenised tensors
   if (0)
   {
-    int level = 16;
+    int level = 4;
     std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
     std::vector<float> physicalParameters;
     bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters);
@@ -3182,7 +3259,7 @@ int SamplesGeneratorImpl::run()
     }
     std::string fileRootName = m_OutputDirectory + "level" + std::to_string(level) + "_";
     std::string fileExtension = ".bin";
-    fileRootName += std::to_string(group++) + "_";
+    //fileRootName += std::to_string(group++) + "_";
     cfgUtil::writeBinary<float>(fileRootName + "elasticityTensors" + fileExtension, tensors);
 
     //std::vector<std::vector<float> > tensors2;
@@ -3200,23 +3277,51 @@ int SamplesGeneratorImpl::run()
 
   if (1)
   {
-    for (int ilevel=1; ilevel<=2; ilevel*=2)
+    int maxlevel = 2;
+    if (m_orthotropicOnly)
+      maxlevel = 4;
+    if (m_cubicOnly)
+      maxlevel = (m_dim==2? 8: 4);
+
+    for (int ilevel=1; ilevel<=maxlevel; ilevel*=2)
     {
       int n[3] = {ilevel, ilevel, ilevel};
       std::vector<std::vector<int> > newMaterialAssignment;
       computeMaterialParametersIncremental(stepperType, ilevel, newMaterialAssignment);
       //computeMaterialParameters(stepperType, newMaterialAssignment, n, baseMaterialStructures, N, ilevel, m_blockRep, true, true);
 
+      std::vector<float> tensors;
       std::vector<float> physicalParameters;
       std::vector<std::vector<std::vector<float> > > x[3];
-      computeParameters(stepperType, newMaterialAssignment, n, baseMaterialStructures, N, physicalParameters, x); 
+      //computeParameters(stepperType, newMaterialAssignment, n, baseMaterialStructures, N, physicalParameters, x); 
+
+      int imat, nmat=(int)newMaterialAssignment.size();
+      for (imat=0; imat<nmat; imat++)
+      {
+        std::cout << "************ imat = " << imat << std::endl;
+        NumericalCoarsening numCoarsening;
+        NumericalCoarsening::StructureType type = (m_cubicOnly? NumericalCoarsening::Cubic: NumericalCoarsening::General);
+        if (m_dim==2)
+        {
+          numCoarsening.computeCoarsenedElasticityTensorAndParameters(newMaterialAssignment[imat], n, m_blockRep, m_nbSubdivisions, m_mat2D, type, tensors, physicalParameters);
+        }
+        else
+        {
+          numCoarsening.computeCoarsenedElasticityTensorAndParameters(newMaterialAssignment[imat], n, m_blockRep, m_nbSubdivisions, m_mat, type, tensors, physicalParameters);
+        }
+      }
       writeFiles(ilevel, newMaterialAssignment, baseMaterialStructures, physicalParameters, x);
+
+      std::string fileRootName = m_OutputDirectory + "level" + std::to_string(ilevel) + "_";
+      std::string fileExtension = ".bin";
+      cfgUtil::writeBinary<float>(fileRootName + "elasticityTensors" + fileExtension, tensors);
     }
   }
 
   bool growAllStructures = false;
 
-  for (int ilevel=4; ilevel<=0; ilevel*=2)
+  for (int ilevel=8; ilevel<=0; ilevel *=2)
+  //for (int ilevel=4; ilevel<=16; ilevel*=2)
   //for (int ilevel=16; ilevel<=32; ilevel*=2)
   //for (int ilevel=4; ilevel<=128; ilevel*=2)
   {

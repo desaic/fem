@@ -12,6 +12,8 @@
 #include <fstream>
 #include <assert.h>
 
+#include "Timer.hpp"
+
 StepperNewton::StepperNewton():dense(true),dx_tol(1e-5f),h(1.0f)
 {
   m_Init = false;
@@ -40,6 +42,8 @@ void StepperNewton::removeRotation(bool iOn)
 int StepperNewton::oneStep()
 {
   int status = 0;
+
+  fem_error = FEM_OK;
 
   std::vector<Vector3f> force = m->getForce();
   float E = m->getEnergy();
@@ -327,7 +331,12 @@ int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vect
   }
   ia[nrow] = indVal;
 
+  Timer t;
+  t.start();
   int status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
+  t.end();
+  float duration = t.getSeconds();
+  std::cout << " time linear solve: " << duration << "\n";
    //   std::cout<< "sparse solve " << status << "\n";
   for(int ii = 0;ii<x.size();ii++){
     bb[ii] = x[ii];

@@ -602,6 +602,12 @@ cfgScalar cfgMaterialUtilities::computeVonMisesStress2D(std::vector<cfgScalar> &
   return val;
 }
 
+cfgScalar cfgMaterialUtilities::computeYoungModulus(cfgScalar iStrain, cfgScalar iStress)
+{
+  cfgScalar YoungModulus=iStress/iStrain;
+  return YoungModulus;
+}
+
 cfgScalar cfgMaterialUtilities::computeYoungModulus(const std::vector<cfgScalar> &iStrains, const std::vector<cfgScalar>  &iStresses)
 {
   cfgScalar YoungModulus=0;
@@ -633,6 +639,12 @@ cfgScalar cfgMaterialUtilities::computePoissonRatio(const std::vector<cfgScalar>
     cfgScalar a = Vol/lambda1;
     poissonRatio = (1-sqrt(a))/(lambda1-1);*/ 
   }
+  return poissonRatio;
+}
+
+cfgScalar cfgMaterialUtilities::computePoissonRatio(cfgScalar &iStrainsAxialDir, cfgScalar&iStrainsTransversalDir)
+{
+  cfgScalar poissonRatio = - iStrainsTransversalDir/iStrainsAxialDir;
   return poissonRatio;
 }
 
@@ -682,16 +694,16 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vect
 {
   oPhysicalParameters.clear();
 
-  int iVersion=1; // 0: Density Yx Yy; 1: Density Nux Nuy
+  int iVersion=2; // 0: Density Yx Yy; 1: Density Nux Nuy 2: Density Yx Yy, Nux Nuy
 
-  int naxis = 3;
+  int naxis = 2;
   int icomb, ncomb = (int)iMaterials.size();
   for (icomb=0; icomb<ncomb; icomb++)
   {
     cfgScalar r = computeMaterialRatio(iMaterials[icomb], iBaseMaterialStructures);
     oPhysicalParameters.push_back(r);
 
-    if (iVersion==0)
+    if (iVersion==0 || iVersion==2)
     {
       int iaxis;
       for (iaxis=0; iaxis<naxis; iaxis++)
@@ -700,16 +712,14 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vect
         oPhysicalParameters.push_back(Y);
       }
     }
-    else
+    if (iVersion==1 || iVersion==2)
     {
-      cfgScalar poissonRatio_xy = computePoissonRatio(iStrains[0][0][icomb], iStrains[0][1][icomb]); 
-      oPhysicalParameters.push_back(poissonRatio_xy);
-
-      cfgScalar poissonRatio_xz = computePoissonRatio(iStrains[0][0][icomb], iStrains[0][2][icomb]); 
-      oPhysicalParameters.push_back(poissonRatio_xy);
-
-      cfgScalar poissonRatio_yz = computePoissonRatio(iStrains[1][1][icomb], iStrains[1][2][icomb]); 
-      oPhysicalParameters.push_back(poissonRatio_xy);
+      int iaxis;
+      for (iaxis=0; iaxis<naxis; iaxis++)
+      {
+        cfgScalar poissonRatio = computePoissonRatio(iStrains[iaxis][iaxis][icomb], iStrains[iaxis][1-iaxis][icomb]); 
+        oPhysicalParameters.push_back(poissonRatio);
+      }
     }
   }
   return true;
@@ -721,7 +731,7 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vect
 {
   oPhysicalParameters.clear();
 
-  int iVersion=0; // 0: Density Yx Yy; 1: Density Nux Nuy
+  int iVersion=2; // 0: Density Yx Yy; 1: Density Nux Nuy, 2: Density Yx Yy Nux Nuy
 
   int naxis = 3;
   int icomb, ncomb = (int)iMaterials.size();
@@ -730,7 +740,7 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vect
     cfgScalar r = computeMaterialRatio(iMaterials[icomb], iBaseMaterialStructures);
     oPhysicalParameters.push_back(r);
 
-    if (iVersion==0)
+    if (iVersion==0 || iVersion==2)
     {
       int iaxis;
       for (iaxis=0; iaxis<naxis; iaxis++)
@@ -739,14 +749,16 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vect
         oPhysicalParameters.push_back(Y);
       }
     }
-    else
+    if (iVersion==1 || iVersion==2)
     {
-      int iaxis;
-      for (iaxis=0; iaxis<naxis; iaxis++)
-      {
-        cfgScalar poissonRatio = computePoissonRatio(iStrains[iaxis][iaxis][icomb], iStrains[iaxis][1-iaxis][icomb]); 
-        oPhysicalParameters.push_back(poissonRatio);
-      }
+      cfgScalar poissonRatio_xy = computePoissonRatio(iStrains[0][0][icomb], iStrains[0][1][icomb]); 
+      oPhysicalParameters.push_back(poissonRatio_xy);
+
+      cfgScalar poissonRatio_xz = computePoissonRatio(iStrains[0][0][icomb], iStrains[0][2][icomb]); 
+      oPhysicalParameters.push_back(poissonRatio_xz);
+
+      cfgScalar poissonRatio_yz = computePoissonRatio(iStrains[1][1][icomb], iStrains[1][2][icomb]); 
+      oPhysicalParameters.push_back(poissonRatio_yz);
     }
   }
   return true;
@@ -1118,13 +1130,15 @@ void cfgMaterialUtilities::updateMaterialSubstructure(std::vector<int> &ioMateri
   }
 }
 
-bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, int nX, int nY, int nZ)
+bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, int nX, int nY, int nZ)
 {
   bool isManifold = true;
 
   int nxComb = nx/nX;
   int nyComb = ny/nY;
   int nzComb = nz/nZ;
+
+  int startIndex = (isStructuredMirrored? 1: 0);
 
   int icomb, jcomb, kcomb;
   for (icomb=0; icomb<nxComb && isManifold; icomb++)
@@ -1139,33 +1153,35 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std
           int x = nX*icomb + icell;
           int y = nY*jcomb;
           int z = nZ*kcomb;
+          if (x>=startIndex && y>=startIndex && z>=startIndex)
+          {
+            int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
+            int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
+            int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
+            int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
+            int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
+            int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+            int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
+            int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
 
-          int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
-          int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
-          int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
-          int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
-          int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
-          int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
-          int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
-          int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+            int mat111 = iMaterials[indMat111];
+            int mat121 = iMaterials[indMat121];
+            int mat211 = iMaterials[indMat211];
+            int mat221 = iMaterials[indMat221];
+            int mat112 = iMaterials[indMat112];
+            int mat122 = iMaterials[indMat122];
+            int mat212 = iMaterials[indMat212];
+            int mat222 = iMaterials[indMat222];
 
-          int mat111 = iMaterials[indMat111];
-          int mat121 = iMaterials[indMat121];
-          int mat211 = iMaterials[indMat211];
-          int mat221 = iMaterials[indMat221];
-          int mat112 = iMaterials[indMat112];
-          int mat122 = iMaterials[indMat122];
-          int mat212 = iMaterials[indMat212];
-          int mat222 = iMaterials[indMat222];
-
-          isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
-          isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
-          isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
-          isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
-          isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
-          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
-          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
-          isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || mat111==mat211);
+            isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
+            isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
+            isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
+            isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
+            isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
+            isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+            isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+            isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || (mat111==mat211 && mat111==mat112 && mat111==mat212));
+          }
         }
 
         int jcell;
@@ -1174,33 +1190,35 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std
           int x = nX*icomb;
           int y = nY*jcomb + jcell;
           int z = nZ*kcomb;
+          if (x>=startIndex && y>=startIndex && z>=startIndex)
+          {
+            int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
+            int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
+            int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
+            int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
+            int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
+            int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+            int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
+            int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
 
-          int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
-          int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
-          int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
-          int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
-          int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
-          int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
-          int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
-          int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+            int mat111 = iMaterials[indMat111];
+            int mat121 = iMaterials[indMat121];
+            int mat211 = iMaterials[indMat211];
+            int mat221 = iMaterials[indMat221];
+            int mat112 = iMaterials[indMat112];
+            int mat122 = iMaterials[indMat122];
+            int mat212 = iMaterials[indMat212];
+            int mat222 = iMaterials[indMat222];
 
-          int mat111 = iMaterials[indMat111];
-          int mat121 = iMaterials[indMat121];
-          int mat211 = iMaterials[indMat211];
-          int mat221 = iMaterials[indMat221];
-          int mat112 = iMaterials[indMat112];
-          int mat122 = iMaterials[indMat122];
-          int mat212 = iMaterials[indMat212];
-          int mat222 = iMaterials[indMat222];
-
-          isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
-          isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
-          isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
-          isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
-          isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
-          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
-          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
-          isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || mat111==mat211);
+            isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
+            isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
+            isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
+            isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
+            isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
+            isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+            isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+            isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || (mat111==mat211 && mat111==mat112 && mat111==mat212));
+          }
         }
 
         int kcell;
@@ -1209,33 +1227,35 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std
           int x = nX*icomb;
           int y = nY*jcomb;
           int z = nZ*kcomb + kcell;
+          if (x>=startIndex && y>=startIndex && z>=startIndex)
+          {
+            int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
+            int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
+            int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
+            int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
+            int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
+            int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+            int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
+            int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
 
-          int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
-          int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
-          int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
-          int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
-          int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
-          int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
-          int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
-          int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+            int mat111 = iMaterials[indMat111];
+            int mat121 = iMaterials[indMat121];
+            int mat211 = iMaterials[indMat211];
+            int mat221 = iMaterials[indMat221];
+            int mat112 = iMaterials[indMat112];
+            int mat122 = iMaterials[indMat122];
+            int mat212 = iMaterials[indMat212];
+            int mat222 = iMaterials[indMat222];
 
-          int mat111 = iMaterials[indMat111];
-          int mat121 = iMaterials[indMat121];
-          int mat211 = iMaterials[indMat211];
-          int mat221 = iMaterials[indMat221];
-          int mat112 = iMaterials[indMat112];
-          int mat122 = iMaterials[indMat122];
-          int mat212 = iMaterials[indMat212];
-          int mat222 = iMaterials[indMat222];
-
-          isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
-          isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
-          isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
-          isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
-          isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
-          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
-          isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
-          isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || mat111==mat211);
+            isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
+            isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
+            isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
+            isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
+            isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
+            isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+            isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+            isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || (mat111==mat211 && mat111==mat112 && mat111==mat212));
+          }
         }
       }
     }
@@ -1243,12 +1263,14 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std
   return isManifold;
 }
 
-bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, int iNbCellsToCheck)
+bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, bool isStructuredMirrored, int iNbCellsToCheck)
 {
   bool isManifold = true;
 
   int nxComb = nx/nX;
   int nyComb = ny/nY;
+
+  int startIndex = (isStructuredMirrored? 1: 0);
 
   int icomb, jcomb;
   for (icomb=0; icomb<nxComb && isManifold; icomb++)
@@ -1264,18 +1286,20 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector
         {
           int x = nX*icomb + icell;
           int y = nY*jcomb;
+          if (x>=startIndex && y>=startIndex)
+          {
+            int indMat11 = getGridToVectorIndex(x, y, nx, ny);
+            int indMat12 = getGridToVectorIndex(x, (y+ny-1)%ny, nx, ny);
+            int indMat21 = getGridToVectorIndex((x+nx-1)%nx, y, nx, ny);
+            int indMat22 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, nx, ny);
 
-          int indMat11 = getGridToVectorIndex(x, y, nx, ny);
-          int indMat12 = getGridToVectorIndex(x, (y+ny-1)%ny, nx, ny);
-          int indMat21 = getGridToVectorIndex((x+nx-1)%nx, y, nx, ny);
-          int indMat22 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, nx, ny);
+            int mat11 = iMaterials[indMat11];
+            int mat12 = iMaterials[indMat12];
+            int mat21 = iMaterials[indMat21];
+            int mat22 = iMaterials[indMat22];
 
-          int mat11 = iMaterials[indMat11];
-          int mat12 = iMaterials[indMat12];
-          int mat21 = iMaterials[indMat21];
-          int mat22 = iMaterials[indMat22];
-
-          isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+            isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+          }
         }
       }
 
@@ -1286,18 +1310,20 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector
         {
           int x = nX*icomb;
           int y = nY*jcomb + jcell;
+          if (x>=startIndex && y>=startIndex)
+          {
+            int indMat11 = getGridToVectorIndex(x, y, nx, ny);
+            int indMat12 = getGridToVectorIndex(x, (y+ny-1)%ny, nx, ny);
+            int indMat21 = getGridToVectorIndex((x+nx-1)%nx, y, nx, ny);
+            int indMat22 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, nx, ny);
 
-          int indMat11 = getGridToVectorIndex(x, y, nx, ny);
-          int indMat12 = getGridToVectorIndex(x, (y+ny-1)%ny, nx, ny);
-          int indMat21 = getGridToVectorIndex((x+nx-1)%nx, y, nx, ny);
-          int indMat22 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, nx, ny);
+            int mat11 = iMaterials[indMat11];
+            int mat12 = iMaterials[indMat12];
+            int mat21 = iMaterials[indMat21];
+            int mat22 = iMaterials[indMat22];
 
-          int mat11 = iMaterials[indMat11];
-          int mat12 = iMaterials[indMat12];
-          int mat21 = iMaterials[indMat21];
-          int mat22 = iMaterials[indMat22];
-
-          isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+            isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+          }
         }
       }
     }
@@ -1305,13 +1331,14 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector
   return isManifold;
 }
 
-bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials)
+bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, bool isStructuredMirrored)
 {
   bool isManifold = true;
+  int startIndex = (isStructuredMirrored? 1: 0);
 
-  for (int x=0; x<nx && isManifold; x++)
+  for (int x=startIndex; x<nx && isManifold; x++)
   {
-    for (int y=0; y<ny && isManifold; y++)
+    for (int y=startIndex; y<ny && isManifold; y++)
     {
       int indMat11 = getGridToVectorIndex(x, y, nx, ny);
       int indMat12 = getGridToVectorIndex(x, (y+ny-1)%ny, nx, ny);
@@ -1470,6 +1497,144 @@ void cfgMaterialUtilities::mirrorStructure(int Nx, int Ny, int Nz ,const std::ve
 
         int indMat8 = getGridToVectorIndex(Nx-1-i + Nx, Ny-1-j + Ny, Nz-1-k + Nz, n[0], n[1], n[2]);
         oNewStructureElements[indMat8] = mat;
+      }
+    }
+  }
+}
+
+int cfgMaterialUtilities::getDiagonalStructureNumberOfElements(int N, int iDim)
+{
+  int nelem=0;
+  if (iDim==2)
+  {
+    nelem=(N*(N+1))/2;
+  }
+  else
+  {
+    for (int i=0; i<N; i++)
+    {
+      for (int j=0; j<=i; j++)
+      {
+        for (int k=0; k<=j; k++)
+        {
+          nelem++;
+        }
+      }
+    }
+  }
+  return nelem;
+}
+
+void cfgMaterialUtilities::mirrorStructureAlongDiagonal(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
+{
+  int n[2] = {Nx, Ny};
+  oNewStructureElements.resize(n[0]*n[1]);
+
+  assert(n[0]==n[1]);
+  assert(iStructureElements.size()==(n[0]*n[1]-n[0])/2+n[0]);
+
+  int index=0;
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<=i; j++)
+    {
+      int mat = iStructureElements[index++];
+
+      int indMat1 = getGridToVectorIndex(i, j, n[0], n[1]);
+      oNewStructureElements[indMat1] = mat;
+      if (i!=j)
+      {
+        int indMat2 = getGridToVectorIndex(j, i, n[0], n[1]);
+        oNewStructureElements[indMat2] = mat;
+      }
+    }
+  }
+}
+
+void cfgMaterialUtilities::mirrorStructureAlongDiagonal(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
+{
+  int n[3] = {Nx, Ny, Nz};
+  oNewStructureElements.resize(n[0]*n[1]*n[2]);
+
+  assert(n[0]==n[1] && n[0]==n[2]);
+  //assert(iStructureElements.size()==(n[0]*n[1]-n[0])/2+n[0]);
+
+  int index=0;
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<=i; j++)
+    {
+      for (int k=0; k<=j; k++)
+      {
+        int mat = iStructureElements[index++];
+
+        int indMat1 = getGridToVectorIndex(i, j, k, n[0], n[1], n[2]);
+        oNewStructureElements[indMat1] = mat;
+        if (k!=j)
+        {
+          int indMat2 = getGridToVectorIndex(i, k, j, n[0], n[1], n[2]);
+          oNewStructureElements[indMat2] = mat;
+        }
+        if (i!=j)
+        {
+          int indMat3 = getGridToVectorIndex(j, i, k, n[0], n[1], n[2]);
+          oNewStructureElements[indMat3] = mat;
+          if (k!=i)
+          {
+            int indMat4 = getGridToVectorIndex(j, k, i, n[0], n[1], n[2]);
+            oNewStructureElements[indMat4] = mat;
+          }
+        }
+        if (k!=i)
+        {
+          int indMat5 = getGridToVectorIndex(k, j, i, n[0], n[1], n[2]);
+          oNewStructureElements[indMat5] = mat;
+          if (j!=i)
+          {
+            int indMat6 = getGridToVectorIndex(k, i, j, n[0], n[1], n[2]);
+            oNewStructureElements[indMat6] = mat;
+          }
+        }   
+      }
+    }
+  }
+}
+
+
+void cfgMaterialUtilities::getQuarter(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
+{
+  int n[3] = {Nx/2, Ny/2};
+  oNewStructureElements.resize(n[0]*n[1]);
+
+  for (int i=0; i<n[0]; i++)
+  {
+    for (int j=0; j<n[1]; j++)
+    {
+      int indMat = getGridToVectorIndex(i, j, Nx, Ny);
+      int mat = iStructureElements[indMat];
+
+      int indMat1 = getGridToVectorIndex(i, j, n[0], n[1]);
+      oNewStructureElements[indMat1] = mat;
+    }
+  }
+}
+
+void cfgMaterialUtilities::getQuarter(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
+{
+  int n[3] = {Nx/2, Ny/2, Nz/2};
+  oNewStructureElements.resize(n[0]*n[1]*n[2]);
+
+  for (int i=0; i<n[0]; i++)
+  {
+    for (int j=0; j<n[1]; j++)
+    {
+      for (int k=0; k<n[2]; k++)
+      {
+        int indMat = getGridToVectorIndex(i, j, k, Nx, Ny, Nz);
+        int mat = iStructureElements[indMat];
+
+        int indMat1 = getGridToVectorIndex(i, j, k, n[0], n[1], n[2]);
+        oNewStructureElements[indMat1] = mat;
       }
     }
   }

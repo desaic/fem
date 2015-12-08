@@ -23,8 +23,8 @@ namespace meshUtil
   void getExternalVertices(ElementRegGrid * iElementGrid, std::vector<int> &oElemIndices, std::vector<std::vector<int> > &oFaceVertexIndices, std::vector<Vector3S> &oNormals);
   void getVertexValences(const ElementRegGrid * iElementGrid, const std::vector<int> &iElemIndices, const std::vector<std::vector<int> > &iFvIndices, std::map<int,int> &oind2Valence);
 
-  // Hexahedral mesh utilities 2D
-  // ----------------------------
+  // Hexahedral mesh utilities 2D/3D
+  // -------------------------------
   //0: Left, 1: Right, 2: Bottom, 3:Top
   void getSideVertices(int iSide, const ElementRegGrid2D * iElementGrid, std::vector<int> &oVertexIndices);
   void getSideVertices(int iSide, const ElementRegGrid2D * iElementGrid, std::vector<int> &oElemIndices, std::vector<std::vector<int> > &oFaceVertexIndices);
@@ -34,6 +34,9 @@ namespace meshUtil
 
   void computeCoarsenedElasticityTensor(ElementRegGrid2D &iElementGrid, const std::vector<std::vector<cfgScalar> > &iHarmonicDisplacements, MatrixXS &oCoarsenedTensor);
   void computeCoarsenedElasticityTensor(ElementRegGrid &iElementGrid, const std::vector<std::vector<cfgScalar> > &iHarmonicDisplacements, MatrixXS &oCoarsenedTensor);
+
+  void computeStrains(ElementRegGrid2D &iElementGrid, const std::vector<std::vector<cfgScalar> > &iDisplacements, std::vector<std::vector<cfgScalar> > &oStrains);
+  void computeStrains(ElementRegGrid &iElementGrid, const std::vector<std::vector<cfgScalar> > &iDisplacements, std::vector<std::vector<cfgScalar> > &oStrains);
 };
 
 #endif 

@@ -791,6 +791,73 @@ std::vector<cfgScalar> meshUtil::getVonMisesStressesPerElement(ElementRegGrid2D 
   return stresses;
  }
 
+void meshUtil::computeStrains(ElementRegGrid2D &iElementGrid, const std::vector<std::vector<cfgScalar> > &iHarmonicDisplacements, std::vector<std::vector<cfgScalar> > &oStrains)
+{
+  oStrains.clear();
+  oStrains.resize(iHarmonicDisplacements.size());
+
+  int nx = iElementGrid.nx;
+  int ny = iElementGrid.ny;
+
+  std::vector<int> corners;
+  corners.push_back(iElementGrid.GetVertInd(0, 0));
+  corners.push_back(iElementGrid.GetVertInd(0, ny));
+  corners.push_back(iElementGrid.GetVertInd(nx, 0));
+  corners.push_back(iElementGrid.GetVertInd(nx, ny));
+  ElementHex2D coarseElem(corners);
+  StrainLin2D strainLin;
+  
+  int idisp, ndisp=(int)iHarmonicDisplacements.size();
+  for (idisp=0; idisp<ndisp; idisp++)
+  {
+    std::vector<Vector2S> h = cfgMaterialUtilities::toVector2S(iHarmonicDisplacements[idisp]);
+    std::vector<Vector2S> x = cfgUtil::add(iElementGrid.X, h);
+    Matrix2S coarseF = coarseElem.defGrad(Vector2S(0,0), iElementGrid.X, x);
+    Matrix2S currentStrainTensor = strainLin.getStrainTensor(coarseF);
+    oStrains[idisp].push_back(currentStrainTensor(0,0));
+    oStrains[idisp].push_back(currentStrainTensor(1,1));
+    oStrains[idisp].push_back(currentStrainTensor(0,1));
+  }
+}
+
+void meshUtil::computeStrains(ElementRegGrid &iElementGrid, const std::vector<std::vector<cfgScalar> > &iHarmonicDisplacements, std::vector<std::vector<cfgScalar> > &oStrains)
+{
+  oStrains.clear();
+  oStrains.resize(iHarmonicDisplacements.size());
+
+  int nx = iElementGrid.nx;
+  int ny = iElementGrid.ny;
+  int nz = iElementGrid.nz;
+
+  std::vector<int> corners;
+  corners.push_back(iElementGrid.GetVertInd(0, 0, 0));
+  corners.push_back(iElementGrid.GetVertInd(0, 0, nz));
+  corners.push_back(iElementGrid.GetVertInd(0, ny, 0));
+  corners.push_back(iElementGrid.GetVertInd(0, ny, nz));
+  corners.push_back(iElementGrid.GetVertInd(nx, 0, 0));
+  corners.push_back(iElementGrid.GetVertInd(nx, 0, nz));
+  corners.push_back(iElementGrid.GetVertInd(nx, ny, 0));
+  corners.push_back(iElementGrid.GetVertInd(nx, ny, nz));
+  ElementHex coarseElem(corners);
+  StrainLin strainLin;
+
+  int idisp, ndisp=(int)iHarmonicDisplacements.size();
+  assert(ndisp==6);
+  for (idisp=0; idisp<ndisp; idisp++)
+  {
+    std::vector<Vector3f> h = cfgMaterialUtilities::toVector3f(iHarmonicDisplacements[idisp]);
+    std::vector<Vector3f> x = cfgUtil::add(iElementGrid.X, h);
+    Matrix3f coarseF = coarseElem.defGrad(Vector3f(0,0,0), iElementGrid.X, x);
+    Matrix3f currentStrainTensor = strainLin.getStrainTensor(coarseF);
+    oStrains[idisp].push_back(currentStrainTensor(0,0));
+    oStrains[idisp].push_back(currentStrainTensor(1,1));
+    oStrains[idisp].push_back(currentStrainTensor(2,2));
+    oStrains[idisp].push_back(currentStrainTensor(1,2));
+    oStrains[idisp].push_back(currentStrainTensor(0,2));
+    oStrains[idisp].push_back(currentStrainTensor(0,1));
+  }
+}
+
 void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid2D &iElementGrid, const std::vector<std::vector<cfgScalar> > &iHarmonicDisplacements, MatrixXS &oCoarsenedTensor)
 {
   int nx = iElementGrid.nx;
