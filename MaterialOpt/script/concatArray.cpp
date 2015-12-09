@@ -1,22 +1,24 @@
 #include "cfgUtilities.h"
 #include <iostream>
-int main(int argc, char * argv[]){
-  int nFile = 
+#include <string>
 
-  std::string fileRootName("../data/Level16");
-  std::string fileExtension(".bin");
-  if(conf.hasOpt("fileRootName")){
-    fileRootName = conf.getString("fileRootName");
-  }
-  if(conf.hasOpt("fileExtension")){
-    fileExtension = conf.getString("fileExtension");
-  }
-  std::vector<std::vector<int> > materialAssignments;
+int main(int argc, char * argv[]){
+  int nFile = 11;
+
+  std::string fileRootName("../../data/Level16_elasticityTensors/level16_");
+  std::string fileExtension("_elasticityTensors.bin");
+  
+  std::vector<std::vector<float> > all;
   std::vector<std::vector<float> > tensors;
   bool success ;
-  std::string matAssignmentFile = fileRootName + "_matAssignments" + fileExtension;
-  std::string tensorFile = fileRootName + "_elasticityTensors" + fileExtension;
-  success = cfgUtil::readBinary<int>(matAssignmentFile, materialAssignments);
-
+  for(int ii = 0; ii<nFile; ii++){
+    std::string tensorFile = fileRootName +std::to_string(ii) + fileExtension;
+    success = cfgUtil::readBinary<float>(tensorFile, tensors);
+    all.insert(all.end(), tensors.begin(), tensors.end());
+  }
+  
+  std::string outfile("level16_elasticityTensors.bin");
+  cfgUtil::writeBinary<float>(outfile, all);
+  
   return 0;
 }
