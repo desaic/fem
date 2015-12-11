@@ -3,13 +3,9 @@
 #include "Render.hpp"
 #include "World.hpp"
 #include "Element.hpp"
-#include "ElementHier.hpp"
 #include "ElementRegGrid.hpp"
-#include "ElementMeshHier.hpp"
 #include "StepperGrad.hpp"
 #include "StepperNewton.hpp"
-#include "AdmmCPU.hpp"
-#include "AdmmNoSpring.hpp"
 //#include "IpoptStepper.hpp"
 #include "MaterialQuad.hpp"
 #include "StrainEneNeo.hpp"
@@ -17,18 +13,9 @@
 #include "StrainCorotLin.hpp"
 #include "UnitTests.hpp"
 
+#include <fstream>
 #include <iostream>
 #include <iomanip>
-void runTest()
-{
-  //ElementCoarseTest();
-  stiffnessTest(2);
-  //testCoarseDefGrad();
-	//forceTest(0);
-  //cudaLinTest();
-  system("pause");
-  exit(0);
-}
 
 //reorder stiffness matrix for a single element to compare to vega
 void OrderVega(Eigen::MatrixXd & K){
@@ -49,11 +36,7 @@ int main(int argc, char* argv[])
 {
   const char * filename = "config.txt";
   ConfigFile conf;
-  conf.load(filename);
-  if (conf.getBool("test")){
-    runTest();
-  }
-  
+  conf.load(filename);  
   
   int refine = 1;
   if (conf.hasOpt("refine")){

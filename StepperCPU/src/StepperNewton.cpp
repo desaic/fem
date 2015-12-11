@@ -4,7 +4,6 @@
 #include "ArrayUtil.hpp"
 #include "femError.hpp"
 
-#include "LinSolve.hpp"
 #include "SparseLin.hpp"
 #include "Eigen/Sparse"
 
@@ -28,14 +27,7 @@ int StepperNewton::oneStep()
   int ndof = 3*(int)m->x.size();
   std::vector<float> bb(ndof);
 
-  if (dense)
-  {
-    status = compute_dx_dense(m, force, rmRigid, bb);
-  }
-  else
-  {
     status = compute_dx_sparse(m, force, rmRigid, bb);
-  }
   if (status>0)
     return status;
 
@@ -117,38 +109,6 @@ void fixRigid(MatrixXf & K, float * b,
   }
 }
 
-int StepperNewton::compute_dx_dense(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
-{
-  int ndof = bb.size();
-  assert(iMesh && 3*iMesh->x.size()==ndof);
-
-  MatrixXf K = iMesh->getStiffness();
-   
-  for(unsigned int ii = 0;ii<m->x.size(); ii++){
-    for(int jj = 0;jj<3;jj++){
-      int row = 3*ii + jj;
-      //damping, better condition number
-  //    K(row,row) += 100;
-      if(m->fixed[ii]){
-        bb[ row ] = 0;
-        for(int kk = 0;kk<ndof;kk++){
-          K(row,kk) = 0;
-          K(row,row) = 100;
-        }
-      }else{
-        bb[ row ] = iForces[ii][jj];
-      }
-    }
-  }
-  if(iRmRigid){
-    K.resize(ndof + 6, ndof+6);
-    bb.resize(ndof+6);
-    fixRigid(K,&(bb[0]),m);
-  }
-  linSolvef(K,&(bb[0]));
-
-  return 0;
-}
 
 int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
 {

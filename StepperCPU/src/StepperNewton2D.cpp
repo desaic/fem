@@ -4,7 +4,6 @@
 #include "femError.hpp"
 #include "MeshUtilities.h"
 
-#include "LinSolve.hpp"
 #include "SparseLin.hpp"
 #include "Eigen/Sparse"
 

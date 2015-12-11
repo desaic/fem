@@ -1,6 +1,6 @@
 #ifndef TIMER_HPP
 #define TIMER_HPP
-#include <ctime>
+#include <chrono>
 
 class Timer
 {
@@ -20,8 +20,8 @@ public:
 private:
   clock_t t0, t1;
 
-  struct timespec start_t;
-  struct timespec finish_t;
+  std::chrono::time_point<std::chrono::system_clock> start_t;
+  std::chrono::time_point<std::chrono::system_clock> finish_t;
 
 };
 

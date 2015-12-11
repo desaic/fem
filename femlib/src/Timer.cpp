@@ -7,27 +7,25 @@ Timer::Timer() :t0(0), t1(0)
 
 void Timer::start()
 {
-  t0 = std::clock();
+  startWall();
 }
 
 int Timer::end()
 {
-  t1 = std::clock();
-  //naive overflow check
-  if (t1 < t0){
-    return -1;
-  }
+  endWall();
   return 0;
 }
 
 float Timer::getSeconds()
 {
-  return (t1 - t0) / (float)(CLOCKS_PER_SEC);
+  std::chrono::duration<double> diff = finish_t - start_t;
+  return diff.count();
 }
 
 float Timer::getMilliseconds()
 {
-  return (t1 - t0) / (CLOCKS_PER_SEC/1000.0f);
+  std::chrono::duration<double> diff = finish_t - start_t;
+  return diff.count()/1000;
 }
 
 clock_t Timer::getClocks()
@@ -37,17 +35,16 @@ clock_t Timer::getClocks()
 
 void Timer::startWall()
 {
-  clock_gettime(CLOCK_MONOTONIC, &start_t);
+  start_t = std::chrono::system_clock::now();
 }
 
 void Timer::endWall()
 {
-  clock_gettime(CLOCK_MONOTONIC, &finish_t);
+  finish_t = std::chrono::system_clock::now();
 }
 
 double Timer::getSecondsWall()
 {
-  double elapsed = finish_t.tv_sec - start_t.tv_sec;
-  elapsed += (finish_t.tv_nsec - start_t.tv_nsec)/1.0e9;
-  return elapsed;
+  std::chrono::duration<double> diff = finish_t - start_t;
+  return diff.count();
 }
