@@ -114,3 +114,28 @@ operator<<(std::ostream & o, const std::vector<T> & arr)
     o<<arr[ii]<<"\n";
   }
 }
+
+std::string directoryName(std::string filename)
+{
+  char * fullpath;
+  std::string path;
+  std::string s;
+
+#ifdef __linux__
+  char resolve[PATH_MAX];
+  fullpath = realpath(filename.c_str(), resolve);
+  if (fullpath == NULL){
+    std::cout << "Error resolving " << filename << "\n";
+  }
+  s = std::string(fullpath);
+#elif _WIN32
+  char full[_MAX_PATH];
+  if ( _fullpath(full, filename.c_str(), _MAX_PATH) != NULL ){
+    s = std::string(full);
+  }
+#endif
+  std::size_t found = s.find_last_of("/\\");
+  path = s.substr(0, found);
+  path += "/";
+  return path;
+}

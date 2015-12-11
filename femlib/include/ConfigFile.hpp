@@ -13,6 +13,7 @@ public:
 
   bool hasOpt(const std::string & key)const;
 
+  std::string dir;
 private:
   std::map<std::string, std::string> m;
 };

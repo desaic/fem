@@ -36,4 +36,6 @@ public:
   std::ofstream out;
 };
 
+std::string directoryName(std::string filename);
+
 #endif // FILEUTIL_HPP

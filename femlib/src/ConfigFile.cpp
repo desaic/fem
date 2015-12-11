@@ -8,6 +8,7 @@ void ConfigFile::load(const char * filename)
   if (!in.good()){
     return;
   }
+  dir = directoryName(filename);
   std::string line;
   while (std::getline(in.in, line)){
     std::istringstream ss(line);
