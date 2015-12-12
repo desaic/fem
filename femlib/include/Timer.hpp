@@ -1,6 +1,6 @@
 #ifndef TIMER_HPP
 #define TIMER_HPP
-#include <ctime>
+#include <chrono>
 
 class Timer
 {
@@ -12,7 +12,17 @@ public:
   float getSeconds();
   float getMilliseconds();
   clock_t getClocks();
+
+  void   startWall();
+  void   endWall();
+  double getSecondsWall();
+
 private:
   clock_t t0, t1;
+
+  std::chrono::time_point<std::chrono::system_clock> start_t;
+  std::chrono::time_point<std::chrono::system_clock> finish_t;
+
 };
+
 #endif

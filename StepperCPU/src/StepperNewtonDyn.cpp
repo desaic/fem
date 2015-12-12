@@ -4,7 +4,6 @@
 #include "ArrayUtil.hpp"
 #include "femError.hpp"
 
-#include "LinSolve.hpp"
 #include "SparseLin.hpp"
 #include "Eigen/Sparse"
 

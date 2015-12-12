@@ -1,6 +1,7 @@
 #ifndef cfgUtilities_h
 #define cfgUtilities_h
 
+#include <assert.h>
 #include <iostream>
 #include <numeric>
 #include <set>

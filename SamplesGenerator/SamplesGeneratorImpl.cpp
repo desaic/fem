@@ -19,7 +19,6 @@
 #include "StepperNewton.hpp"
 #include "Stepper2D.h"
 #include "StepperNewton2D.h"
-#include "AdmmCPU.hpp"
 #include "StepperGrad.hpp"
 
 #include "MeshUtilities.h"
@@ -412,10 +411,6 @@ bool SamplesGeneratorImpl::computeForceDeformationSample(ElementRegGrid * iEleme
   else if (iStepperType == "ipopt"){
     //not yet implemented
     //  stepper = new IpoptStepper();
-  }
-  else if (iStepperType == "admmCPU"){
-    stepper = new AdmmCPU();
-    ((AdmmCPU*)stepper)->ro0 = 10;
   }
   else if (iStepperType == "grad"){
     stepper = new StepperGrad();
