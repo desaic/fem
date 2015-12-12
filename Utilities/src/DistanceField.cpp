@@ -11,6 +11,7 @@
 using namespace cfgMaterialUtilities;
 
 // levelset
+#ifndef LEVEL_SET_NOT_AVAILABLE
 #include "MacGrid.h"
 #include "FaceField.h"
 #include "LevelSet.h"
@@ -20,6 +21,7 @@ using namespace cfgMaterialUtilities;
 const int d=3;
 Type_Define_VectorD_Outside_Class(d);Type_Define_VectorDi_Outside_Class(d);Type_Define_MatrixD_Outside_Class(d);
 
+#endif 
 
 DistanceField::DistanceField(int iDim)
 {
@@ -34,6 +36,7 @@ std::vector<cfgScalar> DistanceField::computeDistances(const std::vector<cfgScal
 {
   std::vector<cfgScalar> distances;
 
+#ifndef LEVEL_SET_NOT_AVAILABLE
   std::vector<cfgScalar> pointsInit = iPoints;
   std::vector<cfgScalar> lengths(m_dim, 1);
   int npoint=(int)pointsInit.size()/m_dim;
@@ -79,5 +82,9 @@ std::vector<cfgScalar> DistanceField::computeDistances(const std::vector<cfgScal
   {
     distances.resize(npoint, 1);
   }
+#endif 
   return distances;
 }
+
+
+
