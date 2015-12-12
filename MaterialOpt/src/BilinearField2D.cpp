@@ -1,4 +1,4 @@
-#include "GridField2D.hpp" 
+#include "BilinearField2D.hpp" 
 
 //1 3
 //0 2
@@ -12,7 +12,7 @@ Eigen::VectorXd bilinearWeight(const Eigen::VectorXd & n){
 }
 
 void
-GridField2D::allocate(int nx, int ny)
+BilinearField2D::allocate(int nx, int ny)
 {
   gridSize[0] = nx;
   gridSize[1] = ny;
@@ -21,7 +21,7 @@ GridField2D::allocate(int nx, int ny)
 }
 
 Eigen::VectorXi
-GridField2D::gridIdx(const Eigen::VectorXd & x)
+BilinearField2D::gridIdx(const Eigen::VectorXd & x)
 {
   int dim = 2;
   //cell index in x and y directions.
@@ -36,7 +36,7 @@ GridField2D::gridIdx(const Eigen::VectorXd & x)
 }
 
 Eigen::VectorXd
-GridField2D::natCoord(const Eigen::VectorXd & x)
+BilinearField2D::natCoord(const Eigen::VectorXd & x)
 {
   int dim = 2;
   Eigen::VectorXd n(dim);
@@ -51,7 +51,7 @@ GridField2D::natCoord(const Eigen::VectorXd & x)
 }
 
 Eigen::VectorXi
-GridField2D::squareVertexIdx(const Eigen::VectorXi & idx)
+BilinearField2D::squareVertexIdx(const Eigen::VectorXi & idx)
 {
   int nV = 4;
   Eigen::VectorXi val(nV);
@@ -63,7 +63,7 @@ GridField2D::squareVertexIdx(const Eigen::VectorXi & idx)
 }
 
 Eigen::VectorXd
-GridField2D::squareVertexVal(const Eigen::VectorXi & idx)
+BilinearField2D::squareVertexVal(const Eigen::VectorXi & idx)
 {
   Eigen::VectorXi vi = squareVertexIdx(idx);
   int nV = vi.rows();
@@ -75,13 +75,13 @@ GridField2D::squareVertexVal(const Eigen::VectorXi & idx)
 }
 
 int
-GridField2D::vertexIndex(int xi, int yi) const
+BilinearField2D::vertexIndex(int xi, int yi) const
 {
   return xi*(gridSize[1]+1) + yi;
 }
 
 double
-GridField2D::f(const Eigen::VectorXd & x)
+BilinearField2D::f(const Eigen::VectorXd & x)
 {
 
   assert(x.rows() >= 2);
@@ -94,7 +94,7 @@ GridField2D::f(const Eigen::VectorXd & x)
 }
 
 Eigen::SparseVector<double>
-GridField2D::df(const Eigen::VectorXd & x)
+BilinearField2D::df(const Eigen::VectorXd & x)
 {
 
   Eigen::VectorXi idx = gridIdx(x);

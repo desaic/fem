@@ -11,7 +11,6 @@
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
 #include "StrainCorotLin.hpp"
-#include "UnitTests.hpp"
 
 #include <fstream>
 #include <iostream>

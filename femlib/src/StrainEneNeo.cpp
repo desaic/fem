@@ -7,6 +7,29 @@ StrainEneNeo::StrainEneNeo()
   param[1] =10;
 }
 
+Matrix3f StrainEneNeo::getStrainTensor(const Matrix3f & F)
+{
+  return F.transposed() * F;
+}
+
+Eigen::MatrixXf StrainEneNeo::EMatrix()
+{
+  Eigen::MatrixXf E = Eigen::MatrixXf::Zero(6, 6);
+  float G = param[0];
+  float l = param[1];
+  float e = G*(3 * l + 2 * G) / (l + G);
+  float nu = l / (2 * (l + G));
+  float c = e / ((1 + nu)*(1 - 2 * nu));
+  for (int ii = 0; ii < 3; ii++){
+    for (int jj = 0; jj < 3; jj++){
+      E(ii, jj) = nu;
+    }
+    E(ii, ii) = 1 - nu;
+    E(3 + ii, 3 + ii) = 0.5f - nu;
+  }
+  return c*E;
+}
+
 float StrainEneNeo::getEnergy(const Matrix3f & F)
 {
   float I1 = (F.transposed()*F).trace();

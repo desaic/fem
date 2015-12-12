@@ -8,7 +8,7 @@ message(${QHULL_BIN_DIR})
 if(DEFINED ENV{PARDISO_LIB_PATH})
 	set(IS_PARDISO_AVAILABLE ON)
 endif()
-
+add_definitions( -DLEVEL_SET_NOT_AVAILABLE)
 file(GLOB src "*.cpp")
 file(GLOB headers "*.h")
 
@@ -45,6 +45,9 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/../StepperCPU/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../StepperCPU ${CMAKE_CURRENT_BINARY_DIR}/StepperCPU)
 link_directories(${PROJECT_SOURCE_DIR}/../lib)  #for blas
+
+include_directories(${PROJECT_SOURCE_DIR}/../MaterialOpt/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/../MaterialOpt ${CMAKE_CURRENT_BINARY_DIR}/MaterialOpt)
 
 if (IS_PARDISO_AVAILABLE)
 	link_directories($ENV{PARDISO_LIB_PATH})

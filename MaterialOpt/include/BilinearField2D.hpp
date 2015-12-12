@@ -1,12 +1,12 @@
-#ifndef GRID_FIELD_2D_HPP
-#define GRID_FIELD_2D_HPP
+#ifndef BILINEAR_FIELD_2D_HPP
+#define BILINEAR_FIELD_2D_HPP
 
 #include "RealField.hpp"
 
 ///@brief the grid is column major.
-class GridField2D : public RealField{
+class BilinearField2D : public RealField{
 public:
-  GridField2D():gridSize(2,0){}
+  BilinearField2D() :gridSize(2, 0){}
 
   ///@brief allocate a nx by ny grid. The number of control points is
   /// (nx+1)x(ny+1).
