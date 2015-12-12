@@ -34,6 +34,8 @@ using namespace cfgUtil;
 #include "ScoringFunction.h"
 #include "Resampler.h"
 
+#include "DistanceField.h"
+
 MaterialParametersView::MaterialParametersView()
   :QVTKWidget()
 {
@@ -254,6 +256,47 @@ void MaterialParametersView::updatePlots()
     int npoints = (int)physicalParametersPerLevel[ilevel].size()/paramdim;
     std::vector<int> levels(npoints, ilevel);
     vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels);
+
+    if (0)
+    {
+      DistanceField distanceField(paramdim);
+      std::vector<cfgScalar> distances = distanceField.computeDistances(physicalParametersPerLevel[ilevel]);
+
+      cfgScalar minValue = FLT_MAX;
+      cfgScalar maxValue = -FLT_MAX;
+      for (int ipoint=0; ipoint<npoints; ipoint++)
+      {
+        cfgScalar dist = distances[ipoint];
+        if (dist < minValue)
+          minValue = dist;
+        if (dist > maxValue)
+          maxValue = dist;
+      }
+      std::cout << "min dist = " << minValue << ", max dist = " << maxValue << std::endl;
+
+      std::vector<vtkVector3i> colors;
+      for (int ipoint=0; ipoint<npoints; ipoint++)
+      {
+        vtkVector3i matColor;
+        if (distances[ipoint] < 0)
+        {
+          cfgScalar w = distances[ipoint]/minValue;
+          matColor = vtkVector3i((1-w)*255, (1-w)*255, w*255 + (1-w)*255);
+        }
+        else if (distances[ipoint] > 0)
+        {
+          cfgScalar w = distances[ipoint]/maxValue;
+          matColor = vtkVector3i(w*255 + (1-w)*255, (1-w)*255, (1-w)*255);
+        }
+        else
+        {
+           matColor = vtkVector3i(255, 0, 0);
+        }
+        colors.push_back(matColor);
+      }
+      vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Nu1", "Density", colors, 10);
+      //m_plotsPerLevel[ilevel].push_back(plot);
+    }
 
     if (0)
     {

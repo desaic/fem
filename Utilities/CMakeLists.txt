@@ -24,6 +24,10 @@ if (NOT TARGET FEMLib)
 	add_subdirectory(${PROJECT_SOURCE_DIR}/../femlib ${CMAKE_CURRENT_BINARY_DIR}/femlib)
 endif()
 
+# levelset
+include_directories($ENV{TOPOOPT_DIR}/library/Utilities)
+include_directories($ENV{TOPOOPT_DIR}/external/PhysBAM/PhysBAM_Tools)
+
 add_library(Utilities ${LIB_SRC})
 
 set(Utilities_LIBS Utilities vecmath qhullcpp qhullstatic_p PARENT_SCOPE)

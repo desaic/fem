@@ -18,6 +18,7 @@ public:
 
   std::vector<cfgScalar> computeScores(const std::vector<cfgScalar> &iPoints);
 
+  void setUseDistanceField(bool iUseField);
   void setDensityRadius(cfgScalar iRadius);
   cfgScalar estimateDensityRadius(const std::vector<cfgScalar> &iPoints);
 
@@ -28,6 +29,7 @@ private:
 protected:
   int m_dim;
   cfgScalar m_densityRadius;
+  bool m_useDistanceField;
 };
 
 #endif

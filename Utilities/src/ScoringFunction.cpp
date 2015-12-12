@@ -7,6 +7,7 @@
 
 #include "ScoringFunction.h"
 #include "DensityEstimator.h"
+#include "DistanceField.h"
 
 #include <cfgUtilities.h>
 using namespace cfgUtil;
@@ -18,10 +19,16 @@ ScoringFunction::ScoringFunction(int iDim)
 {
   m_dim = iDim;
   m_densityRadius = 0;
+  m_useDistanceField = 0;
 }
 
 ScoringFunction::~ScoringFunction()
 {
+}
+
+void ScoringFunction::setUseDistanceField(bool iUseField)
+{
+  m_useDistanceField = iUseField;
 }
 
 void ScoringFunction::setDensityRadius(cfgScalar iRadius)
@@ -75,30 +82,54 @@ std::vector<cfgScalar> ScoringFunction::computePropertiesScores(const std::vecto
 
 std::vector<cfgScalar> ScoringFunction::computeScores(const std::vector<cfgScalar> &iPoints)
 {
-  std::vector<cfgScalar> densities = computeDensities(iPoints);
-  std::vector<cfgScalar> scores = computePropertiesScores(iPoints);
-  int ipoint, npoint=(int)scores.size();
-  for (ipoint=0; ipoint<npoint; ipoint++)
+  std::vector<cfgScalar> scores;
+  if (m_useDistanceField)
   {
-    densities[ipoint] = 1-densities[ipoint];
+    DistanceField distanceField(m_dim);
+    scores = distanceField.computeDistances(iPoints);
+
+    cfgScalar scoreMax = *std::max_element(scores.begin(), scores.end());
+    cfgScalar scoreMin = *std::min_element(scores.begin(), scores.end());
+
+    cfgScalar minProba = 0.1;
+
+    if (scoreMax-scoreMin > 1.e-6)
+    {
+      int ipoint, npoint=(int)scores.size();
+      for (ipoint=0; ipoint<npoint; ipoint++)
+      {
+        scores[ipoint] = (scores[ipoint]-scoreMin)/(scoreMax-scoreMin);
+        scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
+      }
+    }
   }
-
-  //scores = mult(scores, densities);
-  scores = densities;
-
-  cfgScalar scoreMax = *std::max_element(scores.begin(), scores.end());
-  cfgScalar scoreMin = *std::min_element(scores.begin(), scores.end());
-
-  cfgScalar minProba = 0.01;
-  
-  if (scoreMax-scoreMin > 1.e-6)
+  else
   {
+    std::vector<cfgScalar> densities = computeDensities(iPoints);
+    scores = computePropertiesScores(iPoints);
+    int ipoint, npoint=(int)scores.size();
     for (ipoint=0; ipoint<npoint; ipoint++)
     {
-      scores[ipoint] = (scores[ipoint]-scoreMin)/(scoreMax-scoreMin);
-      scores[ipoint] *= densities[ipoint];
+      densities[ipoint] = 1-densities[ipoint];
+    }
 
-      scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
+    //scores = mult(scores, densities);
+    scores = densities;
+
+    cfgScalar scoreMax = *std::max_element(scores.begin(), scores.end());
+    cfgScalar scoreMin = *std::min_element(scores.begin(), scores.end());
+
+    cfgScalar minProba = 0.01;
+
+    if (scoreMax-scoreMin > 1.e-6)
+    {
+      for (ipoint=0; ipoint<npoint; ipoint++)
+      {
+        scores[ipoint] = (scores[ipoint]-scoreMin)/(scoreMax-scoreMin);
+        scores[ipoint] *= densities[ipoint];
+
+        scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
+      }
     }
   }
   return scores;

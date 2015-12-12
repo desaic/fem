@@ -88,7 +88,8 @@ private:
   int computeVariationsV3(int iLevel, int iSubLevel, const std::vector<std::vector<std::vector<int> > > &iMaterialAssignmentsPreviousLevels, const std::vector<std::vector<std::vector<int> > > &iBaseMaterialStructuresPreviousLevels, 
                           const std::vector<std::vector<float> > &iPhysicalParametersPreviousLevels, std::vector<std::vector<int> > &oNewMaterialAssignments);
   void computeVariationsSMC(int iLevel, std::string & iStepperType, const std::vector<std::vector<std::vector<int> > > &iMaterialAssignmentsPreviousLevels, const std::vector<std::vector<std::vector<int> > > &iBaseMaterialStructuresPreviousLevels, 
-                           const std::vector<std::vector<float> > &iPhysicalParametersPreviousLevels, std::vector<std::vector<int> > &oNewMaterialAssignments, std::vector<cfgScalar> &oNewPhysicalParameters);
+                           const std::vector<std::vector<float> > &iPhysicalParametersPreviousLevels, const std::vector<std::vector<float> > &iTensorsPreviousLevels,
+                           std::vector<std::vector<int> > &oNewMaterialAssignments, std::vector<cfgScalar> &oNewPhysicalParameters, std::vector<cfgScalar> &oNewTensors);
 
   void writeStressDeformationFile(const std::vector<std::vector<int> > &iMaterialAssignments, int iMatStructureSize[3], const std::vector<std::vector<float> > iStresses[2], const std::vector<std::vector<std::vector<float> > > iX[2], std::string iPostfix="");
 
@@ -96,7 +97,18 @@ private:
                          std::vector<cfgScalar> &oParameters, std::vector<std::vector<std::vector<float> > > oX[3]);
   void writeFiles(int iLevel, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<int> > &iBaseMaterialStructures, const std::vector<cfgScalar> &iParameters, const std::vector<std::vector<std::vector<float> > > iX[2],
                   const std::string iPostFix="");
+  void writeFiles(int iLevel, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<int> > &iBaseMaterialStructures, const std::vector<cfgScalar> &iParameters,
+                  const std::vector<cfgScalar> &iTensorsValues, const std::string iPostFix="");
+
   bool readFiles(int iLevel, std::vector<std::vector<int> > &oMaterialAssignments, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<cfgScalar> &oParameters);
+  bool readFiles(int iLevel, std::vector<std::vector<int> > &oMaterialAssignments, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<cfgScalar> &oParameters, std::vector<cfgScalar> &oTensors, const std::string iPostFix="");
+  void concatenateFiles(int iLevel, int indexMin, int indexMax, const std::string iPostFix="", const std::string iNewPostFix="");
+
+  int getNbParameters();
+  int getNbFreeCells(int n[3]);
+  std::vector<int> getFreeCellsMaterialAssignment(int n[3], const std::vector<int> &iMatAssignments);
+  std::vector<int>  getFullMaterialAssignment(int n[3], const std::vector<int> &iFreeCellMatAssignments);
+  void computeParametersAndTensorValues(int n[3], const std::vector<std::vector<int> > &iMatAssignments, std::vector<cfgScalar> &oParameters, std::vector<cfgScalar> &oTensorValues);
 
 private:
   std::string m_OutputDirectory;

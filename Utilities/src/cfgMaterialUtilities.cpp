@@ -1604,7 +1604,8 @@ void cfgMaterialUtilities::mirrorStructureAlongDiagonal(int Nx, int Ny, int Nz, 
 void cfgMaterialUtilities::getQuarter(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
 {
   int n[3] = {Nx/2, Ny/2};
-  oNewStructureElements.resize(n[0]*n[1]);
+  oNewStructureElements.clear();
+  oNewStructureElements.reserve(n[0]*n[1]);
 
   for (int i=0; i<n[0]; i++)
   {
@@ -1612,9 +1613,7 @@ void cfgMaterialUtilities::getQuarter(int Nx, int Ny, const std::vector<int> &iS
     {
       int indMat = getGridToVectorIndex(i, j, Nx, Ny);
       int mat = iStructureElements[indMat];
-
-      int indMat1 = getGridToVectorIndex(i, j, n[0], n[1]);
-      oNewStructureElements[indMat1] = mat;
+      oNewStructureElements.push_back(mat);
     }
   }
 }
@@ -1622,7 +1621,8 @@ void cfgMaterialUtilities::getQuarter(int Nx, int Ny, const std::vector<int> &iS
 void cfgMaterialUtilities::getQuarter(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
 {
   int n[3] = {Nx/2, Ny/2, Nz/2};
-  oNewStructureElements.resize(n[0]*n[1]*n[2]);
+  oNewStructureElements.clear();
+  oNewStructureElements.reserve(n[0]*n[1]*n[2]);
 
   for (int i=0; i<n[0]; i++)
   {
@@ -1632,9 +1632,40 @@ void cfgMaterialUtilities::getQuarter(int Nx, int Ny, int Nz, const std::vector<
       {
         int indMat = getGridToVectorIndex(i, j, k, Nx, Ny, Nz);
         int mat = iStructureElements[indMat];
+        oNewStructureElements.push_back(mat);
+      }
+    }
+  }
+}
 
-        int indMat1 = getGridToVectorIndex(i, j, k, n[0], n[1], n[2]);
-        oNewStructureElements[indMat1] = mat;
+void cfgMaterialUtilities::getTriangularStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
+{
+  oNewStructureElements.clear();
+
+  for (int i=0; i<Nx/2; i++)
+  {
+    for (int j=0; j<=i; j++)
+    {
+      int indMat = getGridToVectorIndex(i, j, Nx, Ny);
+      int mat = iStructureElements[indMat];
+      oNewStructureElements.push_back(mat);
+    }
+  }
+}
+
+void cfgMaterialUtilities::getTetrahedralStructure(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
+{
+  oNewStructureElements.clear();
+
+  for (int i=0; i<Nx/2; i++)
+  {
+    for (int j=0; j<=i; j++)
+    {
+      for (int k=0; k<=j; k++)
+      {
+        int indMat = getGridToVectorIndex(i, j, k, Nx, Ny, Nz);
+        int mat = iStructureElements[indMat];
+        oNewStructureElements.push_back(mat);
       }
     }
   }
@@ -1775,7 +1806,7 @@ void cfgMaterialUtilities::getBoundingBox(const std::vector<cfgScalar> &iPoints,
   }
 }
 
-void cfgMaterialUtilities::rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths)
+bool cfgMaterialUtilities::rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths)
 {
   assert(iTargetBoxLengths.size()==iDim);
 
@@ -1784,23 +1815,26 @@ void cfgMaterialUtilities::rescaleData(std::vector<cfgScalar> &ioPoints, int iDi
   getBoundingBox(ioPoints, iDim, box);
   std::vector<cfgScalar> scaleFactors;
   int icoord;
+  bool degenerated = true;
   for (icoord=0; icoord<iDim; icoord++)
   {
     double length = box[1][icoord]-box[0][icoord];
     double target_length = iTargetBoxLengths[icoord];
     double scale = (length>eps? target_length/length: 0);
     scaleFactors.push_back(scale);
+    degenerated &= scale==0;
   }
   int ipoint, npoint=(int)ioPoints.size()/iDim;
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
-    Vector3f p = getVector3f(ipoint, ioPoints);
     for (icoord=0; icoord<iDim; icoord++)
     {
-      p[icoord] = scaleFactors[icoord]*(p[icoord]-box[0][icoord]);
-      ioPoints[iDim*ipoint+icoord] = p[icoord];
+      cfgScalar val = ioPoints[iDim*ipoint+icoord];
+      val = scaleFactors[icoord]*(val-box[0][icoord]);
+      ioPoints[iDim*ipoint+icoord] = val;
     }
   }
+  return !degenerated;
 }
 
 void cfgMaterialUtilities::getKMeans(int iNbIterations, int iNbClusters, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<std::vector<int> > &oClusters, std::vector<int> *oCenters)
