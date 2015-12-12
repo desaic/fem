@@ -3,7 +3,7 @@
 #include "vecmath.h"
 #include <vector>
 #include "MatrixX.hpp"
-#include <Eigen\Dense>
+#include <Eigen/Dense>
 
 class Element;
 class ElementMesh;
