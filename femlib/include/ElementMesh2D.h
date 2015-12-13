@@ -64,7 +64,6 @@ public:
 
   virtual ~ElementMesh2D();
 
-private:
   void fixRigid(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh2D * mesh);
   void fixTranslation(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh2D * mesh);
   void fixRotation(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh2D * mesh);

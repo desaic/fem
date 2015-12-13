@@ -16,16 +16,19 @@ public:
   ///@brief not freed by ~FEM2DFun destructor.
   ElementMesh2D * em;
 
+  ///@brief variables used by simulation and linear solve.
+  std::vector<int> m_I, m_J;
+  bool m_Init;
+  bool m_periodic;
+  bool m_noRigid;
+
   ///@brief not freed by ~FEM2DFun destructor.
   ///parameterization for material assignments.
   ///BilinearField2D for bilinearly interpolated material distributsions
   ///over a grid and PiecewiseConstant2D for constant material in each cell.
   RealField * field;
 
-  void init(const Eigen::VectorXd & x0){
-    param = x0;
-  }
-
+  void init(const Eigen::VectorXd & x0);
   ///@brief update parameters for computing function value
   ///and gradients.
   ///In case of fem, it runs required fem simulations.
