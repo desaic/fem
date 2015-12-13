@@ -2,6 +2,7 @@
 #define FEM2DFUN_HPP
 
 #include "RealFun.hpp"
+#include <vector>
 
 class ElementMesh2D;
 class RealField;
@@ -17,10 +18,29 @@ public:
   ElementMesh2D * em;
 
   ///@brief variables used by simulation and linear solve.
+  ///@brief indices of stiffness matrix.
+  ///@brief m_I is array of length matrix_rows + 1.
   std::vector<int> m_I, m_J;
+  ///@brief values in stiffness matrix. Updated by setParam call.
+  std::vector<double> m_val;
   bool m_Init;
   bool m_periodic;
-  bool m_noRigid;
+  bool m_fixRigid;
+
+  ///@brief external forces
+  std::vector< std::vector<double> > externalForce;
+
+  ///@brief element indices ordered into a grid
+  ///grid[col][row] is the element index.
+  std::vector < std::vector< int> > grid;
+
+  ///@brief linear static displacements solved using external forces.
+  std::vector< std::vector<double> > u;
+  
+  ///@brief gradient of objective with respect to displacements.
+  ///Each vector should be the same size as the stiffness matrix, padded by 0s
+  ///so that the call to linear solver works.
+  std::vector< std::vector<double> > dfdu;
 
   ///@brief not freed by ~FEM2DFun destructor.
   ///parameterization for material assignments.
@@ -42,7 +62,12 @@ public:
   ///stretching force along x-axis.
   virtual double f();
 
+  ///@brief this function needs to change according to f().
+  void compute_dfdu();
+
   ///@brief compute gradient of f().
+  ///Given an implementation of dfdu.
+  ///When dK/dParam changes, this function needs to change accordingly.
   ///The return value should have the same size as the parameters.
   virtual Eigen::VectorXd df();
 

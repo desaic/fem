@@ -14,32 +14,69 @@ void FEM2DFun::init(const Eigen::VectorXd & x0){
   bool triangular = true;
   m_I.clear();
   m_J.clear();
-  em->stiffnessPattern(m_I, m_J, triangular, m_noRigid);
+  em->stiffnessPattern(m_I, m_J, triangular, m_fixRigid, m_fixRigid, m_periodic);
   sparseInit();
   param = x0;
+
+  int nrow = m_I.size()-1;
+  u.resize(externalForce.size());
+  for (unsigned int ii = 0; ii < u.size(); ii++){
+    u.resize(nrow);
+  }
+  dfdu.resize(u.size());
 }
 
 void FEM2DFun::setParam(const Eigen::VectorXd & x0)
 {
+  bool triangle = true;
+  bool constrained = false;
   param = x0;
+
+  //solve linear statics problems
   std::vector<cfgScalar> val;
-  getStiffnessSparse(em, param, val, )
+  getStiffnessSparse(em, param, val, triangle, constrained, m_fixRigid, m_periodic);
+  m_val = std::vector<double>(val.begin(), val.end());
+  double nrows = m_I.size() - 1;
+  for (unsigned int ii = 0; ii < externalForce.size(); ii++){
+    std::fill(u[ii].begin(), u[ii].end(), 0);
+    sparseSolve(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data());
+  }
 }
 
 double FEM2DFun::f()
 {
+  //Example: measure width and height under a stretching force.
+
   return 0;
 }
 
+void FEM2DFun::compute_dfdu()
+{
+  int nrows = m_I.size() - 1;
+  for (unsigned int ii = 0; ii < dfdu.size(); ii++){
+
+  }
+}
+
+
 Eigen::VectorXd FEM2DFun::df()
 {
-  return Eigen::VectorXd(1);
+  Eigen::VectorXd grad(param.size(), 0);
+  int nrows = m_I.size() - 1;
+  //sensitivity analysis using the adjoint method.
+  for (unsigned int ii = 0; ii < u.size(); ii++){
+    std::vector<double> lambda(nrows, 0);
+    //here dK/dParam = K.
+    //dfdx = dfdu 
+    sparseSolve(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data());
+  }
+  return grad;
 }
 
 FEM2DFun::FEM2DFun() :em(0), 
 m_Init(false),
 m_periodic(true),
-m_noRigid(true),
+m_fixRigid(true),
 field(0)
 {
 }
