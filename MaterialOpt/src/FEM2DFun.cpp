@@ -24,6 +24,7 @@ double measureStretchX(ElementMesh2D * em, const std::vector<double> & u, const 
 double measureStretchY(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid);
 
 void FEM2DFun::init(const Eigen::VectorXd & x0){
+  
   bool triangular = true;
   m_I.clear();
   m_J.clear();
@@ -45,6 +46,11 @@ void FEM2DFun::init(const Eigen::VectorXd & x0){
       grid[ii][jj] = ii * m_ny + jj;
     }
   }
+  externalForce.resize(1);
+  externalForce[0].resize(nrow, 0);
+  Eigen::Vector3d forceDir = forceMagnitude * Eigen::Vector3d(1, 0, 0);
+  stretchX(em, forceDir, grid, externalForce[0]);
+  m_Init = true;
 }
 
 void FEM2DFun::setParam(const Eigen::VectorXd & x0)
@@ -116,7 +122,7 @@ Eigen::VectorXd FEM2DFun::df()
     //lambda = K^{-1} dfdu.
     //dfdx = -lambda * dK/dparam * u.
     sparseSolve(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data());
-    for (unsigned int jj = 0; jj < param.size(); jj++){
+    for (unsigned int jj = 0; jj < em->e.size(); jj++){
       Element2D * ele = em->e[jj];
       int nV = ele->nV();
       Eigen::MatrixXd dKdp;
@@ -144,6 +150,7 @@ m_periodic(true),
 m_fixRigid(true),
 dx0(1e-3), dy0(1e-3),
 dxw(5), dyw(1),
+forceMagnitude(100),
 m_nx(0), m_ny(0),
 field(0)
 {

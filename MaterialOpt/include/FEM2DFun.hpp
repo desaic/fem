@@ -35,6 +35,8 @@ public:
 
   ///@brief external forces
   std::vector< std::vector<double> > externalForce;
+  ///@brief total force applied on one side
+  double forceMagnitude;
 
   ///@brief element indices ordered into a grid
   ///grid[col][row] is the element index.
