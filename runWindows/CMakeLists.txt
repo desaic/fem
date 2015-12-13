@@ -60,7 +60,7 @@ endif()
 
 add_executable (Run ${src})
 
-target_link_libraries(Run vecmath FEMLib StepperCPU libopenblas FEMViewer)
+target_link_libraries(Run vecmath FEMLib MaterialOpt Utilities StepperCPU libopenblas FEMViewer ${Utilities_LIBS})
 if(MSVC)
   target_link_libraries(Run glfw3 opengl32 glu32)
 endif()

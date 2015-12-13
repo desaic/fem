@@ -49,7 +49,10 @@ int main(int argc, char* argv[])
   PiecewiseConstant2D * field = new PiecewiseConstant2D();
   fem->em = em;
   fem->field = field;
+  fem->m_nx = nx;
+  fem->m_ny = ny;
   Eigen::VectorXd x0 = 0.5 * Eigen::VectorXd::Ones(em->e.size());
+  fem->init(x0);
   for (int ii = 0; ii < x0.rows(); ii++){
     x0[ii] += 0.1 * (rand() / (float)RAND_MAX - 0.5);
   }

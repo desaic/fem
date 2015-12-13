@@ -32,13 +32,7 @@ void FEM2DFun::init(const Eigen::VectorXd & x0){
   sparseInit();
   param = x0;
 
-  int nrow = m_I.size()-1;
-  u.resize(externalForce.size());
-  for (unsigned int ii = 0; ii < u.size(); ii++){
-    u.resize(nrow);
-  }
-  dfdu.resize(u.size());
-
+  int nrow = (int)m_I.size() - 1;
   grid.resize(m_nx);
   for (int ii = 0; ii < m_nx; ii++){
     grid[ii].resize(m_ny);
@@ -50,6 +44,13 @@ void FEM2DFun::init(const Eigen::VectorXd & x0){
   externalForce[0].resize(nrow, 0);
   Eigen::Vector3d forceDir = forceMagnitude * Eigen::Vector3d(1, 0, 0);
   stretchX(em, forceDir, grid, externalForce[0]);
+
+  u.resize(externalForce.size());
+  for (unsigned int ii = 0; ii < u.size(); ii++){
+    u.resize(nrow);
+  }
+  dfdu.resize(u.size());
+
   m_Init = true;
 }
 
@@ -63,7 +64,7 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
   std::vector<cfgScalar> val;
   getStiffnessSparse(em, param, val, triangle, constrained, m_fixRigid, m_periodic);
   m_val = std::vector<double>(val.begin(), val.end());
-  double nrows = m_I.size() - 1;
+  int nrows = (int)m_I.size() - 1;
   for (unsigned int ii = 0; ii < externalForce.size(); ii++){
     std::fill(u[ii].begin(), u[ii].end(), 0);
     sparseSolve(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data());
@@ -82,7 +83,7 @@ double FEM2DFun::f()
 
 void FEM2DFun::compute_dfdu()
 {
-  int nrows = m_I.size() - 1;
+  int nrows = (int)m_I.size() - 1;
   double dx = measureStretchX(em, u[0], grid);
   double dy = measureStretchY(em, u[0], grid);
   std::vector<double>grad(u[0].size(), 0);
@@ -114,8 +115,8 @@ void FEM2DFun::compute_dfdu()
 
 Eigen::VectorXd FEM2DFun::df()
 {
-  Eigen::VectorXd grad(param.size(), 0);
-  int nrows = m_I.size() - 1;
+  Eigen::VectorXd grad = Eigen::VectorXd::Zero(param.size()) ;
+  int nrows = (int)m_I.size() - 1;
   //sensitivity analysis using the adjoint method.
   for (unsigned int ii = 0; ii < u.size(); ii++){
     std::vector<double> lambda(nrows, 0);
@@ -171,7 +172,7 @@ void getStiffnessSparse(ElementMesh2D * em, const Eigen::VectorXd & param,
 
     //scale by parameter.
     //change for more complex material mixture.
-    K *= param[ii];
+    K *= (cfgScalar)param[ii];
 
     for (int jj = 0; jj<nV; jj++){
       int vj = ele->at(jj);
@@ -217,8 +218,8 @@ void getStiffnessSparse(ElementMesh2D * em, const Eigen::VectorXd & param,
 std::vector<int> topVerts(ElementMesh2D * em, const Grid2D & grid)
 {
   std::vector<int> v;
-  int nx = grid.size();
-  int ny = grid[0].size();
+  int nx = (int)grid.size();
+  int ny = (int)grid[0].size();
   int topV[2] = { 1, 3 };
   for (int ii = 0; ii<nx; ii++){
     int ei = grid[ii][ny - 1];
@@ -233,7 +234,7 @@ std::vector<int> topVerts(ElementMesh2D * em, const Grid2D & grid)
 std::vector<int> botVerts(ElementMesh2D * em, const Grid2D & grid)
 {
   std::vector<int> v;
-  int nx = grid.size();
+  int nx = (int)grid.size();
   int botV[2] = { 0, 2 };
   for (int ii = 0; ii<nx; ii++){
     int ei = grid[ii][0];
@@ -248,7 +249,7 @@ std::vector<int> botVerts(ElementMesh2D * em, const Grid2D & grid)
 std::vector<int> leftVerts(ElementMesh2D * em, const Grid2D & grid)
 {
   std::vector<int> v;
-  int ny = grid[0].size();
+  int ny = (int)grid[0].size();
   int leftV[2] = { 0, 1 };
   for (int ii = 0; ii<ny; ii++){
     int ei = grid[0][ii];
@@ -263,8 +264,8 @@ std::vector<int> leftVerts(ElementMesh2D * em, const Grid2D & grid)
 std::vector<int> rightVerts(ElementMesh2D * em, const Grid2D & grid)
 {
   std::vector<int> v;
-  int nx = grid.size();
-  int ny = grid[0].size();
+  int nx = (int)grid.size();
+  int ny = (int)grid[0].size();
   int rightV[2] = { 2, 3 };
   for (int ii = 0; ii<ny; ii++){
     int ei = grid[nx - 1][ii];
@@ -281,7 +282,7 @@ void stretchX(ElementMesh2D * em, const Eigen::Vector3d & ff, const Grid2D& grid
   int dim = 2;
   std::vector<int> leftv, rightv;
   rightv = rightVerts(em, grid);
-  Eigen::Vector3d fv = ff / rightv.size();
+  Eigen::Vector3d fv = ff / (double)rightv.size();
   for (unsigned int ii = 0; ii<rightv.size(); ii++){
     int vidx = rightv[ii];
     for (int jj = 0; jj < dim; jj++){
