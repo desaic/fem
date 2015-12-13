@@ -28,6 +28,11 @@ public:
   bool m_periodic;
   bool m_fixRigid;
 
+  ///@brief target displacements.
+  double dx0, dy0;
+  ///@brief weight for displacement objectives.
+  double dxw, dyw;
+
   ///@brief external forces
   std::vector< std::vector<double> > externalForce;
 

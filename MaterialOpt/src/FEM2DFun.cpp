@@ -5,10 +5,23 @@
 #include "SparseLin.hpp"
 
 typedef Eigen::Triplet<cfgScalar> TripletS;
+typedef std::vector<std::vector< int> > Grid2D;
+
 ///@brief a copy of stiffness matrix assembly function in ElementMesh2D class.
 ///Difference is that this function scales K for each element using param.
 void getStiffnessSparse(ElementMesh2D * em, const Eigen::VectorXd & param,
   std::vector<cfgScalar> &val, bool trig, bool constrained, bool iFixedRigid, bool iPeriodic);
+
+std::vector<int> topVerts(ElementMesh2D * em, const Grid2D & grid);
+std::vector<int> botVerts(ElementMesh2D * em, const Grid2D & grid);
+std::vector<int> leftVerts(ElementMesh2D * em, const Grid2D & grid);
+std::vector<int> rightVerts(ElementMesh2D * em, const Grid2D & grid);
+
+///@brief make stretching force in x direction
+void stretchX(ElementMesh2D * em, const Eigen::Vector3d & ff, const Grid2D& grid, std::vector<double> & externalForce);
+
+double measureStretchX(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid);
+double measureStretchY(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid);
 
 void FEM2DFun::init(const Eigen::VectorXd & x0){
   bool triangular = true;
@@ -54,18 +67,44 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
 double FEM2DFun::f()
 {
   //Example: measure width and height under a stretching force.
-
-  return 0;
+  double dx, dy;
+  dx = measureStretchX(em, u[0], grid);
+  dy = measureStretchY(em, u[0], grid);
+  double val = dxw * (dx - dx0) * (dx - dx0) + dyw * (dy - dy0) * (dy - dy0);
+  return val;
 }
 
 void FEM2DFun::compute_dfdu()
 {
   int nrows = m_I.size() - 1;
+  double dx = measureStretchX(em, u[0], grid);
+  double dy = measureStretchY(em, u[0], grid);
+  std::vector<double>grad(u[0].size(), 0);
+
   for (unsigned int ii = 0; ii < dfdu.size(); ii++){
-
+    std::vector<int> verts;
+    verts = topVerts(em, grid);
+    for (unsigned int ii = 0; ii<verts.size(); ii++){
+      grad[dim * verts[ii] + 1] += (dy - dy0)*dyw;
+    }
+    verts = botVerts(em, grid);
+    for (unsigned int ii = 0; ii<verts.size(); ii++){
+      grad[dim * verts[ii] + 1] -= (dy - dy0)*dyw;
+    }
+    verts = rightVerts(em, grid);
+    for (unsigned int ii = 0; ii<verts.size(); ii++){
+      grad[dim * verts[ii]] += (dx - dx0)*dxw;
+    }
+    verts = leftVerts(em, grid);
+    for (unsigned int ii = 0; ii<verts.size(); ii++){
+      grad[dim * verts[ii]] -= (dx - dx0)*dxw;
+    }
+    for (unsigned int ii = 0; ii<grad.size(); ii++){
+      grad[ii] /= verts.size();
+    }
   }
+  dfdu.push_back(grad);
 }
-
 
 Eigen::VectorXd FEM2DFun::df()
 {
@@ -103,6 +142,8 @@ FEM2DFun::FEM2DFun() :em(0), dim(2),
 m_Init(false),
 m_periodic(true),
 m_fixRigid(true),
+dx0(1e-3), dy0(1e-3),
+dxw(5), dyw(1),
 m_nx(0), m_ny(0),
 field(0)
 {
@@ -164,4 +205,115 @@ void getStiffnessSparse(ElementMesh2D * em, const Eigen::VectorXd & param,
       val.push_back(it.value());
     }
   }
+}
+
+std::vector<int> topVerts(ElementMesh2D * em, const Grid2D & grid)
+{
+  std::vector<int> v;
+  int nx = grid.size();
+  int ny = grid[0].size();
+  int topV[2] = { 1, 3 };
+  for (int ii = 0; ii<nx; ii++){
+    int ei = grid[ii][ny - 1];
+    for (int jj = 0; jj<2; jj++){
+      int vi = em->e[ei]->at(topV[jj]);
+      v.push_back(vi);
+    }
+  }
+  return v;
+}
+
+std::vector<int> botVerts(ElementMesh2D * em, const Grid2D & grid)
+{
+  std::vector<int> v;
+  int nx = grid.size();
+  int botV[2] = { 0, 2 };
+  for (int ii = 0; ii<nx; ii++){
+    int ei = grid[ii][0];
+    for (int jj = 0; jj<2; jj++){
+      int vi = em->e[ei]->at(botV[jj]);
+      v.push_back(vi);
+    }
+  }
+  return v;
+}
+
+std::vector<int> leftVerts(ElementMesh2D * em, const Grid2D & grid)
+{
+  std::vector<int> v;
+  int ny = grid[0].size();
+  int leftV[2] = { 0, 1 };
+  for (int ii = 0; ii<ny; ii++){
+    int ei = grid[0][ii];
+    for (int jj = 0; jj<2; jj++){
+      int vi = em->e[ei]->at(leftV[jj]);
+      v.push_back(vi);
+    }
+  }
+  return v;
+}
+
+std::vector<int> rightVerts(ElementMesh2D * em, const Grid2D & grid)
+{
+  std::vector<int> v;
+  int nx = grid.size();
+  int ny = grid[0].size();
+  int rightV[2] = { 2, 3 };
+  for (int ii = 0; ii<ny; ii++){
+    int ei = grid[nx - 1][ii];
+    for (int jj = 0; jj<2; jj++){
+      int vi = em->e[ei]->at(rightV[jj]);
+      v.push_back(vi);
+    }
+  }
+  return v;
+}
+
+void stretchX(ElementMesh2D * em, const Eigen::Vector3d & ff, const Grid2D& grid, std::vector<double> & externalForce)
+{
+  int dim = 2;
+  std::vector<int> leftv, rightv;
+  rightv = rightVerts(em, grid);
+  Eigen::Vector3d fv = ff / rightv.size();
+  for (unsigned int ii = 0; ii<rightv.size(); ii++){
+    int vidx = rightv[ii];
+    for (int jj = 0; jj < dim; jj++){
+      externalForce[dim * vidx+jj] += fv[jj];
+    }
+  }
+  leftv = leftVerts(em, grid);
+  for (unsigned int ii = 0; ii<leftv.size(); ii++){
+    int vidx = leftv[ii];
+    for (int jj = 0; jj < dim; jj++){
+      externalForce[dim * vidx + jj] -= fv[jj];
+    }
+  }
+}
+
+double measureStretchX(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid)
+{
+  int dim = 2;
+  std::vector<int> lv, rv;
+  lv = leftVerts(em, grid);
+  rv = rightVerts(em, grid);
+  double stretch = 0;
+  for (unsigned int ii = 0; ii<lv.size(); ii++){
+    stretch += u[dim * rv[ii]] - u[dim * lv[ii]];
+  }
+  stretch /= lv.size();
+  return stretch;
+}
+
+double measureStretchY(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid)
+{
+  int dim = 2;
+  std::vector<int> tv, bv;
+  tv = topVerts(em, grid);
+  bv = botVerts(em, grid);
+  double stretch = 0;
+  for (unsigned int ii = 0; ii<tv.size(); ii++){
+    stretch += u[dim * tv[ii]+1] - u[dim * bv[ii]+1];
+  }
+  stretch /= bv.size();
+  return stretch;
 }
