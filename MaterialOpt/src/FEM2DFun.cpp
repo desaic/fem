@@ -24,6 +24,14 @@ void FEM2DFun::init(const Eigen::VectorXd & x0){
     u.resize(nrow);
   }
   dfdu.resize(u.size());
+
+  grid.resize(m_nx);
+  for (int ii = 0; ii < m_nx; ii++){
+    grid[ii].resize(m_ny);
+    for (int jj = 0; jj < m_ny; jj++){
+      grid[ii][jj] = ii * m_ny + jj;
+    }
+  }
 }
 
 void FEM2DFun::setParam(const Eigen::VectorXd & x0)
@@ -66,17 +74,36 @@ Eigen::VectorXd FEM2DFun::df()
   //sensitivity analysis using the adjoint method.
   for (unsigned int ii = 0; ii < u.size(); ii++){
     std::vector<double> lambda(nrows, 0);
-    //here dK/dParam = K.
-    //dfdx = dfdu 
+    //lambda = K^{-1} dfdu.
+    //dfdx = -lambda * dK/dparam * u.
     sparseSolve(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data());
+    for (unsigned int jj = 0; jj < param.size(); jj++){
+      Element2D * ele = em->e[jj];
+      int nV = ele->nV();
+      Eigen::MatrixXd dKdp;
+      Eigen::VectorXd Ue(nV);
+      Eigen::VectorXd lambda_e(nV);
+      //in this example dK/dParam = K.
+      dKdp = em->getStiffness(jj).cast<double>();
+      Ue = dKdp * Ue;
+      for (int kk = 0; kk < ele->nV(); kk++){
+        int vidx = em->e[jj]->at(kk);
+        for (int ll = 0; ll < dim; ll++){
+          Ue[kk*dim + ll] = u[ii][vidx*dim + ll];
+          lambda_e[kk*dim + ll] = lambda[vidx*dim + ll];
+        }
+      }
+      grad[jj] += -lambda_e.dot(dKdp * Ue);
+    }
   }
   return grad;
 }
 
-FEM2DFun::FEM2DFun() :em(0), 
+FEM2DFun::FEM2DFun() :em(0), dim(2),
 m_Init(false),
 m_periodic(true),
 m_fixRigid(true),
+m_nx(0), m_ny(0),
 field(0)
 {
 }

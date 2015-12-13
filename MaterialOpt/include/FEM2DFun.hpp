@@ -16,7 +16,8 @@ public:
 
   ///@brief not freed by ~FEM2DFun destructor.
   ElementMesh2D * em;
-
+  ///@brief dimension of space. set to 2.
+  int dim;
   ///@brief variables used by simulation and linear solve.
   ///@brief indices of stiffness matrix.
   ///@brief m_I is array of length matrix_rows + 1.
@@ -33,6 +34,7 @@ public:
   ///@brief element indices ordered into a grid
   ///grid[col][row] is the element index.
   std::vector < std::vector< int> > grid;
+  int m_nx, m_ny;
 
   ///@brief linear static displacements solved using external forces.
   std::vector< std::vector<double> > u;
