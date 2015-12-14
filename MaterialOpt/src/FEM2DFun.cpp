@@ -46,12 +46,30 @@ void FEM2DFun::init(const Eigen::VectorXd & x0){
   stretchX(em, forceDir, grid, externalForce[0]);
 
   u.resize(externalForce.size());
-  for (unsigned int ii = 0; ii < u.size(); ii++){
-    u.resize(nrow);
-  }
   dfdu.resize(u.size());
+  for (unsigned int ii = 0; ii < u.size(); ii++){
+    u[ii].resize(nrow);
+    dfdu[ii].resize(nrow);
+  }
 
   m_Init = true;
+}
+
+int checkSparseIndex(const std::vector<int > & I, const std::vector<int> & J)
+{
+  int nrow = (int)I.size() - 1;
+  int maxIdx = 0;
+  for (int ii = 0; ii < I.size() - 1; ii++){
+    for (int jj = I[ii]; jj < I[ii + 1]; jj++){
+      maxIdx = std::max(J[ii], maxIdx);
+      if (J[jj] >= nrow){
+        std::cout << ii << " " << jj << "\n";
+        return -1;
+      }
+    }
+  }
+  std::cout << "max idx " << maxIdx << "\n";
+  return 0;
 }
 
 void FEM2DFun::setParam(const Eigen::VectorXd & x0)
@@ -65,9 +83,12 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
   getStiffnessSparse(em, param, val, triangle, constrained, m_fixRigid, m_periodic);
   m_val = std::vector<double>(val.begin(), val.end());
   int nrows = (int)m_I.size() - 1;
+  //checkSparseIndex(m_I, m_J);
   for (unsigned int ii = 0; ii < externalForce.size(); ii++){
     std::fill(u[ii].begin(), u[ii].end(), 0);
-    sparseSolve(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data());
+    std::vector<int> I = m_I;
+    std::vector<int> J = m_J;
+    sparseSolve(I.data(), J.data(), m_val.data(), nrows, &(u[ii][0]), externalForce[ii].data());
   }
 }
 
@@ -86,52 +107,53 @@ void FEM2DFun::compute_dfdu()
   int nrows = (int)m_I.size() - 1;
   double dx = measureStretchX(em, u[0], grid);
   double dy = measureStretchY(em, u[0], grid);
-  std::vector<double>grad(u[0].size(), 0);
-
+  std::fill(dfdu[0].begin(), dfdu[0].end(), 0);
   for (unsigned int ii = 0; ii < dfdu.size(); ii++){
     std::vector<int> verts;
     verts = topVerts(em, grid);
     for (unsigned int ii = 0; ii<verts.size(); ii++){
-      grad[dim * verts[ii] + 1] += (dy - dy0)*dyw;
+      dfdu[0][dim * verts[ii] + 1] += (dy - dy0)*dyw;
     }
     verts = botVerts(em, grid);
     for (unsigned int ii = 0; ii<verts.size(); ii++){
-      grad[dim * verts[ii] + 1] -= (dy - dy0)*dyw;
+      dfdu[0][dim * verts[ii] + 1] -= (dy - dy0)*dyw;
     }
     verts = rightVerts(em, grid);
     for (unsigned int ii = 0; ii<verts.size(); ii++){
-      grad[dim * verts[ii]] += (dx - dx0)*dxw;
+      dfdu[0][dim * verts[ii]] += (dx - dx0)*dxw;
     }
     verts = leftVerts(em, grid);
     for (unsigned int ii = 0; ii<verts.size(); ii++){
-      grad[dim * verts[ii]] -= (dx - dx0)*dxw;
+      dfdu[0][dim * verts[ii]] -= (dx - dx0)*dxw;
     }
-    for (unsigned int ii = 0; ii<grad.size(); ii++){
-      grad[ii] /= verts.size();
+    for (unsigned int ii = 0; ii<dfdu[0].size(); ii++){
+      dfdu[0][ii] /= verts.size();
     }
   }
-  dfdu.push_back(grad);
 }
 
 Eigen::VectorXd FEM2DFun::df()
 {
   Eigen::VectorXd grad = Eigen::VectorXd::Zero(param.size()) ;
   int nrows = (int)m_I.size() - 1;
+  compute_dfdu();
   //sensitivity analysis using the adjoint method.
   for (unsigned int ii = 0; ii < u.size(); ii++){
     std::vector<double> lambda(nrows, 0);
     //lambda = K^{-1} dfdu.
     //dfdx = -lambda * dK/dparam * u.
-    sparseSolve(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data());
+    std::vector<int> I = m_I;
+    std::vector<int> J = m_J;
+    checkSparseIndex(I, J);
+    sparseSolve(I.data(), J.data(), m_val.data(), nrows, &(lambda[0]), &(dfdu[ii][0]));
     for (unsigned int jj = 0; jj < em->e.size(); jj++){
       Element2D * ele = em->e[jj];
       int nV = ele->nV();
       Eigen::MatrixXd dKdp;
-      Eigen::VectorXd Ue(nV);
-      Eigen::VectorXd lambda_e(nV);
+      Eigen::VectorXd Ue(nV * dim);
+      Eigen::VectorXd lambda_e(nV * dim);
       //in this example dK/dParam = K.
       dKdp = em->getStiffness(jj).cast<double>();
-      Ue = dKdp * Ue;
       for (int kk = 0; kk < ele->nV(); kk++){
         int vidx = em->e[jj]->at(kk);
         for (int ll = 0; ll < dim; ll++){

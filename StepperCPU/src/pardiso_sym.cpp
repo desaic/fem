@@ -53,6 +53,7 @@ void sparseInit()
 {
   error = 0;
   solver = 0; /* use sparse direct solver */
+  iparm[34] = 1;
   pardisoinit (pt,  &mtype, &solver, iparm, dparm, &error);
 
   if (error != 0)
@@ -85,36 +86,22 @@ void sparseInit()
 int
 sparseSolve(int * ia, int * ja, double * a, int n, double* x, double * b)
 {
-
     int      nnz = ia[n];
-
     /* RHS and solution vectors. */
     int      nrhs = 1;          /* Number of right hand sides. */
-
-
     int      i;
-
     double   ddum;              /* Double dummy */
     int      idum;              /* Integer dummy. */
-
-   
-/* -------------------------------------------------------------------- */
-/* ..  Setup Pardiso control parameters.                                */
-/* -------------------------------------------------------------------- */
-
-
-
 /* -------------------------------------------------------------------- */
 /* ..  Convert matrix from 0-based C-notation to Fortran 1-based        */
 /*     notation.                                                        */
 /* -------------------------------------------------------------------- */
-    for (i = 0; i < n+1; i++) {
-        ia[i] += 1;
+    for (i = 0; i < n + 1; i++) {
+      ia[i] += 1;
     }
     for (i = 0; i < nnz; i++) {
-        ja[i] += 1;
+      ja[i] += 1;
     }
-
 /* -------------------------------------------------------------------- */
 /*  .. pardiso_chk_matrix(...)                                          */
 /*     Checks the consistency of the given matrix.                      */
@@ -170,7 +157,7 @@ sparseSolve(int * ia, int * ja, double * a, int n, double* x, double * b)
 /* ..  Numerical factorization.                                         */
 /* -------------------------------------------------------------------- */    
     phase = 22;
-    iparm[32] = 1; /* compute determinant */
+    iparm[32] = 0; /* compute determinant */
 
     pardiso (pt, &maxfct, &mnum, &mtype, &phase,
              &n, a, ia, ja, &idum, &nrhs,
