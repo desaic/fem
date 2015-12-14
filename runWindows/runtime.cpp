@@ -25,6 +25,9 @@ void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h);
 ///@param h appropriate step size if there is one. Always positive.
 int lineSearch(RealFun * fun, const Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h);
 
+///@param nSteps maximum number of steps.
+void gradientDescent(RealFun * fun, const Eigen::VectorXd & x0, int nSteps);
+
 int main(int argc, char* argv[])
 {
   
@@ -68,7 +71,7 @@ int main(int argc, char* argv[])
   fem->setParam(x0);
   Eigen::VectorXd grad = fem->df();
   h = 1;
-  lineSearch(fem, x0, grad, h);
+  gradientDescent(fem, x0, 1000);
   system("PAUSE");
   return 0;
 }
@@ -80,6 +83,20 @@ double infNorm(const Eigen::VectorXd & a)
     maxval = std::max(maxval, std::abs(a[ii]));
   }
   return maxval;
+}
+
+void gradientDescent(RealFun * fun, const Eigen::VectorXd & x0, int nSteps)
+{
+  Eigen::VectorXd x = x0;
+  for (int ii = 0; ii < nSteps; ii++){
+    fun->setParam(x);
+    Eigen::VectorXd grad = fun->df();
+    double h = 1;
+    int ret = lineSearch(fun, x, grad, h);
+    if (ret < 0){
+      break;
+    }
+  }
 }
 
 int lineSearch(RealFun * fun, const Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h )
