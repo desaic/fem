@@ -87,11 +87,15 @@ double infNorm(const Eigen::VectorXd & a)
 
 void gradientDescent(RealFun * fun, const Eigen::VectorXd & x0, int nSteps)
 {
+  //maximum movement in any parameter.
+  double maxStep = 0.1;
   Eigen::VectorXd x = x0;
   for (int ii = 0; ii < nSteps; ii++){
     fun->setParam(x);
     Eigen::VectorXd grad = fun->df();
     double h = 1;
+    double norm = infNorm(grad);
+    h = maxStep / norm;
     int ret = lineSearch(fun, x, grad, h);
     if (ret < 0){
       break;
