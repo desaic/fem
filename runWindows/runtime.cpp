@@ -56,8 +56,9 @@ int main(int argc, char* argv[])
   for (int ii = 0; ii < x0.rows(); ii++){
     x0[ii] += 0.1 * (rand() / (float)RAND_MAX - 0.5);
   }
-  double h = 1e-3;
+  double h = 1e-2;
   check_df(fem, x0, h);
+  system("PAUSE");
   return 0;
 }
 

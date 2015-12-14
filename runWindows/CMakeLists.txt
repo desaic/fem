@@ -17,7 +17,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 # utilities
 include_directories(${PROJECT_SOURCE_DIR}/../Utilities/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/Utilities)
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
   link_directories(${QHULL_BIN_DIR}/Release)
 else()
   link_directories(${QHULL_BIN_DIR}/Debug)

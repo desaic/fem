@@ -98,7 +98,7 @@ double FEM2DFun::f()
   double dx, dy;
   dx = measureStretchX(em, u[0], grid);
   dy = measureStretchY(em, u[0], grid);
-  double val = dxw * (dx - dx0) * (dx - dx0) + dyw * (dy - dy0) * (dy - dy0);
+  double val = 0.5 * dxw * (dx - dx0) * (dx - dx0) + 0.5 * dyw * (dy - dy0) * (dy - dy0);
   return val;
 }
 
