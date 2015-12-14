@@ -18,6 +18,13 @@
 ///@brief verify consistency of f and df using central differencing
 void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h);
 
+///@brief finds a step size the decreases value of fun.
+///@return <0 if cannot find a positive step size.
+///@param x0 starting point.
+///@param dir search direction.
+///@param h appropriate step size if there is one. Always positive.
+int lineSearch(RealFun * fun, const Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h);
+
 int main(int argc, char* argv[])
 {
   
@@ -57,8 +64,44 @@ int main(int argc, char* argv[])
     x0[ii] += 0.1 * (rand() / (float)RAND_MAX - 0.5);
   }
   double h = 1e-2;
-  check_df(fem, x0, h);
+  //check_df(fem, x0, h);
+  fem->setParam(x0);
+  Eigen::VectorXd grad = fem->df();
+  h = 1;
+  lineSearch(fem, x0, grad, h);
   system("PAUSE");
+  return 0;
+}
+
+double infNorm(const Eigen::VectorXd & a)
+{
+  double maxval = 0;
+  for (int ii = 0; ii < a.rows(); ii++){
+    maxval = std::max(maxval, std::abs(a[ii]));
+  }
+  return maxval;
+}
+
+int lineSearch(RealFun * fun, const Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h )
+{
+  double f0 = fun->f();
+  Eigen::VectorXd grad0 = fun->df();
+  double norm0 = infNorm(grad0);
+  while (1){
+    //minus sign here if we want to minimize function value.
+    Eigen::VectorXd x = x0 - h*dir;
+    fun->setParam(x);
+    double f1 = fun->f();
+    Eigen::VectorXd grad1 = fun->df();
+    double norm1 = infNorm(grad1);
+    //if gradient norm or function value decrease, return.
+    if (norm1 < norm0 || f1 < f0){
+      break;
+    }
+    else{
+      h /= 2;
+    }
+  }
   return 0;
 }
 
