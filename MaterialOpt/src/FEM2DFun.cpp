@@ -144,7 +144,7 @@ Eigen::VectorXd FEM2DFun::df()
     //dfdx = -lambda * dK/dparam * u.
     std::vector<int> I = m_I;
     std::vector<int> J = m_J;
-    checkSparseIndex(I, J);
+    //checkSparseIndex(I, J);
     sparseSolve(I.data(), J.data(), m_val.data(), nrows, &(lambda[0]), &(dfdu[ii][0]));
     for (unsigned int jj = 0; jj < em->e.size(); jj++){
       Element2D * ele = em->e[jj];
