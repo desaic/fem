@@ -17,7 +17,7 @@ BilinearField2D::allocate(int nx, int ny)
   gridSize[0] = nx;
   gridSize[1] = ny;
   int Nparam = (nx+1)*(ny+1);
-  param.resize(Nparam, 0);
+  param.resize(Nparam, 1);
 }
 
 Eigen::VectorXi

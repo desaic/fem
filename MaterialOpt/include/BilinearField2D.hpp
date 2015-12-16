@@ -17,11 +17,6 @@ public:
 
   virtual Eigen::SparseVector<double> df(const Eigen::VectorXd & x);
 
-  virtual void setParam(int paramIdx, double val){
-    assert(paramIdx>=0 && paramIdx<param.size());
-    param[paramIdx] = val;
-  }
-
   int vertexIndex(int xi, int yi) const;
 
   Eigen::VectorXi gridIdx(const Eigen::VectorXd & x);
@@ -34,8 +29,6 @@ public:
 
   ///@brief vertex indices of a square.
   Eigen::VectorXi squareVertexIdx(const Eigen::VectorXi & idx);
-
-  std::vector<double> param;
 
   ///@brief gridSize[0] = number of columns, number of cells in x direction.
   std::vector<int> gridSize;

@@ -31,6 +31,7 @@ void FEM2DFun::init(const Eigen::VectorXd & x0){
   em->stiffnessPattern(m_I, m_J, triangular, m_fixRigid, m_fixRigid, m_periodic);
   sparseInit();
   param = x0;
+  distribution = Eigen::VectorXd::Zero(em->e.size());
   int nrow = (int)m_I.size() - 1;
   grid.resize(m_nx);
   for (int ii = 0; ii < m_nx; ii++){
@@ -77,9 +78,23 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
   bool constrained = false;
   param = x0;
 
+  //read material distribution from field
+  for (int ii = 0; ii < field->param.size(); ii++){
+    field->setParam(ii, x0[ii]);
+  }
+  for (int ii = 0; ii < m_nx; ii++){
+    for (int jj = 0; jj < m_ny; jj++){
+      Eigen::VectorXd coord = Eigen::VectorXd::Zero(dim);
+      int eIdx = grid[ii][jj];
+      coord[0] = (ii + 0.5) / m_nx;
+      coord[1] = (jj + 0.5) / m_ny;
+      distribution[eIdx] = field->f(coord);
+    }
+  }
+
   //solve linear statics problems
   std::vector<cfgScalar> val;
-  getStiffnessSparse(em, param, val, triangle, constrained, m_fixRigid, m_periodic);
+  getStiffnessSparse(em, distribution, val, triangle, constrained, m_fixRigid, m_periodic);
   m_val = std::vector<double>(val.begin(), val.end());
   int nrows = (int)m_I.size() - 1;
   //checkSparseIndex(m_I, m_J);
@@ -132,9 +147,18 @@ void FEM2DFun::compute_dfdu()
   }
 }
 
+Eigen::MatrixXd FEM2DFun::dKdp(int eidx, int pidx)
+{
+  return Eigen::MatrixXd();
+}
+
 Eigen::VectorXd FEM2DFun::df()
 {
-  Eigen::VectorXd grad = Eigen::VectorXd::Zero(param.size()) ;
+  //gradient of f with respect to parameters.
+  Eigen::VectorXd grad = Eigen::VectorXd::Zero(param.size());
+  //gradient of f with respect to material distribution.
+  Eigen::VectorXd dfddist = Eigen::VectorXd::Zero(distribution.size());
+
   int nrows = (int)m_I.size() - 1;
   compute_dfdu();
   //sensitivity analysis using the adjoint method.
@@ -161,7 +185,20 @@ Eigen::VectorXd FEM2DFun::df()
           lambda_e[kk*dim + ll] = lambda[vidx*dim + ll];
         }
       }
-      grad[jj] += -lambda_e.dot(dKdp * Ue);
+      dfddist[jj] += -lambda_e.dot(dKdp * Ue);
+    }
+  }
+
+  Eigen::VectorXd coord = Eigen::VectorXd::Zero(dim);
+  for (int ii = 0; ii < m_nx; ii++){
+    for (int jj = 0; jj < m_ny; jj++){
+      int eidx = grid[ii][jj];
+      coord[0] = (ii + 0.5) / m_nx;
+      coord[1] = (jj + 0.5) / m_ny;
+      Eigen::SparseVector<double> ddistdp = field->df(coord);
+      for (Eigen::SparseVector<double>::InnerIterator it(ddistdp); it; ++it){
+        grad[it.index()] += dfddist[eidx] * it.value();
+      }
     }
   }
   return grad;

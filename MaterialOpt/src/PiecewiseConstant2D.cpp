@@ -6,7 +6,7 @@ PiecewiseConstant2D::allocate(int nx, int ny)
   gridSize[0] = nx;
   gridSize[1] = ny;
   int Nparam = nx*ny;
-  param.resize(Nparam, 0);
+  param.resize(Nparam, 1);
 }
 
 Eigen::VectorXi

@@ -57,7 +57,12 @@ public:
   ///over a grid and PiecewiseConstant2D for constant material in each cell.
   RealField * field;
 
+  ///@brief material distribution. Currently just ratio between two materials for each element.
+  ///Should be the same size as number of elements
+  Eigen::VectorXd distribution;
+
   void init(const Eigen::VectorXd & x0);
+  
   ///@brief update parameters for computing function value
   ///and gradients.
   ///In case of fem, it runs required fem simulations.
@@ -74,8 +79,12 @@ public:
   ///@brief this function needs to change according to f().
   void compute_dfdu();
 
+  ///@brief How element stiffness changes with respect to parameter.
+  ///@TODO: implement this so that df() doesn't need to change when dK/dparam changes.
+  Eigen::MatrixXd dKdp(int eidx, int pidx);
+
   ///@brief compute gradient of f().
-  ///Given an implementation of dfdu.
+  ///Given an implementation of dfdu and dKdp.
   ///When dK/dParam changes, this function needs to change accordingly.
   ///The return value should have the same size as the parameters.
   virtual Eigen::VectorXd df();

@@ -56,13 +56,15 @@ int main(int argc, char* argv[])
 
   FEM2DFun * fem = new FEM2DFun();
   PiecewiseConstant2D * field = new PiecewiseConstant2D();
+  //for example, the parameterization can have lower resolution. Effectively refining each cell to 2x2 block.
+  field->allocate(nx/2, ny/2);
   fem->em = em;
   fem->dx0 = 2e-3;
   fem->dy0 = 2e-3;
   fem->field = field;
   fem->m_nx = nx;
   fem->m_ny = ny;
-  Eigen::VectorXd x0 = 0.5 * Eigen::VectorXd::Ones(em->e.size());
+  Eigen::VectorXd x0 = 0.5 * Eigen::VectorXd::Ones(field->param.size());
   //uniform lower and upper bounds for variables. 
   //Can change for more complex material distribution scheme.
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(x0.size());
