@@ -16,6 +16,10 @@ public:
 
   Eigen::VectorXd param;
 
+  ///@brief can be empty, in which case variables are unbounded.
+  Eigen::VectorXd lowerBounds;
+  Eigen::VectorXd upperBounds;
+
   virtual void init(const Eigen::VectorXd & x0){
     param = x0;
   }

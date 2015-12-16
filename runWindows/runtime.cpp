@@ -23,14 +23,13 @@ void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h);
 ///@param x0 starting point.
 ///@param dir search direction.
 ///@param h appropriate step size if there is one. Always positive.
-int lineSearch(RealFun * fun, const Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h);
+int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h);
 
 ///@param nSteps maximum number of steps.
 void gradientDescent(RealFun * fun, const Eigen::VectorXd & x0, int nSteps);
 
 int main(int argc, char* argv[])
 {
-  
   const char * filename = "config.txt";
   ConfigFile conf;
   conf.load(filename);  
@@ -58,10 +57,17 @@ int main(int argc, char* argv[])
   FEM2DFun * fem = new FEM2DFun();
   PiecewiseConstant2D * field = new PiecewiseConstant2D();
   fem->em = em;
+  fem->dx0 = 2e-3;
+  fem->dy0 = 2e-3;
   fem->field = field;
   fem->m_nx = nx;
   fem->m_ny = ny;
   Eigen::VectorXd x0 = 0.5 * Eigen::VectorXd::Ones(em->e.size());
+  //uniform lower and upper bounds for variables. 
+  //Can change for more complex material distribution scheme.
+  fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(x0.size());
+  fem->upperBounds = Eigen::VectorXd::Ones(x0.size());
+
   fem->init(x0);
   for (int ii = 0; ii < x0.rows(); ii++){
     x0[ii] += 0.1 * (rand() / (float)RAND_MAX - 0.5);
@@ -71,7 +77,7 @@ int main(int argc, char* argv[])
   fem->setParam(x0);
   Eigen::VectorXd grad = fem->df();
   h = 1;
-  gradientDescent(fem, x0, 1000);
+  gradientDescent(fem, x0, 100);
   system("PAUSE");
   return 0;
 }
@@ -97,13 +103,14 @@ void gradientDescent(RealFun * fun, const Eigen::VectorXd & x0, int nSteps)
     double norm = infNorm(grad);
     h = maxStep / norm;
     int ret = lineSearch(fun, x, grad, h);
+    //std::cout << ii << " " << fun->f() << " " << h << "\n";
     if (ret < 0){
       break;
     }
   }
 }
 
-int lineSearch(RealFun * fun, const Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h )
+int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h )
 {
   double f0 = fun->f();
   Eigen::VectorXd grad0 = fun->df();
@@ -111,12 +118,14 @@ int lineSearch(RealFun * fun, const Eigen::VectorXd & x0, const Eigen::VectorXd 
   while (1){
     //minus sign here if we want to minimize function value.
     Eigen::VectorXd x = x0 - h*dir;
+    clampVector(x, fun->lowerBounds, fun->upperBounds);
     fun->setParam(x);
     double f1 = fun->f();
     Eigen::VectorXd grad1 = fun->df();
     double norm1 = infNorm(grad1);
     //if gradient norm or function value decrease, return.
     if (norm1 < norm0 || f1 < f0){
+      x0 = x;
       break;
     }
     else{

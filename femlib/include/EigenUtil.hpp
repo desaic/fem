@@ -4,6 +4,8 @@
 #include <Eigen/Sparse>
 #include <vector>
 
+void clampVector(Eigen::VectorXd & x, const Eigen::VectorXd & lb, const Eigen::VectorXd & ub);
+
 ///@brief write sparse matrix in matlab format such that one can copy paste
 ///into matlab workspace
 void write_matlab(std::ostream &output, const char *variable_name,

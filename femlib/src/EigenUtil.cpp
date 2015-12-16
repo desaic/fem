@@ -1,4 +1,20 @@
 #include "EigenUtil.hpp"
+#include <assert.h>
+void clampVector(Eigen::VectorXd & x, const Eigen::VectorXd & lb, const Eigen::VectorXd & ub)
+{
+  if (lb.size() > 0){
+    assert(lb.size() == x.size());
+    for (int ii = 0; ii < x.size(); ii++){
+      x[ii] = std::max(lb[ii], x[ii]);
+    }
+  }
+  if (ub.size()>0){
+    assert(ub.size() == x.size());
+    for (int ii = 0; ii < x.size(); ii++){
+      x[ii] = std::min(ub[ii], x[ii]);
+    }
+  }
+}
 
 void write_matlab(std::ostream &output, const char *variable_name,
                   const Eigen::SparseMatrix<double> & M)

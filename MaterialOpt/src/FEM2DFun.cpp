@@ -31,7 +31,6 @@ void FEM2DFun::init(const Eigen::VectorXd & x0){
   em->stiffnessPattern(m_I, m_J, triangular, m_fixRigid, m_fixRigid, m_periodic);
   sparseInit();
   param = x0;
-
   int nrow = (int)m_I.size() - 1;
   grid.resize(m_nx);
   for (int ii = 0; ii < m_nx; ii++){
@@ -99,6 +98,7 @@ double FEM2DFun::f()
   dx = measureStretchX(em, u[0], grid);
   dy = measureStretchY(em, u[0], grid);
   double val = 0.5 * dxw * (dx - dx0) * (dx - dx0) + 0.5 * dyw * (dy - dy0) * (dy - dy0);
+  //std::cout << "dx dy " << dx << " " << dy << "\n";
   return val;
 }
 
