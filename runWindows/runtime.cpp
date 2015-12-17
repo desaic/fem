@@ -7,16 +7,30 @@
 #include "ElementRegGrid2D.h"
 #include "FEM2DFun.hpp"
 #include "PiecewiseConstant2D.hpp"
+#include "PiecewiseConstantSym2D.hpp"
 
 #include "MaterialQuad2D.h"
 #include "StrainLin2D.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 
+///@brief sparse matrix vector product.
+Eigen::VectorXd
+spmv(const std::vector<int> & I, const std::vector<int> & J, const std::vector<double> & val,
+const std::vector<double> x, bool triangle= true);
+
 ///@brief verify consistency of f and df using central differencing
 void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h);
+
+///@brief verify that linear static simulation is working.
+///Checks K*u - f.
+///Also checks df/dx = K.
+///Numerical differencing is very slow. It computes all N*N entries in K, where N = Number of elements.
+///@TODO: Move code to UnitTests.
+void check_sim(FEM2DFun * fem, const Eigen::VectorXd & x);
 
 ///@brief finds a step size the decreases value of fun.
 ///@return <0 if cannot find a positive step size.
@@ -55,7 +69,7 @@ int main(int argc, char* argv[])
   em->check();
 
   FEM2DFun * fem = new FEM2DFun();
-  PiecewiseConstant2D * field = new PiecewiseConstant2D();
+  PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
   //for example, the parameterization can have lower resolution. Effectively refining each cell to 2x2 block.
   field->allocate(nx/2, ny/2);
   fem->em = em;
@@ -76,13 +90,14 @@ int main(int argc, char* argv[])
   }
   double h = 1e-2;
   //check_df(fem, x0, h);
+  check_sim(fem, x0);
   fem->setParam(x0);
   Eigen::VectorXd grad = fem->df();
   h = 1;
   gradientDescent(fem, x0, 100);
   for (int ii = 0; ii < nx; ii++){
     for (int jj = 0; jj < ny; jj++){
-      std::cout << x0[ii*ny + jj]<<" ";
+      std::cout << fem->distribution[ii*ny + jj]<<" ";
     }
     std::cout << "\n";
   }
@@ -169,4 +184,50 @@ void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h)
     max_diff = std::max(max_diff, std::abs(diff));
   }
   std::cout << "max diff " << max_diff << "\n";
+}
+
+///@brief sparse matrix vector mult
+Eigen::VectorXd
+spmv(const std::vector<int> & I, const std::vector<int> & J, const std::vector<double> & val,
+const std::vector<double> x, bool triangle)
+{
+  int nrows = (int)I.size() - 1;
+  Eigen::VectorXd b = Eigen::VectorXd::Zero(nrows);
+  for (int ii = 0; ii < nrows; ii++){
+    for (int jj = I[ii]; jj < I[ii + 1]; jj++){
+      int idx = J[jj];
+      double value = val[jj];
+      b[ii] += value * x[idx];
+    }
+  }
+  if (triangle){
+    for (int ii = 0; ii < nrows; ii++){
+      for (int jj = I[ii]; jj < I[ii + 1]; jj++){
+        int idx = J[jj];
+        if (ii == idx){
+          continue;
+        }
+        double value = val[jj];
+        b[idx] += value * x[ii];
+      }
+    }
+  }
+  return b;
+}
+
+void check_sim(FEM2DFun * fem, const Eigen::VectorXd & x)
+{
+  fem->setParam(x);
+  for (unsigned int ii = 0; ii < fem->u.size(); ii++){
+    Eigen::VectorXd prod = spmv(fem->m_I, fem->m_J, fem->m_val, fem->u[ii]);
+    Eigen::VectorXd fe = Eigen::Map<Eigen::VectorXd> (fem->externalForce[ii].data(), fem->externalForce[ii].size());
+    
+    for (int ii = 0; ii < prod.size(); ii++){
+      std::cout << prod[ii] << " ";
+    }
+    prod -= fe; 
+    double maxErr = infNorm(prod);
+    std::cout << "Lin solve residual: " << maxErr << "\n";
+  }
+  
 }
