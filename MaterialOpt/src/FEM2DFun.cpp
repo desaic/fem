@@ -139,7 +139,10 @@ double FEM2DFun::f()
   density /= distribution.size();
   val += 0.5 * mw * (density - m0) * (density - m0);
   
-  std::cout << "dx dy " << dx << " " << dy << " "<<density<<"\n";
+  //std::cout << "dx dy " << dx << " " << dy << " "<<density<<"\n";
+  if (logfile.is_open()){
+    logfile << dx << " " << dy << " " << density << "\n";
+  }
   return val ;
 }
 
@@ -203,7 +206,7 @@ Eigen::VectorXd FEM2DFun::df()
       Eigen::VectorXd Ue(nV * dim);
       Eigen::VectorXd lambda_e(nV * dim);
       //in this example dK/dParam = K.
-      dKdp =   em->getStiffness(jj).cast<double>();
+      dKdp = em->getStiffness(jj).cast<double>();
       for (int kk = 0; kk < ele->nV(); kk++){
         int vidx = em->e[jj]->at(kk);
         for (int ll = 0; ll < dim; ll++){

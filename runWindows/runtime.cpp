@@ -43,7 +43,7 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
 ///@param nSteps maximum number of steps.
 void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps);
 
-void optMat(FEM2DFun * fem)
+void optMat(FEM2DFun * fem, int nSteps)
 {
   RealField * field = fem->field;
   Eigen::VectorXd x0 = 0.5 * Eigen::VectorXd::Ones(field->param.size());
@@ -55,8 +55,9 @@ void optMat(FEM2DFun * fem)
   fem->setParam(x0);
   Eigen::VectorXd grad = fem->df();
   h = 1;
-  int nSteps = 100;
+  fem->logfile.open("log.txt");
   gradientDescent(fem, x0, nSteps);
+  fem->logfile.close();
   for (int ii = 0; ii < fem->m_nx; ii++){
     for (int jj = 0; jj < fem->m_ny; jj++){
       std::cout << fem->distribution[ii*fem->m_ny + jj] << " ";
@@ -109,9 +110,10 @@ int main(int argc, char* argv[])
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
 
-  bool render = true;
+  int nSteps = 1000;
+  bool render = false;
   if (render){
-    std::thread thread(optMat, fem);
+    std::thread thread(optMat, fem, nSteps);
     Render render;
     World * world = new World();
     world->em2d.push_back(em);
@@ -121,8 +123,7 @@ int main(int argc, char* argv[])
   else{
     //check_df(fem, x0, h);
     //check_sim(fem, x0);
-    optMat(fem);
-    system("PAUSE");
+    optMat(fem, nSteps);
   }
   return 0;
 }

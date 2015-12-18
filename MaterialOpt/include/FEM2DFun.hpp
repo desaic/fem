@@ -3,6 +3,7 @@
 
 #include "RealFun.hpp"
 #include <vector>
+#include <fstream>
 
 class ElementMesh2D;
 class RealField;
@@ -94,6 +95,8 @@ public:
   ///The return value should have the same size as the parameters.
   virtual Eigen::VectorXd df();
 
+  ///@brief for debugging and visualizing trajectory.
+  std::ofstream logfile;
 };
 
 #endif
