@@ -1,1 +1,3 @@
 refine 2
+#structure p0.txt
+structure p1.txt

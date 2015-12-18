@@ -26,6 +26,8 @@ const std::vector<double> x, bool triangle= true);
 ///@brief verify consistency of f and df using central differencing
 void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h);
 
+void loadArr2D(std::vector<std::vector< int> > &arr, std::string filename);
+
 ///@brief verify that linear static simulation is working.
 ///Checks K*u - f.
 ///Also checks df/dx = K.
@@ -46,16 +48,8 @@ void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps);
 void optMat(FEM2DFun * fem, int nSteps)
 {
   RealField * field = fem->field;
-  Eigen::VectorXd x0 = 0.5 * Eigen::VectorXd::Ones(field->param.size());
-  fem->init(x0);
-  for (int ii = 0; ii < x0.rows(); ii++){
-    x0[ii] += 0.1 * (rand() / (float)RAND_MAX - 0.5);
-  }
-  double h = 1e-2;
-  fem->setParam(x0);
-  Eigen::VectorXd grad = fem->df();
-  h = 1;
   fem->logfile.open("log.txt");
+  Eigen::VectorXd x0 = fem->param;
   gradientDescent(fem, x0, nSteps);
   fem->logfile.close();
   for (int ii = 0; ii < fem->m_nx; ii++){
@@ -72,11 +66,30 @@ int main(int argc, char* argv[])
   const char * filename = "config.txt";
   ConfigFile conf;
   conf.load(filename);  
-
+  
   Vector3f ff(100, 0, 0);
   int nx = 16;
   int ny = 16;
-  ElementRegGrid2D * em = new ElementRegGrid2D(nx,ny);
+  Eigen::VectorXd x0;
+
+  if (conf.hasOpt("structure")){
+    std::vector<std::vector<int> > structure;
+    loadArr2D(structure, conf.getString("structure"));
+    nx = structure.size();
+    ny = structure[0].size();
+    x0 = Eigen::VectorXd::Zero(nx * ny);
+    for (int ii = 0; ii < nx; ii++){
+      for (int jj = 0; jj < ny; jj++){
+        double val = structure[ii][jj];
+        double shrink = 0.1;
+        val = 0.5 + shrink * (val - 0.5);
+        x0[ii * ny + jj] = val;
+      }
+    }
+  } else {
+    x0 = 0.5 * Eigen::VectorXd::Ones(nx * ny);
+  }
+  ElementRegGrid2D * em = new ElementRegGrid2D(nx, ny);
   std::vector<StrainLin2D> ene(1);
 
   ene[0].param[0] = 3448.275862;
@@ -94,23 +107,29 @@ int main(int argc, char* argv[])
   em->check();
 
   FEM2DFun * fem = new FEM2DFun();
-  PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
+  //PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
+  PiecewiseConstant2D * field = new PiecewiseConstant2D();
   //for example, the parameterization can have lower resolution. Effectively refining each cell to 2x2 block.
-  field->allocate(nx/2, ny/2);
-  fem->em = em;
-  fem->dx0 = 2e-2;
-  fem->dy0 = 1e-2;
-  fem->field = field;
-  fem->m_nx = nx;
-  fem->m_ny = ny;
-  fem->m0 = 0.5;
-  fem->mw = 1e-5;
+  field->allocate(nx, ny);
+
   //uniform lower and upper bounds for variables. 
   //Can change for more complex material distribution scheme.
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
 
-  int nSteps = 1000;
+  fem->em = em;
+  fem->dx0 = 2e-2;
+  fem->dy0 = 2e-2;
+  fem->dxw = 5;
+  fem->field = field;
+  fem->m_nx = nx;
+  fem->m_ny = ny;
+  fem->m0 = 0.4;
+  fem->mw = 1e-5;
+  
+  fem->init(x0);
+
+  int nSteps = 1;
   bool render = false;
   if (render){
     std::thread thread(optMat, fem, nSteps);
@@ -121,7 +140,8 @@ int main(int argc, char* argv[])
     render.loop();
   }
   else{
-    //check_df(fem, x0, h);
+    double h = 0.001;
+    check_df(fem, x0, h);
     //check_sim(fem, x0);
     optMat(fem, nSteps);
   }
@@ -140,7 +160,7 @@ double infNorm(const Eigen::VectorXd & a)
 void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps)
 {
   //maximum movement in any parameter.
-  double maxStep = 0.1;
+  double maxStep = 0.5;
   Eigen::VectorXd x = x0;
   for (int ii = 0; ii < nSteps; ii++){
     fun->setParam(x);
@@ -257,4 +277,22 @@ void check_sim(FEM2DFun * fem, const Eigen::VectorXd & x)
     std::cout << "Lin solve residual: " << maxErr << "\n";
   }
 
+}
+
+void loadArr2D(std::vector<std::vector< int> > &arr, std::string filename)
+{
+  std::ifstream in(filename);
+  int nx = 0, ny = 0;
+  in >> nx;
+  in >> ny;
+  arr.resize(nx);
+  for (int ii = 0; ii < nx; ii++){
+    arr[ii].resize(ny);
+  }
+  for (int ii = 0; ii < nx; ii++){
+    for (int jj = 0; jj < ny; jj++){
+      in >> arr[jj][ii];
+    }
+  }
+  in.close();
 }

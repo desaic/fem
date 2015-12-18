@@ -139,7 +139,7 @@ double FEM2DFun::f()
   density /= distribution.size();
   val += 0.5 * mw * (density - m0) * (density - m0);
   
-  //std::cout << "dx dy " << dx << " " << dy << " "<<density<<"\n";
+  std::cout << "dx dy " << dx << " " << dy << " "<<density<<"\n";
   if (logfile.is_open()){
     logfile << dx << " " << dy << " " << density << "\n";
   }
@@ -225,7 +225,7 @@ Eigen::VectorXd FEM2DFun::df()
   }
   density /= distribution.size();
   for (unsigned int ii = 0; ii < dfddist.size(); ii++){
-    dfddist[ii] += mw * (density - m0);
+    dfddist[ii] += (mw / distribution.size()) * (density - m0);
   }
 
   Eigen::VectorXd coord = Eigen::VectorXd::Zero(dim);
