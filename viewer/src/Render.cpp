@@ -7,6 +7,9 @@
 #include "ArrayUtil.hpp"
 #include "Element.hpp"
 #include "ElementMesh.hpp"
+#include "ElementMesh2D.h"
+#include "Element2D.h"
+
 #include "glheader.hpp"
 #include "Render.hpp"
 #include "World.hpp"
@@ -28,8 +31,6 @@ static void error_callback(int error, const char* description)
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-  Stepper * stepper = render->getStepper();
-  std::unique_lock<std::mutex> lck(stepper->mtx, std::defer_lock);
   if(action == GLFW_PRESS){
     switch(key){
     case GLFW_KEY_W:
@@ -52,56 +53,64 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
       break;
     }
   }else if(action==GLFW_RELEASE){
-    switch(key){
+    switch (key){
     case GLFW_KEY_ESCAPE:
       glfwSetWindowShouldClose(window, GL_TRUE);
-      break;    
+      break;
     case GLFW_KEY_W:
-      render->camera.keyhold[0]=false;
+      render->camera.keyhold[0] = false;
       break;
     case GLFW_KEY_S:
-      render->camera.keyhold[1]=false;
+      render->camera.keyhold[1] = false;
       break;
     case GLFW_KEY_A:
-      render->camera.keyhold[2]=false;
+      render->camera.keyhold[2] = false;
       break;
     case GLFW_KEY_D:
-      render->camera.keyhold[3]=false;
+      render->camera.keyhold[3] = false;
       break;
     case GLFW_KEY_R:
-      render->camera.keyhold[4]=false;
+      render->camera.keyhold[4] = false;
       break;
     case GLFW_KEY_F:
-      render->camera.keyhold[5]=false;
+      render->camera.keyhold[5] = false;
       break;
+    }
+  }
 
-    case GLFW_KEY_P:
-      lck.lock();
-      stepper->state = Stepper::PAUSE;
-      lck.unlock();
-      break;
-    case GLFW_KEY_LEFT_BRACKET:
-      lck.lock();
-      if (stepper->state == Stepper::PAUSE){
-        stepper->state = Stepper::SINGLE;
-        stepper->cv.notify_one();
-      }
-      else{
-        stepper->state = Stepper::SINGLE;
+  Stepper * stepper = render->getStepper();
+  if (stepper != NULL){
+    std::unique_lock<std::mutex> lck(stepper->mtx, std::defer_lock);
+    if (action == GLFW_RELEASE){
+      switch (key){
+      case GLFW_KEY_P:
+        lck.lock();
+        stepper->state = Stepper::PAUSE;
         lck.unlock();
+        break;
+      case GLFW_KEY_LEFT_BRACKET:
+        lck.lock();
+        if (stepper->state == Stepper::PAUSE){
+          stepper->state = Stepper::SINGLE;
+          stepper->cv.notify_one();
+        }
+        else{
+          stepper->state = Stepper::SINGLE;
+          lck.unlock();
+        }
+        break;
+      case GLFW_KEY_RIGHT_BRACKET:
+        lck.lock();
+        if (stepper->state == Stepper::PAUSE){
+          stepper->state = Stepper::ALL;
+          stepper->cv.notify_one();
+        }
+        else{
+          stepper->state = Stepper::ALL;
+          lck.unlock();
+        }
+        break;
       }
-      break;
-    case GLFW_KEY_RIGHT_BRACKET:
-      lck.lock();
-      if (stepper->state == Stepper::PAUSE){
-        stepper->state = Stepper::ALL;
-        stepper->cv.notify_one();
-      }
-      else{
-        stepper->state = Stepper::ALL;
-        lck.unlock();
-      }
-      break;
     }
   }
 }
@@ -212,6 +221,38 @@ void Render::drawEle(int eidx, ElementMesh * m)
   glEnd();
 }
 
+void Render::drawEle2D(int eidx, ElementMesh2D * m)
+{
+  Element2D * ele = m->e[eidx];
+  glColor3f(ele->color[0], ele->color[1], ele->color[2]);
+  glDisable(GL_LIGHTING);
+  glBegin(GL_TRIANGLES);
+  
+  Vector2S v = m->x[ele->at(0)];
+  glVertex3f(v[0], v[1], 0);
+  v = m->x[ele->at(2)];
+  glVertex3f(v[0], v[1], 0);
+  v = m->x[ele->at(1)];
+  glVertex3f(v[0], v[1], 0);
+
+  v = m->x[ele->at(2)];
+  glVertex3f(v[0], v[1], 0);
+  v = m->x[ele->at(3)];
+  glVertex3f(v[0], v[1], 0);
+  v = m->x[ele->at(1)];
+  glVertex3f(v[0], v[1], 0);
+
+  glEnable(GL_LIGHTING);
+  glEnd();
+}
+
+void Render::drawEleMesh2D(ElementMesh2D * eMesh)
+{
+  for (unsigned int ii = 0; ii<eMesh->e.size(); ii++){
+    drawEle2D(ii, eMesh);
+  }
+}
+
 void Render::drawEleMesh(ElementMesh * eMesh)
 {
   for(unsigned int ii = 0;ii<eMesh->e.size();ii++){
@@ -231,7 +272,9 @@ void Render::draw()
   for(unsigned int ii = 0;ii<world->em.size();ii++){
     drawEleMesh(world->em[ii]);
   }
-
+  for (unsigned int ii = 0; ii<world->em2d.size(); ii++){
+    drawEleMesh2D(world->em2d[ii]);
+  }
   GLfloat floorCol[4] =
   { 1, 1, 1, 1 };
   glEnable(GL_LIGHTING);

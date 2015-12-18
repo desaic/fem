@@ -53,6 +53,17 @@ std::vector<std::array<int,2> >
 Element2D::getEdges()
 {
   std::vector<std::array<int,2> >edges;
+  std::array<int, 2> e;
+
+  e[0] = 0; e[1] = 1;
+  edges.push_back(e);
+  e[0] = 1; e[1] = 2;
+  edges.push_back(e);
+  e[0] = 2; e[1] = 3;
+  edges.push_back(e);
+  e[0] = 3; e[1] = 1;
+  edges.push_back(e);
+
   return edges;
 }
 

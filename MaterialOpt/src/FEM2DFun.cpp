@@ -3,6 +3,7 @@
 #include "ElementMesh2D.h"
 #include "RealField.hpp"
 #include "SparseLin.hpp"
+//#include "Timer.hpp"
 
 typedef Eigen::Triplet<cfgScalar> TripletS;
 typedef std::vector<std::vector< int> > Grid2D;
@@ -76,6 +77,7 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
 {
   bool triangle = true;
   bool constrained = false;
+  Vector3S color0(0.6, 0.6, 1.0);
   param = x0;
 
   //read material distribution from field
@@ -89,12 +91,17 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
       coord[0] = (ii + 0.5) / m_nx;
       coord[1] = (jj + 0.5) / m_ny;
       distribution[eIdx] = field->f(coord);
+      em->e[eIdx]->color = distribution[eIdx] * color0;
     }
   }
 
   //solve linear statics problems
+  //Timer timer;
   std::vector<cfgScalar> val;
+  //timer.startWall();
   getStiffnessSparse(em, distribution, val, triangle, constrained, m_fixRigid, m_periodic);
+  //timer.endWall();
+  //std::cout << "assemble time " << timer.getSecondsWall() << "\n";
   m_val = std::vector<double>(val.begin(), val.end());
   int nrows = (int)m_I.size() - 1;
   //checkSparseIndex(m_I, m_J);
@@ -102,7 +109,17 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
     std::fill(u[ii].begin(), u[ii].end(), 0);
     std::vector<int> I = m_I;
     std::vector<int> J = m_J;
+    //timer.startWall();
     sparseSolve(I.data(), J.data(), m_val.data(), nrows, &(u[ii][0]), externalForce[ii].data());
+    //timer.endWall();
+    //std::cout<<"Lin solve time " << timer.getSecondsWall() << "\n";
+  }
+
+  //show rendering
+  for (unsigned int ii = 0; ii < em->x.size(); ii++){
+    for (int jj = 0; jj < dim; jj++){
+      em->x[ii][jj] = em->X[ii][jj] + u[0][ii*dim + jj];
+    }
   }
 }
 
@@ -113,7 +130,7 @@ double FEM2DFun::f()
   dx = measureStretchX(em, u[0], grid);
   dy = measureStretchY(em, u[0], grid);
   double val = 0.5 * dxw * (dx - dx0) * (dx - dx0) + 0.5 * dyw * (dy - dy0) * (dy - dy0);
-  //std::cout << "dx dy " << dx << " " << dy << "\n";
+  std::cout << "dx dy " << dx << " " << dy << "\n";
   return val;
 }
 
@@ -208,7 +225,7 @@ FEM2DFun::FEM2DFun() :em(0), dim(2),
 m_Init(false),
 m_periodic(true),
 m_fixRigid(true),
-dx0(1e-3), dy0(1e-3),
+dx0(1e-2), dy0(5e-3),
 dxw(5), dyw(1),
 forceMagnitude(100),
 m_nx(0), m_ny(0),

@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <thread>
 
 ///@brief sparse matrix vector product.
 Eigen::VectorXd
@@ -42,20 +43,44 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
 ///@param nSteps maximum number of steps.
 void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps);
 
+void optMat(FEM2DFun * fem)
+{
+  RealField * field = fem->field;
+  Eigen::VectorXd x0 = 0.5 * Eigen::VectorXd::Ones(field->param.size());
+  fem->init(x0);
+  for (int ii = 0; ii < x0.rows(); ii++){
+    x0[ii] += 0.1 * (rand() / (float)RAND_MAX - 0.5);
+  }
+  double h = 1e-2;
+  //check_df(fem, x0, h);
+  //check_sim(fem, x0);
+  fem->setParam(x0);
+  Eigen::VectorXd grad = fem->df();
+  h = 1;
+  gradientDescent(fem, x0, 100);
+  for (int ii = 0; ii < fem->m_nx; ii++){
+    for (int jj = 0; jj < fem->m_ny; jj++){
+      std::cout << fem->distribution[ii*fem->m_ny + jj] << " ";
+    }
+    std::cout << "\n";
+  }
+
+}
+
 int main(int argc, char* argv[])
 {
   const char * filename = "config.txt";
   ConfigFile conf;
   conf.load(filename);  
-  
-  int nx = 16, ny = 16;
+
   Vector3f ff(100, 0, 0);
-  
+  int nx = 16;
+  int ny = 16;
   ElementRegGrid2D * em = new ElementRegGrid2D(nx,ny);
   std::vector<StrainLin2D> ene(1);
 
-  ene[0].param[0] = 34482.75862;
-  ene[0].param[1] = 310344.8276;
+  ene[0].param[0] = 3448.275862;
+  ene[0].param[1] = 31034.48276;
 
   std::vector<MaterialQuad2D * > material(ene.size());
   for (unsigned int ii = 0; ii < material.size(); ii++){
@@ -73,35 +98,29 @@ int main(int argc, char* argv[])
   //for example, the parameterization can have lower resolution. Effectively refining each cell to 2x2 block.
   field->allocate(nx/2, ny/2);
   fem->em = em;
-  fem->dx0 = 2e-3;
-  fem->dy0 = 2e-3;
+  fem->dx0 = 2e-2;
+  fem->dy0 = 1e-2;
   fem->field = field;
   fem->m_nx = nx;
   fem->m_ny = ny;
-  Eigen::VectorXd x0 = 0.5 * Eigen::VectorXd::Ones(field->param.size());
   //uniform lower and upper bounds for variables. 
   //Can change for more complex material distribution scheme.
-  fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(x0.size());
-  fem->upperBounds = Eigen::VectorXd::Ones(x0.size());
+  fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
+  fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
 
-  fem->init(x0);
-  for (int ii = 0; ii < x0.rows(); ii++){
-    x0[ii] += 0.1 * (rand() / (float)RAND_MAX - 0.5);
+  bool render = false;
+  if (render){
+    std::thread thread(optMat, fem);
+    Render render;
+    World * world = new World();
+    world->em2d.push_back(em);
+    render.init(world);
+    render.loop();
   }
-  double h = 1e-2;
-  //check_df(fem, x0, h);
-  check_sim(fem, x0);
-  fem->setParam(x0);
-  Eigen::VectorXd grad = fem->df();
-  h = 1;
-  gradientDescent(fem, x0, 100);
-  for (int ii = 0; ii < nx; ii++){
-    for (int jj = 0; jj < ny; jj++){
-      std::cout << fem->distribution[ii*ny + jj]<<" ";
-    }
-    std::cout << "\n";
+  else{
+    optMat(fem);
+    system("PAUSE");
   }
-  system("PAUSE");
   return 0;
 }
 
@@ -126,7 +145,7 @@ void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps)
     double norm = infNorm(grad);
     h = maxStep / norm;
     int ret = lineSearch(fun, x, grad, h);
-    //std::cout << ii << " " << fun->f() << " " << h << "\n";
+    std::cout << ii << " " << fun->f() << " " << h << "\n";
     if (ret < 0){
       break;
     }
@@ -139,7 +158,8 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
   double f0 = fun->f();
   Eigen::VectorXd grad0 = fun->df();
   double norm0 = infNorm(grad0);
-  while (1){
+  int nSteps = 10;
+  for(int step = 0; step<nSteps; step++){
     //minus sign here if we want to minimize function value.
     Eigen::VectorXd x = x0 - h*dir;
     clampVector(x, fun->lowerBounds, fun->upperBounds);
@@ -148,6 +168,7 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
     Eigen::VectorXd grad1 = fun->df();
     double norm1 = infNorm(grad1);
     //if gradient norm or function value decrease, return.
+    std::cout << h << " " << norm1 << " " << f1 << "\n";
     if (norm1 < norm0 || f1 < f0){
       x0 = x;
       break;
@@ -229,5 +250,5 @@ void check_sim(FEM2DFun * fem, const Eigen::VectorXd & x)
     double maxErr = infNorm(prod);
     std::cout << "Lin solve residual: " << maxErr << "\n";
   }
-  
+
 }

@@ -12,7 +12,11 @@ struct Camera{
       at[ii]=0.0f;
       up[ii] = 0.0f;
     }
-    eye[2]= -1.0f;
+    eye[0] = 0.5;
+    eye[1] = 0.5;
+    at[0] = 0.5;
+    at[1] = 0.5;
+    eye[2]= -2.0f;
     up[1] = 1.0f;
 
     for(int ii= 0;ii<NKEYS;ii++){

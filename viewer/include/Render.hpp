@@ -15,6 +15,8 @@ class ElementHex;
 class World;
 class Element;
 class ElementMesh;
+class Element2D;
+class ElementMesh2D;
 class Stepper;
 class Render
 {
@@ -25,6 +27,8 @@ public:
   void draw();
   void drawEle(int eidx, ElementMesh * eMesh);
   void drawEleMesh(ElementMesh * eMesh);
+  void drawEle2D(int eidx, ElementMesh2D * eMesh);
+  void drawEleMesh2D(ElementMesh2D * eMesh);
   void moveCamera(float dt);
   Stepper * getStepper();
   virtual ~Render();
