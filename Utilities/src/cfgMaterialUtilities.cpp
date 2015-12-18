@@ -1806,7 +1806,7 @@ void cfgMaterialUtilities::getBoundingBox(const std::vector<cfgScalar> &iPoints,
   }
 }
 
-bool cfgMaterialUtilities::rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths)
+bool cfgMaterialUtilities::rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths, std::vector<cfgScalar> *ioScalingFactors)
 {
   assert(iTargetBoxLengths.size()==iDim);
 
@@ -1833,6 +1833,10 @@ bool cfgMaterialUtilities::rescaleData(std::vector<cfgScalar> &ioPoints, int iDi
       val = scaleFactors[icoord]*(val-box[0][icoord]);
       ioPoints[iDim*ipoint+icoord] = val;
     }
+  }
+  if (ioScalingFactors)
+  {
+    *ioScalingFactors = scaleFactors;
   }
   return !degenerated;
 }
@@ -2565,6 +2569,25 @@ std::vector<int> cfgMaterialUtilities::genIncrementalSequence(int iMin, int iMax
   }
   return values;
 }
+
+void cfgMaterialUtilities::sortValues(const std::vector<cfgScalar> &iValues, std::vector<int> &oOrderedIndices)
+{
+  oOrderedIndices.clear();
+
+  std::multimap<cfgScalar, int> values;
+  int ival=0, nval=(int)iValues.size();
+  for (ival=0; ival<nval; ival++)
+  {
+    values.insert(std::pair<cfgScalar, int>(iValues[ival], ival));
+  }
+  oOrderedIndices.reserve(nval);
+  std::map<cfgScalar, int>::const_iterator it, it_end=values.end();
+  for (it=values.begin(); it!=it_end; it++)
+  {
+    oOrderedIndices.push_back(it->second);
+  }
+}
+
 
 
 

@@ -17,6 +17,7 @@ public:
   ~Resampler();
 
   void resample(const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules);
+  void resampleBoundary(cfgScalar iMinRadius, int iDim, const std::vector<cfgScalar> &iPoints, const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules);
 
 private:
   void normalize(std::vector<cfgScalar> &ioValues);

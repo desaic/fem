@@ -7,8 +7,13 @@
 
 #include "Resampler.h"
 
+#include "DistanceTool.h"
+
 #include <cfgUtilities.h>
 using namespace cfgUtil;
+
+#include <cfgMaterialUtilities.h>
+using namespace cfgMaterialUtilities;
 
 Resampler::Resampler()
 {
@@ -76,6 +81,40 @@ void Resampler::normalize(std::vector<cfgScalar> &ioValues)
 {
   cfgScalar sumValues = std::accumulate(ioValues.begin(), ioValues.end(), (cfgScalar)0);
   ioValues = mult(ioValues, 1/sumValues);
+}
+
+void Resampler::resampleBoundary(cfgScalar iMinRadius, int iDim, const std::vector<cfgScalar> &iPoints, const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules)
+{
+  oParticules.clear();
+
+  std::set<int> pointsToDiscard;
+
+  std::vector<cfgScalar> initPoints = iPoints;
+  std::vector<cfgScalar> lengths(iDim, 1);
+  bool resOk = rescaleData(initPoints, iDim, lengths);
+  std::vector<double> points = convertVec<cfgScalar, double>(initPoints);
+
+  DistanceTool distanceTool(points, iDim);
+
+  std::vector<int> orderedScoreIndices;
+  sortValues(iScores, orderedScoreIndices);
+
+  int npoint = (int)orderedScoreIndices.size();
+  for (int ipoint=0; ipoint<npoint && oParticules.size()<iNbTargetParticules; ipoint++)
+  {
+    int indPoint = orderedScoreIndices[npoint-1-ipoint];
+    if (pointsToDiscard.count(indPoint)==0)
+    {
+      oParticules.push_back(indPoint);
+
+      std::vector<int> closestPoints;
+      distanceTool.getClosestPointIndices(&points[iDim*indPoint], iMinRadius, pointsToDiscard, closestPoints);
+      for (int iclosestPoint=0; iclosestPoint<(int)closestPoints.size(); iclosestPoint++)
+      {
+        pointsToDiscard.insert(closestPoints[iclosestPoint]);
+      }
+    }
+  }
 }
 
 

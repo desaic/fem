@@ -31,6 +31,10 @@ if (NOT TARGET vecmath)
 	add_subdirectory(${PROJECT_SOURCE_DIR}/../femlib ${CMAKE_CURRENT_BINARY_DIR}/femlib)
 endif()
 
+# continuous material optimization
+include_directories(${PROJECT_SOURCE_DIR}/../MaterialOpt/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/../MaterialOpt ${CMAKE_CURRENT_BINARY_DIR}/MaterialOpt)
+
 # stepper newton
 include_directories(${PROJECT_SOURCE_DIR}/../StepperCPU/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../StepperCPU ${CMAKE_CURRENT_BINARY_DIR}/StepperCPU)
@@ -46,7 +50,7 @@ endif()
 
 add_executable (SamplesGenerator ${src})
 
-target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} vecmath FEMLib StepperCPU libopenblas ${Utilities_LIBS})
+target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} vecmath FEMLib StepperCPU libopenblas ${Utilities_LIBS} MaterialOpt)
 if (IS_PARDISO_AVAILABLE)
 	target_link_libraries(SamplesGenerator libpardiso500-WIN-X86-64)
 endif()

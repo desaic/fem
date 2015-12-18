@@ -107,7 +107,7 @@ namespace cfgMaterialUtilities
   void getKMeans(int iNbIterations, int iNbClusters, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<std::vector<int> > &oClusters, std::vector<int> *oCenters=NULL);
 
   void getBoundingBox(const std::vector<cfgScalar> &iPoints, int iDim, std::vector<cfgScalar> oBox[2]);
-  bool rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths);
+  bool rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths, std::vector<cfgScalar> *ioScalingFactors=NULL);
 
   // Triangle mesh utilities
   //------------------------
@@ -152,6 +152,7 @@ namespace cfgMaterialUtilities
   // Misc
   // ----
   std::vector<int> genIncrementalSequence(int iMin, int iMax, int iStep=1);
+  void sortValues(const std::vector<cfgScalar> &iValues, std::vector<int> &oOrderedIndices);
 };
 
 #endif 

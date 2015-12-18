@@ -8,7 +8,7 @@ message(${QHULL_BIN_DIR})
 if(DEFINED ENV{PARDISO_LIB_PATH})
 	set(IS_PARDISO_AVAILABLE ON)
 endif()
-add_definitions( -DLEVEL_SET_NOT_AVAILABLE)
+
 file(GLOB src "*.cpp")
 file(GLOB headers "*.h")
 
@@ -17,11 +17,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 # utilities
 include_directories(${PROJECT_SOURCE_DIR}/../Utilities/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/Utilities)
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-  link_directories(${QHULL_BIN_DIR}/Release)
-else()
-  link_directories(${QHULL_BIN_DIR}/Debug)
-endif()
+#if(CMAKE_BUILD_TYPE STREQUAL "Release")
+#  link_directories(${QHULL_BIN_DIR}/Release)
+#else()
+#  link_directories(${QHULL_BIN_DIR}/Debug)
+#endif()
+link_directories($ENV{QHULL_BUILD_PATH})
 
 # math
 include_directories(${PROJECT_SOURCE_DIR}/../vecmath/include)

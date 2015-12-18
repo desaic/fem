@@ -256,11 +256,14 @@ void MaterialParametersView::updatePlots()
     int npoints = (int)physicalParametersPerLevel[ilevel].size()/paramdim;
     std::vector<int> levels(npoints, ilevel);
     vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels);
-
+   
     if (0)
     {
       DistanceField distanceField(paramdim);
-      std::vector<cfgScalar> distances = distanceField.computeDistances(physicalParametersPerLevel[ilevel]);
+      std::vector<cfgScalar> derivatives;
+      std::vector<cfgScalar> distances = distanceField.computeDistances(physicalParametersPerLevel[ilevel], &derivatives);
+
+      std::vector<cfgScalar> newPoints = cfgUtil::add<cfgScalar>(physicalParametersPerLevel[ilevel], derivatives);
 
       cfgScalar minValue = FLT_MAX;
       cfgScalar maxValue = -FLT_MAX;
@@ -294,8 +297,29 @@ void MaterialParametersView::updatePlots()
         }
         colors.push_back(matColor);
       }
-      vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Nu1", "Density", colors, 10);
-      //m_plotsPerLevel[ilevel].push_back(plot);
+      std::vector<int> newparticules;
+      newparticules = genIncrementalSequence(0, npoints-1);
+
+      vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
+      vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table2, "Y1", "Nu1", "Density", colors, 10);
+      m_plotsPerLevel[ilevel].push_back(plot);
+
+      int nTargetParticules = 100;
+      cfgScalar minRadius = 0.1;
+      std::vector<int> newparticules3;
+      Resampler resampler;
+      resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, newparticules3);
+    
+      vtkVector3i green(0, 255, 0);
+      vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
+      vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, "Y1", "Nu1", "Density", green, 15);
+      m_plotsPerLevel[ilevel].push_back(plot3);
+
+      vtkVector3i magenta(255, 0, 255);
+      vtkSmartPointer<vtkTable> table4 =  createTable(newPoints, levels, paramdim, 1, labels, &newparticules3);
+      vtkSmartPointer<cfgPlotPoints3D> plot4 = createPointPlot3D(table4, "Y1", "Nu1", "Density", magenta, 15);
+      m_plotsPerLevel[ilevel].push_back(plot4);
+
     }
 
     if (0)
@@ -311,8 +335,8 @@ void MaterialParametersView::updatePlots()
 
       vtkVector3i red(255, 0, 0);
       vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
-      vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Y2", "Density", red, 15);
-      //m_plotsPerLevel[ilevel].push_back(plot2);
+      vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Nu1", "Density", red, 15);
+      m_plotsPerLevel[ilevel].push_back(plot2);
     }
    
     std::vector<vtkVector3i> colors;

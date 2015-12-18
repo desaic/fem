@@ -11,7 +11,6 @@
 using namespace cfgMaterialUtilities;
 
 // levelset
-#ifndef LEVEL_SET_NOT_AVAILABLE
 #include "MacGrid.h"
 #include "FaceField.h"
 #include "LevelSet.h"
@@ -20,8 +19,6 @@ using namespace cfgMaterialUtilities;
 
 const int d=3;
 Type_Define_VectorD_Outside_Class(d);Type_Define_VectorDi_Outside_Class(d);Type_Define_MatrixD_Outside_Class(d);
-
-#endif 
 
 DistanceField::DistanceField(int iDim)
 {
@@ -32,16 +29,16 @@ DistanceField::~DistanceField()
 {
 }
 
-std::vector<cfgScalar> DistanceField::computeDistances(const std::vector<cfgScalar> &iPoints)
+std::vector<cfgScalar> DistanceField::computeDistances(const std::vector<cfgScalar> &iPoints, std::vector<cfgScalar> *ioDerivatives)
 {
   std::vector<cfgScalar> distances;
 
-#ifndef LEVEL_SET_NOT_AVAILABLE
   std::vector<cfgScalar> pointsInit = iPoints;
   std::vector<cfgScalar> lengths(m_dim, 1);
   int npoint=(int)pointsInit.size()/m_dim;
-
-  bool resOk = rescaleData(pointsInit, m_dim, lengths);
+  
+  std::vector<cfgScalar> scalingFactors;
+  bool resOk = rescaleData(pointsInit, m_dim, lengths, &scalingFactors);
   if (resOk)
   {
     Array<VectorD> points;
@@ -57,7 +54,7 @@ std::vector<cfgScalar> DistanceField::computeDistances(const std::vector<cfgScal
 
     LevelSet<d> levelset;
     PointsToLevelSet<d> points_to_levelset(points,levelset);
-    points_to_levelset.scale=64;
+    points_to_levelset.scale=32;
 
     points_to_levelset.Update();
 
@@ -74,15 +71,36 @@ std::vector<cfgScalar> DistanceField::computeDistances(const std::vector<cfgScal
       cfgScalar distance = (cfgScalar)levelset.Phi(points[ipoint]);
       //std::cout << distance << " " << points[ipoint][0] << " " << points[ipoint][1] << " " << points[ipoint][2] << " " << std::endl;
       //distance += offset;
-
       distances.push_back(distance);
+    }
+    if (ioDerivatives)
+    {
+      ioDerivatives->clear();
+      for (int ipoint=0; ipoint<npoint; ipoint++)
+      {
+        cfgScalar distance = (cfgScalar)levelset.Phi(points[ipoint]);
+        VectorD normal = levelset.Normal(points[ipoint]);
+        for (int icoord=0; icoord<d; icoord++)
+        {
+          cfgScalar val = (cfgScalar)normal[icoord];
+          val *= scalingFactors[icoord];
+          ioDerivatives->push_back(val);
+        }
+        for (int icoord=d; icoord<m_dim; icoord++)
+        {
+          ioDerivatives->push_back(0);
+        }
+      }
     }
   }
   else
   {
     distances.resize(npoint, 1);
+    if (ioDerivatives)
+    {
+      ioDerivatives->resize(npoint*d, 0);
+    }
   }
-#endif 
   return distances;
 }
 

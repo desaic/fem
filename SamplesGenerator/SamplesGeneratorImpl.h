@@ -110,6 +110,10 @@ private:
   std::vector<int>  getFullMaterialAssignment(int n[3], const std::vector<int> &iFreeCellMatAssignments);
   void computeParametersAndTensorValues(int n[3], const std::vector<std::vector<int> > &iMatAssignments, std::vector<cfgScalar> &oParameters, std::vector<cfgScalar> &oTensorValues);
 
+  void runContinuousOptimization(int iLevel, const std::vector<MaterialQuad2D> &iBaseMaterials, const std::vector<std::vector<int> > &iMaterialAssignments, 
+                                 const std::vector<float> &iParameters, const std::vector<float> &iTensors, 
+                                 std::vector<std::vector<int> > &oNewMaterialAssignments, std::vector<cfgScalar> &oNewPhysicalParameters, std::vector<cfgScalar> &oNewTensors);
+
 private:
   std::string m_OutputDirectory;
   bool m_UseLinearMaterial;
