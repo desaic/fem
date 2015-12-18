@@ -130,8 +130,17 @@ double FEM2DFun::f()
   dx = measureStretchX(em, u[0], grid);
   dy = measureStretchY(em, u[0], grid);
   double val = 0.5 * dxw * (dx - dx0) * (dx - dx0) + 0.5 * dyw * (dy - dy0) * (dy - dy0);
-  std::cout << "dx dy " << dx << " " << dy << "\n";
-  return val;
+  
+  //density objective
+  double density = 0;
+  for (unsigned int ii = 0; ii < distribution.size(); ii++){
+    density += distribution[ii];
+  }
+  density /= distribution.size();
+  val += 0.5 * mw * (density - m0) * (density - m0);
+  
+  std::cout << "dx dy " << dx << " " << dy << " "<<density<<"\n";
+  return val ;
 }
 
 void FEM2DFun::compute_dfdu()
@@ -194,7 +203,7 @@ Eigen::VectorXd FEM2DFun::df()
       Eigen::VectorXd Ue(nV * dim);
       Eigen::VectorXd lambda_e(nV * dim);
       //in this example dK/dParam = K.
-      dKdp = em->getStiffness(jj).cast<double>();
+      dKdp =   em->getStiffness(jj).cast<double>();
       for (int kk = 0; kk < ele->nV(); kk++){
         int vidx = em->e[jj]->at(kk);
         for (int ll = 0; ll < dim; ll++){
@@ -204,6 +213,16 @@ Eigen::VectorXd FEM2DFun::df()
       }
       dfddist[jj] += -lambda_e.dot(dKdp * Ue);
     }
+  }
+
+  //gradient of density term:
+  double density = 0;
+  for (unsigned int ii = 0; ii < distribution.size(); ii++){
+    density += distribution[ii];
+  }
+  density /= distribution.size();
+  for (unsigned int ii = 0; ii < dfddist.size(); ii++){
+    dfddist[ii] += mw * (density - m0);
   }
 
   Eigen::VectorXd coord = Eigen::VectorXd::Zero(dim);

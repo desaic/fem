@@ -52,12 +52,11 @@ void optMat(FEM2DFun * fem)
     x0[ii] += 0.1 * (rand() / (float)RAND_MAX - 0.5);
   }
   double h = 1e-2;
-  //check_df(fem, x0, h);
-  //check_sim(fem, x0);
   fem->setParam(x0);
   Eigen::VectorXd grad = fem->df();
   h = 1;
-  gradientDescent(fem, x0, 100);
+  int nSteps = 100;
+  gradientDescent(fem, x0, nSteps);
   for (int ii = 0; ii < fem->m_nx; ii++){
     for (int jj = 0; jj < fem->m_ny; jj++){
       std::cout << fem->distribution[ii*fem->m_ny + jj] << " ";
@@ -103,12 +102,14 @@ int main(int argc, char* argv[])
   fem->field = field;
   fem->m_nx = nx;
   fem->m_ny = ny;
+  fem->m0 = 0.5;
+  fem->mw = 1e-5;
   //uniform lower and upper bounds for variables. 
   //Can change for more complex material distribution scheme.
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
 
-  bool render = false;
+  bool render = true;
   if (render){
     std::thread thread(optMat, fem);
     Render render;
@@ -118,6 +119,8 @@ int main(int argc, char* argv[])
     render.loop();
   }
   else{
+    //check_df(fem, x0, h);
+    //check_sim(fem, x0);
     optMat(fem);
     system("PAUSE");
   }
@@ -159,6 +162,7 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
   Eigen::VectorXd grad0 = fun->df();
   double norm0 = infNorm(grad0);
   int nSteps = 10;
+  int ret = -1;
   for(int step = 0; step<nSteps; step++){
     //minus sign here if we want to minimize function value.
     Eigen::VectorXd x = x0 - h*dir;
@@ -171,13 +175,14 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
     std::cout << h << " " << norm1 << " " << f1 << "\n";
     if (norm1 < norm0 || f1 < f0){
       x0 = x;
+      ret = 0;
       break;
     }
     else{
       h /= 2;
     }
   }
-  return 0;
+  return ret;
 }
 
 void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h)

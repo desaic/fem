@@ -33,6 +33,11 @@ public:
   ///@brief weight for displacement objectives.
   double dxw, dyw;
 
+  ///@brief target density fraction.
+  double m0;
+  ///@brief weight for density term.
+  double mw;
+
   ///@brief external forces
   std::vector< std::vector<double> > externalForce;
   ///@brief total force applied on one side
