@@ -1,3 +1,9 @@
 refine 2
 #structure p0.txt
 structure p1.txt
+render false
+test false
+maxStep 0.5
+fileRootName level16
+fileExtension .bin
+nSteps 500

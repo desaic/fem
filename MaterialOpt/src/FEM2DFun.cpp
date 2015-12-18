@@ -115,6 +115,9 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
     //std::cout<<"Lin solve time " << timer.getSecondsWall() << "\n";
   }
 
+  dx = measureStretchX(em, u[0], grid);
+  dy = measureStretchY(em, u[0], grid);
+
   //show rendering
   for (unsigned int ii = 0; ii < em->x.size(); ii++){
     for (int jj = 0; jj < dim; jj++){
@@ -126,9 +129,6 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
 double FEM2DFun::f()
 {
   //Example: measure width and height under a stretching force.
-  double dx, dy;
-  dx = measureStretchX(em, u[0], grid);
-  dy = measureStretchY(em, u[0], grid);
   double val = 0.5 * dxw * (dx - dx0) * (dx - dx0) + 0.5 * dyw * (dy - dy0) * (dy - dy0);
   
   //density objective
@@ -139,7 +139,7 @@ double FEM2DFun::f()
   density /= distribution.size();
   val += 0.5 * mw * (density - m0) * (density - m0);
   
-  std::cout << "dx dy " << dx << " " << dy << " "<<density<<"\n";
+  std::cout << "dx dy " << dx << " " << dy << " "<<density<<" "<<m0<<"\n";
   if (logfile.is_open()){
     logfile << dx << " " << dy << " " << density << "\n";
   }
@@ -149,8 +149,6 @@ double FEM2DFun::f()
 void FEM2DFun::compute_dfdu()
 {
   int nrows = (int)m_I.size() - 1;
-  double dx = measureStretchX(em, u[0], grid);
-  double dy = measureStretchY(em, u[0], grid);
   std::fill(dfdu[0].begin(), dfdu[0].end(), 0);
   for (unsigned int ii = 0; ii < dfdu.size(); ii++){
     std::vector<int> verts;
@@ -249,7 +247,7 @@ m_periodic(true),
 m_fixRigid(true),
 dx0(1e-2), dy0(5e-3),
 dxw(5), dyw(1),
-forceMagnitude(100),
+forceMagnitude(1000),
 m_nx(0), m_ny(0),
 field(0)
 {

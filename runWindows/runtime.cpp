@@ -1,3 +1,4 @@
+#include "cfgUtilities.h"
 #include "ConfigFile.hpp"
 #include "EigenUtil.hpp"
 #include "Render.hpp"
@@ -17,6 +18,11 @@
 #include <iostream>
 #include <iomanip>
 #include <thread>
+
+//maximum movement in any parameter.
+double maxStep = 0.5;
+
+std::vector<std::vector<int> > materialAssignments;
 
 ///@brief sparse matrix vector product.
 Eigen::VectorXd
@@ -45,20 +51,62 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
 ///@param nSteps maximum number of steps.
 void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps);
 
-void optMat(FEM2DFun * fem, int nSteps)
+void loadBinary(ConfigFile & conf, std::vector<std::vector<int> > & materialAssignments);
+
+void printStructure(FEM2DFun * fem)
 {
-  RealField * field = fem->field;
-  fem->logfile.open("log.txt");
-  Eigen::VectorXd x0 = fem->param;
-  gradientDescent(fem, x0, nSteps);
-  fem->logfile.close();
   for (int ii = 0; ii < fem->m_nx; ii++){
     for (int jj = 0; jj < fem->m_ny; jj++){
       std::cout << fem->distribution[ii*fem->m_ny + jj] << " ";
     }
     std::cout << "\n";
   }
+}
 
+void shrinkVector(Eigen::VectorXd & x, const std::vector<int> & a, float shrink_ratio)
+{
+  for (int ii = 0; ii < a.size(); ii++){
+    double val = a[ii];
+    val = 0.5 + shrink_ratio * (val - 0.5);
+    x[ii] = val;
+  }
+}
+
+double sum(const Eigen::VectorXd & x)
+{
+  double sum = 0;
+  for (int ii = 0; ii < x.size(); ii++){
+    sum += x[ii];
+  }
+  return sum;
+}
+
+std::string sequenceFilename(std::string prefix, int idx, std::string suffix)
+{
+  return prefix + std::to_string(idx) + suffix;
+}
+
+void optMat(FEM2DFun * fem, int nSteps)
+{
+  RealField * field = fem->field;
+  Eigen::VectorXd x0 = fem->param;
+  int nStructure = materialAssignments.size();
+  double shrink_ratio = 0.3;
+  for (int ii = nStructure-1; ii >=0; ii++){
+    shrinkVector(x0, materialAssignments[ii], shrink_ratio);
+    fem->setParam(x0);
+    fem->dx0 = fem->dx;
+    //set up objective for negative poisson ratio.
+    fem->dy0 = fem->dx;
+    fem->m0 = sum(fem->distribution)/fem->distribution.size();
+    //scale mass term to roughly displacement term.
+    fem->mw = 0.3 * (fem->dx0 / fem->m0);
+    std::string filename;
+    filename = sequenceFilename("log", ii, ".txt");
+    fem->logfile.open(filename);
+    gradientDescent(fem, x0, nSteps);
+    fem->logfile.close();
+  }
 }
 
 int main(int argc, char* argv[])
@@ -67,31 +115,36 @@ int main(int argc, char* argv[])
   ConfigFile conf;
   conf.load(filename);  
   
-  Vector3f ff(100, 0, 0);
   int nx = 16;
   int ny = 16;
   Eigen::VectorXd x0;
 
   if (conf.hasOpt("structure")){
+    std::vector<int> arr;
     std::vector<std::vector<int> > structure;
     loadArr2D(structure, conf.getString("structure"));
     nx = structure.size();
     ny = structure[0].size();
     x0 = Eigen::VectorXd::Zero(nx * ny);
+    arr.resize(nx * ny);
     for (int ii = 0; ii < nx; ii++){
       for (int jj = 0; jj < ny; jj++){
         double val = structure[ii][jj];
-        double shrink = 0.1;
+        double shrink = 0.3;
         val = 0.5 + shrink * (val - 0.5);
         x0[ii * ny + jj] = val;
+        arr[ii*ny + jj] = structure[ii][jj];
       }
     }
+    materialAssignments.push_back(arr);
   } else {
     x0 = 0.5 * Eigen::VectorXd::Ones(nx * ny);
   }
+
+  loadBinary(conf, materialAssignments);
+
   ElementRegGrid2D * em = new ElementRegGrid2D(nx, ny);
   std::vector<StrainLin2D> ene(1);
-
   ene[0].param[0] = 3448.275862;
   ene[0].param[1] = 31034.48276;
 
@@ -118,19 +171,30 @@ int main(int argc, char* argv[])
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
 
   fem->em = em;
-  fem->dx0 = 2e-2;
-  fem->dy0 = 2e-2;
-  fem->dxw = 5;
+  fem->dx0 = 0.22;
+  fem->dy0 = 0.22;
+  fem->dxw = 2;
   fem->field = field;
   fem->m_nx = nx;
   fem->m_ny = ny;
   fem->m0 = 0.4;
-  fem->mw = 1e-5;
+  fem->mw = 0.1;
   
   fem->init(x0);
 
-  int nSteps = 1000;
-  bool render = false;
+  int nSteps = conf.getInt("nSteps");
+  bool render = conf.getBool("render");
+  bool test = conf.getBool("test");
+  if (conf.hasOpt("maxStep")){
+    maxStep = conf.getFloat("maxStep");
+  }
+  if (test){
+    double h = 0.001;
+    nSteps = 1;
+    check_df(fem, x0, h);
+    //check_sim(fem, x0);
+  }
+
   if (render){
     std::thread thread(optMat, fem, nSteps);
     Render render;
@@ -140,9 +204,6 @@ int main(int argc, char* argv[])
     render.loop();
   }
   else{
-    double h = 0.001;
-    //check_df(fem, x0, h);
-    //check_sim(fem, x0);
     optMat(fem, nSteps);
   }
   return 0;
@@ -159,8 +220,7 @@ double infNorm(const Eigen::VectorXd & a)
 
 void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps)
 {
-  //maximum movement in any parameter.
-  double maxStep = 0.5;
+
   Eigen::VectorXd x = x0;
   for (int ii = 0; ii < nSteps; ii++){
     fun->setParam(x);
@@ -295,4 +355,23 @@ void loadArr2D(std::vector<std::vector< int> > &arr, std::string filename)
     }
   }
   in.close();
+}
+
+void loadBinary(ConfigFile & conf, std::vector<std::vector<int> > & materialAssignments)
+{
+  std::string fileRootName("../data/level16");
+  std::string fileExtension(".bin");
+  if (conf.hasOpt("fileRootName")){
+    fileRootName = conf.getString("fileRootName");
+  }
+  if (conf.hasOpt("fileExtension")){
+    fileExtension = conf.getString("fileExtension");
+  }
+  bool success;
+  std::string matAssignmentFile = conf.dir + "/" + fileRootName + "_matAssignments" + fileExtension;
+  success = cfgUtil::readBinary<int>(matAssignmentFile, materialAssignments);
+  if (!success){
+    std::cout << "Can't read " << matAssignmentFile << "\n";
+  }
+
 }

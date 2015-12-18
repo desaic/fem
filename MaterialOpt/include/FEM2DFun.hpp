@@ -29,6 +29,8 @@ public:
   bool m_periodic;
   bool m_fixRigid;
 
+  ///@brief displacements produced by the first externalForce after calling setParam(x).
+  double dx, dy;
   ///@brief target displacements.
   double dx0, dy0;
   ///@brief weight for displacement objectives.
