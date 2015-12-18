@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
   
   fem->init(x0);
 
-  int nSteps = 1;
+  int nSteps = 1000;
   bool render = false;
   if (render){
     std::thread thread(optMat, fem, nSteps);
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
   }
   else{
     double h = 0.001;
-    check_df(fem, x0, h);
+    //check_df(fem, x0, h);
     //check_sim(fem, x0);
     optMat(fem, nSteps);
   }
