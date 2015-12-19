@@ -124,25 +124,21 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
       em->x[ii][jj] = em->X[ii][jj] + u[0][ii*dim + jj];
     }
   }
+
+  //density objective
+  density = 0;
+  for (unsigned int ii = 0; ii < distribution.size(); ii++){
+    density += distribution[ii];
+  }
+  density /= distribution.size();
+
 }
 
 double FEM2DFun::f()
 {
   //Example: measure width and height under a stretching force.
   double val = 0.5 * dxw * (dx - dx0) * (dx - dx0) + 0.5 * dyw * (dy - dy0) * (dy - dy0);
-  
-  //density objective
-  double density = 0;
-  for (unsigned int ii = 0; ii < distribution.size(); ii++){
-    density += distribution[ii];
-  }
-  density /= distribution.size();
   val += 0.5 * mw * (density - m0) * (density - m0);
-  
-  std::cout << "dx dy " << dx << " " << dy << " "<<density<<" "<<m0<<"\n";
-  if (logfile.is_open()){
-    logfile << dx << " " << dy << " " << density << "\n";
-  }
   return val ;
 }
 
@@ -188,6 +184,7 @@ Eigen::VectorXd FEM2DFun::df()
 
   int nrows = (int)m_I.size() - 1;
   compute_dfdu();
+  Eigen::MatrixXd K0 = (em->getStiffness(0)).cast<double>();
   //sensitivity analysis using the adjoint method.
   for (unsigned int ii = 0; ii < u.size(); ii++){
     std::vector<double> lambda(nrows, 0);
@@ -203,8 +200,10 @@ Eigen::VectorXd FEM2DFun::df()
       Eigen::MatrixXd dKdp;
       Eigen::VectorXd Ue(nV * dim);
       Eigen::VectorXd lambda_e(nV * dim);
-      //in this example dK/dParam = K.
-      dKdp = em->getStiffness(jj).cast<double>();
+      //in this example dK/dParam = K * (1/(3-2*rho)^2).
+      double numerator = (3 - 2 * distribution[jj]);
+      numerator *= numerator;
+      dKdp =  (3.0/numerator) * K0;
       for (int kk = 0; kk < ele->nV(); kk++){
         int vidx = em->e[jj]->at(kk);
         for (int ll = 0; ll < dim; ll++){
@@ -216,12 +215,6 @@ Eigen::VectorXd FEM2DFun::df()
     }
   }
 
-  //gradient of density term:
-  double density = 0;
-  for (unsigned int ii = 0; ii < distribution.size(); ii++){
-    density += distribution[ii];
-  }
-  density /= distribution.size();
   for (unsigned int ii = 0; ii < dfddist.size(); ii++){
     dfddist[ii] += (mw / distribution.size()) * (density - m0);
   }
@@ -239,6 +232,11 @@ Eigen::VectorXd FEM2DFun::df()
     }
   }
   return grad;
+}
+
+void FEM2DFun::log(std::ostream & out)
+{
+  out << dx << " " << dy << " " << density << "\n";
 }
 
 FEM2DFun::FEM2DFun() :em(0), dim(2),
@@ -261,14 +259,13 @@ void getStiffnessSparse(ElementMesh2D * em, const Eigen::VectorXd & param,
   int N = 2 * (int)em->x.size();
   std::vector<TripletS> coef;
   Eigen::SparseMatrix<cfgScalar> Ksparse(N, N);
+  MatrixXS K0 = em->getStiffness(0);
   for (unsigned int ii = 0; ii<em->e.size(); ii++){
     Element2D * ele = em->e[ii];
     int nV = ele->nV();
-    MatrixXS K = em->getStiffness(ii);
-
-    //scale by parameter.
-    //change for more complex material mixture.
-    K *= (cfgScalar)param[ii];
+    //K = K0 * rho/(3-2*rho).
+    //change for better bound if there is one
+    MatrixXS K = (cfgScalar) (param[ii] / (3 - 2 * param[ii])) * K0;
 
     for (int jj = 0; jj<nV; jj++){
       int vj = ele->at(jj);

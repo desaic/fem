@@ -3,7 +3,6 @@
 
 #include "RealFun.hpp"
 #include <vector>
-#include <fstream>
 
 class ElementMesh2D;
 class RealField;
@@ -31,6 +30,7 @@ public:
 
   ///@brief displacements produced by the first externalForce after calling setParam(x).
   double dx, dy;
+  double density;
   ///@brief target displacements.
   double dx0, dy0;
   ///@brief weight for displacement objectives.
@@ -97,8 +97,7 @@ public:
   ///The return value should have the same size as the parameters.
   virtual Eigen::VectorXd df();
 
-  ///@brief for debugging and visualizing trajectory.
-  std::ofstream logfile;
+  void log(std::ostream & out);
 };
 
 #endif

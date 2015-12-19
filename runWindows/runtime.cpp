@@ -21,8 +21,14 @@
 
 //maximum movement in any parameter.
 double maxStep = 0.5;
+int logInterval = 10;
+std::ofstream logfile;
+std::ofstream materialOut;
+int nChunk = 6;
+int chunkIdx = 0;
 
 std::vector<std::vector<int> > materialAssignments;
+std::vector<std::vector<double> > continuousMaterials;
 
 ///@brief sparse matrix vector product.
 Eigen::VectorXd
@@ -53,11 +59,13 @@ void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps);
 
 void loadBinary(ConfigFile & conf, std::vector<std::vector<int> > & materialAssignments);
 
-void printStructure(FEM2DFun * fem)
+void printStructure(FEM2DFun * fem, std::ostream & out)
 {
+  out << fem->m_nx << " " << fem->m_ny << "\n";
   for (int ii = 0; ii < fem->m_nx; ii++){
     for (int jj = 0; jj < fem->m_ny; jj++){
-      std::cout << fem->distribution[ii*fem->m_ny + jj] << " ";
+      double val = fem->distribution[ii*fem->m_ny + jj];
+      out <<  val << " ";
     }
     std::cout << "\n";
   }
@@ -70,6 +78,17 @@ void shrinkVector(Eigen::VectorXd & x, const std::vector<int> & a, float shrink_
     val = 0.5 + shrink_ratio * (val - 0.5);
     x[ii] = val;
   }
+}
+
+Eigen::VectorXd firstQuadrant(const Eigen::VectorXd a, int nx, int ny)
+{
+  Eigen::VectorXd x(nx*ny / 4);
+  for (int ii = 0; ii < nx / 2; ii++){
+    for (int jj = 0; jj < ny / 2; jj++){
+      x[ii * (ny / 2) + jj] = a[ii*ny + jj];
+    }
+  }
+  return x;
 }
 
 double sum(const Eigen::VectorXd & x)
@@ -86,15 +105,25 @@ std::string sequenceFilename(std::string prefix, int idx, std::string suffix)
   return prefix + std::to_string(idx) + suffix;
 }
 
+//uses orthotropic structure
 void optMat(FEM2DFun * fem, int nSteps)
 {
   RealField * field = fem->field;
-  Eigen::VectorXd x0 = fem->param;
+  Eigen::VectorXd x1 = fem->param;
+  
   int nStructure = materialAssignments.size();
+  nStructure /= nChunk;
+  int startIdx = chunkIdx * nStructure;
+  int endIdx = std::max((chunkIdx + 1) * nStructure, (int)materialAssignments.size());
+  std::string materialOutName =  sequenceFilename("materialStructure", chunkIdx, ".txt");
+  materialOut.open(materialOutName);
   double shrink_ratio = 0.3;
-  for (int ii = nStructure-1; ii >=0; ii++){
+  for (int ii = startIdx; ii < endIdx; ii++){
+    Eigen::VectorXd x0(materialAssignments[ii].size());
     shrinkVector(x0, materialAssignments[ii], shrink_ratio);
-    fem->setParam(x0);
+    x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
+    fem->setParam(x1);
+    //printStructure(fem);
     fem->dx0 = fem->dx;
     //set up objective for negative poisson ratio.
     fem->dy0 = fem->dx;
@@ -103,10 +132,15 @@ void optMat(FEM2DFun * fem, int nSteps)
     fem->mw = 0.3 * (fem->dx0 / fem->m0);
     std::string filename;
     filename = sequenceFilename("log", ii, ".txt");
-    fem->logfile.open(filename);
-    gradientDescent(fem, x0, nSteps);
-    fem->logfile.close();
+    logfile.open(filename);
+    gradientDescent(fem, x1, nSteps);
+    for (unsigned int jj = 0; jj < fem->distribution.size(); jj++){
+      materialOut << fem->distribution[jj] << " ";
+    }
+    materialOut << "\n";
+    logfile.close();
   }
+  materialOut.close();
 }
 
 int main(int argc, char* argv[])
@@ -160,10 +194,11 @@ int main(int argc, char* argv[])
   em->check();
 
   FEM2DFun * fem = new FEM2DFun();
-  //PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
-  PiecewiseConstant2D * field = new PiecewiseConstant2D();
+  PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
+  field->allocate(nx / 2, ny / 2);
   //for example, the parameterization can have lower resolution. Effectively refining each cell to 2x2 block.
-  field->allocate(nx, ny);
+  //PiecewiseConstant2D * field = new PiecewiseConstant2D();
+  //field->allocate(nx, ny);
 
   //uniform lower and upper bounds for variables. 
   //Can change for more complex material distribution scheme.
@@ -182,6 +217,7 @@ int main(int argc, char* argv[])
   
   fem->init(x0);
 
+  chunkIdx = conf.getInt("chunkIdx");
   int nSteps = conf.getInt("nSteps");
   bool render = conf.getBool("render");
   bool test = conf.getBool("test");
@@ -193,6 +229,7 @@ int main(int argc, char* argv[])
     nSteps = 1;
     check_df(fem, x0, h);
     //check_sim(fem, x0);
+    return 0;
   }
 
   if (render){
@@ -234,7 +271,11 @@ void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps)
       break;
     }
     x0 = x;
+    if (ii % logInterval == 0){
+      fun->log(logfile);
+    }
   }
+  fun->log(logfile);
 }
 
 int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h )

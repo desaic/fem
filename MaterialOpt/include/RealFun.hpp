@@ -44,6 +44,8 @@ public:
     return Eigen::MatrixXd(1,1);
   }
 
+  virtual void log(std::ostream & out){}
+
   virtual ~RealFun(){}
 };
 
