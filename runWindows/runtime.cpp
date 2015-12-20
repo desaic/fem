@@ -9,6 +9,7 @@
 #include "FEM2DFun.hpp"
 #include "PiecewiseConstant2D.hpp"
 #include "PiecewiseConstantSym2D.hpp"
+#include "PiecewiseConstantCubic2D.hpp"
 
 #include "MaterialQuad2D.h"
 #include "StrainLin2D.h"
@@ -91,6 +92,20 @@ Eigen::VectorXd firstQuadrant(const Eigen::VectorXd a, int nx, int ny)
   return x;
 }
 
+Eigen::VectorXd upsampleVector(const Eigen::VectorXd a, int nx, int ny)
+{
+  Eigen::VectorXd x(nx * ny * 4);
+  for (int ii = 0; ii < nx ; ii++){
+    for (int jj = 0; jj < ny ; jj++){
+      x[2 * ii*ny + 2 * jj]       = a[ii*ny + jj];
+      x[2 * ii*ny + 2 * jj + 1]   = a[ii*ny + jj];
+      x[2 * (ii + 1)*ny + 2 * jj] = a[ii*ny + jj];
+      x[2 * (ii + 1)*ny + 2 * jj + 1] = a[ii*ny + jj];
+    }
+  }
+  return x;
+}
+
 double sum(const Eigen::VectorXd & x)
 {
   double sum = 0;
@@ -114,22 +129,27 @@ void optMat(FEM2DFun * fem, int nSteps)
   int nStructure = materialAssignments.size();
   nStructure /= nChunk;
   int startIdx = chunkIdx * nStructure;
-  int endIdx = std::max((chunkIdx + 1) * nStructure, (int)materialAssignments.size());
+  int endIdx = (chunkIdx + 1) * nStructure;
+  //the last batch should compute untill the end.
+  if (chunkIdx == nChunk){
+    endIdx = std::max(endIdx, (int)materialAssignments.size());
+  }
   std::string materialOutName =  sequenceFilename("materialStructure", chunkIdx, ".txt");
   materialOut.open(materialOutName);
   double shrink_ratio = 0.3;
-  for (int ii = startIdx; ii < endIdx; ii++){
+  for (int ii = endIdx-2; ii < endIdx; ii++){
     Eigen::VectorXd x0(materialAssignments[ii].size());
     shrinkVector(x0, materialAssignments[ii], shrink_ratio);
     x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
+    x1 = upsampleVector(x1, 2 * fem->m_nx, 2*fem->m_ny);
     fem->setParam(x1);
     //printStructure(fem);
     fem->dx0 = fem->dx;
     //set up objective for negative poisson ratio.
     fem->dy0 = fem->dx;
-    fem->m0 = sum(fem->distribution)/fem->distribution.size();
+    fem->m0 =  0.3*sum(fem->distribution)/fem->distribution.size();
     //scale mass term to roughly displacement term.
-    fem->mw = 0.3 * (fem->dx0 / fem->m0);
+    fem->mw = 0.1 * (fem->dx0 / fem->m0);
     std::string filename;
     filename = sequenceFilename("log", ii, ".txt");
     logfile.open(filename);
@@ -149,10 +169,11 @@ int main(int argc, char* argv[])
   ConfigFile conf;
   conf.load(filename);  
   
-  int nx = 16;
-  int ny = 16;
+  int nx = 32;
+  int ny = 32;
   Eigen::VectorXd x0;
 
+  loadBinary(conf, materialAssignments);
   if (conf.hasOpt("structure")){
     std::vector<int> arr;
     std::vector<std::vector<int> > structure;
@@ -175,8 +196,6 @@ int main(int argc, char* argv[])
     x0 = 0.5 * Eigen::VectorXd::Ones(nx * ny);
   }
 
-  loadBinary(conf, materialAssignments);
-
   ElementRegGrid2D * em = new ElementRegGrid2D(nx, ny);
   std::vector<StrainLin2D> ene(1);
   ene[0].param[0] = 3448.275862;
@@ -194,7 +213,8 @@ int main(int argc, char* argv[])
   em->check();
 
   FEM2DFun * fem = new FEM2DFun();
-  PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
+  //PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
+  PiecewiseConstantCubic2D * field = new PiecewiseConstantCubic2D();
   field->allocate(nx / 2, ny / 2);
   //for example, the parameterization can have lower resolution. Effectively refining each cell to 2x2 block.
   //PiecewiseConstant2D * field = new PiecewiseConstant2D();
@@ -315,6 +335,7 @@ void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h)
   Eigen::VectorXd num_df = Eigen::VectorXd::Zero(x0.size());
 
   double max_diff = 0;
+  double max_val = 0;
   for (int ii = 0; ii < x0.rows(); ii++){
     x[ii] += h;
     fun->setParam(x);
@@ -330,8 +351,9 @@ void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h)
     std::cout << ii << " " << ana_df[ii] << " " << num_df[ii] << "\n";
     double diff = ana_df[ii] - num_df[ii];
     max_diff = std::max(max_diff, std::abs(diff));
+    max_val = std::max(max_val, std::abs(ana_df[ii]));
   }
-  std::cout << "max diff " << max_diff << "\n";
+  std::cout << "max diff " << max_diff << " "<<max_val<<"\n";
 }
 
 ///@brief sparse matrix vector mult

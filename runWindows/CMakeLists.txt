@@ -13,7 +13,7 @@ file(GLOB src "*.cpp")
 file(GLOB headers "*.h")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-
+include_directories(${PROJECT_SOURCE_DIR}/../include)
 # utilities
 include_directories(${PROJECT_SOURCE_DIR}/../Utilities/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/Utilities)
