@@ -111,13 +111,13 @@ void stiffnessTest(int matModel)
   switch (matModel){
   case 0:
     ene = new StrainLin();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   case 1:
     ene = new StrainCorotLin();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   case 2:
     ene = new StrainEneNeo();
@@ -279,18 +279,18 @@ void forceTest(int matModel)
   switch (matModel){
   case 0:
     ene = new StrainLin();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   case 1:
     ene = new StrainCorotLin();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   case 2:
     ene = new StrainEneNeo();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   default:
     return;
@@ -320,10 +320,11 @@ void forceTestHelper(StrainEne * ene)
     }
   }
   em->check();
-
+  material.init(em);
   em->x[0][0] += 0.2f;
   em->x[1][2] -= 0.3f;
   float h = 0.0001f;
+
   std::vector<Vector3f>force = em->getForce();
   for(size_t ii = 0;ii<em->x.size();ii++){
     for(int jj = 0; jj<3; jj++){

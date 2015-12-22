@@ -3,8 +3,8 @@
 void runTest()
 {
   //ElementCoarseTest();
-  stiffnessTest(2);
-	forceTest(2);
+  stiffnessTest(0);
+	forceTest(0);
 //  testCG();
   //cudaLinTest();
   system("pause");
