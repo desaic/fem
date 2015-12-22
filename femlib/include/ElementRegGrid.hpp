@@ -8,7 +8,6 @@
 #ifndef ELEMENTREGGRID_HPP_
 #define ELEMENTREGGRID_HPP_
 #include "ElementMesh.hpp"
-#include "vecmath.h"
 class ElementRegGrid:public ElementMesh
 {
 public:
@@ -20,11 +19,11 @@ public:
   ///@brief remove unused vertices
   void rmEmptyVert();
   
-  int GetEleInd(const Vector3f & p);
+  int GetEleInd(const Eigen::Vector3f & p);
 
   ///@brief 
   int GetEleInd(int ii , int jj, int kk)const;
-  int GetEleInd_clamp(const Vector3f & p);
+  int GetEleInd_clamp(const Eigen::Vector3f & p);
   int GetVertInd(int ii , int jj, int kk);
   int toArrInd(int ii , int jj, int kk)const{return ii * ny * nz + jj * nz + kk;}
 
@@ -35,6 +34,6 @@ public:
   int nx,ny,nz;
   float dx;
 
-  Vector3f origin;
+  Eigen::Vector3f origin;
 };
 #endif /* ELEMENTREGGRID_HPP_ */

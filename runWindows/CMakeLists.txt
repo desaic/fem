@@ -24,12 +24,6 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/
 #endif()
 link_directories($ENV{QHULL_BUILD_PATH})
 
-# math
-include_directories(${PROJECT_SOURCE_DIR}/../vecmath/include)
-if (NOT TARGET vecmath)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/../vecmath ${CMAKE_CURRENT_BINARY_DIR}/vecmath)
-endif() 
-
 # femlib
 include_directories(${PROJECT_SOURCE_DIR}/../femlib/include)
 if (NOT TARGET FEMLib)
@@ -61,7 +55,7 @@ endif()
 
 add_executable (Run ${src})
 
-target_link_libraries(Run vecmath FEMLib MaterialOpt Utilities StepperCPU libopenblas FEMViewer ${Utilities_LIBS})
+target_link_libraries(Run FEMLib MaterialOpt Utilities StepperCPU libopenblas FEMViewer ${Utilities_LIBS})
 if(MSVC)
   target_link_libraries(Run glfw3 opengl32 glu32)
 endif()

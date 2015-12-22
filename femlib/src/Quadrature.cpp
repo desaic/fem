@@ -1,5 +1,5 @@
 #include "Quadrature.hpp"
-
+using namespace Eigen;
 const float Gauss2Pt[2]=
 {
  -1.0f/std::sqrt(3.0f),

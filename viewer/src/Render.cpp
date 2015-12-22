@@ -14,7 +14,6 @@
 #include "Render.hpp"
 #include "World.hpp"
 #include "Stepper.hpp"
-#include "vecmath.h"
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>
@@ -122,9 +121,9 @@ Stepper * Render::getStepper()
 
 void Render::moveCamera(float dt)
 {
-  Vector3f viewDir = camera.at - render->camera.eye;
-  Vector3f up = camera.up;
-  Vector3f right = Vector3f::cross(viewDir,up);
+  Eigen::Vector3f viewDir = camera.at - render->camera.eye;
+  Eigen::Vector3f up = camera.up;
+  Eigen::Vector3f right = viewDir.cross(up);
   right[1] = 0;
   viewDir[1] = 0;
 
@@ -200,7 +199,7 @@ void Render::drawEle(int eidx, ElementMesh * m)
     if(vidx>=m->x.size()){
       std::cout<<m->x.size()<<"\n";
     }
-    Vector3f v = m->x[vidx];
+    Eigen::Vector3f v = m->x[vidx];
     glVertex3f(v[0],v[1],v[2]);
     v = m->x[(*ele)[edges[ii][1]]];
     glVertex3f(v[0],v[1],v[2]);
@@ -210,7 +209,7 @@ void Render::drawEle(int eidx, ElementMesh * m)
 
     glColor3f(0.2f, 0.7f, 0.1f);
     for (unsigned int ii = 0; ii < edges.size(); ii++){
-      Vector3f v = (*(m->u))[eidx][edges[ii][0]];
+      Eigen::Vector3f v = (*(m->u))[eidx][edges[ii][0]];
       glVertex3f(v[0], v[1], v[2]);
       v = (*(m->u))[eidx][edges[ii][1]];
       glVertex3f(v[0], v[1], v[2]);

@@ -1,7 +1,8 @@
 #include "ElementMesh.hpp"
 #include "Element.hpp"
 #include "Eigen/Sparse"
-#include "MatrixX.hpp"
+
+using namespace Eigen;
 
 typedef Eigen::Triplet<float> Tripletf;
 
@@ -16,7 +17,7 @@ void fixRigid(Eigen::SparseMatrix<float> & K,  ElementMesh * mesh)
   for(int ii = 0;ii<mesh->x.size();ii++){
     center += (Eigen::Vector3f) mesh->x[ii];
   }
-  center /= mesh->x.size();
+  center /= (float)mesh->x.size();
   float cScale = 1000;
   std::vector<Tripletf> triplets;
   for(int ii = 0;ii<mesh->x.size();ii++){

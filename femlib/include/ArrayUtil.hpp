@@ -1,10 +1,10 @@
 #ifndef ARRAYUTIL_HPP
 #define ARRAYUTIL_HPP
 #include <vector>
-#include "vecmath.h"
+#include <Eigen/Dense>
 
-void BBox(const std::vector<Vector3f >& v,
-    Vector3f & mn, Vector3f & mx);
+void BBox(const std::vector<Eigen::Vector3f >& v,
+  Eigen::Vector3f & mn, Eigen::Vector3f & mx);
 
 template<typename T>
 void add(std::vector<T> & dst, const std::vector<T> & src)

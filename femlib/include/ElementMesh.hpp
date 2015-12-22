@@ -1,9 +1,6 @@
 #ifndef ELEMENTMESH_HPP
 #define ELEMENTMESH_HPP
 #include <vector>
-#include "vecmath.h"
-#include "BoundVec3.hpp"
-#include "MatrixX.hpp"
 #include <Eigen/Sparse>
 
 class Element;
@@ -19,18 +16,18 @@ public:
 //  std::vector<Vector3f>x0;
 
   ///@brief deformed positions (unit m)
-  std::vector<Vector3f>x;
+  std::vector<Eigen::Vector3f>x;
   
   ///@brief vertex positions at rest pose.
-  std::vector<Vector3f>X;
+  std::vector<Eigen::Vector3f>X;
 
   ///@brief velocity
-  std::vector<Vector3f>v;
+  std::vector<Eigen::Vector3f>v;
 
   ///@brief time step (unit s)
   float dt;
   ///@brief gravitational constant
-  Vector3f G;
+  Eigen::Vector3f G;
   ///@TODO: change to per element density.
   ///@brief kg/m3
   float density;
@@ -43,11 +40,11 @@ public:
   std::vector<int>me;
   
   ///@brief external forces applied to each dof.
-  std::vector<Vector3f>fe;
+  std::vector<Eigen::Vector3f>fe;
   
   std::vector<int> fixed;
 
-  std::vector<std::vector<Vector3f> > * u;
+  std::vector<std::vector<Eigen::Vector3f> > * u;
 
   ///@brief default constructor
   ElementMesh();
@@ -69,10 +66,10 @@ public:
   float getEnergy(int eIdx);
 
   ///@brief computes internal forces only
-  std::vector<Vector3f> getForce(int eIdx);
-  std::vector<Vector3f> getForce();
+  std::vector<Eigen::Vector3f> getForce(int eIdx);
+  std::vector<Eigen::Vector3f> getForce();
 
-  MatrixXf getStiffness(int eIdx);
+  Eigen::MatrixXf getStiffness(int eIdx);
 
   ///@param trig if true, return only the upper triangle of the symmetric matrix.
   void getStiffnessSparse(std::vector<float> &val, bool trig = false, bool constrained=false, bool iFixedRigid=false);
@@ -88,7 +85,7 @@ public:
   void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig = false, bool iFixedRigid=false);
   void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic);
 
-  MatrixXf getStiffness();
+  Eigen::MatrixXf getStiffness();
   
   float eleSize();
 
@@ -101,8 +98,8 @@ private:
 };
 
 
-void getEleX(int ii, const ElementMesh * m, std::vector<Vector3f> &x);
+void getEleX(int ii, const ElementMesh * m, std::vector<Eigen::Vector3f> &x);
 
-void setEleX(int ii, ElementMesh * m, const std::vector<Vector3f> &x);
+void setEleX(int ii, ElementMesh * m, const std::vector<Eigen::Vector3f> &x);
 
 #endif

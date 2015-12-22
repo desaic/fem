@@ -1,8 +1,6 @@
 #ifndef MATERIAL2D_HPP
 #define MATERIAL2D_HPP
-#include "vecmath.h"
 #include <vector>
-#include "MatrixX.hpp"
 #include <Eigen/Dense>
 #include "cfgDefs.h"
 

@@ -1,6 +1,5 @@
 #include "StepperNewton.hpp"
 #include "ElementMesh.hpp"
-#include "MatrixX.hpp"
 #include "ArrayUtil.hpp"
 #include "femError.hpp"
 #include "ElementRegGrid.hpp"
@@ -8,11 +7,13 @@
 #include "SparseLin.hpp"
 #include "Eigen/Sparse"
 
+#include <iostream>
 #include <fstream>
 #include <assert.h>
 
 #include "Timer.hpp"
 
+using namespace Eigen;
 StepperNewton::StepperNewton():dense(true),dx_tol(1e-5f),h(1.0f)
 {
   m_Init = false;
@@ -129,7 +130,7 @@ int StepperNewton::oneStep()
 void fixRigid(MatrixXf & K, float * b,
         ElementMesh * mesh)
 {
-  int row = K.mm-6;
+  int row = K.rows()-6;
   for(int ii =0; ii<6; ii++){
     b[row + ii] = 0;
   }
@@ -145,9 +146,10 @@ void fixRigid(MatrixXf & K, float * b,
     //relative position to center
     Vector3f rel = mesh->x[ii] - center;
     //cross product matrix
-    Matrix3f c (0, -rel[2],  rel[1],
+    Eigen::Matrix3f c;
+    c<<0, -rel[2], rel[1],
              rel[2],       0, -rel[0],
-            -rel[1],  rel[0],       0);
+            -rel[1],  rel[0],       0;
 
     c = cscale * c;
     for(int jj=0; jj<3; jj++){

@@ -1,7 +1,6 @@
 #ifndef QUADRATURE2D_HPP
 #define QUADRATURE2D_HPP
 #include <vector>
-#include "vecmath.h"
 #include "cfgDefs.h"
 
 class Quadrature2D

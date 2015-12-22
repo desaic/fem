@@ -63,7 +63,7 @@ bool cfgMaterialUtilities::writeMaterialCombinations(const std::string iFileName
   return true;
 }
 
-bool cfgMaterialUtilities::readData(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<int> &oMaterials, std::vector<float> &oStresses, std::vector<float> &oStrains)
+bool cfgMaterialUtilities::readData(const std::string &iFileName,  Eigen::Vector3f &oForceAxis, std::vector<int> &oMaterials, std::vector<float> &oStresses, std::vector<float> &oStrains)
 {
   std::ifstream stream(iFileName);
   if (!stream.is_open())
@@ -88,7 +88,7 @@ bool cfgMaterialUtilities::readData(const std::string &iFileName,  Vector3f &oFo
   return true;
 }
 
-bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<int> &iMaterials, const std::vector<float> &iStresses, const std::vector<float> &iStrains)
+bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Eigen::Vector3f &iForceAxis, const std::vector<int> &iMaterials, const std::vector<float> &iStresses, const std::vector<float> &iStrains)
 {
   std::ofstream stream(iFileName);
   if (!stream.is_open())
@@ -119,7 +119,7 @@ bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Vector3
   return false;
 }
 
-bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, const std::vector<std::vector<float> > &iStrains)
+bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Eigen::Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, const std::vector<std::vector<float> > &iStrains)
 {
   std::ofstream stream(iFileName);
   if (!stream.is_open())
@@ -151,7 +151,7 @@ bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Vector3
   return true;
 }
 
-bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, 
+bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Eigen::Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses,
                                      const std::vector<std::vector<std::vector<float> > > &ix, int iN[3])
 {
   std::ofstream stream(iFileName);
@@ -186,7 +186,7 @@ bool cfgMaterialUtilities::writeData(const std::string &iFileName, const Vector3
   return true;
 }
 
-bool cfgMaterialUtilities::writeDataBinary(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, 
+bool cfgMaterialUtilities::writeDataBinary(const std::string &iFileName, const Eigen::Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses,
                                            const std::vector<std::vector<std::vector<float> > > &ix, int iN[3])
 {
   std::fstream file(iFileName, std::ios::out | std::ios::binary);
@@ -229,7 +229,7 @@ bool cfgMaterialUtilities::writeDataBinary(const std::string &iFileName, const V
 bool cfgMaterialUtilities::concatenateData(const std::string &iInputBaseFileName, int iNbFiles, std::string &iOutputFileName)
 {
   std::string fileName = iInputBaseFileName + "_" + std::to_string(0) + ".txt";
-  Vector3f forceAxis;
+  Eigen::Vector3f forceAxis;
   std::vector<int> materials;
   std::vector<float> stresses, strains;
   bool ResOk = readData(fileName,  forceAxis, materials, stresses, strains);
@@ -248,7 +248,7 @@ bool cfgMaterialUtilities::concatenateData(const std::string &iInputBaseFileName
   for (ifile=0; ifile<iNbFiles && ResOk; ifile++)
   {
     std::string fileName = iInputBaseFileName + "_" + std::to_string(ifile) + ".txt";
-    Vector3f forceAxis;
+    Eigen::Vector3f forceAxis;
     std::vector<int> materials;
     std::vector<float> stresses, strains;
 
@@ -268,7 +268,7 @@ bool cfgMaterialUtilities::concatenateData(const std::string &iInputBaseFileName
 }
 
 
-bool cfgMaterialUtilities::readData(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<float> > &oStrains)
+bool cfgMaterialUtilities::readData(const std::string &iFileName, Eigen::Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<float> > &oStrains)
 {
   oMaterials.clear();
   oStresses.clear();
@@ -302,7 +302,7 @@ bool cfgMaterialUtilities::readData(const std::string &iFileName,  Vector3f &oFo
   return true;
 }
 
-bool cfgMaterialUtilities::readData(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<std::vector<float> > > &ox, int oN[3])
+bool cfgMaterialUtilities::readData(const std::string &iFileName, Eigen::Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<std::vector<float> > > &ox, int oN[3])
 {
   oMaterials.clear();
   oStresses.clear();
@@ -352,7 +352,7 @@ bool cfgMaterialUtilities::readData(const std::string &iFileName,  Vector3f &oFo
   return true;
 }
 
-bool cfgMaterialUtilities::readDataBinary(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<std::vector<float> > > &ox, int oN[3])
+bool cfgMaterialUtilities::readDataBinary(const std::string &iFileName, Eigen::Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<std::vector<float> > > &ox, int oN[3])
 {
   oMaterials.clear();
   oStresses.clear();
@@ -438,7 +438,7 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::string &iMateria
     for (iaxis=0; iaxis<naxis; iaxis++)
     {
       std::string sampleFile = iStressStrainFilesDirectories[iaxis] + iStressStrainBaseFileName + "_" + std::to_string(icomb) + ".txt"; 
-      Vector3f forceAxis;
+      Eigen::Vector3f forceAxis;
       std::vector<float> stresses_f, strains_f;
       readData(sampleFile, forceAxis, materials[icomb], stresses_f, strains_f);
       stresses[iaxis][icomb] = convertVec<float, cfgScalar>(stresses_f);
@@ -506,7 +506,7 @@ bool cfgMaterialUtilities::computeMaterialParametersFromDeformations(const std::
   bool ResOk = true;
   for (int iaxis=0; iaxis<2 && ResOk; iaxis++)
   {
-    Vector3f forceAxis;
+    Eigen::Vector3f forceAxis;
     std::vector<std::vector<std::vector<float> > > x;
     std::vector<std::vector<float> > stresses_f;
     int n[3];
@@ -560,7 +560,7 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::string &iMateria
   bool ResOk = true;
   for (int iaxis=0; iaxis<2 && ResOk; iaxis++)
   {
-    Vector3f forceAxis;
+    Eigen::Vector3f forceAxis;
     std::vector<std::vector<float> > stresses_f, strains_f;
 
     ResOk = readData(iStressStrainFileNames[iaxis],  forceAxis, materials, stresses_f, strains_f);
@@ -1756,15 +1756,15 @@ void cfgMaterialUtilities::getFurthestPointsGreedy(int iOutputNbPoints, const st
     for (it=points.begin(); it!=it_end; it++)
     {
       int indVertex = *it;
-      Vector3f p = getVector3f(indVertex, iPoints);
+      Eigen::Vector3f p = getVector3f(indVertex, iPoints);
 
       cfgScalar currentMinDist = FLT_MAX;
       int jpoint, njpoint=(int)oPointIndices.size();
       for (jpoint=0; jpoint<njpoint; jpoint++)
       {
         int indPoint2 = oPointIndices[jpoint];
-        Vector3f q = getVector3f(indPoint2, iPoints);
-        cfgScalar dist = (p-q).absSquared();
+        Eigen::Vector3f q = getVector3f(indPoint2, iPoints);
+        cfgScalar dist = (p-q).squaredNorm();
         if (dist < currentMinDist)
         {
            currentMinDist = dist;
@@ -1974,8 +1974,8 @@ void cfgMaterialUtilities::computeDelaundayTriangulation(const std::vector<float
   qhullUtilities::getFacetsVertices(qhull.facetList(), allFaceVertices);
   //oFaceVertices = allFaceVertices;
 
-  Vector3f meanLengths = getMeanEdgeLengthPerAxis(iPoints, allFaceVertices, 4);
-  Vector3f medianLengths = getMedianEdgeLengthPerAxis(iPoints, allFaceVertices, 4);
+  Eigen::Vector3f meanLengths = getMeanEdgeLengthPerAxis(iPoints, allFaceVertices, 4);
+  Eigen::Vector3f medianLengths = getMedianEdgeLengthPerAxis(iPoints, allFaceVertices, 4);
 
   float meanEdgeLength = getMeanEdgeLength(iPoints, allFaceVertices, 4);
   float minEdgeLength = getMinEdgeLength(iPoints, allFaceVertices, 4);
@@ -2033,7 +2033,7 @@ void cfgMaterialUtilities::computeDelaundayTriangulation(const std::vector<float
   }
 }
 
-Vector3f cfgMaterialUtilities::getMeanEdgeLengthPerAxis(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim)
+Eigen::Vector3f cfgMaterialUtilities::getMeanEdgeLengthPerAxis(const std::vector<float> &iX, const std::vector<int> &iIndexArray, int iDim)
 {
   assert(iIndexArray.size()%iDim==0);
   assert(iDim==4);
@@ -2042,7 +2042,7 @@ Vector3f cfgMaterialUtilities::getMeanEdgeLengthPerAxis(const std::vector<float>
 
   int tetfaces[4][3] = { {0, 1, 2}, {0, 1, 3}, {1, 2, 3}, {2, 3, 0} };
 
-  Vector3f MeanLength(0.f,0.f,0.f);
+  Eigen::Vector3f MeanLength(0.f, 0.f, 0.f);
   int nedge=0;
   int itet=0, ntet=(int)iIndexArray.size()/iDim;
   for (itet=0; itet<ntet; itet++)
@@ -2056,8 +2056,8 @@ Vector3f cfgMaterialUtilities::getMeanEdgeLengthPerAxis(const std::vector<float>
         int indVertex1 = iIndexArray[iDim*itet+tetfaces[iface][ivertex]];
         int indVertex2 = iIndexArray[iDim*itet+tetfaces[iface][(ivertex+1)%3]];
 
-        Vector3f p1 = getVector3f(indVertex1, iX);
-        Vector3f p2 = getVector3f(indVertex2, iX);
+        Eigen::Vector3f p1 = getVector3f(indVertex1, iX);
+        Eigen::Vector3f p2 = getVector3f(indVertex2, iX);
         int icoord=0;
         bool added = false;
         for (icoord=0; icoord<3; icoord++)
@@ -2080,7 +2080,7 @@ Vector3f cfgMaterialUtilities::getMeanEdgeLengthPerAxis(const std::vector<float>
   return MeanLength;
 }
 
-Vector3f cfgMaterialUtilities::getMedianEdgeLengthPerAxis(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim)
+Eigen::Vector3f cfgMaterialUtilities::getMedianEdgeLengthPerAxis(const std::vector<float> &iX, const std::vector<int> &iIndexArray, int iDim)
 {
   assert(iIndexArray.size()%iDim==0);
   assert(iDim==4);
@@ -2102,8 +2102,8 @@ Vector3f cfgMaterialUtilities::getMedianEdgeLengthPerAxis(const std::vector<floa
         int indVertex1 = iIndexArray[iDim*itet+tetfaces[iface][ivertex]];
         int indVertex2 = iIndexArray[iDim*itet+tetfaces[iface][(ivertex+1)%3]];
 
-        Vector3f p1 = getVector3f(indVertex1, iX);
-        Vector3f p2 = getVector3f(indVertex2, iX);
+        Eigen::Vector3f p1 = getVector3f(indVertex1, iX);
+        Eigen::Vector3f p2 = getVector3f(indVertex2, iX);
         int icoord=0;
         for (icoord=0; icoord<3; icoord++)
         {
@@ -2121,7 +2121,7 @@ Vector3f cfgMaterialUtilities::getMedianEdgeLengthPerAxis(const std::vector<floa
   std::sort(MeanLength[2].begin(), MeanLength[2].end());
 
   int indMedian = (int)MeanLength[0].size()/2;
-  Vector3f median;
+  Eigen::Vector3f median;
   median[0] = MeanLength[0][indMedian];
   median[1] = MeanLength[1][indMedian];
   median[2] = MeanLength[2][indMedian];
@@ -2151,9 +2151,9 @@ float cfgMaterialUtilities::getMeanEdgeLength(const std::vector<float> &iX,  con
         int indVertex1 = iIndexArray[iDim*itet+tetfaces[iface][ivertex]];
         int indVertex2 = iIndexArray[iDim*itet+tetfaces[iface][(ivertex+1)%3]];
 
-        Vector3f p1 = getVector3f(indVertex1, iX);
-        Vector3f p2 = getVector3f(indVertex2, iX);
-        float length = (p2-p1).abs();
+        Eigen::Vector3f p1 = getVector3f(indVertex1, iX);
+        Eigen::Vector3f p2 = getVector3f(indVertex2, iX);
+        float length = (p2-p1).norm();
         MeanEdgeLength += length;
         nedge++;
       }
@@ -2184,9 +2184,9 @@ float cfgMaterialUtilities::getMinEdgeLength(const std::vector<float> &iX,  cons
         int indVertex1 = iIndexArray[iDim*itet+tetfaces[iface][ivertex]];
         int indVertex2 = iIndexArray[iDim*itet+tetfaces[iface][(ivertex+1)%3]];
 
-        Vector3f p1 = getVector3f(indVertex1, iX);
-        Vector3f p2 = getVector3f(indVertex2, iX);
-        float SqLength = (p2-p1).absSquared();
+        Eigen::Vector3f p1 = getVector3f(indVertex1, iX);
+        Eigen::Vector3f p2 = getVector3f(indVertex2, iX);
+        float SqLength = (p2-p1).squaredNorm();
         if (SqLength < SqMinEdgeLength)
         {
           SqMinEdgeLength = SqLength;
@@ -2254,18 +2254,18 @@ void cfgMaterialUtilities::fromYoungModulusPoissonRatioToLamesParameters(cfgScal
   oMu = iYoungModulus/(2*(1+iPoissonRatio));
 }
 
-Vector3f cfgMaterialUtilities::getVector3f(int indVertex, const std::vector<float> &iPoints)
+Eigen::Vector3f cfgMaterialUtilities::getVector3f(int indVertex, const std::vector<float> &iPoints)
 {
   assert(iPoints.size()%3==0);
   int indPoint = 3*indVertex;
-  return Vector3f(iPoints[indPoint], iPoints[indPoint+1], iPoints[indPoint+2]);
+  return Eigen::Vector3f(iPoints[indPoint], iPoints[indPoint + 1], iPoints[indPoint + 2]);
 }
 
-Vector2f cfgMaterialUtilities::getVector2f(int indVertex, const std::vector<float> &iPoints)
+Eigen::Vector2f cfgMaterialUtilities::getVector2f(int indVertex, const std::vector<float> &iPoints)
 {
   assert(iPoints.size()%2==0);
   int indPoint = 2*indVertex;
-  return Vector2f(iPoints[indPoint], iPoints[indPoint+1]);
+  return Eigen::Vector2f(iPoints[indPoint], iPoints[indPoint + 1]);
 }
 
 Vector2S cfgMaterialUtilities::getVector2S(int indVertex, const std::vector<cfgScalar> &iPoints)
@@ -2296,14 +2296,14 @@ Vector2d cfgMaterialUtilities::getVector2d(int indVertex, const std::vector<doub
   return Vector2d(iPoints[indPoint], iPoints[indPoint+1]);
 }
 
-std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Vector3f> &iPoints)
+std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Eigen::Vector3f> &iPoints)
  {
    std::vector<float> vec;
    vec.reserve(iPoints.size()*3);
    int ipoint=0, npoint=(int)iPoints.size();
    for (ipoint=0; ipoint<npoint; ipoint++)
    {
-     const Vector3f & p = iPoints[ipoint];
+     const Eigen::Vector3f & p = iPoints[ipoint];
      int icoord=0;
      for (icoord=0; icoord<3; icoord++)
      {
@@ -2313,14 +2313,14 @@ std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Vector3
    return vec;
  }
 
- std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Vector2f> &iPoints)
+std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Eigen::Vector2f> &iPoints)
  {
    std::vector<float> vec;
    vec.reserve(iPoints.size()*2);
    int ipoint=0, npoint=(int)iPoints.size();
    for (ipoint=0; ipoint<npoint; ipoint++)
    {
-     const Vector2f & p = iPoints[ipoint];
+     const Eigen::Vector2f & p = iPoints[ipoint];
      int icoord=0;
      for (icoord=0; icoord<2; icoord++)
      {
@@ -2364,26 +2364,26 @@ std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Vector3
    return vec;
  }
 
- std::vector<Vector2f> cfgMaterialUtilities::toVector2f(const std::vector<float> &iPoints)
+ std::vector<Eigen::Vector2f> cfgMaterialUtilities::toVector2f(const std::vector<float> &iPoints)
  {
-   std::vector<Vector2f> vec;
+   std::vector<Eigen::Vector2f> vec;
    assert(iPoints.size()%2==0);
    int ipoint=0, npoint=(int)iPoints.size()/2;
    for (ipoint=0; ipoint<npoint; ipoint++)
    {
-     vec.push_back(Vector2f(iPoints[2*ipoint], iPoints[2*ipoint+1]));
+     vec.push_back(Eigen::Vector2f(iPoints[2 * ipoint], iPoints[2 * ipoint + 1]));
    }
    return vec;
  }
 
- std::vector<Vector3f> cfgMaterialUtilities::toVector3f(const std::vector<float> &iPoints)
+ std::vector<Eigen::Vector3f> cfgMaterialUtilities::toVector3f(const std::vector<float> &iPoints)
  {
-   std::vector<Vector3f> vec;
+   std::vector<Eigen::Vector3f> vec;
    assert(iPoints.size()%3==0);
    int ipoint=0, npoint=(int)iPoints.size()/3;
    for (ipoint=0; ipoint<npoint; ipoint++)
    {
-     vec.push_back(Vector3f(iPoints[3*ipoint], iPoints[3*ipoint+1], iPoints[3*ipoint+2]));
+     vec.push_back(Eigen::Vector3f(iPoints[3 * ipoint], iPoints[3 * ipoint + 1], iPoints[3 * ipoint + 2]));
    }
    return vec;
  }
@@ -2437,7 +2437,7 @@ void cfgMaterialUtilities::sampleMesh(const std::vector<float> &iPoints, const s
   int ifacet=0, nfacet=(int)iTriIndexArray.size()/3;
   for (ifacet=0; ifacet<nfacet; ifacet++)
   {
-    Vector3f p[3];
+    Eigen::Vector3f p[3];
     float a[3];
     int ipoint=0;
     for (ipoint=0; ipoint<3; ipoint++)
@@ -2455,7 +2455,7 @@ void cfgMaterialUtilities::sampleMesh(const std::vector<float> &iPoints, const s
         sumA += a[ipoint];
       }
 
-      Vector3f newPoint(0,0,0);
+      Eigen::Vector3f newPoint(0, 0, 0);
       for (ipoint=0; ipoint<3; ipoint++)
       {
         newPoint +=  a[ipoint]*p[ipoint];
@@ -2483,7 +2483,7 @@ void cfgMaterialUtilities::computeDistancesToPointCloud(const std::vector<float>
   {
     double ClosestPoint[3];
     distanceTool.getClosestPoint(&pointsToTest[3*ipoint], ClosestPoint);
-    float Dist = (Vector3f(ClosestPoint[0],ClosestPoint[1],ClosestPoint[2])- Vector3f(pointsToTest[3*ipoint], pointsToTest[3*ipoint+1], pointsToTest[3*ipoint+2])).abs();
+    float Dist = (Eigen::Vector3f(ClosestPoint[0], ClosestPoint[1], ClosestPoint[2]) - Eigen::Vector3f(pointsToTest[3 * ipoint], pointsToTest[3 * ipoint + 1], pointsToTest[3 * ipoint + 2])).norm();
     oDistances.push_back(Dist);
   }
 }

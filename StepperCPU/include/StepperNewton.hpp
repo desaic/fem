@@ -2,8 +2,7 @@
 #define STEPPERNEWTON_HPP
 #include "Stepper.hpp"
 #include <vector>
-#include "Vector3f.h"
-
+#include <Eigen/Dense>
 class StepperNewton:public Stepper
 {
 public:
@@ -19,9 +18,9 @@ public:
   float h;
 
 private:
-  int compute_dx_dense(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb);
-  int compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb);
-  int compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRemoveTranslation, bool iRemoveRotation, bool iPeriodic, std::vector<float> &bb);
+  int compute_dx_dense(ElementMesh * iMesh, const std::vector<Eigen::Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb);
+  int compute_dx_sparse(ElementMesh * iMesh, const std::vector<Eigen::Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb);
+  int compute_dx_sparse(ElementMesh * iMesh, const std::vector<Eigen::Vector3f> &iForces, bool iRemoveTranslation, bool iRemoveRotation, bool iPeriodic, std::vector<float> &bb);
 
 private:
   std::vector<int> m_I, m_J;

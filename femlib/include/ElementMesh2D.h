@@ -1,8 +1,6 @@
 #ifndef ELEMENTMESH2D_HPP
 #define ELEMENTMESH2D_HPP
 #include <vector>
-#include "vecmath.h"
-#include "MatrixX.hpp"
 #include "Eigen/Sparse"
 #include "cfgDefs.h"
 

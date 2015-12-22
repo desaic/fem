@@ -1,12 +1,10 @@
 #ifndef cfgMaterialUtilities_h
 #define cfgMaterialUtilities_h
-
+#include <Eigen/Dense>
 #include <string>
 #include <map>
 
 #include "cfgDefs.h"
-
-#include <Vector3f.h>
 
 namespace cfgMaterialUtilities
 {
@@ -14,15 +12,15 @@ namespace cfgMaterialUtilities
   // ---
   bool readMaterialCombinations(const std::string iFileName, std::vector<std::vector<int> > &oMaterials);
   bool writeMaterialCombinations(const std::string iFileName, const std::vector<std::vector<int> > &iMaterials);
-  bool readData(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<int> &oMaterials, std::vector<float> &oStresses, std::vector<float> &oStrains);
-  bool writeData(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<int> &iMaterials, const std::vector<float> &iStresses, const std::vector<float> &iStrains); 
-  bool writeData(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, const std::vector<std::vector<float> > &iStrains);
-  bool writeData(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, const std::vector<std::vector<std::vector<float> > > &ix, int iN[3]);
-  bool writeDataBinary(const std::string &iFileName, const Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, const std::vector<std::vector<std::vector<float> > > &ix, int iN[3]);
+  bool readData(const std::string &iFileName, Eigen::Vector3f &oForceAxis, std::vector<int> &oMaterials, std::vector<float> &oStresses, std::vector<float> &oStrains);
+  bool writeData(const std::string &iFileName, const Eigen::Vector3f &iForceAxis, const std::vector<int> &iMaterials, const std::vector<float> &iStresses, const std::vector<float> &iStrains);
+  bool writeData(const std::string &iFileName, const Eigen::Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, const std::vector<std::vector<float> > &iStrains);
+  bool writeData(const std::string &iFileName, const Eigen::Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, const std::vector<std::vector<std::vector<float> > > &ix, int iN[3]);
+  bool writeDataBinary(const std::string &iFileName, const Eigen::Vector3f &iForceAxis, const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<float> > &iStresses, const std::vector<std::vector<std::vector<float> > > &ix, int iN[3]);
   bool concatenateData(const std::string &iInputBaseFileName, int iNbFiles, std::string &iOutputFileName);
-  bool readData(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<float> > &oStrains);
-  bool readData(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<std::vector<float> > > &ox, int oN[3]);
-  bool readDataBinary(const std::string &iFileName,  Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<std::vector<float> > > &ox, int oN[3]);
+  bool readData(const std::string &iFileName, Eigen::Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<float> > &oStrains);
+  bool readData(const std::string &iFileName, Eigen::Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<std::vector<float> > > &ox, int oN[3]);
+  bool readDataBinary(const std::string &iFileName, Eigen::Vector3f &oForceAxis, std::vector<std::vector<int> > &oMaterials, std::vector<std::vector<float> > &oStresses, std::vector<std::vector<std::vector<float> > > &ox, int oN[3]);
   
   bool computeMaterialParameters(const std::string &iMaterialFile, const std::string iStressStrainFilesDirectories[2], const std::string iStressStrainBaseFileName, int iNbFiles, 
                                  std::vector<cfgScalar> &oPhysicalParameters, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<std::vector<int> > &oMaterialAssignmentsOneCell);
@@ -112,8 +110,8 @@ namespace cfgMaterialUtilities
   // Triangle mesh utilities
   //------------------------
   float getMeanEdgeLength(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim);
-  Vector3f getMeanEdgeLengthPerAxis(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim);
-  Vector3f getMedianEdgeLengthPerAxis(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim);
+  Eigen::Vector3f getMeanEdgeLengthPerAxis(const std::vector<float> &iX, const std::vector<int> &iIndexArray, int iDim);
+  Eigen::Vector3f getMedianEdgeLengthPerAxis(const std::vector<float> &iX, const std::vector<int> &iIndexArray, int iDim);
   float getMinEdgeLength(const std::vector<float> &iX,  const std::vector<int> &iIndexArray, int iDim);
   void getEdgesFromTriFaceIndexArray(const std::vector<int> &iTriIndexArray, std::vector<int> &oEdgeIndexArray);
   void sampleMesh(const std::vector<float> &iPoints, const std::vector<int> &iTriIndexArray, int iNbSamplesPerFace, std::vector<float> &oPoints);
@@ -129,22 +127,22 @@ namespace cfgMaterialUtilities
 
   // Conversion between types
   // -----------------------
-  Vector3f getVector3f(int indVertex, const std::vector<float> &iPoints);
-  Vector2f getVector2f(int indVertex, const std::vector<float> &iPoints);
+  Eigen::Vector3f getVector3f(int indVertex, const std::vector<float> &iPoints);
+  Eigen::Vector2f getVector2f(int indVertex, const std::vector<float> &iPoints);
   Vector3S getVector3S(int indVertex, const std::vector<cfgScalar> &iPoints);
   Vector2S getVector2S(int indVertex, const std::vector<cfgScalar> &iPoints);
   Vector3d getVector3d(int indVertex, const std::vector<double> &iPoints);
   Vector2d getVector2d(int indVertex, const std::vector<double> &iPoints);
 
-  std::vector<float> toVectorFloat(const std::vector<Vector3f> &iPoints);
-  std::vector<float> toVectorFloat(const std::vector<Vector2f> &iPoints);
+  std::vector<float> toVectorFloat(const std::vector<Eigen::Vector3f> &iPoints);
+  std::vector<float> toVectorFloat(const std::vector<Eigen::Vector2f> &iPoints);
 
   std::vector<cfgScalar> toVectorScalar(const std::vector<Vector3S> &iPoints);
   std::vector<cfgScalar> toVectorScalar(const std::vector<Vector2S> &iPoints);
 
-  std::vector<Vector2f> toVector2f(const std::vector<float> &iPoints);
+  std::vector<Eigen::Vector2f> toVector2f(const std::vector<float> &iPoints);
   std::vector<Vector2S> toVector2S(const std::vector<cfgScalar> &iPoints);
-  std::vector<Vector3f> toVector3f(const std::vector<float> &iPoints);
+  std::vector<Eigen::Vector3f> toVector3f(const std::vector<float> &iPoints);
 
   MatrixXS toMatrixScalar(const MatrixEXd &iMatrix);
   MatrixEXd toMatrixDouble(const MatrixXS &iMatrix);

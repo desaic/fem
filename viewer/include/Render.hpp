@@ -8,8 +8,8 @@
 #ifndef RENDER_HPP_
 #define RENDER_HPP_
 #include <vector>
-#include "vecmath.h"
 #include "Camera.hpp"
+#include <Eigen/Dense>
 struct GLFWwindow;
 class ElementHex;
 class World;
@@ -36,7 +36,7 @@ public:
   Camera camera;
   GLFWwindow* window;
   
-  std::vector<Vector3f> matColor;
+  std::vector<Eigen::Vector3f> matColor;
 
   //how fast to rotate in x and y axis
   float xRotSpeed, yRotSpeed;

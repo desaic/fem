@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <iostream>
+using namespace Eigen;
 StepperGrad::StepperGrad():h(0.01f),force_L2tol(1e-4f) {}
 
 int StepperGrad::oneStep()
@@ -18,7 +19,7 @@ int StepperGrad::oneStep()
   float E = m->getEnergy();
   float totalMag = 0;
   for(unsigned int ii = 0;ii<force.size();ii++){
-    totalMag += force[ii].absSquared();  
+    totalMag += force[ii].squaredNorm();  
   }
   if(totalMag<force_L2tol){
     return 0;

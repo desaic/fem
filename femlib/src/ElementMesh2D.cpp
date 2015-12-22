@@ -474,8 +474,8 @@ MatrixXS ElementMesh2D::getStiffness()
     for(int jj = 0; jj<e[ii]->nV(); jj++){
       int vj = e[ii]->at(jj);
       for(int kk = 0; kk<e[ii]->nV(); kk++){
-        int vk = e[ii]->at(kk);    
-        addSubMat(K,Kglobal, 2*jj, 2*kk, 2*vj, 2*vk, 2, 2);
+        int vk = e[ii]->at(kk);
+        Kglobal.block(2 * vj, 2 * vk, 2, 2) = K.block(2 * jj, 2 * kk, 2, 2);
       }
     }
   }

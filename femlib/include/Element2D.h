@@ -3,8 +3,7 @@
 
 #include <array>
 #include <vector>
-
-#include "vecmath.h"
+#include <Eigen/Dense>
 #include "cfgDefs.h"
 
 class Element2D

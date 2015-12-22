@@ -1,7 +1,6 @@
 #ifndef ElementRegGrid2D2D_HPP_
 #define ElementRegGrid2D2D_HPP_
 #include "ElementMesh2D.h"
-#include "vecmath.h"
 class ElementRegGrid2D:public ElementMesh2D
 {
 public:

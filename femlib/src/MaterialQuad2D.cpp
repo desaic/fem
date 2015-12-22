@@ -1,7 +1,6 @@
 #include "MaterialQuad2D.h"
 #include "Element2D.h"
 #include "ElementMesh2D.h"
-#include "MatrixX.hpp"
 #include "Quadrature2D.h"
 #include "StrainEne2D.h"
 #include <assert.h>
@@ -161,9 +160,7 @@ MatrixXS MaterialQuad2D::getStiffness(Element2D* ele, ElementMesh2D * mesh)
   //std::cout << K <<std::endl << std::endl;
   cfgScalar vol = ele->getVol(mesh->X);
   K *= vol;
-  MatrixXS Kret(ndof, ndof);
-  copyMat(K, Kret, ndof, ndof);
-  return Kret;
+  return K;
 }
 
 MatrixXS MaterialQuad2D::stiffness(int qi, const MaterialQuad2D * mat, Element2D* ele, ElementMesh2D * mesh)

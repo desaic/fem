@@ -1,11 +1,11 @@
 #ifndef QUADRATURE_HPP
 #define QUADRATURE_HPP
 #include <vector>
-#include "vecmath.h"
+#include <Eigen/Dense>
 class Quadrature
 {
 public:
-  std::vector<Vector3f> x;
+  std::vector<Eigen::Vector3f> x;
   std::vector<float> w;
   Quadrature();
   

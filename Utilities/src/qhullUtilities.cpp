@@ -8,7 +8,6 @@
 #include <QhullPoint.h>
 #include <Qhull.h>
 
-#include <Vector3f.h>
 #include <set>
 
 #include "cfgUtilities.h"
@@ -47,10 +46,10 @@ void qhullUtilities::filterFaces(const Qhull &iHull, const QhullFacetList &iFace
           QhullPoint p1 = points.at(indP1);
           QhullPoint p2 = points.at(indP2);
 
-          Vector3f q1(p1[0],p1[1],p1[2]);
-          Vector3f q2(p2[0],p2[1],p2[2]);
+          Eigen::Vector3f q1(p1[0], p1[1], p1[2]);
+          Eigen::Vector3f q2(p2[0], p2[1], p2[2]);
 
-          float length = (q1-q2).abs();
+          float length = (q1-q2).norm();
           if (length>iMaxEdgeLength)
           {
             longEdgeFound = true;
@@ -100,10 +99,10 @@ void qhullUtilities::sortFaces(const Qhull &iHull, const QhullFacetList &iFacets
           QhullPoint p1 = points.at(indP1);
           QhullPoint p2 = points.at(indP2);
 
-          Vector3f q1(p1[0],p1[1],p1[2]);
-          Vector3f q2(p2[0],p2[1],p2[2]);
+          Eigen::Vector3f q1(p1[0], p1[1], p1[2]);
+          Eigen::Vector3f q2(p2[0], p2[1], p2[2]);
 
-          float length = (q1-q2).abs();
+          float length = (q1-q2).norm();
           if (length>iMaxEdgeLength)
           {
             longEdgeFound = true;
@@ -157,10 +156,10 @@ void qhullUtilities::sortFaces(const Qhull &iHull, const QhullFacetList &iFacets
           QhullPoint p1 = points.at(indP1);
           QhullPoint p2 = points.at(indP2);
 
-          Vector3f q1(p1[0],p1[1],p1[2]);
-          Vector3f q2(p2[0],p2[1],p2[2]);
+          Eigen::Vector3f q1(p1[0], p1[1], p1[2]);
+          Eigen::Vector3f q2(p2[0], p2[1], p2[2]);
 
-          Vector3f q12 = q1-q2;
+          Eigen::Vector3f q12 = q1 - q2;
           q12[0] *= iScale[0];
           q12[1] *= iScale[1];
           q12[2] *= iScale[2];
@@ -175,7 +174,7 @@ void qhullUtilities::sortFaces(const Qhull &iHull, const QhullFacetList &iFacets
           }
           else
           {
-            float length = q12.abs();
+            float length = q12.norm();
             if (length>iMaxEdgeLength)
             {
               longEdgeFound = true;

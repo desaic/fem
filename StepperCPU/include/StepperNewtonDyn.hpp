@@ -2,8 +2,7 @@
 #define STEPPERNEWTONDYN_HPP
 #include "Stepper.hpp"
 #include <vector>
-#include "Vector3f.h"
-
+#include <Eigen/Dense>
 class StepperNewtonDyn:public Stepper
 {
 public:
@@ -17,7 +16,7 @@ public:
   int frameCnt;
 private:
   ///@param collide. Pass in empty array if no collision
-  float compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces,
+  float compute_dx_sparse(ElementMesh * iMesh, const std::vector<Eigen::Vector3f> &iForces,
                           const std::vector<bool> &collide,
                           std::vector<float> &bb);
 

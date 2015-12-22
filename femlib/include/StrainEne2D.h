@@ -1,6 +1,5 @@
 #ifndef STRAINENE2D_HPP
 #define STRAINENE2D_HPP
-#include "vecmath.h"
 #include <vector>
 #include <Eigen/Dense>
 #include "cfgDefs.h"
