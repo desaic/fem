@@ -7,6 +7,8 @@
 class ElementMesh2D;
 class RealField;
 
+typedef std::vector<std::vector< int> > Grid2D;
+
 ///@brief a real-valued function based on 2D FEM simulation.
 class FEM2DFun :public RealFun{
 public:
@@ -70,7 +72,8 @@ public:
   Eigen::VectorXd distribution;
 
   void init(const Eigen::VectorXd & x0);
-  
+  void computeGrid();
+  void initArrays();
   ///@brief update parameters for computing function value
   ///and gradients.
   ///In case of fem, it runs required fem simulations.
@@ -99,5 +102,15 @@ public:
 
   void log(std::ostream & out);
 };
+
+///@brief make stretching force in x direction
+void stretchX(ElementMesh2D * em, const Eigen::Vector3d & ff, const Grid2D& grid, std::vector<double> & externalForce);
+void stretchY(ElementMesh2D * em, const Eigen::Vector3d & ff, const Grid2D& grid, std::vector<double> & externalForce);
+
+double measureStretchX(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid);
+double measureStretchY(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid);
+
+//measure shear displacement in x direction of top and bottom vertices.
+double measureShearX(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid);
 
 #endif

@@ -6,6 +6,7 @@
 #include "Element.hpp"
 #include "ElementRegGrid.hpp"
 #include "ElementRegGrid2D.h"
+#include "FileUtil.hpp"
 #include "FEM2DFun.hpp"
 #include "PiecewiseConstant2D.hpp"
 #include "PiecewiseConstantSym2D.hpp"
@@ -40,6 +41,7 @@ const std::vector<double> x, bool triangle= true);
 void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h);
 
 void loadArr2D(std::vector<std::vector< int> > &arr, std::string filename);
+void loadText(ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments);
 
 ///@brief verify that linear static simulation is working.
 ///Checks K*u - f.
@@ -80,7 +82,14 @@ void shrinkVector(Eigen::VectorXd & x, const std::vector<int> & a, float shrink_
     x[ii] = val;
   }
 }
-
+void shrinkVector(Eigen::VectorXd & x, const std::vector<double> & a, float shrink_ratio)
+{
+  for (int ii = 0; ii < a.size(); ii++){
+    double val = a[ii];
+    val = 0.5 + shrink_ratio * (val - 0.5);
+    x[ii] = val;
+  }
+}
 Eigen::VectorXd firstQuadrant(const Eigen::VectorXd a, int nx, int ny)
 {
   Eigen::VectorXd x(nx*ny / 4);
@@ -120,12 +129,73 @@ std::string sequenceFilename(std::string prefix, int idx, std::string suffix)
   return prefix + std::to_string(idx) + suffix;
 }
 
+std::vector< std::vector<double> > interpArr(const std::vector<std::vector<double> > & a, int nStep, double lb, double ub)
+{
+  std::vector< std::vector<double> > out;
+  for (unsigned int ii = 0; ii < a.size(); ii++){
+    std::vector<double> b = a[ii];
+    for (int jj = 0; jj < nStep; jj++){
+      for (unsigned int kk = 0; kk < b.size(); kk++){
+        b[kk] = (a[ii][kk] - lb) * (jj + 1.0) / nStep + lb;
+      }
+      out.push_back(b);
+    }
+    for (int jj = 0; jj < nStep; jj++){
+      for (unsigned int kk = 0; kk < b.size(); kk++){
+        b[kk] = a[ii][kk] + (jj + 1.0) / nStep * (ub-a[ii][kk]);
+      }
+      out.push_back(b);
+    }
+  }
+  return out;
+}
+
+///@brief compute material properties
+void computeMat(FEM2DFun * fem, ConfigFile & conf)
+{
+  RealField * field = fem->field;
+  Eigen::VectorXd x1 = fem->param;
+  Eigen::Vector3d fx = fem->forceMagnitude * Eigen::Vector3d(1, 0, 0);
+  Eigen::Vector3d fy = fem->forceMagnitude * Eigen::Vector3d(0, 1, 0);
+  int nrows = (int)fem->externalForce[0].size();
+  fem->externalForce.resize(2);
+  fem->externalForce[1].resize(nrows);
+  stretchY(fem->em, fy, fem->grid, fem->externalForce[1]);
+  fem->initArrays();
+  std::string outputprefix("paraml");
+  if (conf.hasOpt("outputprefix")){
+    outputprefix = conf.getString("outputprefix");
+  }
+  if (conf.hasOpt("interp")){
+    int nStep = conf.getInt("interp");
+    for (unsigned int ii = 0; ii < continuousMaterials.size(); ii++){
+      for (unsigned int jj = 0; jj < continuousMaterials[ii].size(); jj++){
+        continuousMaterials[ii][jj] = std::max(1e-3, continuousMaterials[ii][jj]);
+      }
+    }
+    continuousMaterials = interpArr(continuousMaterials, nStep, 1e-3, 1);
+  }
+  std::string materialOutName = sequenceFilename(outputprefix, chunkIdx, ".txt");
+  materialOut.open(materialOutName);
+  for (int ii = 0; ii < continuousMaterials.size(); ii++){
+    Eigen::VectorXd x0(continuousMaterials[ii].size());
+    shrinkVector(x0, continuousMaterials[ii], 1.0);
+    x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
+    fem->setParam(x1);
+    double dx = fem->dx;
+    double dy = fem->dy;
+    //stretch in y direction under stretching force in y
+    double dyy = measureStretchY(fem->em, fem->u[1], fem->grid);
+    materialOut << dx<<" "<<dy<<" "<<dyy<<" "<<fem->density<<"\n";
+  }
+  materialOut.close();
+}
+
 //uses orthotropic structure
 void optMat(FEM2DFun * fem, int nSteps)
 {
   RealField * field = fem->field;
   Eigen::VectorXd x1 = fem->param;
-  
   int nStructure = materialAssignments.size();
   nStructure /= nChunk;
   int startIdx = chunkIdx * nStructure;
@@ -169,11 +239,16 @@ int main(int argc, char* argv[])
   ConfigFile conf;
   conf.load(filename);  
   
-  int nx = 32;
-  int ny = 32;
+  int nx = 16;
+  int ny = 16;
   Eigen::VectorXd x0;
 
-  loadBinary(conf, materialAssignments);
+  if (conf.hasOpt("fileRootName")){
+    loadBinary(conf, materialAssignments);
+  }
+  if (conf.hasOpt("structurelist")){
+    loadText(conf, continuousMaterials);
+  }
   if (conf.hasOpt("structure")){
     std::vector<int> arr;
     std::vector<std::vector<int> > structure;
@@ -213,8 +288,8 @@ int main(int argc, char* argv[])
   em->check();
 
   FEM2DFun * fem = new FEM2DFun();
-  //PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
-  PiecewiseConstantCubic2D * field = new PiecewiseConstantCubic2D();
+  PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
+  //PiecewiseConstantCubic2D * field = new PiecewiseConstantCubic2D();
   field->allocate(nx / 2, ny / 2);
   //for example, the parameterization can have lower resolution. Effectively refining each cell to 2x2 block.
   //PiecewiseConstant2D * field = new PiecewiseConstant2D();
@@ -251,9 +326,16 @@ int main(int argc, char* argv[])
     //check_sim(fem, x0);
     return 0;
   }
-
+  std::string task = conf.getString("task");
+  std::thread thread;
   if (render){
-    std::thread thread(optMat, fem, nSteps);
+    if (task == "opt"){
+      thread = std::thread(optMat, fem, nSteps);
+    }
+    else if(task == "compute"){
+      thread = std::thread(computeMat, fem, conf);
+    }
+    
     Render render;
     World * world = new World();
     world->em2d.push_back(em);
@@ -261,7 +343,12 @@ int main(int argc, char* argv[])
     render.loop();
   }
   else{
-    optMat(fem, nSteps);
+    if (task == "opt"){
+      optMat(fem, nSteps);
+    }
+    else if (task == "compute"){
+      computeMat(fem, conf);
+    }
   }
   return 0;
 }
@@ -420,6 +507,25 @@ void loadArr2D(std::vector<std::vector< int> > &arr, std::string filename)
   in.close();
 }
 
+void loadText(ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments)
+{
+  std::string filename("materialstructure.txt");
+  if (conf.hasOpt("structurelist")){
+    filename = conf.getString("structurelist");
+  }
+  FileUtilIn in(filename.c_str());
+  int nMat, gridSize;
+  in.in >> nMat >> gridSize;
+  materialAssignments.resize(nMat);
+  for (int ii = 0; ii < nMat; ii++){
+    materialAssignments[ii].resize(gridSize);
+    for (int jj = 0; jj < gridSize; jj++){
+      in.in >> materialAssignments[ii][jj];
+    }
+  }
+  in.close();
+}
+
 void loadBinary(ConfigFile & conf, std::vector<std::vector<int> > & materialAssignments)
 {
   std::string fileRootName("../data/level16");
@@ -437,4 +543,18 @@ void loadBinary(ConfigFile & conf, std::vector<std::vector<int> > & materialAssi
     std::cout << "Can't read " << matAssignmentFile << "\n";
   }
 
+  std::ofstream out("text.txt");
+  out << materialAssignments.size() << " " << materialAssignments[0].size() << "\n";
+  for (unsigned int ii = 0; ii < materialAssignments.size(); ii++){
+    for (unsigned int jj = 0; jj < materialAssignments[ii].size(); jj++){
+      int val = materialAssignments[ii][jj];
+      if (val == 0){
+        out << 1e-3 << " ";
+      } else{
+        out << materialAssignments[ii][jj] << " ";
+      }
+    }
+    out << "\n";
+  }
+  out.close();
 }
