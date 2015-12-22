@@ -107,19 +107,22 @@ bool MaterialOptimizer::run(int N[2], std::vector<int> &ioNewMaterials, const st
     matAssignment = ioNewMaterials;
   }
 
+  double shrink = 0.1;
   Eigen::VectorXd x0(field->param.size());
   assert(x0.rows()==(int)matAssignment.size());
   for (int i=0; i<x0.rows(); i++)
   {
     //x0[i] = (float)matAssignment[i];
+    double old_density;
     if (matAssignment[i]==0)
     {
-      x0[i] = 1.e-3;
+      old_density = 0;
     }
     else
     {
-      x0[i] = 1;
+      old_density = 1;
     }
+    x0[i] = 0.5 + (old_density - 0.5) * shrink;
   }
   fem->init(x0);
 
@@ -128,7 +131,7 @@ bool MaterialOptimizer::run(int N[2], std::vector<int> &ioNewMaterials, const st
   fem->setParam(x0);
   Eigen::VectorXd grad = fem->df();
   h = 1;
-  gradientDescent(fem, x0, 100);
+  gradientDescent(fem, x0, 1000);
 
   for (int i=0; i<x0.rows(); i++)
   {
@@ -164,7 +167,7 @@ double MaterialOptimizer::infNorm(const Eigen::VectorXd & a)
 void MaterialOptimizer::gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps)
 {
   //maximum movement in any parameter.
-  double maxStep = 0.1;
+  double maxStep = 1.;
   Eigen::VectorXd x = x0;
   for (int ii = 0; ii < nSteps; ii++){
     fun->setParam(x);

@@ -309,7 +309,12 @@ void MaterialParametersView::updatePlots()
       std::vector<int> newparticules3;
       Resampler resampler;
       resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, newparticules3);
-    
+      
+      std::vector<int> newparticules3tmp = newparticules3;
+      newparticules3.clear();
+      int ind = 2;
+      newparticules3.push_back(newparticules3tmp[ind]);
+
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, "Y1", "Nu1", "Density", green, 15);
