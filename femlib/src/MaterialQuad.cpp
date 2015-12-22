@@ -89,7 +89,7 @@ Eigen::MatrixXf stiffness(int qi, const MaterialQuad * mat, Element* ele, Elemen
   
   for(int ii = 0;ii<8;ii++){
     for(int jj = 0;jj<3;jj++){
-      Matrix3f dF;
+      Matrix3f dF=Matrix3f::Zero();
       dF.row(jj)=mat->gradN[ii][qi];
       Matrix3f dP = mat->e[ii]->getdPdx(F,dF);
       for(int vv = 0;vv<8;vv++){

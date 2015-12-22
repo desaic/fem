@@ -118,7 +118,7 @@ std::vector<Vector3f> ElementMesh::getForce(int eIdx)
 
 std::vector<Vector3f> ElementMesh::getForce()
 {
-  std::vector<Vector3f> force(x.size());
+  std::vector<Vector3f> force(x.size(), Eigen::Vector3f::Zero());
   for(unsigned int ii = 0;ii<e.size();ii++){
     std::vector<Vector3f> fele = getForce(ii);
     for(int jj = 0; jj<e[ii]->nV(); jj++){

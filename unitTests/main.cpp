@@ -4,7 +4,7 @@ void runTest()
 {
   //ElementCoarseTest();
   stiffnessTest(2);
-	//forceTest(0);
+	forceTest(2);
 //  testCG();
   //cudaLinTest();
   system("pause");
