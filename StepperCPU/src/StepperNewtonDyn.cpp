@@ -1,15 +1,15 @@
 #include "StepperNewtonDyn.hpp"
 #include "ElementMesh.hpp"
-#include "MatrixX.hpp"
 #include "ArrayUtil.hpp"
 #include "femError.hpp"
 
 #include "SparseLin.hpp"
 #include "Eigen/Sparse"
 
+#include <iostream>
 #include <fstream>
 #include <assert.h>
-
+using namespace Eigen;
 StepperNewtonDyn::StepperNewtonDyn():dx_tol(1e-5f),h(0.005f)
 ,frameCnt(0)
 {
@@ -55,7 +55,7 @@ int StepperNewtonDyn::oneStep()
   for(unsigned int ii =0; ii<force.size(); ii++){
     for(int jj =0 ; jj<3; jj++){
       m->x[ii][jj] += bb[3*ii+jj];
-      m->v[ii][jj] = (1.0/h) * bb[3*ii+jj];
+      m->v[ii][jj] = (1.0f/h) * bb[3*ii+jj];
     }
   }
 
@@ -85,7 +85,7 @@ float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh,
     m_Init = true;
   }
 
-  int ndof = bb.size();
+  int ndof = (int)bb.size();
   assert(iMesh && 3*iMesh->x.size()==bb.size());
 
   std::vector<float> Kvalues;
@@ -163,8 +163,8 @@ float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh,
   int status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
   std::cout<< "sparse solve " << status << "\n";
 
-  for(int ii = 0;ii<x.size();ii++){
-    bb[ii] = x[ii];
+  for(unsigned int ii = 0;ii<x.size();ii++){
+    bb[ii] = (float)x[ii];
   }
 
   return 0;

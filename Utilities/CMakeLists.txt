@@ -3,15 +3,10 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 FILE(GLOB LIB_SRC "src/*.cpp")
 INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/include")
+INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/../include")
 
 set(QHULL_SOURCE_DIR $ENV{QHULL_SRC_PATH})
 set(QHULL_BIN_DIR $ENV{QHULL_BUILD_PATH})
-
-# math
-include_directories(${PROJECT_SOURCE_DIR}/../vecmath/include)
-if (NOT TARGET vecmath)
-	add_subdirectory(${PROJECT_SOURCE_DIR}/../vecmath ${CMAKE_CURRENT_BINARY_DIR}/vecmath)
-endif()
 
 # Quickhull
 include_directories(${QHULL_SOURCE_DIR} ${QHULL_SOURCE_DIR}/libqhull ${QHULL_SOURCE_DIR}/libqhullcpp)
@@ -30,7 +25,7 @@ include_directories($ENV{TOPOOPT_DIR}/external/PhysBAM/PhysBAM_Tools)
 
 add_library(Utilities ${LIB_SRC})
 
-set(Utilities_LIBS Utilities vecmath qhullcpp qhullstatic_p PARENT_SCOPE)
+set(Utilities_LIBS Utilities qhullcpp qhullstatic_p PARENT_SCOPE)
 
 SET(LIB_TYPE STATIC)
 

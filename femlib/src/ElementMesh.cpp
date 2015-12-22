@@ -4,7 +4,7 @@
 #include "Element.hpp"
 #include "femError.hpp"
 #include <iostream>
-
+using namespace Eigen;
 ///@TODO only loads hex mesh
 void ElementMesh::load(std::istream & in, float scale)
 {
@@ -101,7 +101,7 @@ float ElementMesh::getEnergy()
   }
   //energy from external forces
   for(unsigned int ii = 0;ii<fe.size();ii++){
-    ene -= Vector3f::dot(fe[ii], x[ii]);
+    ene -= fe[ii].dot( x[ii]);
   }
   return ene;
 }

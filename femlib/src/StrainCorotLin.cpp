@@ -7,7 +7,7 @@
 std::vector<Eigen::Matrix3f> initEp3();
 //3D Levi-Civita symbol
 std::vector<Eigen::Matrix3f> Ep3=initEp3();
-
+using namespace Eigen;
 std::vector<Eigen::Matrix3f> initEp3()
 {
   std::vector<Eigen::Matrix3f> Ep3(3, Eigen::Matrix3f::Zero());

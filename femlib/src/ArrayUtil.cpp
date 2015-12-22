@@ -1,6 +1,6 @@
 #include "ArrayUtil.hpp"
-void BBox(const std::vector<Vector3f >& v,
-    Vector3f & mn, Vector3f & mx)
+void BBox(const std::vector<Eigen::Vector3f >& v,
+  Eigen::Vector3f & mn, Eigen::Vector3f & mx)
 {
   mn = v[0];
   mx = v[0];

@@ -1,9 +1,10 @@
 #include "Element.hpp"
 #include "ElementMesh.hpp"
 #include "Material.hpp"
-#include "MatrixX.hpp"
 #include "ElementRegGrid.hpp"
 #include "MeshUtilities.h"
+
+using namespace Eigen;
 
 typedef Eigen::Triplet<float> Tripletf;
 
@@ -24,7 +25,7 @@ MatrixXf ElementMesh::getStiffness()
       int vj = e[ii]->at(jj);
       for(int kk = 0; kk<e[ii]->nV(); kk++){
         int vk = e[ii]->at(kk);    
-        addSubMat(K,Kglobal, 3*jj, 3*kk, 3*vj, 3*vk, 3, 3);
+        Kglobal.block(3 * vj, 3 * vk, 3, 3) = K.block(3 * jj, 3 * kk, 3, 3);
       }
     }
   }

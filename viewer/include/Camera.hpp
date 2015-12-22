@@ -1,7 +1,7 @@
 #ifndef CAMERA_HPP
 #define CAMERA_HPP
-#include <vecmath.h>
 #include <math.h>
+#include <Eigen/Dense>
 const float MAXY = 0.49f * 3.141593f;
 const float MAXXZ = 2*3.141593f;
 #define NKEYS 6
@@ -12,7 +12,11 @@ struct Camera{
       at[ii]=0.0f;
       up[ii] = 0.0f;
     }
-    eye[2]= -1.0f;
+    eye[0] = 0.5;
+    eye[1] = 0.5;
+    at[0] = 0.5;
+    at[1] = 0.5;
+    eye[2]= -2.0f;
     up[1] = 1.0f;
 
     for(int ii= 0;ii<NKEYS;ii++){
@@ -21,7 +25,7 @@ struct Camera{
   }
   float angle_xz, angle_y;
   void update(){
-    Vector3f viewDir ( -sin(angle_xz),0,cos(angle_xz));
+    Eigen::Vector3f viewDir ( -sin(angle_xz),0,cos(angle_xz));
     if(angle_y > MAXY){
       angle_y = MAXY;
     }
@@ -36,16 +40,16 @@ struct Camera{
       angle_xz +=  MAXXZ;
     }
 
-    Vector3f yaxis = Vector3f(0,1,0);
-    Vector3f right = Vector3f::cross(viewDir,yaxis);
+    Eigen::Vector3f yaxis = Eigen::Vector3f(0, 1, 0);
+    Eigen::Vector3f right = viewDir.cross( yaxis);
     viewDir = cos(angle_y)*viewDir + sin(angle_y)*yaxis;
     at = eye + viewDir;
-    up = Vector3f::cross(right, viewDir);
+    up = right.cross( viewDir);
   }
 
-  Vector3f eye;
-  Vector3f at;
-  Vector3f up;
+  Eigen::Vector3f eye;
+  Eigen::Vector3f at;
+  Eigen::Vector3f up;
 
   //if keys are held
   //W S A D R F

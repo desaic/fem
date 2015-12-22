@@ -1,9 +1,0 @@
-PROJECT (vecmath)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-
-FILE(GLOB LIB_SRC "src/*.cpp")
-INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/include")
-
-add_library(vecmath ${LIB_SRC})
-
-SET(LIB_TYPE STATIC)

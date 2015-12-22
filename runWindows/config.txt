@@ -1,1 +1,15 @@
-refine 2
+#structure ../data/p0.txt
+#structure ../data/p1.txt
+render true
+test false
+maxStep 0.5
+#fileRootName ../data/level16
+fileExtension .bin
+#structurelist ../data/materialStructureu5.txt
+chunkIdx 7
+outputprefix parami
+structurelist ../data/extreme.txt
+#structurelist ../data/level16_matAssignments.txt
+task compute
+nSteps 500
+interp 500

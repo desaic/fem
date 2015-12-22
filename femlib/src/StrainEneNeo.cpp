@@ -1,5 +1,5 @@
 #include "StrainEneNeo.hpp"
-
+using namespace Eigen;
 StrainEneNeo::StrainEneNeo()
 {
   param.resize(2);
@@ -9,7 +9,7 @@ StrainEneNeo::StrainEneNeo()
 
 Matrix3f StrainEneNeo::getStrainTensor(const Matrix3f & F)
 {
-  return F.transposed() * F;
+  return F.transpose() * F;
 }
 
 Eigen::MatrixXf StrainEneNeo::EMatrix()
@@ -32,7 +32,7 @@ Eigen::MatrixXf StrainEneNeo::EMatrix()
 
 float StrainEneNeo::getEnergy(const Matrix3f & F)
 {
-  float I1 = (F.transposed()*F).trace();
+  float I1 = (F.transpose()*F).trace();
   float JJ = std::log(F.determinant());
   float mu = param[0],lambda=param[1];
   float Psi = (mu/2) * (I1-3) - mu*JJ + (lambda/2)*JJ*JJ;
@@ -54,11 +54,11 @@ Matrix3f StrainEneNeo::getdPdx(const Matrix3f & F,const Matrix3f & dF)
   Matrix3f dP = Matrix3f();
   float JJ = std::log(F.determinant());
   Matrix3f Finv = F.inverse();
-  Matrix3f FinvT = Finv.transposed();
+  Matrix3f FinvT = Finv.transpose();
   float mu = param[0],lambda=param[1];
   dP = mu*dF;
   float c1 = mu-lambda * JJ;
-  dP += c1 * FinvT*dF.transposed()*FinvT;
+  dP += c1 * FinvT*dF.transpose()*FinvT;
   dP += lambda*(Finv*dF).trace()*FinvT;
   return dP;
 }

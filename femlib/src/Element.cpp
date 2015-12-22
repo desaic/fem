@@ -1,6 +1,6 @@
 #include "Element.hpp"
 #include "femError.hpp"
-
+using namespace Eigen;
 float Element::getVol(const std::vector<Vector3f> & X)
 {
   return 0;
@@ -21,12 +21,12 @@ Matrix3f
 Element::defGrad(Vector3f p, const std::vector<Vector3f> & X,
   const std::vector<Vector3f> & x) const
 {
-  Matrix3f F=Matrix3f::identity();
+  Matrix3f F=Matrix3f::Identity();
   for(int ii = 0; ii<nV(); ii++){
     int vi = at(ii);
     Vector3f gradN = shapeFunGrad(ii,p,X);
     //outer product
-    F += outerProd((x[vi] - X[vi]) , gradN);
+    F += (x[vi] - X[vi]) * (gradN.transpose());
   }
   //fem_error = FEM_OK;
   if(F.determinant()<0){

@@ -1,6 +1,5 @@
 #ifndef MATERIALQUAD2D_HPP
 #define MATERIALQUAD2D_HPP
-#include "vecmath.h"
 #include "Material2D.h"
 #include <Eigen/Dense>
 

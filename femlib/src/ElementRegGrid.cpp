@@ -10,6 +10,8 @@
 #include "util.h"
 #include <set>
 
+using namespace Eigen;
+
 //node index
 #define IX(ii,jj,kk) ( (ii) * NY * NZ + (jj) * NZ + kk)
 bool naive = false;

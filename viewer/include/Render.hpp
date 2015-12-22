@@ -8,13 +8,15 @@
 #ifndef RENDER_HPP_
 #define RENDER_HPP_
 #include <vector>
-#include "vecmath.h"
 #include "Camera.hpp"
+#include <Eigen/Dense>
 struct GLFWwindow;
 class ElementHex;
 class World;
 class Element;
 class ElementMesh;
+class Element2D;
+class ElementMesh2D;
 class Stepper;
 class Render
 {
@@ -25,6 +27,8 @@ public:
   void draw();
   void drawEle(int eidx, ElementMesh * eMesh);
   void drawEleMesh(ElementMesh * eMesh);
+  void drawEle2D(int eidx, ElementMesh2D * eMesh);
+  void drawEleMesh2D(ElementMesh2D * eMesh);
   void moveCamera(float dt);
   Stepper * getStepper();
   virtual ~Render();
@@ -32,7 +36,7 @@ public:
   Camera camera;
   GLFWwindow* window;
   
-  std::vector<Vector3f> matColor;
+  std::vector<Eigen::Vector3f> matColor;
 
   //how fast to rotate in x and y axis
   float xRotSpeed, yRotSpeed;

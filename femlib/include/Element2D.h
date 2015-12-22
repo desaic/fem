@@ -3,8 +3,7 @@
 
 #include <array>
 #include <vector>
-
-#include "vecmath.h"
+#include <Eigen/Dense>
 #include "cfgDefs.h"
 
 class Element2D
@@ -52,6 +51,9 @@ public:
   const std::vector<int> & getNodeIndices()const{ return n; }
 
   virtual MatrixXS getMatrixB(const Vector2S & xx, const std::vector<Vector2S> & X)=0;
+
+  //for rendering
+  Vector3S color;
 private:
 
   ///@brief nodal indices
