@@ -144,7 +144,6 @@ void run2D(const ConfigFile & conf)
   }
 }
 
-
 void printStructure(FEM2DFun * fem, std::ostream & out)
 {
   out << fem->m_nx << " " << fem->m_ny << "\n";
@@ -165,6 +164,7 @@ void shrinkVector(Eigen::VectorXd & x, const std::vector<int> & a, float shrink_
     x[ii] = val;
   }
 }
+
 void shrinkVector(Eigen::VectorXd & x, const std::vector<double> & a, float shrink_ratio)
 {
   for (int ii = 0; ii < a.size(); ii++){
@@ -173,6 +173,7 @@ void shrinkVector(Eigen::VectorXd & x, const std::vector<double> & a, float shri
     x[ii] = val;
   }
 }
+
 Eigen::VectorXd firstQuadrant(const Eigen::VectorXd a, int nx, int ny)
 {
   Eigen::VectorXd x(nx*ny / 4);
@@ -240,9 +241,12 @@ void computeMat(FEM2DFun * fem, const ConfigFile & conf)
   Eigen::Vector3d fx = fem->forceMagnitude * Eigen::Vector3d(1, 0, 0);
   Eigen::Vector3d fy = fem->forceMagnitude * Eigen::Vector3d(0, 1, 0);
   int nrows = (int)fem->externalForce[0].size();
-  fem->externalForce.resize(2);
+  fem->externalForce.resize(3);
   fem->externalForce[1].resize(nrows);
+  fem->externalForce[2].resize(nrows);
   stretchY(fem->em, fy, fem->grid, fem->externalForce[1]);
+  //shear force
+  stretchY(fem->em, fx, fem->grid, fem->externalForce[2]);
   fem->initArrays();
   std::string outputprefix("paraml");
   if (conf.hasOpt("outputprefix")){
@@ -268,7 +272,8 @@ void computeMat(FEM2DFun * fem, const ConfigFile & conf)
     double dy = fem->dy;
     //stretch in y direction under stretching force in y
     double dyy = measureStretchY(fem->em, fem->u[1], fem->grid);
-    materialOut << dx << " " << dy << " " << dyy << " " << fem->density << "\n";
+    double dxy = measureShearX(fem->em, fem->u[2], fem->grid);
+    materialOut << dx << " " << dy << " " << dyy << " " << dxy<<" "<<fem->density << "\n";
   }
   materialOut.close();
 }

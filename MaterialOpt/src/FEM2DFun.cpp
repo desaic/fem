@@ -125,7 +125,7 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
   //show rendering
   for (unsigned int ii = 0; ii < em->x.size(); ii++){
     for (int jj = 0; jj < dim; jj++){
-      em->x[ii][jj] = em->X[ii][jj] + u[0][ii*dim + jj];
+      em->x[ii][jj] = em->X[ii][jj] + u[2][ii*dim + jj];
     }
   }
 
@@ -288,7 +288,7 @@ void getStiffnessSparse(ElementMesh2D * em, const Eigen::VectorXd & param,
               }
             }
             if (2 * vj + dim1 == 2 * vk + dim2){
-              val *= 1 + 1e-6;
+              val *= 1 + 1e-5;
             }
             TripletS triple(2 * vj + dim1, 2 * vk + dim2, val);
             coef.push_back(triple);
