@@ -22,7 +22,10 @@ void computeMat3D(FEM3DFun * fem, const ConfigFile & conf)
 
 void optMat3D(FEM3DFun * fem, int nSteps)
 {
-
+  RealField * field = fem->field;
+  Eigen::VectorXd x1 = fem->param;
+  fem->setParam(x1);
+  std::cout << "stretch "<< fem->dx << " " << fem->dy << "\n";
 }
 
 void run3D(const ConfigFile & conf)
@@ -34,7 +37,7 @@ void run3D(const ConfigFile & conf)
   int nz = 16;
   int nSteps = 10;
   Eigen::VectorXd x0;
-  x0 = 0.5 * Eigen::VectorXd::Ones(nx * ny * nz);
+  x0 =  Eigen::VectorXd::Ones(nx * ny * nz);
   ElementRegGrid * em = new ElementRegGrid(nx, ny, nz);
   std::vector<StrainLin> ene(1);
   ene[0].param[0] = 3448.275862;
@@ -53,7 +56,7 @@ void run3D(const ConfigFile & conf)
 
   FEM3DFun * fem = new FEM3DFun();
   PiecewiseConstant3D * field = new PiecewiseConstant3D();
-  field->allocate(nx / 2, ny / 2, nz / 2);
+  field->allocate(nx , ny , nz );
 
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
@@ -63,8 +66,9 @@ void run3D(const ConfigFile & conf)
   fem->dy0 = 0.22;
   fem->dxw = 2;
   fem->field = field;
-  fem->m_nx = nx;
-  fem->m_ny = ny;
+  fem->gridSize[0] = nx;
+  fem->gridSize[1] = ny;
+  fem->gridSize[2] = nz;
   fem->m0 = 0.4;
   fem->mw = 0.1;
 

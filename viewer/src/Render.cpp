@@ -157,6 +157,8 @@ void Render::moveCamera(float dt)
   }
 }
 
+double xpos0, ypos0;
+
 void mouseButtonFun(GLFWwindow *window , int button, int action, int mods)
 {
   switch(button){
@@ -167,6 +169,8 @@ void mouseButtonFun(GLFWwindow *window , int button, int action, int mods)
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
         glfwSetCursorPos(window,width/2, height/2);
+        xpos0 = width / 2;
+        ypos0 = height / 2;
       }
     }
     break;
@@ -177,10 +181,10 @@ void mousePosFun(GLFWwindow *window , double xpos, double ypos)
 {
   if(captureMouse){
     int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
-    double dx =  xpos - width/2;
-    double dy = -ypos + height/2;
-    glfwSetCursorPos(window,width/2, height/2);
+    double dx =  xpos - xpos0;
+    double dy = -ypos + ypos0;
+    xpos0 = xpos;
+    ypos0 = ypos;
     render->camera.angle_xz += (float)(dx * render->xRotSpeed);
     render->camera.angle_y  += (float)(dy * render->yRotSpeed);
     render->camera.update();
@@ -194,14 +198,18 @@ void Render::drawEle(int eidx, ElementMesh * m)
   glColor3f(0.4f, 0.5f, 0.9f);
   glDisable(GL_LIGHTING);
   glBegin(GL_LINES);
+  Eigen::Vector3f center(0, 0, 0);
+  for (int ii = 0; ii < ele->nV(); ii++){
+    center += m->x[ele->at(ii)];
+  }
+  center /= ele->nV();
+  float shrink = 0.9f;
   for(unsigned int ii = 0;ii<edges.size();ii++){
     int vidx = (*ele)[edges[ii][0]];
-    if(vidx>=m->x.size()){
-      std::cout<<m->x.size()<<"\n";
-    }
-    Eigen::Vector3f v = m->x[vidx];
+    Eigen::Vector3f v = center + (m->x[vidx] - center) * shrink;
     glVertex3f(v[0],v[1],v[2]);
-    v = m->x[(*ele)[edges[ii][1]]];
+    vidx = (*ele)[edges[ii][1]];
+    v = center + (m->x[vidx] - center)* shrink;
     glVertex3f(v[0],v[1],v[2]);
   }
 
@@ -257,6 +265,19 @@ void Render::drawEleMesh(ElementMesh * eMesh)
   for(unsigned int ii = 0;ii<eMesh->e.size();ii++){
     drawEle(ii,eMesh);
   }
+
+  //draw forces as lines
+  glDisable(GL_LIGHTING);
+  glColor3f(0.5, 0.5, 0.9);
+  glBegin(GL_LINES);
+  for (unsigned int ii = 0; ii < eMesh->fe.size(); ii++){
+    Eigen::Vector3f v = eMesh->x[ii];
+    glVertex3f(v[0], v[1], v[2]);
+    v += eMesh->forceDrawingScale * eMesh->fe[ii];
+    glVertex3f(v[0], v[1], v[2]);
+  }
+  glEnd();
+  glEnable(GL_LIGHTING);
 }
 
 void Render::draw()

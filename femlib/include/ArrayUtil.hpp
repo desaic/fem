@@ -31,4 +31,6 @@ void addmul(std::vector<T> & dst, float f, const std::vector<T> & src)
     dst[ii] += f*src[ii];
   }
 }
+
+int checkSparseIndex(const std::vector<int > & I, const std::vector<int> & J);
 #endif // ARRAYUTIL_HPP

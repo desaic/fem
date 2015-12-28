@@ -10,6 +10,6 @@ chunkIdx 7
 outputprefix parami
 #structurelist ../data/extreme.txt
 #structurelist ../data/level16_matAssignments.txt
-task compute
+task opt
 nSteps 500
 #interp 100

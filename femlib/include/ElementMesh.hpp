@@ -89,6 +89,10 @@ public:
 
   virtual ~ElementMesh();
 
+
+  //for rendering 
+  float forceDrawingScale;
+
 //private:
   void fixTranslation(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
   void fixRotation(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);

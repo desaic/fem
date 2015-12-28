@@ -7,8 +7,6 @@
 class ElementMesh;
 class RealField;
 
-typedef std::vector<std::vector< std::vector<int> > > Grid3D;
-
 ///@brief a real-valued function based on 2D FEM simulation.
 class FEM3DFun :public RealFun{
 public:
@@ -48,10 +46,7 @@ public:
   ///@brief total force applied on one side
   double forceMagnitude;
 
-  ///@brief element indices ordered into a grid
-  ///grid[col][row] is the element index.
-  Grid3D grid;
-  int m_nx, m_ny, m_nz;
+  std::vector<int> gridSize;
 
   ///@brief linear static displacements solved using external forces.
   std::vector< std::vector<double> > u;
@@ -72,7 +67,6 @@ public:
   Eigen::VectorXd distribution;
 
   void init(const Eigen::VectorXd & x0);
-  void computeGrid();
   void initArrays();
   ///@brief update parameters for computing function value
   ///and gradients.
@@ -104,13 +98,13 @@ public:
 };
 
 ///@brief make stretching force in x direction
-void stretchX(ElementMesh * em, const Eigen::Vector3d & ff, const Grid3D& grid, std::vector<double> & externalForce);
-void stretchY(ElementMesh * em, const Eigen::Vector3d & ff, const Grid3D& grid, std::vector<double> & externalForce);
+void stretchX(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
+void stretchY(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
 
-double measureStretchX(ElementMesh * em, const std::vector<double> & u, const Grid3D & grid);
-double measureStretchY(ElementMesh * em, const std::vector<double> & u, const Grid3D & grid);
+double measureStretchX(ElementMesh * em, const std::vector<double> & u, const std::vector<int>& gridSize);
+double measureStretchY(ElementMesh * em, const std::vector<double> & u, const std::vector<int>& gridSize);
 
 //measure shear displacement in x direction of top and bottom vertices.
-double measureShearX(ElementMesh * em, const std::vector<double> & u, const Grid3D & grid);
-
+double measureShearX(ElementMesh * em, const std::vector<double> & u, const std::vector<int>& gridSize);
+int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize);
 #endif
