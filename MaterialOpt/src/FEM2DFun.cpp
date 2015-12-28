@@ -39,8 +39,8 @@ void FEM2DFun::initArrays()
   }
 }
 
-void FEM2DFun::init(const Eigen::VectorXd & x0){
-  
+void FEM2DFun::init(const Eigen::VectorXd & x0)
+{  
   bool triangular = true;
   m_I.clear();
   m_J.clear();
@@ -125,7 +125,7 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
   //show rendering
   for (unsigned int ii = 0; ii < em->x.size(); ii++){
     for (int jj = 0; jj < dim; jj++){
-      em->x[ii][jj] = em->X[ii][jj] + u[0][ii*dim + jj];
+      em->x[ii][jj] = em->X[ii][jj] + u[2][ii*dim + jj];
     }
   }
 
@@ -249,7 +249,7 @@ m_periodic(true),
 m_fixRigid(true),
 dx0(1e-2), dy0(5e-3),
 dxw(5), dyw(1),
-forceMagnitude(1000),
+forceMagnitude(100),
 m_nx(0), m_ny(0),
 field(0)
 {
@@ -288,7 +288,7 @@ void getStiffnessSparse(ElementMesh2D * em, const Eigen::VectorXd & param,
               }
             }
             if (2 * vj + dim1 == 2 * vk + dim2){
-              val *= 1 + 1e-6;
+              val *= 1 + 1e-5;
             }
             TripletS triple(2 * vj + dim1, 2 * vk + dim2, val);
             coef.push_back(triple);

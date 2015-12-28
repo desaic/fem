@@ -250,6 +250,17 @@ void Render::drawEleMesh2D(ElementMesh2D * eMesh)
   for (unsigned int ii = 0; ii<eMesh->e.size(); ii++){
     drawEle2D(ii, eMesh);
   }
+  glDisable(GL_LIGHTING);
+  glColor3f(0.5, 0.5, 0.9);
+  glBegin(GL_LINES);
+  for (unsigned int ii = 0; ii < eMesh->fe.size(); ii++){
+    Vector2S v = eMesh->x[ii];
+    glVertex3f(v[0], v[1], 0);
+    v += eMesh->forceDrawingScale * eMesh->fe[ii];
+    glVertex3f(v[0], v[1], 0);
+  }
+  glEnd();
+  glEnable(GL_LIGHTING);
 }
 
 void Render::drawEleMesh(ElementMesh * eMesh)

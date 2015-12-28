@@ -6,7 +6,6 @@
 #include "StrainEneNeo.hpp"
 #include "StrainLin.hpp"
 #include "StrainCorotLin.hpp"
-#include "MatrixX.hpp"
 #include "Quadrature.hpp"
 #include "StepperNewton.hpp"
 //#include "LinSolveCusp.hpp"
@@ -15,6 +14,8 @@
 #include <Eigen/Dense>
 #include <iostream>
 #include <fstream>
+
+using namespace Eigen;
 
 void forceTestHelper(StrainEne * ene);
 void stiffnessTestHelper(StrainEne * ene);
@@ -80,7 +81,7 @@ void cudaLinTest()
   }
   for (unsigned int ii = 0; ii < f.size(); ii++){
     if (grid->fixed[ii]){
-      f[ii] = Vector3f::ZERO;
+      f[ii] = Vector3f::Zero();
     }
     for (int jj = 0; jj < 3; jj++){
       x[3 * ii + jj] = f[ii][jj];
@@ -110,13 +111,13 @@ void stiffnessTest(int matModel)
   switch (matModel){
   case 0:
     ene = new StrainLin();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   case 1:
     ene = new StrainCorotLin();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   case 2:
     ene = new StrainEneNeo();
@@ -162,15 +163,10 @@ void stiffnessTestHelper(StrainEne * ene)
   }
 
   std::cout<<"Ana K:\n";
-  KAna.print(std::cout);
-  std::cout<<"\n";
-  std::cout<<"Num K:\n";
-  K.print(std::cout);
-  std::cout<<"\n";
-
+  std::cout << KAna << "\nNum K:\n" << K << "\n";
   float maxErr = 0;
-  for(int ii = 0;ii<K.mm;ii++){
-    for(int jj =0 ;jj<K.nn;jj++){
+  for(int ii = 0;ii<K.rows();ii++){
+    for(int jj =0 ;jj<K.cols();jj++){
       float err = (float)std::abs(KAna(ii,jj)-K(ii,jj));
       if(err>maxErr){
         maxErr = err;
@@ -223,8 +219,8 @@ void linearTMatrixTest(StrainLin * ene)
   //std::cout << "alt K:\n";
   //std::cout << Ka << "\n";
   float maxErr = 0;
-  for (int ii = 0; ii<K.mm; ii++){
-    for (int jj = 0; jj<K.nn; jj++){
+  for (int ii = 0; ii<K.rows(); ii++){
+    for (int jj = 0; jj<K.cols(); jj++){
       float err = (float)std::abs(Ka(ii, jj) - K(ii, jj));
       if (err>maxErr){
         maxErr = err;
@@ -283,18 +279,18 @@ void forceTest(int matModel)
   switch (matModel){
   case 0:
     ene = new StrainLin();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   case 1:
     ene = new StrainCorotLin();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   case 2:
     ene = new StrainEneNeo();
-    ene->param[0] = 1000;
-    ene->param[1] = 10000;
+    ene->param[0] = 34482;
+    ene->param[1] = 310344;
     break;
   default:
     return;
@@ -324,10 +320,11 @@ void forceTestHelper(StrainEne * ene)
     }
   }
   em->check();
-
+  material.init(em);
   em->x[0][0] += 0.2f;
   em->x[1][2] -= 0.3f;
   float h = 0.0001f;
+
   std::vector<Vector3f>force = em->getForce();
   for(size_t ii = 0;ii<em->x.size();ii++){
     for(int jj = 0; jj<3; jj++){

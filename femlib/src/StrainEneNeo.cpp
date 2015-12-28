@@ -42,8 +42,7 @@ float StrainEneNeo::getEnergy(const Matrix3f & F)
 Matrix3f StrainEneNeo::getPK1(const Matrix3f & F)
 {
   float JJ = std::log(F.determinant());
-  Matrix3f Finv = F.inverse();
-  Finv.transpose();
+  Matrix3f Finv = F.inverse().transpose();
   float mu = param[0],lambda=param[1];
   Matrix3f PP = mu*(F-Finv) + lambda*JJ*Finv;
   return PP;

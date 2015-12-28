@@ -93,7 +93,7 @@ cfgScalar ElementMesh2D::eleSize()
   return X[e[0]->at(7)][0] - X[e[0]->at(0)][0];
 }
 
-ElementMesh2D::ElementMesh2D():u(0)
+ElementMesh2D::ElementMesh2D() :u(0), forceDrawingScale(10)
 {}
 
 ElementMesh2D::~ElementMesh2D()
@@ -467,8 +467,7 @@ MatrixXS ElementMesh2D::getStiffness(int eIdx)
 MatrixXS ElementMesh2D::getStiffness()
 {
   int matSize = 2 * (int)x.size();
-  MatrixXS Kglobal(matSize,matSize);
-  Kglobal.fill(0);
+  MatrixXS Kglobal=MatrixXS::Zero(matSize,matSize);
   for(unsigned int ii = 0;ii<e.size();ii++){
     MatrixXS K = getStiffness(ii);
     for(int jj = 0; jj<e[ii]->nV(); jj++){
