@@ -27,6 +27,7 @@ int chunkIdx = 0;
 
 std::vector<std::vector<int> > materialAssignments;
 std::vector<std::vector<double> > continuousMaterials;
+void loadBinary(const ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments);
 
 void run2D(const ConfigFile & conf)
 {
@@ -35,34 +36,13 @@ void run2D(const ConfigFile & conf)
   Eigen::VectorXd x0;
 
   if (conf.hasOpt("fileRootName")){
-    loadBinary(conf, materialAssignments);
+    loadBinary(conf, continuousMaterials);
   }
   if (conf.hasOpt("structurelist")){
     loadText(conf, continuousMaterials);
   }
-  if (conf.hasOpt("structure")){
-    std::vector<int> arr;
-    std::vector<std::vector<int> > structure;
-    loadArr2D(structure, conf.getString("structure"));
-    nx = structure.size();
-    ny = structure[0].size();
-    x0 = Eigen::VectorXd::Zero(nx * ny);
-    arr.resize(nx * ny);
-    for (int ii = 0; ii < nx; ii++){
-      for (int jj = 0; jj < ny; jj++){
-        double val = structure[ii][jj];
-        double shrink = 0.3;
-        val = 0.5 + shrink * (val - 0.5);
-        x0[ii * ny + jj] = val;
-        arr[ii*ny + jj] = structure[ii][jj];
-      }
-    }
-    materialAssignments.push_back(arr);
-  }
-  else {
-    x0 = 0.5 * Eigen::VectorXd::Ones(nx * ny);
-  }
-
+    
+  x0 = 0.5 * Eigen::VectorXd::Ones(nx * ny);
   ElementRegGrid2D * em = new ElementRegGrid2D(nx, ny);
   std::vector<StrainLin2D> ene(1);
   ene[0].param[0] = 3448.275862;
@@ -234,6 +214,13 @@ std::vector< std::vector<double> > interpArr(const std::vector<std::vector<doubl
   return out;
 }
 
+void fill(Eigen::VectorXd & x, double v)
+{
+  for (int ii = 0; ii < x.size(); ii++){
+    x[ii] = v;
+  }
+}
+
 void computeMat(FEM2DFun * fem, const ConfigFile & conf)
 {
   RealField * field = fem->field;
@@ -247,6 +234,10 @@ void computeMat(FEM2DFun * fem, const ConfigFile & conf)
   stretchY(fem->em, fy, fem->grid, fem->externalForce[1]);
   //shear force
   stretchY(fem->em, fx, fem->grid, fem->externalForce[2]);
+  for (unsigned int ii = 0; ii < fem->em->fe.size(); ii++){
+    fem->em->fe[ii][0] = fem->externalForce[2][ii*2];
+    fem->em->fe[ii][1] = fem->externalForce[2][ii * 2+1];
+  }
   fem->initArrays();
   std::string outputprefix("paraml");
   if (conf.hasOpt("outputprefix")){
@@ -263,17 +254,25 @@ void computeMat(FEM2DFun * fem, const ConfigFile & conf)
   }
   std::string materialOutName = sequenceFilename(outputprefix, chunkIdx, ".txt");
   materialOut.open(materialOutName);
+  std::ofstream structOut("s.txt");
   for (int ii = 0; ii < continuousMaterials.size(); ii++){
     Eigen::VectorXd x0(continuousMaterials[ii].size());
     shrinkVector(x0, continuousMaterials[ii], 1.0);
     x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
+    ///check solid material
+    fill(x1, 1.0);
     fem->setParam(x1);
     double dx = fem->dx;
     double dy = fem->dy;
     //stretch in y direction under stretching force in y
     double dyy = measureStretchY(fem->em, fem->u[1], fem->grid);
     double dxy = measureShearX(fem->em, fem->u[2], fem->grid);
-    materialOut << dx << " " << dy << " " << dyy << " " << dxy<<" "<<fem->density << "\n";
+    double F = fem->forceMagnitude;
+    materialOut << F/dx << " " << F/dyy << " " << -dy/dx << " " << F/dxy<<" "<<fem->density << "\n";
+    for (unsigned int jj = 0; jj < fem->distribution.size(); jj++){
+      structOut << fem->distribution[jj] << " ";
+    }
+    structOut << "\n";
   }
   materialOut.close();
 }
@@ -504,7 +503,7 @@ void loadBinary(const ConfigFile & conf, std::vector<std::vector<int> > & materi
     fileExtension = conf.getString("fileExtension");
   }
   bool success;
-  std::string matAssignmentFile = conf.dir + "/" + fileRootName + "_matAssignments" + fileExtension;
+  std::string matAssignmentFile = conf.dir + "/" + fileRootName + fileExtension;
   success = cfgUtil::readBinary<int>(matAssignmentFile, materialAssignments);
   if (!success){
     std::cout << "Can't read " << matAssignmentFile << "\n";
@@ -525,4 +524,40 @@ void loadBinary(const ConfigFile & conf, std::vector<std::vector<int> > & materi
     out << "\n";
   }
   out.close();
+}
+
+void loadBinary(const ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments)
+{
+  std::string fileRootName("../data/level16");
+  std::string fileExtension(".bin");
+  if (conf.hasOpt("fileRootName")){
+    fileRootName = conf.getString("fileRootName");
+  }
+  if (conf.hasOpt("fileExtension")){
+    fileExtension = conf.getString("fileExtension");
+  }
+  bool success;
+  std::string matAssignmentFile = conf.dir + "/" + fileRootName + fileExtension;
+  success = cfgUtil::readBinary<double>(matAssignmentFile, materialAssignments);
+  if (!success){
+    std::cout << "Can't read " << matAssignmentFile << "\n";
+  }
+}
+
+void transposeSave(std::vector<std::vector<double> > & continuousMaterials, int nx, int ny)
+{
+  //transpose each structure and save.
+  unsigned int N = continuousMaterials.size();
+  std::cout << N << "N\n";
+  for (unsigned int si = 0; si< N; si++){
+    std::vector<double> mat = continuousMaterials[si];
+    std::cout << si << "\n";
+    for (int ii = 0; ii < 16; ii++){
+      for (int jj = 0; jj < 16; jj++){
+        mat[ii * 16 + jj] = continuousMaterials[si][jj * 16 + ii];
+      }
+    }
+    continuousMaterials.push_back(mat);
+  }
+  cfgUtil::writeBinary("mat.bin", continuousMaterials);
 }

@@ -39,8 +39,8 @@ void FEM2DFun::initArrays()
   }
 }
 
-void FEM2DFun::init(const Eigen::VectorXd & x0){
-  
+void FEM2DFun::init(const Eigen::VectorXd & x0)
+{  
   bool triangular = true;
   m_I.clear();
   m_J.clear();
@@ -249,7 +249,7 @@ m_periodic(true),
 m_fixRigid(true),
 dx0(1e-2), dy0(5e-3),
 dxw(5), dyw(1),
-forceMagnitude(1000),
+forceMagnitude(100),
 m_nx(0), m_ny(0),
 field(0)
 {

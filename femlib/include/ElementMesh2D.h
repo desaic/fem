@@ -51,7 +51,6 @@ public:
   ///@param trig if true, return only the upper triangle of the symmetric matrix.
   void getStiffnessSparse(std::vector<cfgScalar> &val, bool trig = false, bool constrained=false, bool iFixedTranslation=false, bool iFixedRotation=false, bool iPeriodic=false);
 
-
   ///@param I row offsets. I.size() = matrix size + 1. I[size()-1]=number of non-zeros.
   ///@param J column indices.
   void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig = false, bool iFixedTranslation=false, bool iFixedRotation=false, bool iPeriodic=false);
@@ -66,6 +65,9 @@ public:
   void fixTranslation(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh2D * mesh);
   void fixRotation(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh2D * mesh);
   void enforcePeriodicity(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh2D * mesh);
+
+  //for rendering
+  float forceDrawingScale;
 };
 
 

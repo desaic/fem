@@ -93,7 +93,7 @@ cfgScalar ElementMesh2D::eleSize()
   return X[e[0]->at(7)][0] - X[e[0]->at(0)][0];
 }
 
-ElementMesh2D::ElementMesh2D():u(0)
+ElementMesh2D::ElementMesh2D() :u(0), forceDrawingScale(10)
 {}
 
 ElementMesh2D::~ElementMesh2D()
