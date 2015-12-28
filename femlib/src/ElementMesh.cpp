@@ -151,7 +151,7 @@ float ElementMesh::eleSize()
   return X[e[0]->at(7)][0] - X[e[0]->at(0)][0];
 }
 
-ElementMesh::ElementMesh():u(0),dt(0.01),G(Vector3f(0,-9.8,0)), density(1000)
+ElementMesh::ElementMesh():dt(0.01),G(Vector3f(0,-9.8,0)), density(1000)
 {}
 
 ElementMesh::~ElementMesh()

@@ -205,17 +205,6 @@ void Render::drawEle(int eidx, ElementMesh * m)
     glVertex3f(v[0],v[1],v[2]);
   }
 
-  if (m->u != 0){
-
-    glColor3f(0.2f, 0.7f, 0.1f);
-    for (unsigned int ii = 0; ii < edges.size(); ii++){
-      Eigen::Vector3f v = (*(m->u))[eidx][edges[ii][0]];
-      glVertex3f(v[0], v[1], v[2]);
-      v = (*(m->u))[eidx][edges[ii][1]];
-      glVertex3f(v[0], v[1], v[2]);
-    }
-  }
-
   glEnable(GL_LIGHTING);
   glEnd();
 }

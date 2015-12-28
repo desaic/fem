@@ -1,3 +1,4 @@
+dim 3
 render true
 test false
 maxStep 0.5
