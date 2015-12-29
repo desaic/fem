@@ -43,6 +43,7 @@ namespace cfgMaterialUtilities
   cfgScalar computeYoungModulus(cfgScalar iStrain, cfgScalar iStress);
   cfgScalar computeYoungModulus(const std::vector<cfgScalar> &iStrains, const std::vector<cfgScalar>  &iStresses);
   cfgScalar computeMaterialRatio(const std::vector<int> &iMaterialAssignment, const std::vector<std::vector<int> > &iBaseMaterialStructures);
+  cfgScalar computeMaterialDensity(const std::vector<int> &iMaterialAssignment, const std::vector<cfgScalar> &iBaseMaterialDensities);
   cfgScalar computePoissonRatio(const std::vector<cfgScalar> &iStrainsAxialDir, const std::vector<cfgScalar> &iStrainsTransversalDir);
   cfgScalar computePoissonRatio(cfgScalar &iStrainsAxialDir, cfgScalar&iStrainsTransversalDir);
   cfgScalar computeVonMisesStress(std::vector<cfgScalar> &iStresses);  // iStresses = [sigma_xx sigma_yy sigma_zz sigma_xy sigma_yz sigma_zx]
@@ -143,6 +144,7 @@ namespace cfgMaterialUtilities
   std::vector<Eigen::Vector2f> toVector2f(const std::vector<float> &iPoints);
   std::vector<Vector2S> toVector2S(const std::vector<cfgScalar> &iPoints);
   std::vector<Eigen::Vector3f> toVector3f(const std::vector<float> &iPoints);
+   std::vector<Vector3S> toVector3S(const std::vector<cfgScalar> &iPoints);
 
   MatrixXS toMatrixScalar(const MatrixEXd &iMatrix);
   MatrixEXd toMatrixDouble(const MatrixXS &iMatrix);

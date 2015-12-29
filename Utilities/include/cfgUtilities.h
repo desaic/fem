@@ -137,7 +137,7 @@ namespace cfgUtil
     size_t ielem, nelem=iVec.size();
     for (ielem=0; ielem<nelem; ielem++)
     {
-      newVec.push_back(iVec[ielem]);
+      newVec.push_back((T2)iVec[ielem]);
     }
     return newVec;
   }

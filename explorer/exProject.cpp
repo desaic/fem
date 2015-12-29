@@ -61,13 +61,16 @@ bool exProject::loadFile(const QString &iFileName, int &oLevel, QString &oLabel)
     std::string fileRootName = stringRoot.toStdString();
     std::string fileExtension = ".bin";
 
-    std::vector<cfgScalar> physicalParameters;
+    std::vector<cfgScalar> physicalParameters, elasticityTensors;
     std::vector<std::vector<int> > baseMaterials, materialAssignments;
+    std::vector<std::vector<cfgScalar> > materialDistributions;
     resOk = cfgUtil::readBinary<float>(fileRootName + "params" + fileExtension, physicalParameters);
+    //if (resOk)
+    //  resOk = cfgUtil::readBinary<int>(fileRootName + "baseMat" + fileExtension, baseMaterials);
     if (resOk)
-      resOk = cfgUtil::readBinary<int>(fileRootName + "baseMat" + fileExtension, baseMaterials);
-    if (resOk)
-      resOk = cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, materialAssignments);
+      resOk = cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, materialAssignments) ||
+              cfgUtil::readBinary<cfgScalar>(fileRootName + "matDistributions" + fileExtension, materialDistributions);
+    cfgUtil::readBinary<cfgScalar>(fileRootName + "elasticityTensors" + fileExtension, elasticityTensors);
 
     if (resOk)
     {
@@ -78,18 +81,21 @@ bool exProject::loadFile(const QString &iFileName, int &oLevel, QString &oLabel)
       oLabel.chop(1);
       oLabel.remove(str);
 
-      addLevelData(level, baseMaterials, materialAssignments, physicalParameters);
+      addLevelData(level, baseMaterials, materialAssignments, materialDistributions, physicalParameters, elasticityTensors);
     }
   }
   return resOk;
 }
 
-void exProject::addLevelData(int ilevel, const std::vector<std::vector<int> > &iBaseMaterials, const std::vector<std::vector<int> > &iMaterialAssignments, std::vector<cfgScalar> &iPhysicalParameters)
+void exProject::addLevelData(int ilevel, const std::vector<std::vector<int> > &iBaseMaterials, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<cfgScalar> > &iMaterialDistributions, 
+                             std::vector<cfgScalar> &iPhysicalParameters, std::vector<cfgScalar> &elasticityTensors)
 {
   m_levels.push_back(ilevel);
   m_baseMaterials.push_back(iBaseMaterials);
   m_materialAssignments.push_back(iMaterialAssignments);
+  m_materialDistributions.push_back(iMaterialDistributions);
   m_physicalParametersPerLevel.push_back(iPhysicalParameters);
+  m_elasticityTensors.push_back(elasticityTensors);
 
   int defaultVisibility = 1;
   m_levelVisibility.push_back(defaultVisibility);
@@ -110,7 +116,7 @@ bool exProject::getMaterialParameters(int iLevel, std::vector<cfgScalar> &oPhysi
   bool readSingleFile = m_readSingleFile;
   bool readFullDeformation = m_readFullDeformation;
 
-  int nlevel = m_levels.size()+1;
+  int nlevel = (int)m_levels.size()+1;
 
   std::cout << "reading material parameters for level " << iLevel << std::endl;
 
@@ -242,7 +248,7 @@ QSharedPointer<ElementMesh> exProject::computeElementMesh(int iCombIndex, int iL
     std::string stressStrainBaseFileName = "StressStrain_" + std::to_string(level) + "_" + std::to_string(m_blockSize);
 
     std::string sampleFile = stressStrainFilesDir[0] + stressStrainBaseFileName + "_" + std::to_string(indComb) + ".txt"; 
-    Vector3f forceAxis;
+    Vector3S forceAxis;
     
     std::vector<cfgScalar> stresses, strains;
     ResOk = readData(sampleFile, forceAxis, materialAssignment, stresses, strains);
@@ -333,7 +339,15 @@ QSharedPointer<ElementMesh> exProject::computeElementMeshIncr(int iCombIndex, in
   int level = m_levels[iLevel];
   int N[3] = {level,level,level};
 
-  const std::vector<int> & materialAssignment = m_materialAssignments[iLevel][iCombIndex];
+  std::vector<int> materialAssignment;
+  if (m_materialAssignments[iLevel].size()>0)
+  {
+    materialAssignment = m_materialAssignments[iLevel][iCombIndex];
+  }
+  else if (m_materialDistributions[iLevel].size()>0)
+  {
+    materialAssignment = convertVec<float, int>(mult(m_materialDistributions[iLevel][iCombIndex], 255.f));
+  }
 
   //bool isManifold = cfgMaterialUtilities::isStructureManifold(N[0], N[1], N[2], materialAssignment, 1, 1, 1, true);
 

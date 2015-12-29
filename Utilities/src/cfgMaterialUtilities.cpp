@@ -667,6 +667,19 @@ cfgScalar cfgMaterialUtilities::computeMaterialRatio(const std::vector<int> &iMa
   return r;
 }
 
+cfgScalar cfgMaterialUtilities::computeMaterialDensity(const std::vector<int> &iMaterialAssignment, const std::vector<cfgScalar> &iBaseMaterialDensities)
+{
+  cfgScalar r=0;
+  int imat, nmat=(int)iMaterialAssignment.size();
+  for (imat=0; imat<nmat; imat++)
+  {
+    int matIndex = iMaterialAssignment[imat];
+    r += iBaseMaterialDensities[matIndex];
+  }
+  r /= (cfgScalar)nmat;
+  return r;
+}
+
 bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vector<int> > &iMaterials, const std::vector<std::vector<int> > &iBaseMaterialStructures,
                                                      const std::vector<std::vector<cfgScalar> > iStresses[2], const std::vector<std::vector<cfgScalar> > iStrains[2],
                                                      std::vector<cfgScalar> &oPhysicalParameters)
@@ -2396,6 +2409,18 @@ std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Eigen::
    for (ipoint=0; ipoint<npoint; ipoint++)
    {
      vec.push_back(Vector2S(iPoints[2*ipoint], iPoints[2*ipoint+1]));
+   }
+   return vec;
+ }
+
+ std::vector<Vector3S> cfgMaterialUtilities::toVector3S(const std::vector<cfgScalar> &iPoints)
+ {
+   std::vector<Vector3S> vec;
+   assert(iPoints.size()%3==0);
+   int ipoint=0, npoint=(int)iPoints.size()/3;
+   for (ipoint=0; ipoint<npoint; ipoint++)
+   {
+     vec.push_back(Vector3S(iPoints[3*ipoint], iPoints[3*ipoint+1], iPoints[3*ipoint+2]));
    }
    return vec;
  }

@@ -43,11 +43,12 @@ SamplesGeneratorImpl::SamplesGeneratorImpl(int iDim)
   m_UseLinearMaterial = true;
   assert(iDim==2||iDim==3);
   //m_dim = iDim;
-  m_dim = 2;
-  m_blockRep = 4;// (m_dim==2? 8: 4);
+  m_dim = 3;
+  m_blockRep = 1;// (m_dim==2? 8: 4);
   m_nbSubdivisions = 1;
   m_orthotropicOnly = false;
   m_cubicOnly = true;
+  m_continuousMatDist = true;
 }
 
 SamplesGeneratorImpl::~SamplesGeneratorImpl()
@@ -58,7 +59,7 @@ float SamplesGeneratorImpl::computeStrain(const ElementRegGrid * iElementGrid, i
 {
   //writeVector2File(iElementGrid->x, m_OutputDirectory + "x.m");
 
-  Vector3f Barycenters[2];
+  Vector3S Barycenters[2];
 
   int iside;
   for (iside=0; iside<2; iside++)
@@ -86,7 +87,7 @@ float SamplesGeneratorImpl::computeStrain(const ElementRegGrid * iElementGrid, i
     }
     Barycenters[iside] /= (float)ind2Valence.size();
   }
-  float strain = (Barycenters[0]-Barycenters[1]).abs()-1;
+  float strain = (Barycenters[0]-Barycenters[1]).norm()-1;
   return strain;
 }
 
@@ -138,7 +139,7 @@ void SamplesGeneratorImpl::setExternalForces(ElementRegGrid * iElementGrid, int 
   n[1] = em->ny;
   n[2] = em->nz;
 
-  Vector3f ff;
+  Vector3S ff(0,0,0);
   ff[iAxis] = (1.f/(n[(iAxis+1)%3]*n[(iAxis+2)%3])) * iForceMagnitude/4;
 
   std::vector<int> sides;
@@ -315,65 +316,6 @@ ElementRegGrid2D * SamplesGeneratorImpl::createPhysicalSystem(int iN[2], std::ve
   em->check();
   return em;
 }
-
-/*
-ElementRegGrid * SamplesGeneratorImpl::createPhysicalSystem(int iN[3], Vector3f iForce, std::vector<MaterialQuad> &iMaterials)
-{
-  ElementRegGrid * em = new ElementRegGrid(iN[0],iN[1],iN[2]);
-
-  std::vector<int> elemIndices;
-  std::vector<std::vector<int> > fvIndices;
-  std::vector<Vector3f> Normals;
-  getExternalVertices(em, elemIndices, fvIndices, Normals);
-
-  // External forces
-  Vector3f ff;
-  int iaxis;
-  for (iaxis=0; iaxis<3; iaxis++)
-  {
-    ff[iaxis] = (1.f/(iN[(iaxis+1)%3]*iN[(iaxis+2)%3])) * iForce[iaxis];
-  }
-
-  int ielem=0, nelem=(int)fvIndices.size();
-  for (ielem=0; ielem<nelem; ielem++)
-  {
-    int indElement = elemIndices[ielem];
-    Vector3f & Normal = Normals[ielem];
-    std::vector<int> & elemFvIndices = fvIndices[ielem];
-    if (Vector3f::dot(ff,Normal)>0)
-    {
-      Vector3f Force = fabs(Vector3f::dot(ff,Normal))*Normal;
-      int ivertex=0, nvertex=(int)elemFvIndices.size();
-      for (ivertex=0; ivertex<nvertex; ivertex++)
-      {
-        int FvIndex = elemFvIndices[ivertex];
-        int VertexIndex =em->e[indElement]->at(FvIndex);
-        em->fe[VertexIndex] += Force;
-      }
-    }
-  }
-
-  // Constraints
-   for(int ii = 0;ii<iN[0];ii++){
-    for(int jj =0;jj<iN[2];jj++){
-      int eidx= em->GetEleInd(ii,0,jj);
-      int aa[4] = {0,1,4,5};
-      for(int kk = 0;kk<4;kk++){
-        int vidx =em->e[eidx]->at(aa[kk]);
-        em->fixed[vidx] = 1;
-      }
-    }
-  }
-
-  // Materials
-  int imat=0, nmat=(int)iMaterials.size();
-  for (imat=0; imat<nmat; imat++)
-  {
-    em->addMaterial(&iMaterials[imat]);
-  }
-  em->check();
-  return em;
-}*/ 
 
 bool SamplesGeneratorImpl::computeEquilibrium(Stepper * iStepper, ElementRegGrid * iElementGrid, int iNumberOfSteps, bool &oConverged)
 {
@@ -560,7 +502,7 @@ void SamplesGeneratorImpl::sampleMaterialSpace()
   for (icomb=0; icomb<ncomb; icomb++)
   {
     std::string sampleFile = m_OutputDirectory + "StressStrain_" + std::to_string(level) + "_" + std::to_string(blockSize) + "_" + std::to_string(icomb) + ".txt"; 
-    Vector3f forceAxis;
+    Vector3S forceAxis;
     std::vector<int> materials;
     std::vector<cfgScalar> stresses, strains;
     readData(sampleFile, forceAxis, materials, stresses, strains);
@@ -598,7 +540,7 @@ bool SamplesGeneratorImpl::sampleDeformation(int iN[3], std::vector<MaterialQuad
   oStresses.clear();
   oStrains.clear();
 
-  std::vector<Vector3f> xinit;
+  std::vector<Vector3S> xinit;
   int isample;
   for (isample=0; isample<iNumberOfSample && ResOk; isample++)
   {
@@ -728,7 +670,7 @@ bool SamplesGeneratorImpl::sampleDeformation(int iN[3], std::vector<MaterialQuad
   oStresses.clear();
   oDeformations.clear();
 
-  std::vector<Vector3f> xinit;
+  std::vector<Vector3S> xinit;
   int isample;
   for (isample=0; isample<iNumberOfSample && ResOk; isample++)
   {
@@ -892,7 +834,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::string iStepperType , c
       if (icomb%1000==0)
       {
         std::cout << "ncomb = " << icomb << std::endl;
-        Vector3f forceAxis;
+        Vector3S forceAxis(0,0,0);
         forceAxis[iaxis] = 1.f;
 
         std::vector<std::vector<int> > materials = iMaterialAssignments;
@@ -918,7 +860,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::string iStepperType , c
     int iaxis=0;
     for (iaxis=0; iaxis<2; iaxis++)
     {
-      Vector3f forceAxis;
+      Vector3S forceAxis(0,0,0);
       forceAxis[iaxis] = 1.f;
       if (iWriteFullDeformation)
       {
@@ -939,7 +881,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::string iStepperType , c
       int iaxis=0;
       for (iaxis=0; iaxis<2; iaxis++)
       {
-        Vector3f forceAxis;
+        Vector3S forceAxis(0,0,0);
         forceAxis[iaxis] = 1.f;
         std::string strAxis =  (iaxis==0?"x//": "y//");
         std::string FileName = m_OutputDirectory + strAxis  + "StressStrain_" + std::to_string(iLevel) + '_' + std::to_string(3) + "_" + std::to_string(icomb) + ".txt";
@@ -1009,7 +951,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::string iStepperType , c
       if (icomb%50==0)
       {
         std::cout << "ncomb = " << icomb << std::endl;
-        Vector3f forceAxis;
+        Vector3S forceAxis(0,0,0);
         forceAxis[iaxis] = 1.f;
 
         std::vector<std::vector<int> > materials = iMaterialAssignments;
@@ -1035,7 +977,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::string iStepperType , c
     int iaxis=0;
     for (iaxis=0; iaxis<2; iaxis++)
     {
-      Vector3f forceAxis;
+      Vector3S forceAxis(0,0,0);
       forceAxis[iaxis] = 1.f;
       if (iWriteFullDeformation)
       {
@@ -1058,7 +1000,7 @@ int SamplesGeneratorImpl::computeMaterialParameters(std::string iStepperType , c
       int iaxis=0;
       for (iaxis=0; iaxis<2; iaxis++)
       {
-        Vector3f forceAxis;
+        Vector3S forceAxis(0,0,0);
         forceAxis[iaxis] = 1.f;
         std::string strAxis =  (iaxis==0?"x//": "y//");
         std::string FileName = m_OutputDirectory + strAxis  + "StressStrain_" + std::to_string(iLevel) + '_' + std::to_string(3) + "_" + std::to_string(icomb) + iPostfix + ".txt";
@@ -1150,7 +1092,7 @@ void SamplesGeneratorImpl::writeStressDeformationFile(const std::vector<std::vec
   int iaxis=0;
   for (iaxis=0; iaxis<2; iaxis++)
   {
-    Vector3f forceAxis;
+    Vector3S forceAxis(0,0,0);
     forceAxis[iaxis] = 1.f;
 
     std::string extension = ".bin"; // ".txt";
@@ -2457,17 +2399,20 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
 
   const std::vector<std::vector<std::vector<int> > > & baseMaterialStructures = iBaseMaterialStructuresPreviousLevels;
 
+  std::vector<float> physicalParameters = iPhysicalParametersPreviousLevels[prevLevel];
+  std::vector<float> tensors = iTensorsPreviousLevels[prevLevel];
+
   int nTargetParticules = 300;
   int dimparam = getNbParameters();
-  int nInitParticules = iPhysicalParametersPreviousLevels[prevLevel].size()/dimparam;
+  int nInitParticules = (int)physicalParameters.size()/dimparam;
 
   // Sampling
   std::vector<int> particules;
   ScoringFunction scoringFunction(dimparam);
-  //cfgScalar radius = scoringFunction.estimateDensityRadius(iPhysicalParametersPreviousLevels[prevLevel]);
+  //cfgScalar radius = scoringFunction.estimateDensityRadius(physicalParameters);
   bool useDistanceField = true;
   scoringFunction.setUseDistanceField(useDistanceField);
-  std::vector<cfgScalar> scores = scoringFunction.computeScores(iPhysicalParametersPreviousLevels[prevLevel]);
+  std::vector<cfgScalar> scores = scoringFunction.computeScores(physicalParameters);
   Resampler resampler;
   resampler.resample(scores, nTargetParticules, particules);
  
@@ -2478,8 +2423,8 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
   std::vector<int> initVoxelIndices = genIncrementalSequence(0, nvoxel-1);
 
   std::vector<std::vector<int> > materialAssignments, allMaterialAssignments;
-  std::vector<float> physicalParameters, allPhysicalParameters;
-  std::vector<float> tensors, allTensors;
+  std::vector<float> allPhysicalParameters;
+  std::vector<float> allTensors;
 
   bool growStructure = true;
   if (growStructure)
@@ -2525,8 +2470,10 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
     std::vector<int> initMaterialAssignment = *initMaterialAsssignments.begin();
     materialAssignments.push_back(initMaterialAssignment);*/ 
   }
-  physicalParameters = getSubVector(iPhysicalParametersPreviousLevels[prevLevel], dimparam, particules);
-  tensors = getSubVector(iTensorsPreviousLevels[prevLevel], m_dim==2?6:21, particules);
+  physicalParameters = getSubVector(physicalParameters, dimparam, particules);
+  tensors = getSubVector(tensors, m_dim==2?6:21, particules);
+
+  writeFiles(iLevel, allMaterialAssignments, baseMaterialStructures[prevLevel], allPhysicalParameters, allTensors, "SMC_init");
 
   std::vector<std::vector<std::vector<float> > > x[3];
   //writeFiles(iLevel, materialAssignments, baseMaterialStructures[prevLevel], physicalParameters, x, "SMC_init");
@@ -2570,7 +2517,7 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
             {
               mirrorStructureAlongDiagonal(n[0]/2, n[1]/2, n[2]/2, newMaterialAssignment, mirroredMaterials);
             }
-            if ((m_dim==2 && isStructureManifold(n[0]/2, n[1]/2, mirroredMaterials, mirroredStructure)) || (m_dim==3 && isStructureManifold(n[0]/2, n[1]/2, n[2]/2, mirroredMaterials, n[0]/2, n[1]/2, n[2]/2, mirroredStructure)) )
+            if ((m_dim==2 && isStructureManifold(n[0]/2, n[1]/2, mirroredMaterials, mirroredStructure)) || (m_dim==3 && isStructureManifold(n[0]/2, n[1]/2, n[2]/2, mirroredMaterials, N[0], N[1], N[2], mirroredStructure)) )
             {
               newParticuleGenerated = true;
             }
@@ -2581,7 +2528,7 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
           }
           else
           {
-            if ((m_dim==2 && isStructureManifold(n[0]/2, n[1]/2, newMaterialAssignment, mirroredStructure)) || (m_dim==3 && isStructureManifold(n[0]/2, n[1]/2, n[2]/2, newMaterialAssignment, n[0]/2, n[1]/2, n[2]/2, mirroredStructure)) )
+            if ((m_dim==2 && isStructureManifold(n[0]/2, n[1]/2, newMaterialAssignment, mirroredStructure)) || (m_dim==3 && isStructureManifold(n[0]/2, n[1]/2, n[2]/2, newMaterialAssignment, N[0], N[1], N[2], mirroredStructure)) )
             {
               newParticuleGenerated = true;
             }
@@ -2658,15 +2605,15 @@ void SamplesGeneratorImpl::getNewCombinations(const std::vector<int> &iBoundaryP
   std::vector<cfgScalar> boundaryPointCoords = getSubVector(iPoints, 3, iBoundaryPoints);
   cfgScalar bary[3];
   getBarycenter<cfgScalar,3>(boundaryPointCoords, bary);
-  Vector3f c(bary[0],bary[1],bary[2]);
+  Vector3S c(bary[0],bary[1],bary[2]);
 
   cfgScalar SqMaxDist = 0;
   int ipoint=0, npoint=(int)iBoundaryPoints.size();
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
     int indPoint = iBoundaryPoints[ipoint];
-    Vector3f p = getVector3f(indPoint, iPoints);
-    cfgScalar SqDist = (p-c).absSquared();
+    Vector3S p = getVector3S(indPoint, iPoints);
+    cfgScalar SqDist = (p-c).squaredNorm();
     if (SqDist>SqMaxDist)
     {
       SqMaxDist = SqDist;
@@ -2677,10 +2624,10 @@ void SamplesGeneratorImpl::getNewCombinations(const std::vector<int> &iBoundaryP
   npoint = iPoints.size()/3;
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
-    Vector3f p = getVector3f(ipoint, iPoints);
+    Vector3S p = getVector3S(ipoint, iPoints);
     int closestBoundaryPoint = getClosestPoint(p, boundaryPointCoords);
-    Vector3f q = getVector3f(iBoundaryPoints[closestBoundaryPoint], iPoints);
-    float SqDist = (p-q).absSquared();
+    Vector3S q = getVector3S(iBoundaryPoints[closestBoundaryPoint], iPoints);
+    float SqDist = (p-q).squaredNorm();
     if (SqDist>SqMaxDist2)
     {
       SqMaxDist2 = SqDist;
@@ -2722,10 +2669,10 @@ void SamplesGeneratorImpl::getNewCombinations(const std::vector<int> &iBoundaryP
       while (!matAssigned && assignmentOk)
       {
         int matIndex = rand() % nMat;
-        Vector3f p = getVector3f(matIndex, iPoints);
+        Vector3S p = getVector3S(matIndex, iPoints);
         int closestBoundaryPoint = getClosestPoint(p, boundaryPointCoords);
-        Vector3f q = getVector3f(iBoundaryPoints[closestBoundaryPoint], iPoints);
-        float SqDist = (p-q).absSquared();
+        Vector3S q = getVector3S(iBoundaryPoints[closestBoundaryPoint], iPoints);
+        float SqDist = (p-q).squaredNorm();
         float a = sqrt(SqDist/SqMaxDist);
         float proba = a*pmin + (1-a)*pmax;
         /*if (SqDist < 1.e-6)
@@ -2793,10 +2740,10 @@ void SamplesGeneratorImpl::getNewCombinationsV2(const std::vector<int> &iBoundar
   npoint = iPoints.size()/3;
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
-    Vector3f p = getVector3f(ipoint, iPoints);
+    Vector3S p = getVector3S(ipoint, iPoints);
     int closestBoundaryPoint = getClosestPoint(p, boundaryPointCoords);
-    Vector3f q = getVector3f(iBoundaryPoints[closestBoundaryPoint], iPoints);
-    float SqDist = (p-q).absSquared();
+    Vector3S q = getVector3S(iBoundaryPoints[closestBoundaryPoint], iPoints);
+    float SqDist = (p-q).squaredNorm();
     if (SqDist>SqMaxDist2)
     {
       SqMaxDist2 = SqDist;
@@ -2837,10 +2784,10 @@ void SamplesGeneratorImpl::getNewCombinationsV2(const std::vector<int> &iBoundar
         while (!matAssigned && assignmentOk)
         {
           int matIndex = rand() % nMat;
-          Vector3f p = getVector3f(matIndex, iPoints);
+          Vector3S p = getVector3S(matIndex, iPoints);
           int closestBoundaryPoint = getClosestPoint(p, boundaryPointCoords);
-          Vector3f q = getVector3f(iBoundaryPoints[closestBoundaryPoint], iPoints);
-          float SqDist = (p-q).absSquared();
+          Vector3S q = getVector3S(iBoundaryPoints[closestBoundaryPoint], iPoints);
+          float SqDist = (p-q).squaredNorm();
           float a = sqrt(SqDist/SqMaxDist);
           float proba = a*pmin + (1-a)*pmax;
           if (SqDist < 1.e-6)
@@ -3239,15 +3186,15 @@ void SamplesGeneratorImpl::getNewCombinationsV5(const std::vector<int> &iBoundar
   } 
 }
 
-int SamplesGeneratorImpl::getClosestPoint(Vector3f &iP, const std::vector<cfgScalar> &iPoints)
+int SamplesGeneratorImpl::getClosestPoint(Vector3S &iP, const std::vector<cfgScalar> &iPoints)
 {
   int ClosestPointIndex = -1;
   float SqDistMin = FLT_MAX;
   int ipoint=0, npoint=(int)iPoints.size()/3;
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
-    Vector3f Q = getVector3f(ipoint, iPoints);
-    float SqDist = (Q-iP).absSquared();
+    Vector3S Q = getVector3S(ipoint, iPoints);
+    float SqDist = (Q-iP).squaredNorm();
     if (SqDist < SqDistMin)
     {
       SqDistMin = SqDist;
@@ -3302,6 +3249,63 @@ void SamplesGeneratorImpl::computeParametersAndTensorValues(int n[3], const std:
   }
 }
 
+void SamplesGeneratorImpl::computeParametersAndTensorValues(int n[3], const std::vector<std::vector<double> > &iMatDistributions, std::vector<cfgScalar> &oParameters, std::vector<cfgScalar> &oTensorValues)
+{
+  oParameters.clear();
+  oTensorValues.clear();
+
+  int ncell = (int)iMatDistributions[0].size();
+  std::vector<int> matAssignment = genIncrementalSequence(0, ncell-1);
+
+  int nmat=(int)iMatDistributions.size();
+  for (int imat=0; imat<nmat; imat++)
+  {
+    if (imat % 100==0 )
+      std::cout << "************ imat = " << imat << std::endl;
+    NumericalCoarsening numCoarsening;
+    NumericalCoarsening::StructureType type = NumericalCoarsening::General;
+    if (m_cubicOnly)
+    {
+      type = NumericalCoarsening::Cubic;
+    }
+    else if (m_orthotropicOnly)
+    {
+      type = NumericalCoarsening::Orthotropic;
+    }
+ 
+    std::vector<MaterialQuad2D> mat2D(ncell);
+    std::vector<StrainLin2D> ene(ncell);
+
+    for (unsigned int ii = 0; ii < mat2D.size(); ii++)
+    {
+      double val = iMatDistributions[imat][ii];
+      float coeff = (cfgScalar) (val / (3 - 2 * val));
+      ene[ii].param[0] = coeff * m_mat2D[1].e[0]->param[0];
+      ene[ii].param[1] = coeff * m_mat2D[1].e[0]->param[1];
+
+      for (unsigned int jj = 0; jj < mat2D[ii].e.size(); jj++)
+      {
+        mat2D[ii].e[jj] = &ene[ii];
+      }
+    }
+    std::vector<cfgScalar> densities = convertVec<double, cfgScalar>(iMatDistributions[imat]);
+    if (m_dim==2)
+    {
+      numCoarsening.computeCoarsenedElasticityTensorAndParameters(matAssignment, n, m_blockRep, m_nbSubdivisions, mat2D, type, densities, oTensorValues, oParameters);
+    }
+    else
+    {
+      numCoarsening.computeCoarsenedElasticityTensorAndParameters(matAssignment, n, m_blockRep, m_nbSubdivisions, mat2D, type, oTensorValues, oParameters);
+    }
+
+    if (imat % 10==0 )
+    {
+      writeFiles(n[0], convertVec<double, cfgScalar>(iMatDistributions), oParameters, oTensorValues, "continuous_"+std::to_string(imat));
+    }
+  }
+}
+
+
 void SamplesGeneratorImpl::writeFiles(int iLevel, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<int> > &iBaseMaterialStructures, const std::vector<cfgScalar> &iParameters,
                                       const std::vector<std::vector<std::vector<float> > > iX[2], const std::string iPostFix)
 {
@@ -3328,6 +3332,19 @@ void SamplesGeneratorImpl::writeFiles(int iLevel, const std::vector<std::vector<
   cfgUtil::writeBinary<float>(fileRootName + "params" + fileExtension, iParameters);
   cfgUtil::writeBinary<int>(fileRootName + "baseMat" + fileExtension, iBaseMaterialStructures);
   cfgUtil::writeBinary<int>(fileRootName + "matAssignments" + fileExtension, iMaterialAssignments);
+  cfgUtil::writeBinary<float>(fileRootName + "elasticityTensors" + fileExtension, iTensorsValues);
+}
+
+void SamplesGeneratorImpl::writeFiles(int iLevel, const std::vector<std::vector<float> > &iMaterialDistributions, const std::vector<cfgScalar> &iParameters, const std::vector<cfgScalar> &iTensorsValues, const std::string iPostFix)
+{
+  std::string fileRootName = m_OutputDirectory + "level" + std::to_string(iLevel) + "_";
+  if (iPostFix!="")
+  {
+    fileRootName += iPostFix + "_";
+  }
+  std::string fileExtension = ".bin";
+  cfgUtil::writeBinary<float>(fileRootName + "params" + fileExtension, iParameters);
+  cfgUtil::writeBinary<float>(fileRootName + "matDistributions" + fileExtension, iMaterialDistributions);
   cfgUtil::writeBinary<float>(fileRootName + "elasticityTensors" + fileExtension, iTensorsValues);
 }
 
@@ -3445,7 +3462,7 @@ int SamplesGeneratorImpl::run()
   if (0)
   {
     std::string inputFileName = m_OutputDirectory + "x_level1//StressStrain_1_3_x.txt";
-    Vector3f forceAxis;
+    Vector3S forceAxis;
     std::vector<std::vector<int> > materials;
     std::vector<std::vector<float> > stresses, strains;
     bool ResOk = readData(inputFileName,  forceAxis, materials, stresses, strains);
@@ -3565,68 +3582,29 @@ int SamplesGeneratorImpl::run()
     std::vector<float> physicalParameters;
     bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters);
 
-    int group=0;
-    std::vector<std::vector<float> > tensors;
-    int N[3] = {level, level, level};
+    int n[3] = {level, level, level};
+    std::vector<float> tensors;
+    std::vector<float> newphysicalParameters;
+    computeParametersAndTensorValues(n, materialAssignments, newphysicalParameters, tensors);
+    writeFiles(level, materialAssignments, baseMaterialStructures, newphysicalParameters, tensors);
+    return 0;
+  }
 
-    int imat, nmat=(int)materialAssignments.size();
-    std::cout << "nmat = " << nmat << std::endl;
-    for (imat=0; imat<nmat; imat++)
+  // compute homogenised tensors from continuous material distribution
+  if (0)
+  {
+    int level = 16;
+
+    std::vector<std::vector<double> > materialDistributions;
+    bool ResOk = cfgUtil::readBinary<double>(m_OutputDirectory + "16Ortho.bin", materialDistributions);
+    if (ResOk)
     {
-      //if (imat %100 == 0)
-        std::cout << "imat = " << imat << std::endl;
-      NumericalCoarsening numCoarsening;
-      if (m_dim==2)
-      {
-        MatrixXS C =  numCoarsening.computeCoarsenedElasticityTensor(materialAssignments[imat], N, m_blockRep, m_nbSubdivisions, m_mat2D);
-        //std::cout << "C = " << std::endl << C << std::endl;
-        std::vector<float> Cvalues;
-        for (int i=0; i<3; i++)
-        {
-          for (int j=0; j<3; j++)
-          {
-            if (j<=i)
-            {
-              Cvalues.push_back(C(i,j));
-            }
-          }
-        }
-        tensors.push_back(Cvalues);
-      }
-      else
-      {
-        MatrixXS C =  numCoarsening.computeCoarsenedElasticityTensor(materialAssignments[imat], N, m_blockRep, m_nbSubdivisions, m_mat);
-        //std::cout << "C = " << std::endl << C << std::endl;
-        std::vector<float> Cvalues;
-        for (int i=0; i<6; i++)
-        {
-          for (int j=0; j<6; j++)
-          {
-            if (j<=i)
-            {
-              Cvalues.push_back(C(i,j));
-            }
-          }
-        }
-        tensors.push_back(Cvalues);
-      }
-      /*if ((imat+1) % 200 == 0)
-      {
-        std::string fileRootName = m_OutputDirectory + "level" + std::to_string(level) + "_";
-        std::string fileExtension = ".bin";
-        fileRootName += std::to_string(group++) + "_";
-        cfgUtil::writeBinary<float>(fileRootName + "elasticityTensors" + fileExtension, tensors);
-        tensors.clear();
-      }*/ 
+      int n[3] = {level, level, level};
+      std::vector<float> tensors;
+      std::vector<float> physicalParameters;
+      computeParametersAndTensorValues(n, materialDistributions, physicalParameters, tensors);
+      writeFiles(level, convertVec<double, cfgScalar>(materialDistributions), physicalParameters, tensors, "continuous");
     }
-    std::string fileRootName = m_OutputDirectory + "level" + std::to_string(level) + "_";
-    std::string fileExtension = ".bin";
-    //fileRootName += std::to_string(group++) + "_";
-    cfgUtil::writeBinary<float>(fileRootName + "elasticityTensors" + fileExtension, tensors);
-
-    //std::vector<std::vector<float> > tensors2;
-    //ResOk = cfgUtil::readBinary<float>(fileRootName + "elasticityTensors" + fileExtension, tensors2);
-
     return 0;
   }
 
@@ -3643,7 +3621,7 @@ int SamplesGeneratorImpl::run()
     if (m_orthotropicOnly)
       maxlevel = 4;
     if (m_cubicOnly)
-      maxlevel = (m_dim==2? 8: 4);
+      maxlevel = 8; //maxlevel = (m_dim==2? 8: 4);
 
     for (int ilevel=1; ilevel<=maxlevel; ilevel*=2)
     {
@@ -3662,7 +3640,7 @@ int SamplesGeneratorImpl::run()
   }
 
   // Continuous optimization
-  if (1)
+  if (0)
   {
     int ilevel = 16;
     int n[3] = {ilevel, ilevel, ilevel};
@@ -3676,7 +3654,7 @@ int SamplesGeneratorImpl::run()
     runContinuousOptimization(ilevel, m_mat2D, materialAssignments, physicalParameters, tensors, newMaterialAssignments, newParameters, newTensors);
   }
 
-  if (0)
+  if (1)
   {
     bool growAllStructures = false;
 
@@ -3919,7 +3897,7 @@ int SamplesGeneratorImpl::run()
         float forceMagnitude = 1.f;
         int NumberOfSample = 10;
         int axis = 0;
-        Vector3f forceAxis;
+        Vector3S forceAxis;
         forceAxis[axis] = 1.f;
 
         std::string FileName = m_OutputDirectory + "StressStrain_" + std::to_string(iHLevel) + '_' + std::to_string(iReflevel) + "_" + std::to_string(icomb+shiftRand) + ".txt";

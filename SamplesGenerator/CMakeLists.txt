@@ -20,16 +20,16 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/
 link_directories($ENV{QHULL_BUILD_PATH})
 
 # math
-include_directories(${PROJECT_SOURCE_DIR}/../vecmath/include)
-if (NOT TARGET vecmath)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/../vecmath ${CMAKE_CURRENT_BINARY_DIR}/vecmath)
-endif() 
+#include_directories(${PROJECT_SOURCE_DIR}/../vecmath/include)
+#if (NOT TARGET vecmath)
+#    add_subdirectory(${PROJECT_SOURCE_DIR}/../vecmath ${CMAKE_CURRENT_BINARY_DIR}/vecmath)
+#endif() 
 
 # femlib
 include_directories(${PROJECT_SOURCE_DIR}/../femlib/include)
-if (NOT TARGET vecmath)
-	add_subdirectory(${PROJECT_SOURCE_DIR}/../femlib ${CMAKE_CURRENT_BINARY_DIR}/femlib)
-endif()
+#if (NOT TARGET vecmath)
+#	add_subdirectory(${PROJECT_SOURCE_DIR}/../femlib ${CMAKE_CURRENT_BINARY_DIR}/femlib)
+#endif()
 
 # continuous material optimization
 include_directories(${PROJECT_SOURCE_DIR}/../MaterialOpt/include)
@@ -50,7 +50,7 @@ endif()
 
 add_executable (SamplesGenerator ${src})
 
-target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} vecmath FEMLib StepperCPU libopenblas ${Utilities_LIBS} MaterialOpt)
+target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} FEMLib StepperCPU libopenblas ${Utilities_LIBS} MaterialOpt)
 if (IS_PARDISO_AVAILABLE)
 	target_link_libraries(SamplesGenerator libpardiso500-WIN-X86-64)
 endif()

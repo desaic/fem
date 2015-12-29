@@ -26,7 +26,7 @@ MainWindow::MainWindow()
       addLevelCheckBox(dockWidgetContents, ilevel);
   }*/ 
 
-  int dim = 2;
+  int dim = 3;
   m_project = new exProject(dim);
   m_project->setFileDirectory("..//..//Output//");
   //m_project->setFileDirectory("..//..//Output//Stress_Deformation_8x8_1000_samples_Ratio10//");
@@ -108,7 +108,7 @@ void MainWindow::dropEvent(QDropEvent *iEvent)
       bool resOk = m_project->loadFile(file, level, label);
       if (resOk)
       {
-        addLevelCheckBox(dockWidgetContents, level, label);
+        addLevelCheckBox(layersWidgetContents, level, label);
       }
     }
   }

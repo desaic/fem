@@ -310,20 +310,20 @@ void MaterialParametersView::updatePlots()
       Resampler resampler;
       resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, newparticules3);
       
-      std::vector<int> newparticules3tmp = newparticules3;
-      newparticules3.clear();
-      int ind = 2;
-      newparticules3.push_back(newparticules3tmp[ind]);
+      //std::vector<int> newparticules3tmp = newparticules3;
+      //newparticules3.clear();
+      //int ind = 2;
+      //newparticules3.push_back(newparticules3tmp[ind]);
 
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, "Y1", "Nu1", "Density", green, 15);
       m_plotsPerLevel[ilevel].push_back(plot3);
 
-      vtkVector3i magenta(255, 0, 255);
+      /*vtkVector3i magenta(255, 0, 255);
       vtkSmartPointer<vtkTable> table4 =  createTable(newPoints, levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot4 = createPointPlot3D(table4, "Y1", "Nu1", "Density", magenta, 15);
-      m_plotsPerLevel[ilevel].push_back(plot4);
+      m_plotsPerLevel[ilevel].push_back(plot4);*/ 
 
     }
 
@@ -714,6 +714,17 @@ void MaterialParametersView::mouseReleaseEvent(QMouseEvent * iMouseEvent)
   {
     int indLevel = m_plots2Levels[pickedPlotIndex];
     m_project->setPickedStructure(pickedPointIndex, indLevel);
+
+    const std::vector<std::vector<cfgScalar> > & tensors = m_project->getElasticityTensors();
+    if (tensors.size()>0 && tensors[indLevel].size()>0)
+    {
+      int indStart = 6*pickedPointIndex;
+      const std::vector<cfgScalar> & t = tensors[indLevel];
+      std::cout << "Elasticity tensor: " << std::endl;
+      std::cout << t[indStart] << std::endl;
+      std::cout << t[indStart+1] << " " << t[indStart+2] << std::endl;
+      std::cout << t[indStart+3] << " " << t[indStart+4] << " " << t[indStart+5] << std::endl;
+    }
   }
 
   /*if (pickedPointIndex>=0)

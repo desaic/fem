@@ -10,7 +10,6 @@ class ElementRegGrid;
 class ElementRegGrid2D;
 class Stepper;
 class Stepper2D;
-class Vector3f;
 
 class SamplesGeneratorImpl
 {
@@ -51,7 +50,7 @@ private:
   bool computeForceDeformationSample(ElementRegGrid2D * iElementGrid, std::string iStepperType, int iNumberOfSteps, bool &oConverged);
   bool computeEquilibrium(Stepper * iStepper, ElementRegGrid * iElementGrid, int iNumberOfSteps, bool &oConverged);
   bool computeEquilibrium(Stepper2D * iStepper, ElementRegGrid2D * iElementGrid, int iNumberOfSteps, bool &oConverged);
-  ElementRegGrid * createPhysicalSystem(int iN[3], Vector3f iForce, std::vector<MaterialQuad> &iMaterials);
+  ElementRegGrid * createPhysicalSystem(int iN[3], Vector3S iForce, std::vector<MaterialQuad> &iMaterials);
   ElementRegGrid * createPhysicalSystem(int iN[3], std::vector<MaterialQuad> &iMaterials);
   ElementRegGrid2D * createPhysicalSystem(int iN[2], std::vector<MaterialQuad2D> &iMaterials);
   void setExternalForces(ElementRegGrid * iElementGrid, int iAxis, int iSide, float iForceMagnitude);
@@ -79,7 +78,7 @@ private:
   void growStructureDoubleSize(int N[2], const std::vector<int> &matAssignment, std::set<std::vector<int> > &ioNewMaterialAssignments, int iRowToDuplicate, int iColToDuplicate);
   void growStructureDoubleSize(int N[3], const std::vector<int> &matAssignment, std::set<std::vector<int> > &ioNewMaterialAssignments, int iLayerXToDuplicate, int iLayerYToDuplicate, int iLayerZToDuplicate);
 
-  int getClosestPoint(Vector3f &iP, const std::vector<cfgScalar> &iPoints);
+  int getClosestPoint(Vector3S &iP, const std::vector<cfgScalar> &iPoints);
   int getRandomMatWithLinearProba(std::multimap<float, int> &iDist2MatIndex, float eps, float r);
 
   int computeVariations(std::string & iStepperType, int iLevel);
@@ -99,6 +98,7 @@ private:
                   const std::string iPostFix="");
   void writeFiles(int iLevel, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<int> > &iBaseMaterialStructures, const std::vector<cfgScalar> &iParameters,
                   const std::vector<cfgScalar> &iTensorsValues, const std::string iPostFix="");
+  void writeFiles(int iLevel, const std::vector<std::vector<float> > &iMaterialDistributions, const std::vector<cfgScalar> &iParameters, const std::vector<cfgScalar> &iTensorsValues, const std::string iPostFix="");
 
   bool readFiles(int iLevel, std::vector<std::vector<int> > &oMaterialAssignments, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<cfgScalar> &oParameters);
   bool readFiles(int iLevel, std::vector<std::vector<int> > &oMaterialAssignments, std::vector<std::vector<int> > &oBaseMaterialStructures, std::vector<cfgScalar> &oParameters, std::vector<cfgScalar> &oTensors, const std::string iPostFix="");
@@ -109,6 +109,7 @@ private:
   std::vector<int> getFreeCellsMaterialAssignment(int n[3], const std::vector<int> &iMatAssignments);
   std::vector<int>  getFullMaterialAssignment(int n[3], const std::vector<int> &iFreeCellMatAssignments);
   void computeParametersAndTensorValues(int n[3], const std::vector<std::vector<int> > &iMatAssignments, std::vector<cfgScalar> &oParameters, std::vector<cfgScalar> &oTensorValues);
+  void computeParametersAndTensorValues(int n[3], const std::vector<std::vector<double> > &iMatDistributions, std::vector<cfgScalar> &oParameters, std::vector<cfgScalar> &oTensorValues);
 
   void runContinuousOptimization(int iLevel, const std::vector<MaterialQuad2D> &iBaseMaterials, const std::vector<std::vector<int> > &iMaterialAssignments, 
                                  const std::vector<float> &iParameters, const std::vector<float> &iTensors, 
@@ -124,6 +125,7 @@ private:
   std::vector<MaterialQuad2D> m_mat2D;
   bool m_orthotropicOnly;
   bool m_cubicOnly;
+  bool m_continuousMatDist;
 };
 
 #endif

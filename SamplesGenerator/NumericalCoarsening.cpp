@@ -84,6 +84,56 @@ void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters(const st
   ioParameters.push_back(G);
 }
 
+void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[2], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad2D> &iBaseMaterials, 
+                                                                        StructureType iType, std::vector<cfgScalar> &iBaseMaterialDensities, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters)
+{
+  std::vector<int> cellMaterials;
+  repMaterialAssignment(N[0], N[1], iMaterials, iNbBlockRep, iNbBlockRep, iNbSubdiv, cellMaterials); 
+
+  int n[2] = {N[0]*iNbBlockRep*iNbSubdiv, N[1]*iNbBlockRep*iNbSubdiv};
+  ElementRegGrid2D * physicalSystem = createPhysicalSystem(n, iBaseMaterials, cellMaterials);
+  Stepper2D * stepper = createStepper(physicalSystem);
+
+  cfgScalar forceMagnitude = 1;
+  std::vector<std::vector<cfgScalar> > harmonicDisp;
+  computeHarmonicDisplacements(physicalSystem, stepper, forceMagnitude, iType, harmonicDisp);
+
+  std::vector<Vector2S> h = cfgMaterialUtilities::toVector2S(harmonicDisp[0]);
+  std::vector<Vector2S> x = cfgUtil::add(physicalSystem->X, h);
+
+  MatrixXS C;
+  meshUtil::computeCoarsenedElasticityTensor(*physicalSystem, harmonicDisp, C);
+
+  std::vector<float> Cvalues;
+  for (int i=0; i<3; i++)
+  {
+    for (int j=0; j<3; j++)
+    {
+      if (j<=i)
+      {
+        ioTensorValues.push_back(C(i,j));
+      }
+    }
+  }
+
+  std::vector<std::vector<cfgScalar> > strains;
+  meshUtil::computeStrains(*physicalSystem, harmonicDisp, strains);
+
+  cfgScalar r = computeMaterialDensity(iMaterials, iBaseMaterialDensities);
+  ioParameters.push_back(r);
+
+  int naxis = (iType==Cubic? 1: 2);
+  for (int iaxis=0; iaxis<naxis; iaxis++)
+  {
+    cfgScalar Y = computeYoungModulus(strains[iaxis][iaxis], forceMagnitude);
+    ioParameters.push_back(Y);
+  }
+  cfgScalar poissonRatio_xy = computePoissonRatio(strains[0][0], strains[0][1]); 
+  ioParameters.push_back(poissonRatio_xy);
+
+  cfgScalar G = C(2,2);
+  ioParameters.push_back(G);
+}
 void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[3], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad> &iBaseMaterials, 
                                                                         StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters)
 {
@@ -287,9 +337,9 @@ void NumericalCoarsening::setExternalForcesForHarmonicDisp(cfgScalar iFx, cfgSca
 
   int nforce =  iPhysicalSystem->fe.size();
   iPhysicalSystem->fe.clear();
-  iPhysicalSystem->fe.resize(nforce, Vector3f(0,0,0));
+  iPhysicalSystem->fe.resize(nforce, Vector3S(0,0,0));
 
-  Vector3f force(iFx, iFy, iFz);
+  Vector3S force(iFx, iFy, iFz);
   if (iFx!=0 && iFy==0 && iFz==0)
   {
     addExternalForces(iPhysicalSystem, 0, 2, force);
@@ -304,26 +354,26 @@ void NumericalCoarsening::setExternalForcesForHarmonicDisp(cfgScalar iFx, cfgSca
   }
   else if (iFx!=0 && iFy!=0 && iFz==0)
   {
-    Vector3f forceX(iFx, 0, 0);
+    Vector3S forceX(iFx, 0, 0);
     addExternalForces(iPhysicalSystem, 1, 2, forceX);
 
-    Vector3f forceY(0, iFy, 0);
+    Vector3S forceY(0, iFy, 0);
     addExternalForces(iPhysicalSystem, 0, 2, forceY);
   }
   else if (iFx!=0 && iFy==0 && iFz!=0)
   {
-    Vector3f forceX(iFx, 0, 0);
+    Vector3S forceX(iFx, 0, 0);
     addExternalForces(iPhysicalSystem, 2, 2, forceX);
 
-    Vector3f forceZ(0, 0, iFz);
+    Vector3S forceZ(0, 0, iFz);
     addExternalForces(iPhysicalSystem, 0, 2, forceZ);
   }
   else if (iFx==0 && iFy!=0 && iFz!=0)
   {
-    Vector3f forceY(0, iFy, 0);
+    Vector3S forceY(0, iFy, 0);
     addExternalForces(iPhysicalSystem, 2, 2, forceY);
 
-    Vector3f forceZ(0, 0, iFz);
+    Vector3S forceZ(0, 0, iFz);
     addExternalForces(iPhysicalSystem, 1, 2, forceZ);
   }
 }
@@ -408,7 +458,7 @@ void NumericalCoarsening::addExternalForces(ElementRegGrid2D * iElementGrid, int
   }
 }
 
-void NumericalCoarsening::addExternalForces(ElementRegGrid * iElementGrid, int iAxis, int iSide, Vector3f &iForceMagnitude)
+void NumericalCoarsening::addExternalForces(ElementRegGrid * iElementGrid, int iAxis, int iSide, Vector3S &iForceMagnitude)
 {
   assert(iElementGrid);
   assert(iSide==2);
@@ -424,7 +474,7 @@ void NumericalCoarsening::addExternalForces(ElementRegGrid * iElementGrid, int i
   std::vector<int> signs;
 
   cfgScalar coeff = ((cfgScalar)1/(n[(iAxis+1)%3]*n[(iAxis+2)%3]))/4;
-  Vector3f ff = coeff*iForceMagnitude;
+  Vector3S ff = coeff*iForceMagnitude;
 
   sides.push_back(0);
   sides.push_back(1);
