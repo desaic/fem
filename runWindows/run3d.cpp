@@ -26,6 +26,7 @@ void optMat3D(FEM3DFun * fem, int nSteps)
   Eigen::VectorXd x1 = fem->param;
   fem->setParam(x1);
   fem->m0 = sum(fem->distribution) / fem->distribution.size();
+  double val = fem->f();
   //scale mass term to roughly displacement term.
   //gradientDescent(fem, x1, nSteps);
 }
@@ -42,6 +43,7 @@ void run3D(const ConfigFile & conf)
   x0 =  Eigen::VectorXd::Ones(nx * ny * nz);
   ElementRegGrid * em = new ElementRegGrid(nx, ny, nz);
   std::vector<StrainLin> ene(1);
+  //E = 1e3.
   ene[0].param[0] = 3448.275862;
   ene[0].param[1] = 31034.48276;
 

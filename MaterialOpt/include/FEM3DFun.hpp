@@ -1,6 +1,7 @@
 #ifndef FEM3DFUN_HPP
 #define FEM3DFUN_HPP
 
+#include "cfgDefs.h"
 #include "RealFun.hpp"
 #include <vector>
 
@@ -28,10 +29,14 @@ public:
   bool m_Init;
   bool m_periodic;
   bool m_fixRigid;
-
+  bool constrained;
   ///@brief 6x6 matrix of coarse strain tensor
   ///produced by harmonic displacements.
   Eigen::MatrixXd G;
+
+  ///@brief 6x6 fine energy matrix. 
+  ///\sum_i G^T:C:G
+  Eigen::MatrixXd GTCG;
 
   double density;
 
@@ -66,6 +71,10 @@ public:
   Eigen::VectorXd distribution;
   
   PardisoState * pardisoState;
+
+  MatrixXS K0;
+  MatrixXS getKe(int ei);
+  void getStiffnessSparse();
 
   void init(const Eigen::VectorXd & x0);
   void initArrays();

@@ -20,11 +20,6 @@ static const int sw[8][3] =
 { 1, 1, 1 }
 };
 
-///@brief a copy of stiffness matrix assembly function in ElementMesh2D class.
-///Difference is that this function scales K for each element using param.
-void getStiffnessSparse(ElementMesh * em, const Eigen::VectorXd & param,
-  std::vector<cfgScalar> &val, bool trig, bool constrained, bool iFixedRigid, bool iPeriodic);
-
 std::vector<int> topVerts(ElementMesh * em, const std::vector<int> & gridSize);
 std::vector<int> botVerts(ElementMesh * em, const std::vector<int> & gridSize);
 std::vector<int> leftVerts(ElementMesh * em, const std::vector<int> & gridSize);
@@ -36,7 +31,13 @@ std::vector<int> backVerts(ElementMesh * em, const std::vector<int> & gridSize);
 void addVector3d(std::vector<double> & a, const Eigen::Vector3d & f,
   const std::vector<int> & idx);
 
-///@brief eight corners of a grid for coarsening.
+void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
+  const std::vector<double> & u);
+
+void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
+  const std::vector<Eigen::Vector3f> & X);
+
+  ///@brief eight corners of a grid for coarsening.
 std::vector<int> cornerVerts(ElementMesh * em, const std::vector<int> & gridSize);
 
 ///@brief assuming element size 1.
@@ -44,6 +45,9 @@ Vector3d shapeFunGrad(int ii, const Vector3d & xx);
 
 ///@param size. size of a cube element.
 Eigen::MatrixXd BMatrix(const Vector3d & xx, const Eigen::Vector3d & size);
+
+Eigen::VectorXd hexStrain(const Eigen::VectorXd & x, const Eigen::VectorXd & X,
+  const Eigen::Vector3d & xi);
 
 int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize)
 {
@@ -61,6 +65,7 @@ void FEM3DFun::initArrays()
     dfdu[ii].resize(nrow);
   }
   G = Eigen::MatrixXd(6, nForce);
+  GTCG = Eigen::MatrixXd(6, 6);
 }
 
 void FEM3DFun::init(const Eigen::VectorXd & x0)
@@ -95,11 +100,12 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
   stretchY(em, forceDir, gridSize, externalForce[1]);
   forceDir = forceMagnitude * Eigen::Vector3d(0, 0, 1);
   stretchZ(em, forceDir, gridSize, externalForce[2]);
-  shearYZ(em, forceMagnitude, gridSize, externalForce[3]);
-  shearXZ(em, forceMagnitude, gridSize, externalForce[4]);
-  shearXY(em, forceMagnitude, gridSize, externalForce[5]);
+  shearXY(em, forceMagnitude, gridSize, externalForce[3]);
+  shearYZ(em, forceMagnitude, gridSize, externalForce[4]);
+  shearXZ(em, forceMagnitude, gridSize, externalForce[5]);
 
   initArrays();
+  K0 = em->getStiffness(0);
   m_Init = true;
 }
 
@@ -130,12 +136,10 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
 
   //solve linear statics problems
   Timer timer;
-  std::vector<cfgScalar> val;
   //timer.startWall();
-  getStiffnessSparse(em, distribution, val, triangle, constrained, m_fixRigid, m_periodic);
+  getStiffnessSparse();
   //timer.endWall();
   //std::cout << "assemble time " << timer.getSecondsWall() << "\n";
-  m_val = std::vector<double>(val.begin(), val.end());
   int nrows = (int)m_I.size() - 1;
 
   timer.startWall();
@@ -161,9 +165,62 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
 
 }
 
+void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx, 
+  const std::vector<Eigen::Vector3f> & X )
+{
+  int dim = 3;
+  x = Eigen::VectorXd(dim * vidx.size());
+  for (unsigned int ii = 0; ii < vidx.size(); ii++){
+    for (int jj = 0; jj < dim; jj++){
+      x[ii*dim + jj] = X[vidx[ii]][jj];
+    }
+  }
+}
+
+void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
+  const std::vector<double> & u)
+{
+  int dim = 3;
+  x = Eigen::VectorXd(dim * vidx.size());
+  for (unsigned int ii = 0; ii < vidx.size(); ii++){
+    for (int jj = 0; jj < dim; jj++){
+      x[ii*dim + jj] = u[dim*vidx[ii]+jj];
+    }
+  }
+}
+
 double FEM3DFun::f()
 {
   double val = 0;
+  std::vector<int> vidx = cornerVerts(em, gridSize);
+  Eigen::VectorXd X;
+  copyVert3(X, vidx, em->X);
+  for (int ii = 0; ii < G.cols(); ii++){
+    Eigen::Vector3d xi(0, 0, 0);
+    Eigen::VectorXd x;
+    copyVert3(x, vidx, u[ii]);
+    Eigen::VectorXd strain = hexStrain(x, X, xi);
+    G.col(ii) = strain;
+  }
+  GTCG = Eigen::MatrixXd::Zero(6, 6);
+  for (int ei = 0; ei < (int)em->e.size(); ei++){
+    //element displacements.
+    Eigen::MatrixXd Ke = getKe(ei).cast<double>();
+    std::vector<Eigen::VectorXd> ue(6);
+    std::vector<int> ni = em->e[ei]->getNodeIndices();
+    for (int ii = 0; ii < GTCG.cols(); ii++){
+      copyVert3(ue[ii], ni, u[ii]);
+    }
+    for (int ii = 0; ii < GTCG.cols(); ii++){
+      for (int jj = 0; jj < GTCG.rows(); jj++){
+        GTCG(ii,jj) += ue[ii].dot(Ke*ue[jj]);
+      }
+    }
+  }
+  Eigen::MatrixXd Ginv = G.inverse();
+  Eigen::MatrixXd C = Ginv.transpose() * GTCG * Ginv;
+  std::cout << "G:\n" << G << "\n";
+  std::cout <<"GTCG:\n"<<GTCG<<"\nC:\n "<< C << "\n";
   return val ;
 }
 
@@ -248,6 +305,7 @@ FEM3DFun::FEM3DFun() :em(0), dim(3),
 m_Init(false),
 m_periodic(true),
 m_fixRigid(true),
+constrained(false),
 forceMagnitude(100),
 gridSize(3,0),
 field(0)
@@ -256,20 +314,24 @@ field(0)
 
 FEM3DFun::~FEM3DFun(){}
 
-void getStiffnessSparse(ElementMesh * em, const Eigen::VectorXd & param,
-  std::vector<cfgScalar> &val, bool trig, bool constrained, bool iFixedRigid, bool iPeriodic)
+MatrixXS FEM3DFun::getKe(int ei)
 {
+  return (cfgScalar)(param[ei] / (3 - 2 * param[ei])) * K0;
+}
+
+void FEM3DFun::getStiffnessSparse()
+{
+  bool trig = true;
   int dim = 3;
   int N = dim * (int)em->x.size();
   std::vector<TripletS> coef;
   Eigen::SparseMatrix<cfgScalar> Ksparse(N, N);
-  MatrixXS K0 = em->getStiffness(0);
   for (unsigned int ii = 0; ii<em->e.size(); ii++){
     Element * ele = em->e[ii];
     int nV = ele->nV();
     //K = K0 * rho/(3-2*rho).
     //change for better bound if there is one
-    MatrixXS K = (cfgScalar) (param[ii] / (3 - 2 * param[ii])) * K0;
+    MatrixXS K = getKe(ii);
 
     for (int jj = 0; jj<nV; jj++){
       int vj = ele->at(jj);
@@ -298,21 +360,21 @@ void getStiffnessSparse(ElementMesh * em, const Eigen::VectorXd & param,
     }
   }
   Ksparse.setFromTriplets(coef.begin(), coef.end());
-  if (iFixedRigid)
+  if (m_fixRigid)
   {
     em->fixTranslation(Ksparse, trig, em);
     em->fixRotation(Ksparse, trig, em);
   }
-  if (iPeriodic)
+  if (m_periodic)
   {
     em->enforcePeriodicity(Ksparse, trig, em);
   }
 
-  val.resize(Ksparse.nonZeros());
+  m_val.resize(Ksparse.nonZeros());
   int idx = 0;
   for (int ii = 0; ii<Ksparse.rows(); ii++){
     for (Eigen::SparseMatrix<cfgScalar>::InnerIterator it(Ksparse, ii); it; ++it){
-      val[idx] = it.value();
+      m_val[idx] = it.value();
       idx++;
     }
   }
@@ -551,14 +613,14 @@ Eigen::MatrixXd BMatrix(const Vector3d & xx, const Eigen::Vector3d & size)
 }
 
 //returns 6 element vector measured at xi.
-Eigen::VectorXd hexStrain(const Eigen::VectorXd & x, const Eigen::VectorXd & X,
+Eigen::VectorXd hexStrain(const Eigen::VectorXd & u, const Eigen::VectorXd & X,
   const Eigen::Vector3d & xi)
 {
   int dim = 3;
   //size of cube element
-  int nV = X.cols()/3;
-  Eigen::Vector3d esize = X.segment<3>(0) - X.segment<3>(3*(nV-1));
+  int nV = X.rows()/3;
+  Eigen::Vector3d esize = X.segment<3>(3*(nV-1)) - X.segment<3>(0);
   Eigen::MatrixXd B=BMatrix(xi, esize);
-  Eigen::VectorXd strain = B*(x-X);
+  Eigen::VectorXd strain = B*u;
   return strain;
 }
