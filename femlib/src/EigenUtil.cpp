@@ -21,7 +21,7 @@ void write_matlab(std::ostream &output, const char *variable_name,
 {
 
   output<<"I=[";
-   for(unsigned int i=0; i<M.cols(); ++i){
+   for(int i=0; i<M.cols(); ++i){
      for (Eigen::SparseMatrix<double>::InnerIterator it(M, i); it; ++it){
        output<<" "<<i+1;
      }
@@ -31,7 +31,7 @@ void write_matlab(std::ostream &output, const char *variable_name,
    }
 
    output<<"];\n  J=[";
-   for(unsigned int i=0; i<M.cols(); ++i){
+   for(int i=0; i<M.cols(); ++i){
      for (Eigen::SparseMatrix<double>::InnerIterator it(M, i); it; ++it){
        output<<" "<<it.row()+1;
      }
@@ -41,7 +41,7 @@ void write_matlab(std::ostream &output, const char *variable_name,
    }
 
    output<<"];\n  V=[";
-   for(unsigned int i=0; i<M.cols(); ++i){
+   for(int i=0; i<M.cols(); ++i){
      for (Eigen::SparseMatrix<double>::InnerIterator it(M, i); it; ++it){
        output<<" "<<it.value();
      }
@@ -59,7 +59,7 @@ void write_matlab_lists(std::ostream &output,
 {
   int nnz = M.nonZeros();
   output<<M.rows()<<" "<<nnz<<"\n";
-  for(unsigned int i=0; i<M.cols(); ++i){
+  for(int i=0; i<M.cols(); ++i){
     for (Eigen::SparseMatrix<double>::InnerIterator it(M, i); it; ++it){
       output<< i+1 << " " << it.row()+1 << " " << it.value() <<"\n";
     }
@@ -71,9 +71,18 @@ void write_vega_lists(std::ostream &output,
 {
   output<<M.rows()<<"\n"<<M.cols()<<"\n";
   output.precision(16);
-  for(unsigned int i=0; i<M.cols(); ++i){
+  for(int i=0; i<M.cols(); ++i){
     for (Eigen::SparseMatrix<double>::InnerIterator it(M, i); it; ++it){
       output<< i << " " << it.row() << " " << it.value() <<"\n";
     }
   }
+}
+
+double sum(const Eigen::VectorXd & x)
+{
+  double sum = 0;
+  for (int ii = 0; ii < x.size(); ii++){
+    sum += x[ii];
+  }
+  return sum;
 }

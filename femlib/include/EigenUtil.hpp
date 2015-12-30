@@ -79,5 +79,6 @@ rmConstrained(const Eigen::SparseMatrix<T> & K,
   return Kc;
 }
 
+double sum(const Eigen::VectorXd & x);
 
 #endif // EIGENUTIL_HPP

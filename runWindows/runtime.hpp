@@ -3,9 +3,12 @@
 
 #include "ConfigFile.hpp"
 #include "FEM2DFun.hpp"
+#include "FEM3DFun.hpp"
+
 #include <fstream>
 
 void run2D(const ConfigFile & conf);
+void run3D(const ConfigFile & conf);
 
 ///@brief sparse matrix vector product.
 Eigen::VectorXd
@@ -42,5 +45,7 @@ void computeMat(FEM2DFun * fem, const ConfigFile & conf);
 
 ///@brief optimize material distribution for each starting point.
 void optMat(FEM2DFun * fem, int nSteps);
+
+void optMat3D(FEM3DFun * fem, int nSteps);
 
 #endif

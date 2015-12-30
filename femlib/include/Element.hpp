@@ -49,6 +49,9 @@ public:
     const std::vector<Eigen::Vector3f>x);
 
   const std::vector<int> & getNodeIndices()const{ return n; }
+
+  //for rendering
+  Eigen::Vector3f color;
 private:
 
   ///@brief nodal indices

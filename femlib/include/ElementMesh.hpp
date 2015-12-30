@@ -43,9 +43,7 @@ public:
   std::vector<Eigen::Vector3f>fe;
   
   std::vector<int> fixed;
-
-  std::vector<std::vector<Eigen::Vector3f> > * u;
-
+  
   ///@brief default constructor
   ElementMesh();
   
@@ -91,7 +89,11 @@ public:
 
   virtual ~ElementMesh();
 
-private:
+
+  //for rendering 
+  float forceDrawingScale;
+
+//private:
   void fixTranslation(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
   void fixRotation(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
   void enforcePeriodicity(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
