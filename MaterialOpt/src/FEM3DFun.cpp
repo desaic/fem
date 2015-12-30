@@ -83,7 +83,12 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
   stretchX(em, forceDir, gridSize, externalForce[0]);
   forceDir = forceMagnitude * Eigen::Vector3d(0, 1, 0);
   stretchY(em, forceDir, gridSize, externalForce[1]);
-  
+  forceDir = forceMagnitude * Eigen::Vector3d(0, 0, 1);
+  stretchZ(em, forceDir, gridSize, externalForce[2]);
+  shearYZ(em, forceMagnitude, gridSize, externalForce[3]);
+  shearXZ(em, forceMagnitude, gridSize, externalForce[4]);
+  shearXY(em, forceMagnitude, gridSize, externalForce[5]);
+
   initArrays();
   m_Init = true;
 }
@@ -132,14 +137,6 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
     sparseSolve(I.data(), J.data(), m_val.data(), nrows, &(u[ii][0]), externalForce[ii].data());
     //timer.endWall();
     //std::cout<<"Lin solve time " << timer.getSecondsWall() << "\n";
-  }
-
-  //show rendering
-  for (unsigned int ii = 0; ii < em->x.size(); ii++){
-    for (int jj = 0; jj < dim; jj++){
-      em->x[ii][jj] = em->X[ii][jj] + u[0][ii*dim + jj];
-      em->fe[ii][jj] = externalForce[0][ii*dim + jj];
-    }
   }
 
   //density objective

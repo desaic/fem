@@ -41,6 +41,8 @@ public:
   //how fast to rotate in x and y axis
   float xRotSpeed, yRotSpeed;
   float camSpeed;
+  void toggleForce();
+  int forceIdx;
 private:
   ///@brief Render does not own this pointer.
   World * world;

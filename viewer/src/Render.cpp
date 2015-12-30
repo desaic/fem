@@ -73,6 +73,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
       break;
     case GLFW_KEY_F:
       render->camera.keyhold[5] = false;
+    case GLFW_KEY_T:
+      render->toggleForce();
       break;
     }
   }
@@ -215,6 +217,29 @@ void Render::drawEle(int eidx, ElementMesh * m)
 
   glEnable(GL_LIGHTING);
   glEnd();
+}
+
+void Render::toggleForce()
+{
+  if (world->em.size() == 0){
+    return;
+  }
+  if (world->u == 0 || world->fe == 0){
+    return;
+  }
+  int nForce = (int)(world->u->size());
+  forceIdx++;
+  if (forceIdx >= nForce){
+    forceIdx = 0;
+  }
+  ElementMesh * em = world->em[0];
+  int dim = 3;
+  for (unsigned int ii = 0; ii < em->x.size(); ii++){
+    for (int jj = 0; jj < dim; jj++){
+      em->x[ii][jj] = em->X[ii][jj] + (*(world->u))[forceIdx][ii*dim + jj];
+      em->fe[ii][jj] = (*(world->fe))[forceIdx][ii*dim + jj];
+    }
+  }
 }
 
 void Render::drawEle2D(int eidx, ElementMesh2D * m)
@@ -396,7 +421,8 @@ Render::init(World * _world)
 }
 
 Render::Render():world(0),anim(false),xRotSpeed(0.004f),
-  yRotSpeed(0.004f),camSpeed(0.001f)
+  yRotSpeed(0.004f),camSpeed(0.001f),
+  forceIdx(0)
 {}
 
 Render::~Render()

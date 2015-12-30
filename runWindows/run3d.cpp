@@ -27,7 +27,7 @@ void optMat3D(FEM3DFun * fem, int nSteps)
   fem->setParam(x1);
   fem->m0 = sum(fem->distribution) / fem->distribution.size();
   //scale mass term to roughly displacement term.
-  gradientDescent(fem, x1, nSteps);
+  //gradientDescent(fem, x1, nSteps);
 }
 
 void run3D(const ConfigFile & conf)
@@ -84,6 +84,8 @@ void run3D(const ConfigFile & conf)
     Render render;
     World * world = new World();
     world->em.push_back(em);
+    world->u = &fem->u;
+    world->fe = &fem->externalForce;
     render.init(world);
     render.loop();
   }
