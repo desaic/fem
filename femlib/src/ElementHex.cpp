@@ -21,7 +21,7 @@ const int cubeEdges[12][2] =
   {3,7}
 };
 
-const int sw[8][3] =
+static const int sw[8][3] =
 {{-1,-1,-1},
  {-1,-1, 1}, 
  {-1, 1,-1},

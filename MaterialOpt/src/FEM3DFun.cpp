@@ -9,6 +9,17 @@
 
 typedef Eigen::Triplet<cfgScalar> TripletS;
 
+static const int sw[8][3] =
+{ { -1, -1, -1 },
+{ -1, -1, 1 },
+{ -1, 1, -1 },
+{ -1, 1, 1 },
+{ 1, -1, -1 },
+{ 1, -1, 1 },
+{ 1, 1, -1 },
+{ 1, 1, 1 }
+};
+
 ///@brief a copy of stiffness matrix assembly function in ElementMesh2D class.
 ///Difference is that this function scales K for each element using param.
 void getStiffnessSparse(ElementMesh * em, const Eigen::VectorXd & param,
@@ -18,6 +29,21 @@ std::vector<int> topVerts(ElementMesh * em, const std::vector<int> & gridSize);
 std::vector<int> botVerts(ElementMesh * em, const std::vector<int> & gridSize);
 std::vector<int> leftVerts(ElementMesh * em, const std::vector<int> & gridSize);
 std::vector<int> rightVerts(ElementMesh * em, const std::vector<int> & gridSize);
+std::vector<int> frontVerts(ElementMesh * em, const std::vector<int> & gridSize);
+std::vector<int> backVerts(ElementMesh * em, const std::vector<int> & gridSize);
+
+///@brief add f to each 3 subvector of a.
+void addVector3d(std::vector<double> & a, const Eigen::Vector3d & f,
+  const std::vector<int> & idx);
+
+///@brief eight corners of a grid for coarsening.
+std::vector<int> cornerVerts(ElementMesh * em, const std::vector<int> & gridSize);
+
+///@brief assuming element size 1.
+Vector3d shapeFunGrad(int ii, const Vector3d & xx);
+
+///@param size. size of a cube element.
+Eigen::MatrixXd BMatrix(const Vector3d & xx, const Eigen::Vector3d & size);
 
 int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize)
 {
@@ -26,17 +52,21 @@ int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize)
 
 void FEM3DFun::initArrays()
 {
-  int nrow = externalForce[0].size();
-  u.resize(externalForce.size());
+  int nForce = (int)externalForce.size();
+  int nrow = (int)externalForce[0].size();
+  u.resize(nForce);
   dfdu.resize(u.size());
   for (unsigned int ii = 0; ii < u.size(); ii++){
     u[ii].resize(nrow);
     dfdu[ii].resize(nrow);
   }
+  G = Eigen::MatrixXd(6, nForce);
 }
 
 void FEM3DFun::init(const Eigen::VectorXd & x0)
 {  
+  //6 harmonic displacements.
+  int nForce = 6;
   bool triangular = true;
   m_I.clear();
   m_J.clear();
@@ -45,10 +75,15 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
   param = x0;
   distribution = Eigen::VectorXd::Zero(em->e.size());
   int nrow = (int)m_I.size() - 1;
-  externalForce.resize(1);
-  externalForce[0].resize(nrow, 0);
+  externalForce.resize(nForce);
+  for (int ii = 0; ii < (int)externalForce.size(); ii++){
+    externalForce[ii].resize(nrow, 0);
+  }
   Eigen::Vector3d forceDir = forceMagnitude * Eigen::Vector3d(1, 0, 0);
   stretchX(em, forceDir, gridSize, externalForce[0]);
+  forceDir = forceMagnitude * Eigen::Vector3d(0, 1, 0);
+  stretchY(em, forceDir, gridSize, externalForce[1]);
+  
   initArrays();
   m_Init = true;
 }
@@ -99,9 +134,6 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
     //std::cout<<"Lin solve time " << timer.getSecondsWall() << "\n";
   }
 
-  dx = measureStretchX(em, u[0], gridSize);
-  dy = measureStretchY(em, u[0], gridSize);
-
   //show rendering
   for (unsigned int ii = 0; ii < em->x.size(); ii++){
     for (int jj = 0; jj < dim; jj++){
@@ -121,38 +153,13 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
 
 double FEM3DFun::f()
 {
-  //Example: measure width and height under a stretching force.
-  double val = 0.5 * dxw * (dx - dx0) * (dx - dx0) + 0.5 * dyw * (dy - dy0) * (dy - dy0);
-  val += 0.5 * mw * (density - m0) * (density - m0);
+  double val = 0;
   return val ;
 }
 
 void FEM3DFun::compute_dfdu()
 {
-  int nrows = (int)m_I.size() - 1;
-  std::fill(dfdu[0].begin(), dfdu[0].end(), 0);
-  for (unsigned int ii = 0; ii < dfdu.size(); ii++){
-    std::vector<int> verts;
-    verts = topVerts(em, gridSize);
-    for (unsigned int ii = 0; ii<verts.size(); ii++){
-      dfdu[0][dim * verts[ii] + 1] += (dy - dy0)*dyw;
-    }
-    verts = botVerts(em, gridSize);
-    for (unsigned int ii = 0; ii<verts.size(); ii++){
-      dfdu[0][dim * verts[ii] + 1] -= (dy - dy0)*dyw;
-    }
-    verts = rightVerts(em, gridSize);
-    for (unsigned int ii = 0; ii<verts.size(); ii++){
-      dfdu[0][dim * verts[ii]] += (dx - dx0)*dxw;
-    }
-    verts = leftVerts(em, gridSize);
-    for (unsigned int ii = 0; ii<verts.size(); ii++){
-      dfdu[0][dim * verts[ii]] -= (dx - dx0)*dxw;
-    }
-    for (unsigned int ii = 0; ii<dfdu[0].size(); ii++){
-      dfdu[0][ii] /= verts.size();
-    }
-  }
+  
 }
 
 Eigen::MatrixXd FEM3DFun::dKdp(int eidx, int pidx)
@@ -224,15 +231,13 @@ Eigen::VectorXd FEM3DFun::df()
 
 void FEM3DFun::log(std::ostream & out)
 {
-  out << dx << " " << dy << " " << density << "\n";
+  
 }
 
 FEM3DFun::FEM3DFun() :em(0), dim(3),
 m_Init(false),
 m_periodic(true),
 m_fixRigid(true),
-dx0(1e-2), dy0(5e-3),
-dxw(5), dyw(1),
 forceMagnitude(100),
 gridSize(3,0),
 field(0)
@@ -374,86 +379,173 @@ std::vector<int> rightVerts(ElementMesh * em, const std::vector<int> & s)
   return v;
 }
 
+std::vector<int> frontVerts(ElementMesh * em, const std::vector<int> & s)
+{
+  std::vector<int> v;
+  int nx = s[0];
+  int ny = s[1];
+  int nz = s[2];
+  int rightV[4] = { 1, 3, 5, 7 };
+  for (int ii = 0; ii<nx; ii++){
+    for (int jj = 0; jj < ny; jj++){
+      int ei = gridToLinearIdx(ii, jj, nz-1, s);
+      for (int jj = 0; jj < 4; jj++){
+        int vi = em->e[ei]->at(rightV[jj]);
+        v.push_back(vi);
+      }
+    }
+  }
+  return v;
+}
+
+std::vector<int> backVerts(ElementMesh * em, const std::vector<int> & s)
+{
+  std::vector<int> v;
+  int nx = s[0];
+  int ny = s[1];
+  int rightV[4] = { 0, 2, 4, 6 };
+  for (int ii = 0; ii<nx; ii++){
+    for (int jj = 0; jj < ny; jj++){
+      int ei = gridToLinearIdx(ii, jj, 0, s);
+      for (int jj = 0; jj < 4; jj++){
+        int vi = em->e[ei]->at(rightV[jj]);
+        v.push_back(vi);
+      }
+    }
+  }
+  return v;
+}
+
+void addVector3d(std::vector<double> & a, const Eigen::Vector3d & f,
+  const std::vector<int> & idx)
+{
+  int dim = f.size(); 
+  for (unsigned int ii = 0; ii < idx.size(); ii++){
+    for (int jj = 0; jj < dim; jj++){
+      a[dim * idx[ii] + jj] += f[jj];
+    }
+  }
+}
+
 void stretchX(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int> & s, std::vector<double> & externalForce)
 {
-  int dim = 3;
   std::vector<int> leftv, rightv;
   rightv = rightVerts(em, s);
   Eigen::Vector3d fv = ff / (double)rightv.size();
-  for (unsigned int ii = 0; ii<rightv.size(); ii++){
-    int vidx = rightv[ii];
-    for (int jj = 0; jj < dim; jj++){
-      externalForce[dim * vidx+jj] += fv[jj];
-    }
-  }
+  addVector3d(externalForce, fv, rightv);
   leftv = leftVerts(em, s);
-  for (unsigned int ii = 0; ii<leftv.size(); ii++){
-    int vidx = leftv[ii];
-    for (int jj = 0; jj < dim; jj++){
-      externalForce[dim * vidx + jj] -= fv[jj];
-    }
-  }
+  addVector3d(externalForce, -fv, leftv);
 }
 
 void stretchY(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int> & s, std::vector<double> & externalForce)
 {
-  int dim = 3;
   std::vector<int> topv, botv;
   topv = topVerts(em, s);
   Eigen::Vector3d fv = ff / (double)topv.size();
-  for (unsigned int ii = 0; ii<topv.size(); ii++){
-    int vidx = topv[ii];
-    for (int jj = 0; jj < dim; jj++){
-      externalForce[dim * vidx + jj] += fv[jj];
-    }
-  }
+  addVector3d(externalForce, fv, topv);
   botv = botVerts(em, s);
-  for (unsigned int ii = 0; ii<botv.size(); ii++){
-    int vidx = botv[ii];
-    for (int jj = 0; jj < dim; jj++){
-      externalForce[dim * vidx + jj] -= fv[jj];
-    }
-  }
+  addVector3d(externalForce, -fv, botv);
 }
 
-double measureStretchX(ElementMesh * em, const std::vector<double> & u, const std::vector<int> & s)
+void stretchZ(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int>& s, std::vector<double> & externalForce)
 {
-  int dim = 3;
-  std::vector<int> lv, rv;
-  lv = leftVerts(em, s);
-  rv = rightVerts(em, s);
-  double stretch = 0;
-  for (unsigned int ii = 0; ii<lv.size(); ii++){
-    stretch += u[dim * rv[ii]] - u[dim * lv[ii]];
-  }
-  stretch /= lv.size();
-  return stretch;
+  std::vector<int> frontv, backv;
+  frontv = frontVerts(em, s);
+  Eigen::Vector3d fv = ff / (double)frontv.size();
+  addVector3d(externalForce, fv, frontv);
+  backv = backVerts(em, s);
+  addVector3d(externalForce, -fv, backv);
 }
 
-double measureStretchY(ElementMesh * em, const std::vector<double> & u, const std::vector<int> & s)
+void shearXY(ElementMesh * em, double ff,
+    const std::vector<int>& s, std::vector<double> & fe)
 {
-  int dim = 3;
-  std::vector<int> tv, bv;
-  tv = topVerts(em, s);
-  bv = botVerts(em, s);
-  double stretch = 0;
-  for (unsigned int ii = 0; ii<tv.size(); ii++){
-    stretch += u[dim * tv[ii]+1] - u[dim * bv[ii]+1];
-  }
-  stretch /= bv.size();
-  return stretch;
+  Eigen::Vector3d force = ff * Eigen::Vector3d(1, 0, 0);
+  //apply horizontal force on top and bottom faces
+  stretchY(em, force, s, fe);
+  force = ff * Eigen::Vector3d(0, 1, 0);
+  stretchX(em, force, s, fe);
 }
 
-double measureShearXY(ElementMesh * em, const std::vector<double> & u, const std::vector<int> & s)
+void shearYZ(ElementMesh * em, double ff,
+  const std::vector<int>& s, std::vector<double> & fe)
+{
+  Eigen::Vector3d force = ff * Eigen::Vector3d(0, 1, 0);
+  //apply horizontal force on top and bottom faces
+  stretchZ(em, force, s, fe);
+  force = ff * Eigen::Vector3d(0, 0, 1);
+  stretchY(em, force, s, fe);
+}
+
+void shearXZ(ElementMesh * em, double ff, 
+  const std::vector<int>& s, std::vector<double> & fe)
+{
+  Eigen::Vector3d force = ff * Eigen::Vector3d(1, 0, 0);
+  //apply horizontal force on top and bottom faces
+  stretchZ(em, force, s, fe);
+  force = ff * Eigen::Vector3d(0, 0, 1);
+  stretchX(em, force, s, fe);
+}
+
+std::vector<int> cornerVerts(ElementMesh * em, const std::vector<int> & gridSize)
+{
+  std::vector<int> corner(8, 0);
+  int x = gridSize[0] - 1;
+  int y = gridSize[1] - 1;
+  int z = gridSize[2] - 1;
+  corner[0] = em->e[gridToLinearIdx(0, 0, 0, gridSize)]->at(0);
+  corner[1] = em->e[gridToLinearIdx(0, 0, z, gridSize)]->at(1);
+  corner[2] = em->e[gridToLinearIdx(0, y, 0, gridSize)]->at(2);
+  corner[3] = em->e[gridToLinearIdx(0, y, z, gridSize)]->at(3);
+  corner[4] = em->e[gridToLinearIdx(x, 0, 0, gridSize)]->at(4);
+  corner[5] = em->e[gridToLinearIdx(x, 0, z, gridSize)]->at(5);
+  corner[6] = em->e[gridToLinearIdx(x, y, 0, gridSize)]->at(6);
+  corner[7] = em->e[gridToLinearIdx(x, y, z, gridSize)]->at(7);
+  return corner;
+}
+
+//assuming element size 1.
+Vector3d shapeFunGrad(int ii, const Vector3d & xx)
+{
+  Vector3d grad;
+  grad[0] = sw[ii][0] * (1 + sw[ii][1] * xx[1]) * (1 + sw[ii][2] * xx[2]);
+  grad[1] = sw[ii][1] * (1 + sw[ii][0] * xx[0]) * (1 + sw[ii][2] * xx[2]);
+  grad[2] = sw[ii][2] * (1 + sw[ii][0] * xx[0]) * (1 + sw[ii][1] * xx[1]);
+  return 0.25*grad;
+}
+
+Eigen::MatrixXd BMatrix(const Vector3d & xx, const Eigen::Vector3d & size)
+{
+  int nV = 8;
+  Eigen::MatrixXd B = Eigen::MatrixXd::Zero(6, 3 * nV);
+  for (int ii = 0; ii < nV; ii++){
+    int col = 3 * ii;
+    Vector3d dN = shapeFunGrad(ii, xx).cwiseQuotient(size);
+    B(0, col) = dN[0];
+    B(1, col + 1) = dN[1];
+    B(2, col + 2) = dN[2];
+
+    B(3, col) = dN[1];
+    B(3, col + 1) = dN[0];
+
+    B(4, col + 1) = dN[2];
+    B(4, col + 2) = dN[1];
+
+    B(5, col) = dN[2];
+    B(5, col + 2) = dN[0];
+  }
+  return B;
+}
+
+//returns 6 element vector measured at xi.
+Eigen::VectorXd hexStrain(const Eigen::VectorXd & x, const Eigen::VectorXd & X,
+  const Eigen::Vector3d & xi)
 {
   int dim = 3;
-  std::vector<int> tv, bv;
-  tv = topVerts(em, s);
-  bv = botVerts(em, s);
-  double shear = 0;
-  for (unsigned int ii = 0; ii<tv.size(); ii++){
-    shear += u[dim * tv[ii]] - u[dim * bv[ii]];
-  }
-  shear /= bv.size();
-  return shear;
+  //size of cube element
+  int nV = X.cols()/3;
+  Eigen::Vector3d esize = X.segment<3>(0) - X.segment<3>(3*(nV-1));
+  Eigen::MatrixXd B=BMatrix(xi, esize);
+  Eigen::VectorXd strain = B*(x-X);
+  return strain;
 }

@@ -28,13 +28,11 @@ public:
   bool m_periodic;
   bool m_fixRigid;
 
-  ///@brief displacements produced by the first externalForce after calling setParam(x).
-  double dx, dy;
+  ///@brief 6x6 matrix of coarse strain tensor
+  ///produced by harmonic displacements.
+  Eigen::MatrixXd G;
+
   double density;
-  ///@brief target displacements.
-  double dx0, dy0;
-  ///@brief weight for displacement objectives.
-  double dxw, dyw;
 
   ///@brief target density fraction.
   double m0;
@@ -65,7 +63,7 @@ public:
   ///@brief material distribution. Currently just ratio between two materials for each element.
   ///Should be the same size as number of elements
   Eigen::VectorXd distribution;
-
+  
   void init(const Eigen::VectorXd & x0);
   void initArrays();
   ///@brief update parameters for computing function value
@@ -100,11 +98,10 @@ public:
 ///@brief make stretching force in x direction
 void stretchX(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
 void stretchY(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
+void stretchZ(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
+void shearXY(ElementMesh * em, double ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
+void shearYZ(ElementMesh * em, double ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
+void shearXZ(ElementMesh * em, double ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
 
-double measureStretchX(ElementMesh * em, const std::vector<double> & u, const std::vector<int>& gridSize);
-double measureStretchY(ElementMesh * em, const std::vector<double> & u, const std::vector<int>& gridSize);
-
-//measure shear displacement in x direction of top and bottom vertices.
-double measureShearX(ElementMesh * em, const std::vector<double> & u, const std::vector<int>& gridSize);
 int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize);
 #endif

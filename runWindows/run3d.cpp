@@ -25,13 +25,8 @@ void optMat3D(FEM3DFun * fem, int nSteps)
   RealField * field = fem->field;
   Eigen::VectorXd x1 = fem->param;
   fem->setParam(x1);
-  std::cout << "stretch "<< fem->dx << " " << fem->dy << "\n";
-  fem->dx0 = fem->dx;
-  //set up objective for negative poisson ratio.
-  fem->dy0 = fem->dx;
-  fem->m0 = 0.3*sum(fem->distribution) / fem->distribution.size();
+  fem->m0 = sum(fem->distribution) / fem->distribution.size();
   //scale mass term to roughly displacement term.
-  fem->mw = 0.1 * (fem->dx0 / fem->m0);
   gradientDescent(fem, x1, nSteps);
 }
 
@@ -69,9 +64,6 @@ void run3D(const ConfigFile & conf)
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
 
   fem->em = em;
-  fem->dx0 = 0.22;
-  fem->dy0 = 0.22;
-  fem->dxw = 2;
   fem->field = field;
   fem->gridSize[0] = nx;
   fem->gridSize[1] = ny;
