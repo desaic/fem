@@ -179,15 +179,6 @@ Eigen::VectorXd upsampleVector(const Eigen::VectorXd a, int nx, int ny)
   return x;
 }
 
-double sum(const Eigen::VectorXd & x)
-{
-  double sum = 0;
-  for (int ii = 0; ii < x.size(); ii++){
-    sum += x[ii];
-  }
-  return sum;
-}
-
 std::string sequenceFilename(std::string prefix, int idx, std::string suffix)
 {
   return prefix + std::to_string(idx) + suffix;
