@@ -25,6 +25,7 @@
 #include <omp.h>
 
 /* PARDISO prototype. */
+extern "C" void pardisoinit(void   *, int    *, int *, int *, double *, int *);
 extern "C" void pardiso     (void   *, int    *,   int *, int *,    int *, int *, 
                   double *, int    *,    int *, int *,   int *, int *,
                      int *, double *, double *, int *, double *);
@@ -32,6 +33,38 @@ extern "C" void pardiso_chkmatrix  (int *, int *, double *, int *, int *, int *)
 extern "C" void pardiso_chkvec     (int *, int *, double *, int *);
 extern "C" void pardiso_printstats (int *, int *, double *, int *, int *, int *,
                            double *, int *);
+
+void pardisoInit(PardisoState * state)
+{
+  state->mtype = -2;
+  int error = 0, solver = 0; /* use sparse direct solver */
+  pardisoinit(state->pt, &state->mtype, &solver, state->iparm, state->dparm, &error);
+  state->maxfct = 1;		/* Maximum number of numerical factorizations.  */
+  state->mnum = 1;         /* Which factorization to use. */
+  state->msglvl = 0;//1;         /* Print statistical information  */
+
+  int num_procs = 1;
+  if (error != 0)
+  {
+    if (error == -10)
+      printf("No license file found \n");
+    if (error == -11)
+      printf("License is expired \n");
+    if (error == -12)
+      printf("Wrong username or hostname \n");
+    return;
+  }
+  //  else{
+  //      printf("[PARDISO]: License check was successful ... \n");
+  //  }
+  /* Numbers of processors, value of OMP_NUM_THREADS */
+  char * var = getenv("OMP_NUM_THREADS");
+  if (var != NULL){
+    sscanf(var, "%d", &num_procs);
+  }
+  state->iparm[2] = num_procs;
+  printf("%d omp threads\n", state->iparm[2]);
+}
 
 int pardisoSymbolicFactorize(int * ia, int * ja, int n, PardisoState *state)
 {

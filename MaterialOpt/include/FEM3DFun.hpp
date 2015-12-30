@@ -5,6 +5,7 @@
 #include <vector>
 
 class ElementMesh;
+struct PardisoState;
 class RealField;
 
 ///@brief a real-valued function based on 2D FEM simulation.
@@ -64,6 +65,8 @@ public:
   ///Should be the same size as number of elements
   Eigen::VectorXd distribution;
   
+  PardisoState * pardisoState;
+
   void init(const Eigen::VectorXd & x0);
   void initArrays();
   ///@brief update parameters for computing function value

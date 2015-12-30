@@ -4,8 +4,8 @@
 #include "Element.hpp"
 #include "ElementMesh.hpp"
 #include "RealField.hpp"
-#include "SparseLin.hpp"
-//#include "Timer.hpp"
+#include "pardiso_sym.hpp"
+#include "Timer.hpp"
 
 typedef Eigen::Triplet<cfgScalar> TripletS;
 
@@ -71,7 +71,17 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
   m_I.clear();
   m_J.clear();
   em->stiffnessPattern(m_I, m_J, triangular, m_fixRigid, m_fixRigid, m_periodic);
-  sparseInit();
+  //pardiso uses 1-based
+  for (unsigned int ii = 0; ii < m_I.size(); ii++){
+    m_I[ii] ++;
+  }
+  for (unsigned int ii = 0; ii < m_J.size(); ii++){
+    m_J[ii] ++;
+  }
+
+  pardisoState = new PardisoState();
+  pardisoInit(pardisoState);
+  pardisoSymbolicFactorize(m_I.data(), m_J.data(), m_I.size()-1, pardisoState);
   param = x0;
   distribution = Eigen::VectorXd::Zero(em->e.size());
   int nrow = (int)m_I.size() - 1;
@@ -119,7 +129,7 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
   }
 
   //solve linear statics problems
-  //Timer timer;
+  Timer timer;
   std::vector<cfgScalar> val;
   //timer.startWall();
   getStiffnessSparse(em, distribution, val, triangle, constrained, m_fixRigid, m_periodic);
@@ -127,16 +137,19 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
   //std::cout << "assemble time " << timer.getSecondsWall() << "\n";
   m_val = std::vector<double>(val.begin(), val.end());
   int nrows = (int)m_I.size() - 1;
-  
+
+  timer.startWall();
+  pardisoNumericalFactorize(m_I.data(), m_J.data(), m_val.data(), nrows, pardisoState);
+  timer.endWall();
+  std::cout << "num fact time " << timer.getSecondsWall() << "\n";
+
   for (unsigned int ii = 0; ii < externalForce.size(); ii++){
     std::fill(u[ii].begin(), u[ii].end(), 0);
-    std::vector<int> I = m_I;
-    std::vector<int> J = m_J;
-    //timer.startWall();
+    timer.startWall();
     //checkSparseIndex(I, J);
-    sparseSolve(I.data(), J.data(), m_val.data(), nrows, &(u[ii][0]), externalForce[ii].data());
-    //timer.endWall();
-    //std::cout<<"Lin solve time " << timer.getSecondsWall() << "\n";
+    pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data(), pardisoState);
+    timer.endWall();
+    std::cout<<"Lin subst time " << timer.getSecondsWall() << "\n";
   }
 
   //density objective
@@ -182,7 +195,7 @@ Eigen::VectorXd FEM3DFun::df()
     std::vector<int> I = m_I;
     std::vector<int> J = m_J;
     //checkSparseIndex(I, J);
-    sparseSolve(I.data(), J.data(), m_val.data(), nrows, &(lambda[0]), &(dfdu[ii][0]));
+    pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data(), pardisoState);
     for (unsigned int jj = 0; jj < em->e.size(); jj++){
       Element * ele = em->e[jj];
       int nV = ele->nV();
@@ -295,9 +308,12 @@ void getStiffnessSparse(ElementMesh * em, const Eigen::VectorXd & param,
     em->enforcePeriodicity(Ksparse, trig, em);
   }
 
+  val.resize(Ksparse.nonZeros());
+  int idx = 0;
   for (int ii = 0; ii<Ksparse.rows(); ii++){
     for (Eigen::SparseMatrix<cfgScalar>::InnerIterator it(Ksparse, ii); it; ++it){
-      val.push_back(it.value());
+      val[idx] = it.value();
+      idx++;
     }
   }
 }
