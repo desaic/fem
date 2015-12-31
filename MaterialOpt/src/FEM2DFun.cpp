@@ -108,7 +108,7 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
   //show rendering
   for (unsigned int ii = 0; ii < em->x.size(); ii++){
     for (int jj = 0; jj < dim; jj++){
-      em->x[ii][jj] = em->X[ii][jj] + u[2][ii*dim + jj];
+      em->x[ii][jj] = em->X[ii][jj] + u[0][ii*dim + jj];
     }
   }
 
@@ -118,7 +118,7 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
     density += distribution[ii];
   }
   density /= distribution.size();
-
+  //std::cout << "dx dy: " << dx << " " << dy << "\n";
 }
 
 double FEM2DFun::f()

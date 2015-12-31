@@ -27,6 +27,12 @@ void optMat3D(FEM3DFun * fem, int nSteps)
   fem->setParam(x1);
   fem->m0 = sum(fem->distribution) / fem->distribution.size();
   double val = fem->f();
+  fem->G0 = 0.1 * fem->G;
+  //random perturb
+  for (int ii = 0; ii < x1.size(); ii++){
+    x1[ii] += 0.1 * (rand() / (double)RAND_MAX - 0.5);
+  }
+  check_df(fem, x1, 1e-3);
   //scale mass term to roughly displacement term.
   //gradientDescent(fem, x1, nSteps);
 }
@@ -35,9 +41,9 @@ void run3D(const ConfigFile & conf)
 {
   bool render = conf.getBool("render");
   std::string task = conf.getString("task");
-  int nx = 16;
-  int ny = 16;
-  int nz = 16;
+  int nx = 4;
+  int ny = 4;
+  int nz = 4;
   int nSteps = 10;
   Eigen::VectorXd x0;
   x0 =  Eigen::VectorXd::Ones(nx * ny * nz);

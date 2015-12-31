@@ -65,7 +65,6 @@ void FEM3DFun::initArrays()
     dfdu[ii].resize(nrow);
   }
   G = Eigen::MatrixXd(6, nForce);
-  GTCG = Eigen::MatrixXd(6, 6);
 }
 
 void FEM3DFun::init(const Eigen::VectorXd & x0)
@@ -86,7 +85,7 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
 
   pardisoState = new PardisoState();
   pardisoInit(pardisoState);
-  pardisoSymbolicFactorize(m_I.data(), m_J.data(), m_I.size()-1, pardisoState);
+  pardisoSymbolicFactorize(m_I.data(), m_J.data(), (int)m_I.size()-1, pardisoState);
   param = x0;
   distribution = Eigen::VectorXd::Zero(em->e.size());
   int nrow = (int)m_I.size() - 1;
@@ -103,7 +102,7 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
   shearXY(em, forceMagnitude, gridSize, externalForce[3]);
   shearYZ(em, forceMagnitude, gridSize, externalForce[4]);
   shearXZ(em, forceMagnitude, gridSize, externalForce[5]);
-
+  G0 = Eigen::MatrixXd::Identity(6, 6);
   initArrays();
   K0 = em->getStiffness(0);
   m_Init = true;
@@ -113,7 +112,7 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
 {
   bool triangle = true;
   bool constrained = false;
-  Vector3S color0(0.6, 0.6, 1.0);
+  Vector3S color0(0.6f, 0.6f, 1.0f);
   param = x0;
 
   //read material distribution from field
@@ -135,25 +134,25 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
   }
 
   //solve linear statics problems
-  Timer timer;
+  //Timer timer;
   //timer.startWall();
   getStiffnessSparse();
   //timer.endWall();
   //std::cout << "assemble time " << timer.getSecondsWall() << "\n";
   int nrows = (int)m_I.size() - 1;
 
-  timer.startWall();
+  //timer.startWall();
   pardisoNumericalFactorize(m_I.data(), m_J.data(), m_val.data(), nrows, pardisoState);
-  timer.endWall();
-  std::cout << "num fact time " << timer.getSecondsWall() << "\n";
+  //timer.endWall();
+  //std::cout << "num fact time " << timer.getSecondsWall() << "\n";
 
   for (unsigned int ii = 0; ii < externalForce.size(); ii++){
     std::fill(u[ii].begin(), u[ii].end(), 0);
-    timer.startWall();
+    //timer.startWall();
     //checkSparseIndex(I, J);
     pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data(), pardisoState);
-    timer.endWall();
-    std::cout<<"Lin subst time " << timer.getSecondsWall() << "\n";
+    //timer.endWall();
+    //std::cout<<"Lin subst time " << timer.getSecondsWall() << "\n";
   }
 
   //density objective
@@ -202,31 +201,39 @@ double FEM3DFun::f()
     Eigen::VectorXd strain = hexStrain(x, X, xi);
     G.col(ii) = strain;
   }
-  GTCG = Eigen::MatrixXd::Zero(6, 6);
-  for (int ei = 0; ei < (int)em->e.size(); ei++){
-    //element displacements.
-    Eigen::MatrixXd Ke = getKe(ei).cast<double>();
-    std::vector<Eigen::VectorXd> ue(6);
-    std::vector<int> ni = em->e[ei]->getNodeIndices();
-    for (int ii = 0; ii < GTCG.cols(); ii++){
-      copyVert3(ue[ii], ni, u[ii]);
-    }
-    for (int ii = 0; ii < GTCG.cols(); ii++){
-      for (int jj = 0; jj < GTCG.rows(); jj++){
-        GTCG(ii,jj) += ue[ii].dot(Ke*ue[jj]);
-      }
-    }
-  }
-  Eigen::MatrixXd Ginv = G.inverse();
-  Eigen::MatrixXd C = Ginv.transpose() * GTCG * Ginv;
-  std::cout << "G:\n" << G << "\n";
-  std::cout <<"GTCG:\n"<<GTCG<<"\nC:\n "<< C << "\n";
+  
+  val = 0.5 * (G - G0).squaredNorm();
+  val += 0.5 * mw * (density - m0) * (density - m0);
   return val ;
 }
 
 void FEM3DFun::compute_dfdu()
 {
-  
+  int nForce = G.cols();
+  //only 8 corner vertices affect G
+  std::vector<int> vidx = cornerVerts(em, gridSize);
+  int nV = 8;
+  int dim = 3;
+  Eigen::VectorXd X(nV*dim);
+  copyVert3(X, vidx, em->X);
+  Eigen::Vector3d esize = X.segment<3>(3 * (nV - 1)) - X.segment<3>(0);
+  Eigen::Vector3d xi(0, 0, 0);
+  Eigen::MatrixXd B = BMatrix(xi, esize);
+  Eigen::MatrixXd diff = G - G0;
+  Eigen::MatrixXd grad = B.transpose() * diff;
+
+  //loop each displacement
+  for (int ii = 0; ii < nForce; ii++){
+    //each column corresponds to one set of u.
+    std::fill(dfdu[ii].begin(), dfdu[ii].end(), 0);
+    //loop 8 corners
+    for (int jj = 0; jj < nV; jj++){
+      for (int kk = 0; kk < dim; kk++){
+        //each corner affects 6 entries in G.
+        dfdu[ii][vidx[jj] * dim + kk] += grad(jj*dim + kk, ii);
+      }
+    }
+  }
 }
 
 Eigen::MatrixXd FEM3DFun::dKdp(int eidx, int pidx)
@@ -298,7 +305,7 @@ Eigen::VectorXd FEM3DFun::df()
 
 void FEM3DFun::log(std::ostream & out)
 {
-  
+  out << G << "\n";
 }
 
 FEM3DFun::FEM3DFun() :em(0), dim(3),

@@ -32,11 +32,15 @@ public:
   bool constrained;
   ///@brief 6x6 matrix of coarse strain tensor
   ///produced by harmonic displacements.
+  ///Each column is a strain.
   Eigen::MatrixXd G;
+
+  ///@brief target strains corresponding to 6 harmonic displacements.
+  Eigen::MatrixXd G0;
 
   ///@brief 6x6 fine energy matrix. 
   ///\sum_i G^T:C:G
-  Eigen::MatrixXd GTCG;
+  //Eigen::MatrixXd GTCG;
 
   double density;
 
@@ -47,6 +51,7 @@ public:
 
   ///@brief external forces
   std::vector< std::vector<double> > externalForce;
+  
   ///@brief total force applied on one side
   double forceMagnitude;
 

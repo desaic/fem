@@ -25,18 +25,17 @@ std::ofstream materialOut;
 int nChunk = 6;
 int chunkIdx = 0;
 
-std::vector<std::vector<int> > materialAssignments;
 std::vector<std::vector<double> > continuousMaterials;
 void loadBinary(const ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments);
 
 void run2D(const ConfigFile & conf)
 {
-  int nx = 16;
-  int ny = 16;
+  int nx = 32;
+  int ny = 32;
   Eigen::VectorXd x0;
 
-  if (conf.hasOpt("fileRootName")){
-    loadBinary(conf, continuousMaterials);
+  if (conf.hasOpt("structurebin")){
+    loadIntBinary(conf, continuousMaterials);
   }
   if (conf.hasOpt("structurelist")){
     loadText(conf, continuousMaterials);
@@ -60,8 +59,8 @@ void run2D(const ConfigFile & conf)
   em->check();
 
   FEM2DFun * fem = new FEM2DFun();
-  PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
-  //PiecewiseConstantCubic2D * field = new PiecewiseConstantCubic2D();
+  //PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
+  PiecewiseConstantCubic2D * field = new PiecewiseConstantCubic2D();
   field->allocate(nx / 2, ny / 2);
   //for example, the parameterization can have lower resolution. Effectively refining each cell to 2x2 block.
   //PiecewiseConstant2D * field = new PiecewiseConstant2D();
@@ -179,6 +178,20 @@ Eigen::VectorXd upsampleVector(const Eigen::VectorXd a, int nx, int ny)
   return x;
 }
 
+std::vector<double> upsampleVector(const std::vector<double> & a, int nx, int ny)
+{
+  std::vector<double> x(nx * ny * 4);
+  for (int ii = 0; ii < nx; ii++){
+    for (int jj = 0; jj < ny; jj++){
+      x[2 * ii*ny + 2 * jj] = a[ii*ny + jj];
+      x[2 * ii*ny + 2 * jj + 1] = a[ii*ny + jj];
+      x[2 * (ii + 1)*ny + 2 * jj] = a[ii*ny + jj];
+      x[2 * (ii + 1)*ny + 2 * jj + 1] = a[ii*ny + jj];
+    }
+  }
+  return x;
+}
+
 std::string sequenceFilename(std::string prefix, int idx, std::string suffix)
 {
   return prefix + std::to_string(idx) + suffix;
@@ -273,28 +286,27 @@ void optMat(FEM2DFun * fem, int nSteps)
 {
   RealField * field = fem->field;
   Eigen::VectorXd x1 = fem->param;
-  int nStructure = materialAssignments.size();
+  int nStructure = continuousMaterials.size();
   nStructure /= nChunk;
   int startIdx = chunkIdx * nStructure;
   int endIdx = (chunkIdx + 1) * nStructure;
   //the last batch should compute untill the end.
   if (chunkIdx == nChunk){
-    endIdx = std::max(endIdx, (int)materialAssignments.size());
+    endIdx = std::max(endIdx, (int)continuousMaterials.size());
   }
   std::string materialOutName = sequenceFilename("materialStructure", chunkIdx, ".txt");
   materialOut.open(materialOutName);
   double shrink_ratio = 0.3;
-  for (int ii = endIdx - 2; ii < endIdx; ii++){
-    Eigen::VectorXd x0(materialAssignments[ii].size());
-    shrinkVector(x0, materialAssignments[ii], shrink_ratio);
+  for (int ii = startIdx; ii < endIdx; ii++){
+    Eigen::VectorXd x0(continuousMaterials[ii].size());
+    shrinkVector(x0, continuousMaterials[ii], shrink_ratio);
     x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
-    x1 = upsampleVector(x1, 2 * fem->m_nx, 2 * fem->m_ny);
     fem->setParam(x1);
     //printStructure(fem);
     fem->dx0 = fem->dx;
     //set up objective for negative poisson ratio.
     fem->dy0 = fem->dx;
-    fem->m0 = 0.3*sum(fem->distribution) / fem->distribution.size();
+    fem->m0 = 0.5*sum(fem->distribution) / fem->distribution.size();
     //scale mass term to roughly displacement term.
     fem->mw = 0.1 * (fem->dx0 / fem->m0);
     std::string filename;
@@ -330,7 +342,7 @@ void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps)
     double norm = infNorm(grad);
     h = maxStep / norm;
     int ret = lineSearch(fun, x, grad, h);
-    std::cout << ii << " " << fun->f() << " " << h << "\n";
+    //std::cout << ii << " " << fun->f() << " " << h << "\n";
     if (ret < 0){
       break;
     }
@@ -380,6 +392,7 @@ void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h)
 
   double max_diff = 0;
   double max_val = 0;
+  std::cout << "ana num\n";
   for (int ii = 0; ii < x0.rows(); ii++){
     x[ii] += h;
     fun->setParam(x);
@@ -483,52 +496,39 @@ void loadText(const ConfigFile & conf, std::vector<std::vector<double> > & mater
   in.close();
 }
 
-void loadBinary(const ConfigFile & conf, std::vector<std::vector<int> > & materialAssignments)
+void loadIntBinary(const ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments)
 {
-  std::string fileRootName("../data/level16");
-  std::string fileExtension(".bin");
-  if (conf.hasOpt("fileRootName")){
-    fileRootName = conf.getString("fileRootName");
-  }
-  if (conf.hasOpt("fileExtension")){
-    fileExtension = conf.getString("fileExtension");
+  std::string fileName("../data/level16_matAssignments.bin");
+  if (conf.hasOpt("structurebin")){
+    fileName = conf.getString("structurebin");
   }
   bool success;
-  std::string matAssignmentFile = conf.dir + "/" + fileRootName + fileExtension;
-  success = cfgUtil::readBinary<int>(matAssignmentFile, materialAssignments);
+  std::string matAssignmentFile = conf.dir + "/" + fileName;
+  std::vector<std::vector<int> > intArr;
+  success = cfgUtil::readBinary<int>(matAssignmentFile, intArr);
   if (!success){
     std::cout << "Can't read " << matAssignmentFile << "\n";
+    return;
+  }
+  materialAssignments.resize(intArr.size());
+  for (unsigned int ii = 0; ii < intArr.size(); ii++){
+    materialAssignments[ii].resize(intArr[ii].size());
+    for (unsigned int jj = 0; jj < materialAssignments[ii].size(); jj++){
+      materialAssignments[ii][jj] = intArr[ii][jj];
+    }
+    materialAssignments[ii] = upsampleVector(materialAssignments[ii], 32, 32);
   }
 
-  std::ofstream out("text.txt");
-  out << materialAssignments.size() << " " << materialAssignments[0].size() << "\n";
-  for (unsigned int ii = 0; ii < materialAssignments.size(); ii++){
-    for (unsigned int jj = 0; jj < materialAssignments[ii].size(); jj++){
-      int val = materialAssignments[ii][jj];
-      if (val == 0){
-        out << 1e-3 << " ";
-      }
-      else{
-        out << materialAssignments[ii][jj] << " ";
-      }
-    }
-    out << "\n";
-  }
-  out.close();
 }
 
 void loadBinary(const ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments)
 {
-  std::string fileRootName("../data/level16");
-  std::string fileExtension(".bin");
-  if (conf.hasOpt("fileRootName")){
-    fileRootName = conf.getString("fileRootName");
-  }
-  if (conf.hasOpt("fileExtension")){
-    fileExtension = conf.getString("fileExtension");
+  std::string fileName("../data/level16_matAssignments.bin");
+  if (conf.hasOpt("structurebin")){
+    fileName = conf.getString("structurebin");
   }
   bool success;
-  std::string matAssignmentFile = conf.dir + "/" + fileRootName + fileExtension;
+  std::string matAssignmentFile = conf.dir + "/" + fileName;
   success = cfgUtil::readBinary<double>(matAssignmentFile, materialAssignments);
   if (!success){
     std::cout << "Can't read " << matAssignmentFile << "\n";
