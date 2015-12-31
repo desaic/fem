@@ -1,8 +1,8 @@
-#include "PiecewiseConstant3D.hpp" 
+#include "PiecewiseConstantSym3D.hpp" 
 #include "ArrayUtil.hpp"
 
 void
-PiecewiseConstant3D::allocate(int nx, int ny, int nz)
+PiecewiseConstantSym3D::allocate(int nx, int ny, int nz)
 {
   gridSize[0] = nx;
   gridSize[1] = ny;
@@ -12,13 +12,18 @@ PiecewiseConstant3D::allocate(int nx, int ny, int nz)
 }
 
 Eigen::VectorXi
-PiecewiseConstant3D::gridIdx(const Eigen::VectorXd & x)
+PiecewiseConstantSym3D::gridIdx(const Eigen::VectorXd & x)
 {
   int dim = 3;
   //cell index in x and y directions.
   Eigen::VectorXi idx(dim);
   for(int dd = 0; dd<dim; dd++){
-    int ii = (int)(x[dd]*gridSize[dd]);
+    double coord = 2*x[dd];
+    //reflect other squares to the bottom left square.
+    if (coord > 1){
+      coord = 2 - coord;
+    }
+    int ii = (int)(coord*gridSize[dd]);
     ii = std::max(ii, 0);
     ii = std::min(ii, gridSize[dd]-1);
     idx[dd] = ii;
@@ -27,7 +32,7 @@ PiecewiseConstant3D::gridIdx(const Eigen::VectorXd & x)
 }
 
 double
-PiecewiseConstant3D::f(const Eigen::VectorXd & x)
+PiecewiseConstantSym3D::f(const Eigen::VectorXd & x)
 {
 
   assert(x.rows() >= 3);
@@ -38,7 +43,7 @@ PiecewiseConstant3D::f(const Eigen::VectorXd & x)
 }
 
 Eigen::SparseVector<double>
-PiecewiseConstant3D::df(const Eigen::VectorXd & x)
+PiecewiseConstantSym3D::df(const Eigen::VectorXd & x)
 {
   Eigen::VectorXi idx = gridIdx(x);
   Eigen::SparseVector<double> vec(param.size());

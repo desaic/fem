@@ -48,4 +48,5 @@ void optMat(FEM2DFun * fem, int nSteps);
 
 void optMat3D(FEM3DFun * fem, int nSteps);
 
+extern double maxStep;
 #endif

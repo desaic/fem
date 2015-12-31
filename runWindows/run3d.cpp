@@ -8,6 +8,8 @@
 #include "FEM3DFun.hpp"
 #include "FileUtil.hpp"
 #include "PiecewiseConstant3D.hpp"
+#include "PiecewiseConstantSym3D.hpp"
+#include "PiecewiseConstantCubic3D.hpp"
 
 #include "MaterialQuad.hpp"
 #include "StrainLin.hpp"
@@ -24,14 +26,24 @@ void optMat3D(FEM3DFun * fem, int nSteps)
 {
   RealField * field = fem->field;
   Eigen::VectorXd x1 = fem->param;
-  fem->setParam(x1);
-  fem->m0 = sum(fem->distribution) / fem->distribution.size();
-  double val = fem->f();
-  fem->G0 = 0.1 * fem->G;
-  //random perturb
   for (int ii = 0; ii < x1.size(); ii++){
-    x1[ii] += 0.1 * (rand() / (double)RAND_MAX - 0.5);
+    x1[ii] = 0.5 + (rand() / (float)RAND_MAX - 0.5) * 0.3;
   }
+  fem->setParam(x1);
+  double val = fem->f();
+  fem->m0 = 0.5 * sum(fem->distribution) / fem->distribution.size();
+  fem->mw = 0.1 * fem->G(0, 0) / fem->density;
+  fem->G0 = fem->G;
+  //-0.45 poisson's ratio objective
+  fem->G0(1, 0) = 0.45 * fem->G0(0, 0);
+  fem->G0(2, 0) = 0.45 * fem->G0(0, 0);
+
+  //for test only look at the first displacement.
+  for (int ii = 1; ii < fem->wG.size(); ii++){
+    //fem->wG(ii) = 0;
+    fem->wG(ii) = 1 + (rand() / (float)RAND_MAX - 0.5) ;
+  }
+
   check_df(fem, x1, 1e-3);
   //scale mass term to roughly displacement term.
   //gradientDescent(fem, x1, nSteps);
@@ -41,12 +53,20 @@ void run3D(const ConfigFile & conf)
 {
   bool render = conf.getBool("render");
   std::string task = conf.getString("task");
-  int nx = 4;
-  int ny = 4;
-  int nz = 4;
-  int nSteps = 10;
+
+  int gridres = 16;
+  if (conf.hasOpt("gridres")){
+    gridres = conf.getInt("gridres");
+  }
+  if (conf.hasOpt("maxStep")){
+    maxStep = conf.getFloat("maxStep");
+  }
+  int nx = gridres;
+  int ny = gridres;
+  int nz = gridres;
+  int nSteps =500;
   Eigen::VectorXd x0;
-  x0 =  Eigen::VectorXd::Ones(nx * ny * nz);
+  
   ElementRegGrid * em = new ElementRegGrid(nx, ny, nz);
   std::vector<StrainLin> ene(1);
   //E = 1e3.
@@ -65,8 +85,11 @@ void run3D(const ConfigFile & conf)
   em->check();
 
   FEM3DFun * fem = new FEM3DFun();
-  PiecewiseConstant3D * field = new PiecewiseConstant3D();
-  field->allocate(nx , ny , nz );
+
+  //PiecewiseConstant3D * field = new PiecewiseConstant3D();
+  //PiecewiseConstantSym3D * field = new PiecewiseConstantSym3D();
+  PiecewiseConstantCubic3D * field = new PiecewiseConstantCubic3D();
+  field->allocate(nx / 2, ny / 2, nz / 2 );
 
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
@@ -78,7 +101,8 @@ void run3D(const ConfigFile & conf)
   fem->gridSize[2] = nz;
   fem->m0 = 0.4;
   fem->mw = 0.1;
-
+  field->param = Eigen::VectorXd::Ones(field->param.size());
+  x0 = field->param;
   fem->init(x0);
   std::thread thread;
   if (render){

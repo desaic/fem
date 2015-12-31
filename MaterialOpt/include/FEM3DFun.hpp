@@ -38,6 +38,10 @@ public:
   ///@brief target strains corresponding to 6 harmonic displacements.
   Eigen::MatrixXd G0;
 
+  ///@brief weight for each column of G.
+  ///initialized in init() to all 1s.
+  Eigen::MatrixXd wG;
+  
   ///@brief 6x6 fine energy matrix. 
   ///\sum_i G^T:C:G
   //Eigen::MatrixXd GTCG;

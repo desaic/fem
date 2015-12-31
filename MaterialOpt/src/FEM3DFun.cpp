@@ -49,11 +49,6 @@ Eigen::MatrixXd BMatrix(const Vector3d & xx, const Eigen::Vector3d & size);
 Eigen::VectorXd hexStrain(const Eigen::VectorXd & x, const Eigen::VectorXd & X,
   const Eigen::Vector3d & xi);
 
-int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize)
-{
-  return ix * gridSize[1] * gridSize[2] + iy * gridSize[2] + iz;
-}
-
 void FEM3DFun::initArrays()
 {
   int nForce = (int)externalForce.size();
@@ -103,6 +98,7 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
   shearYZ(em, forceMagnitude, gridSize, externalForce[4]);
   shearXZ(em, forceMagnitude, gridSize, externalForce[5]);
   G0 = Eigen::MatrixXd::Identity(6, 6);
+  wG = Eigen::VectorXd::Ones(6);
   initArrays();
   K0 = em->getStiffness(0);
   m_Init = true;
@@ -112,7 +108,7 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
 {
   bool triangle = true;
   bool constrained = false;
-  Vector3S color0(0.6f, 0.6f, 1.0f);
+  Vector3S color0(0.8f, 0.8f, 1.0f);
   param = x0;
 
   //read material distribution from field
@@ -201,9 +197,13 @@ double FEM3DFun::f()
     Eigen::VectorXd strain = hexStrain(x, X, xi);
     G.col(ii) = strain;
   }
-  
-  val = 0.5 * (G - G0).squaredNorm();
+  Eigen::MatrixXd diff = G - G0;
+  diff = diff.cwiseProduct(diff);
+  Eigen::VectorXd p = diff * wG;
+  val = 0.5 * p.sum();
   val += 0.5 * mw * (density - m0) * (density - m0);
+  std::cout << G(0,0)<<" "<<G(1,0)<<" "<<G(2,0) << "\n";
+  std::cout << val << "\n";
   return val ;
 }
 
@@ -219,9 +219,8 @@ void FEM3DFun::compute_dfdu()
   Eigen::Vector3d esize = X.segment<3>(3 * (nV - 1)) - X.segment<3>(0);
   Eigen::Vector3d xi(0, 0, 0);
   Eigen::MatrixXd B = BMatrix(xi, esize);
-  Eigen::MatrixXd diff = G - G0;
+  Eigen::MatrixXd diff = (G - G0) * wG.asDiagonal();
   Eigen::MatrixXd grad = B.transpose() * diff;
-
   //loop each displacement
   for (int ii = 0; ii < nForce; ii++){
     //each column corresponds to one set of u.
@@ -323,7 +322,7 @@ FEM3DFun::~FEM3DFun(){}
 
 MatrixXS FEM3DFun::getKe(int ei)
 {
-  return (cfgScalar)(param[ei] / (3 - 2 * param[ei])) * K0;
+  return (cfgScalar)(distribution[ei] / (3 - 2 * distribution[ei])) * K0;
 }
 
 void FEM3DFun::getStiffnessSparse()

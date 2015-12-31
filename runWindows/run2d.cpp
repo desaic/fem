@@ -370,7 +370,7 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
     Eigen::VectorXd grad1 = fun->df();
     double norm1 = infNorm(grad1);
     //if gradient norm or function value decrease, return.
-    std::cout << h << " " << norm1 << " " << f1 << "\n";
+    std::cout << step<<" "<< h << " " << norm1 << " " << f1 << "\n";
     if (norm1 < norm0 || f1 < f0){
       x0 = x;
       ret = 0;

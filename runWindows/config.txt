@@ -1,7 +1,8 @@
 dim 3
+gridres 16
 render true
 test false
-maxStep 0.5
+maxStep 0.02
 #structurelist ../data/structure.txt
 #structurebin ../data/level16_3d.bin
 structurebin ../data/level16_matAssignments.bin
