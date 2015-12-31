@@ -7,7 +7,7 @@
 ///Symmetric version of PiecewiseConstant3D
 class PiecewiseConstantCubic3D : public RealField{
 public:
-  PiecewiseConstantCubic3D() :gridSize(2, 0){}
+  PiecewiseConstantCubic3D() :gridSize(3, 0){}
 
   ///@brief allocate a nx by ny grid. The number of control points is
   /// (nx+1)x(ny+1).
