@@ -185,20 +185,6 @@ bool MaterialOptimizer::run(int N[2], const std::vector<int> &iMaterialAssignmen
   return resOk;
 }
 
-void MaterialOptimizer::dumpStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment)
-{
-  Eigen::MatrixXd mat(Nx,Ny);
-  int ind=0;
-  for (int i=0; i<Nx; i++)
-  {
-    for (int j=0; j<Ny; j++)
-    {
-      mat(i,j) = iMatAssignment[ind++];
-    }
-  }
-  std::cout << mat << std::endl << std::endl;
-}
-
 double MaterialOptimizer::infNorm(const Eigen::VectorXd & a)
 {
   double maxval = 0;
@@ -215,7 +201,12 @@ void MaterialOptimizer::gradientDescent(FEM2DFun * fun, Eigen::VectorXd & x0, in
   //maximum movement in any parameter.
   double maxStep = 0.5;
   Eigen::VectorXd x = x0;
-  for (int ii = 0; ii < nSteps; ii++){
+  for (int ii = 0; ii < nSteps; ii++)
+  {
+    if (ii%50==0)
+    {
+      std::cout << "step = " << ii << std::endl;
+    }
     fun->setParam(x);
     Eigen::VectorXd grad = fun->df();
     double h = 1;

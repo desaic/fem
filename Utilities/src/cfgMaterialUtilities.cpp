@@ -1276,6 +1276,25 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std
   return isManifold;
 }
 
+bool cfgMaterialUtilities::isVertexManifold(int indx, int indy, int nx, int ny,  const std::vector<int> &iMaterials)
+{
+  int x = indx;
+  int y = indy;
+
+  int indMat11 = getGridToVectorIndex(x, y, nx, ny);
+  int indMat12 = getGridToVectorIndex(x, (y+ny-1)%ny, nx, ny);
+  int indMat21 = getGridToVectorIndex((x+nx-1)%nx, y, nx, ny);
+  int indMat22 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, nx, ny);
+
+  int mat11 = iMaterials[indMat11];
+  int mat12 = iMaterials[indMat12];
+  int mat21 = iMaterials[indMat21];
+  int mat22 = iMaterials[indMat22];
+
+  bool isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+  return isManifold;
+}
+
 bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, bool isStructuredMirrored, int iNbCellsToCheck)
 {
   bool isManifold = true;
@@ -1368,6 +1387,23 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector
   } 
   return isManifold;
 }
+
+void cfgMaterialUtilities::getNonManifoldVertices(int nx, int ny, const std::vector<int> &iMaterials, bool isStructuredMirrored, std::vector<int> &oNonManifoldVertices)
+{
+  int startIndex = (isStructuredMirrored? 1: 0);
+  for (int x=startIndex; x<nx; x++)
+  {
+    for (int y=startIndex; y<ny; y++)
+    {
+      bool isManifold = isVertexManifold(x, y, nx, ny, iMaterials);
+      if (!isManifold)
+      {
+        oNonManifoldVertices.push_back(getGridToVectorIndex(x, y, nx, ny));
+      }
+    }
+  } 
+}
+
 
 void cfgMaterialUtilities::getLayer(int Nx, int Ny, const std::vector<int> &iStructureElements, int iIndex, int iDim, std::vector<int> &oNewLayerElements)
 {
@@ -1743,7 +1779,7 @@ void cfgMaterialUtilities::getTriangularStructure(int Nx, int Ny, const std::vec
 {
   oNewStructureElements.clear();
 
-  for (int i=0; i<Nx/2; i++)
+  for (int i=0; i<Nx; i++)
   {
     for (int j=0; j<=i; j++)
     {
@@ -1754,11 +1790,25 @@ void cfgMaterialUtilities::getTriangularStructure(int Nx, int Ny, const std::vec
   }
 }
 
+ void cfgMaterialUtilities::getTriangleElements(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oTriangleElements)
+ {
+  oTriangleElements.clear();
+
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<=i; j++)
+    {
+      int indMat = getGridToVectorIndex(i, j, Nx, Ny);
+      oTriangleElements.push_back(indMat);
+    }
+  }
+ }
+
 void cfgMaterialUtilities::getTetrahedralStructure(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
 {
   oNewStructureElements.clear();
 
-  for (int i=0; i<Nx/2; i++)
+  for (int i=0; i<Nx; i++)
   {
     for (int j=0; j<=i; j++)
     {
@@ -1772,10 +1822,68 @@ void cfgMaterialUtilities::getTetrahedralStructure(int Nx, int Ny, int Nz, const
   }
 }
 
+void cfgMaterialUtilities::dumpStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment)
+{
+  Eigen::MatrixXd mat(Nx,Ny);
+  int ind=0;
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<Ny; j++)
+    {
+      mat(i,j) = iMatAssignment[ind++];
+    }
+  }
+  std::cout << mat << std::endl << std::endl;
+}
+
 void cfgMaterialUtilities::getDisconnectedComponents(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents)
 {
+  /*void Phys3DMeshUtils::ExtractDisconnectedComponents(const vector<double> &iVertices, const vector<int> &iIndexArray, vector<vector<int> > &oIndexArrays)
+{
+  DSMesh Mesh;
+  Mesh.init(iVertices, iIndexArray);
 
-}
+  std::set<int> Faces;
+  int iface=0, nface=(int)iIndexArray.size()/3;
+  for (iface=0; iface<nface; iface++)
+  {
+    Faces.insert(iface);
+  }
+
+  oIndexArrays.clear();
+  while (Faces.size()>0)
+  {
+    vector<DSMesh::FaceHandle> FacesToProcess;
+    std::set<int> ComponentFaces;
+
+    std::set<int>::iterator it = Faces.begin();
+
+    DSMesh::FaceHandle fh = Mesh.face_handle(*it);
+    ComponentFaces.insert(fh.idx());
+    Faces.erase(fh.idx());
+
+    FacesToProcess.push_back(fh);
+    while (FacesToProcess.size()>0)
+    {
+      DSMesh::FaceHandle fh = FacesToProcess.back();
+      FacesToProcess.pop_back();
+
+      DSMesh::FaceFaceIter ff_it = Mesh.ff_iter(fh);
+      for (; ff_it; ++ff_it)
+      {
+        int index = ff_it.handle().idx();
+        if (!ComponentFaces.count(index))
+        {
+          ComponentFaces.insert(index);
+          Faces.erase(index);
+          FacesToProcess.push_back(ff_it.handle());
+        }
+      }
+    }
+    oIndexArrays.push_back(Phys3DMatrixUtils::GetVector(ComponentFaces));
+  }
+}*/ 
+} 
 
 cfgScalar cfgMaterialUtilities::computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis)
 {

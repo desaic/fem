@@ -47,8 +47,6 @@ private:
   void computeTargetDisplacements(float iYoungModulus, float iPoissonsRatio, float iFx, float &odx, float &ody);
   void getExternalForces(ElementRegGrid2D * iElementGrid, int iAxis, int iSide, Vector2S &iForceMagnitude, std::vector<double> &oForces);
 
-  void dumpStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment);
-
 private:
   std::vector<MaterialQuad2D> m_baseMaterials;
   StructureType m_structureType;

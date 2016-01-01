@@ -41,6 +41,12 @@ namespace cfgUtil
   template<class T>
   std::map<std::vector<T>, int> computeVector2IndexMap(const std::vector<std::vector<T> > &iVec);
 
+  template<class T>
+  std::vector<T> getNewElements(const std::vector<T> &iExistingElements, const std::vector<T> &iElementsToTest);
+
+  template<class T>
+  std::vector<T> removeElements(const std::vector<T> &iVec, const std::vector<int> &iIndices);
+
   /*-------------------------------------------------------------------------------------*/
   // numerics
   /*-------------------------------------------------------------------------------------*/
@@ -249,6 +255,45 @@ namespace cfgUtil
       mapVec2Index[iVec[ielem]] = ielem;
     }
     return mapVec2Index;
+  }
+
+  template<class T>
+  std::vector<T> getNewElements(const std::vector<T> &iExistingElements, const std::vector<T> &iElementsToTest)
+  {
+    std::vector<T> newElements;
+    std::set<T> existingElements = toStdSet(iExistingElements);
+    int ielem=0, nelem=(int)iElementsToTest.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      if (existingElements.count(iElementsToTest[ielem])==0)
+      {
+        newElements.push_back(iElementsToTest[ielem]);
+      }
+    }
+    return newElements;
+  }
+
+  template<class T>
+  std::vector<T> removeElements(const std::vector<T> &iVec, const std::vector<int> &iIndices)
+  {
+    int nelem=(int)iVec.size();
+    std::vector<bool> toRemove(nelem, false);
+    
+    int nIndices=(int)iIndices.size();
+    for (int i=0; i<nIndices; i++)
+    {
+      toRemove[iIndices[i]] = true;
+    }
+
+    std::vector<int> newElements;
+    for (int ielem=0; ielem<nelem; ielem++)
+    {
+      if (!toRemove[ielem])
+      {
+        newElements.push_back(iVec[ielem]);
+      }
+    }
+    return newElements;
   }
 
   template<class T>

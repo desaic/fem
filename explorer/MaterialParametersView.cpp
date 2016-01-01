@@ -256,6 +256,7 @@ void MaterialParametersView::updatePlots()
     //  col = matColors[1-ilevel];
 
     int npoints = (int)physicalParametersPerLevel[ilevel].size()/paramdim;
+    std::cout << "npoints = " << npoints << std::endl;
     std::vector<int> levels(npoints, ilevel);
     vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels);
    
@@ -328,7 +329,7 @@ void MaterialParametersView::updatePlots()
       //m_plotsPerLevel[ilevel].push_back(plot4); 
 
     }
-    if (1)
+    if (0)
     {
       DistanceField distanceField(paramdim);
       std::vector<cfgScalar> derivatives;

@@ -69,9 +69,11 @@ namespace cfgMaterialUtilities
 
   void repMaterialAssignment(int nx, int ny, const std::vector<int> &iMaterialCombIndices, int iNbSubdivions, int repX, int repY, std::vector<int> &oMaterials);
   void repMaterialAssignment(int nx, int ny, int nz, const std::vector<int> &iMaterialCombIndices, int repX, int repY, int repZ, int iNbSubdivisions, std::vector<int> &oMaterials);
+  bool isVertexManifold(int indx, int indy, int nx, int ny,  const std::vector<int> &iMaterials);
   bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, bool isStructuredMirrored, int iNbCellsToCheck);
   bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, bool isStructuredMirrored);
   bool isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, int nX, int nY, int nZ);
+  void getNonManifoldVertices(int nx, int ny, const std::vector<int> &iMaterials, bool isStructuredMirrored, std::vector<int> &oNonManifoldVertices);
   void updateMaterialSubstructure(std::vector<int> &ioMaterialAsssignment, int nx, int ny, const std::vector<int> &iSubMaterialStructure, int Nx, int Ny, int iSubMatStructLocation);
   
   void getLayer(int Nx, int NY, const std::vector<int> &iStructureElements, int iIndex, int iDim, std::vector<int> &oNewLayerElements);
@@ -89,6 +91,7 @@ namespace cfgMaterialUtilities
   void getQuarter(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
   void getTriangularStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
   void getTetrahedralStructure(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
+  void getTriangleElements(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oTriangleElements);
 
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis);
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int nz, int iAxis);
@@ -97,6 +100,8 @@ namespace cfgMaterialUtilities
  
   int getMaterialSignature(int nx, int ny, const std::vector<int> &icellMaterials, const std::vector<int> &iIndicesToUse);
   void clusterByBoundary(int nx, int ny, const std::vector<std::vector<int> > &icellMaterials, int iNbMat, std::vector<std::vector<int> > &oClusters);
+
+  void dumpStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment);
 
   void getDisconnectedComponents(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents);
 
