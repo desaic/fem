@@ -252,6 +252,8 @@ void MaterialParametersView::updatePlots()
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
     vtkVector3i col = matColors[ilevel];
+    //if (nlevel>1)
+    //  col = matColors[1-ilevel];
 
     int npoints = (int)physicalParametersPerLevel[ilevel].size()/paramdim;
     std::vector<int> levels(npoints, ilevel);
@@ -310,37 +312,58 @@ void MaterialParametersView::updatePlots()
       Resampler resampler;
       resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, newparticules3);
       
-      //std::vector<int> newparticules3tmp = newparticules3;
-      //newparticules3.clear();
-      //int ind = 2;
-      //newparticules3.push_back(newparticules3tmp[ind]);
+      /*std::vector<int> newparticules3tmp = newparticules3;
+      newparticules3.clear();
+      int ind = 0;
+      newparticules3.push_back(newparticules3tmp[ind]);*/ 
 
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, "Y1", "Nu1", "Density", green, 15);
-      m_plotsPerLevel[ilevel].push_back(plot3);
+      //m_plotsPerLevel[ilevel].push_back(plot3);
 
-      /*vtkVector3i magenta(255, 0, 255);
+      vtkVector3i magenta(255, 0, 255);
       vtkSmartPointer<vtkTable> table4 =  createTable(newPoints, levels, paramdim, 1, labels, &newparticules3);
-      vtkSmartPointer<cfgPlotPoints3D> plot4 = createPointPlot3D(table4, "Y1", "Nu1", "Density", magenta, 15);
-      m_plotsPerLevel[ilevel].push_back(plot4);*/ 
+      vtkSmartPointer<cfgPlotPoints3D> plot4 = createPointPlot3D(table4, "Y1", "Nu1", "Density", magenta, 10);
+      //m_plotsPerLevel[ilevel].push_back(plot4); 
 
     }
+    if (1)
+    {
+      DistanceField distanceField(paramdim);
+      std::vector<cfgScalar> derivatives;
+      std::vector<cfgScalar> distances = distanceField.computeDistances(physicalParametersPerLevel[ilevel], &derivatives);
 
+      int nTargetParticules = 300;
+      cfgScalar minRadius = 0.1;
+      std::vector<int> newparticules;
+      Resampler resampler;
+      resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, newparticules);
+
+      vtkVector3i green(0, 255, 0);
+      vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
+      vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Nu1", "Density", green, 15);
+      m_plotsPerLevel[ilevel].push_back(plot2);
+    }
     if (0)
     {
       ScoringFunction scoringFunction(paramdim);
       //scoringFunction.setDensityRadius(0.083);
+      bool useDistanceField = true;
+      scoringFunction.setUseDistanceField(useDistanceField);
       std::vector<cfgScalar> scores = scoringFunction.computeScores(physicalParametersPerLevel[ilevel]);
 
+      cfgScalar minRadius = 0.05;
       int nTargetParticules = 300;
       std::vector<int> newparticules;
       Resampler resampler;
-      resampler.resample(scores, nTargetParticules, newparticules);
+      //resampler.resample(scores, nTargetParticules, newparticules);
+      resampler.resample(minRadius, paramdim, physicalParametersPerLevel[ilevel], scores, nTargetParticules, newparticules);
 
       vtkVector3i red(255, 0, 0);
+      vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
-      vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Nu1", "Density", red, 15);
+      vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Nu1", "Density", green, 15);
       m_plotsPerLevel[ilevel].push_back(plot2);
     }
    

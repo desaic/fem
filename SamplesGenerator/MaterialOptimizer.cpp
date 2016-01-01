@@ -8,8 +8,10 @@
 #include "FEM2DFun.hpp"
 #include "PiecewiseConstant2D.hpp"
 #include "PiecewiseConstantSym2D.hpp"
+#include "PiecewiseConstantCubic2D.hpp"
 
 #include "MaterialOptimizer.h"
+#include <set>
 
 #include "MaterialQuad2D.h"
 #include "StrainLin2D.h"
@@ -40,8 +42,10 @@ void MaterialOptimizer::setStructureType(StructureType iType)
   m_structureType = iType;
 }
 
-bool MaterialOptimizer::run(int N[2], std::vector<int> &ioNewMaterials, const std::vector<float> &iTargetParams)
+bool MaterialOptimizer::run(int N[2], const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments)
 { 
+  oNewMaterialAssignments.clear();
+
   bool resOk = true;
 
   int nx = N[0], ny = N[1];
@@ -65,6 +69,13 @@ bool MaterialOptimizer::run(int N[2], std::vector<int> &ioNewMaterials, const st
   FEM2DFun * fem = new FEM2DFun();
   RealField * field = NULL;
   if (m_structureType == Cubic)
+  {
+    PiecewiseConstantCubic2D * cubicfield = new PiecewiseConstantCubic2D();
+    //PiecewiseConstantSym2D * cubicfield = new PiecewiseConstantSym2D();
+    cubicfield->allocate(nx/2, ny/2);
+    field = cubicfield;
+  }
+  else if (m_structureType == Orthotropic)
   {
     //PiecewiseConstant2D * field = new PiecewiseConstant2D();
     PiecewiseConstantSym2D * symfield = new PiecewiseConstantSym2D();
@@ -92,22 +103,22 @@ bool MaterialOptimizer::run(int N[2], std::vector<int> &ioNewMaterials, const st
   fem->dxw = 1;
   fem->dyw = 1;
 
-  std::vector< std::vector<double> > externalForces(1);
-  getExternalForces(em, 0, 2, Vector2S(fx, 0), externalForces[0]);
-  fem->externalForce = externalForces;
+  //std::vector< std::vector<double> > externalForces(1);
+  //getExternalForces(em, 0, 2, Vector2S(fx, 0), externalForces[0]);
+  //fem->externalForce = externalForces;
   fem->forceMagnitude = (double)fx;
 
   std::vector<int> matAssignment;
   if (m_structureType == Cubic)
   {
-    getQuarter(nx, ny, ioNewMaterials, matAssignment);
+    getQuarter(nx, ny, iMaterialAssignments, matAssignment);
   }
   else
   {
-    matAssignment = ioNewMaterials;
+    matAssignment = iMaterialAssignments;
   }
 
-  double shrink = 0.1;
+  double shrink = 0.3;
   Eigen::VectorXd x0(field->param.size());
   assert(x0.rows()==(int)matAssignment.size());
   for (int i=0; i<x0.rows(); i++)
@@ -131,28 +142,61 @@ bool MaterialOptimizer::run(int N[2], std::vector<int> &ioNewMaterials, const st
   fem->setParam(x0);
   Eigen::VectorXd grad = fem->df();
   h = 1;
-  gradientDescent(fem, x0, 1000);
 
-  for (int i=0; i<x0.rows(); i++)
+  int nbSteps = 500;
+  std::vector<Eigen::VectorXd> parameters;
+  gradientDescent(fem, x0, nbSteps, parameters);
+
+  std::set<std::vector<int> > newMaterials;
+  int ipoint=0, npoint=(int)parameters.size();
+  for (ipoint=0; ipoint<npoint; ipoint++)
   {
-    if (x0[i] < 0.5)
+    const Eigen::VectorXd & x0 = parameters[ipoint];
+    std::vector<int> mat(x0.rows());
+    for (int i=0; i<x0.rows(); i++)
     {
-      matAssignment[i] = 0;
+      if (x0[i] < 0.5)
+      {
+        mat[i] = 0;
+      }
+      else
+      {
+        mat[i] = 1;
+      }
     }
-    else
+    if (newMaterials.count(mat)==0)
     {
-      matAssignment[i] = 1;
+      //dumpStructure(nx/2, ny/2, mat);
+
+      newMaterials.insert(mat);
+      if (m_structureType == Cubic)
+      {
+        /*std::vector<int> newMatAssignment;
+        mirrorStructure(nx/2, ny/2, mat, newMatAssignment);
+        oNewMaterialAssignments.push_back(newMatAssignment);*/ 
+        oNewMaterialAssignments.push_back(mat);
+      }
+      else
+      {
+        oNewMaterialAssignments.push_back(mat);
+      }
     }
-  }
-  if (m_structureType == Cubic)
-  {
-    mirrorStructure(nx/2, ny/2, matAssignment, ioNewMaterials);
-  }
-  else
-  {
-    ioNewMaterials = matAssignment;
   }
   return resOk;
+}
+
+void MaterialOptimizer::dumpStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment)
+{
+  Eigen::MatrixXd mat(Nx,Ny);
+  int ind=0;
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<Ny; j++)
+    {
+      mat(i,j) = iMatAssignment[ind++];
+    }
+  }
+  std::cout << mat << std::endl << std::endl;
 }
 
 double MaterialOptimizer::infNorm(const Eigen::VectorXd & a)
@@ -164,10 +208,12 @@ double MaterialOptimizer::infNorm(const Eigen::VectorXd & a)
   return maxval;
 }
 
-void MaterialOptimizer::gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps)
+void MaterialOptimizer::gradientDescent(FEM2DFun * fun, Eigen::VectorXd & x0, int nSteps, std::vector<Eigen::VectorXd> &oParameters)
 {
+  //oParameters.push_back(x0);
+  oParameters.push_back(fun->distribution);
   //maximum movement in any parameter.
-  double maxStep = 1.;
+  double maxStep = 0.5;
   Eigen::VectorXd x = x0;
   for (int ii = 0; ii < nSteps; ii++){
     fun->setParam(x);
@@ -176,11 +222,12 @@ void MaterialOptimizer::gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int
     double norm = infNorm(grad);
     h = maxStep / norm;
     int ret = lineSearch(fun, x, grad, h);
-    //std::cout << ii << " " << fun->f() << " " << h << "\n";
     if (ret < 0){
       break;
     }
     x0 = x;
+    //oParameters.push_back(x0);
+    oParameters.push_back(fun->distribution);
   }
 }
 

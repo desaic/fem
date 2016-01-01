@@ -27,9 +27,9 @@ link_directories($ENV{QHULL_BUILD_PATH})
 
 # femlib
 include_directories(${PROJECT_SOURCE_DIR}/../femlib/include)
-#if (NOT TARGET vecmath)
-#	add_subdirectory(${PROJECT_SOURCE_DIR}/../femlib ${CMAKE_CURRENT_BINARY_DIR}/femlib)
-#endif()
+if (NOT TARGET FEMLib)
+	add_subdirectory(${PROJECT_SOURCE_DIR}/../femlib ${CMAKE_CURRENT_BINARY_DIR}/femlib)
+endif()
 
 # continuous material optimization
 include_directories(${PROJECT_SOURCE_DIR}/../MaterialOpt/include)
@@ -61,14 +61,19 @@ if (COPY_DLL_TO_BUILD_DIR)
 	add_custom_command(TARGET SamplesGenerator POST_BUILD
 					   COMMAND set "var=${PROJECT_SOURCE_DIR}"
 					   COMMAND set "var=%var:/=\\%"
-					   COMMAND copy "%var%\\..\\dll\\*.dll" "C:\\Users\\melina\\Documents\\Projects\\fem\\SamplesGenerator\\build\\$<CONFIGURATION>" 
+					   COMMAND set "var1=${PROJECT_BINARY_DIR}"
+					   COMMAND set "var1=%var1:/=\\%"
+					   
+					   COMMAND copy "%var%\\..\\dll\\*.dll" "%var1%\\$<CONFIGURATION>"  
 					   COMMENT "copying dlls …"
 				   )
 	if (IS_PARDISO_AVAILABLE)
 		add_custom_command(TARGET SamplesGenerator POST_BUILD
 						   COMMAND set "var=$ENV{PARDISO_LIB_PATH}"
 						   COMMAND set "var=%var:/=\\%"
-						   COMMAND copy "%var%\\*.dll" "C:\\Users\\melina\\Documents\\Projects\\fem\\SamplesGenerator\\build\\$<CONFIGURATION>" 
+						   COMMAND set "var1=${PROJECT_BINARY_DIR}"
+					       COMMAND set "var1=%var1:/=\\%"
+						   COMMAND copy "%var%\\*.dll" "%var1%\\$<CONFIGURATION>"   
 						   COMMENT "copying dlls …"
 				   )
 	endif()

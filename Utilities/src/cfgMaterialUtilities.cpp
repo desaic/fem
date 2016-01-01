@@ -1446,6 +1446,94 @@ void cfgMaterialUtilities::insertLayer(int Nx, int Ny, const std::vector<int> &i
   }
 }
 
+void cfgMaterialUtilities::upscaleStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<int> &oNewMaterialAssignment)
+{
+  int N[2] = {Nx, Ny};
+  int n[2] = {2*Nx, 2*Ny};
+
+  std::vector<std::vector<int> > layersX(N[0]);
+  for (int i=0; i<N[0]; i++)
+  {
+    getLayer(N[0], N[1], iMatAssignment, i, 0, layersX[i]);
+  }
+
+  std::vector<int> newMatAssignement1(n[0]*N[1]);
+  int scale1 = 2;
+  int scale2 = 2;
+
+  int ncol = N[0]/2;
+  int nrow = N[1];
+  for (int icol=0; icol<ncol; icol++)
+  {
+    for (int irow=0; irow<nrow; irow++)
+    {
+      int mat = layersX[icol][irow];
+      for (int irep=0; irep<scale1; irep++)
+      {
+        int x = scale1*icol + irep;
+        int y = irow;
+        int indMat = getGridToVectorIndex(x, y, n[0], N[1]);
+        newMatAssignement1[indMat] = mat;
+      }
+    }
+  }
+  int shift = scale1*ncol;
+  for (int icol=0; icol<ncol; icol++)
+  {
+    for (int irow=0; irow<nrow; irow++)
+    {
+      int mat = layersX[ncol+icol][irow];
+      for (int irep=0; irep<scale2; irep++)
+      {
+        int x = shift + scale2*icol + irep;
+        int y = irow;
+        int indMat = getGridToVectorIndex(x, y, n[0], N[1]);
+        newMatAssignement1[indMat] = mat;
+      }
+    }
+  }
+  std::vector<std::vector<int> > layersY(N[1]);
+  for (int j=0; j<N[1]; j++)
+  {
+    getLayer(n[0], N[1], newMatAssignement1, j, 1, layersY[j]);
+  }
+
+  std::vector<int> newMatAssignement2(n[0]*n[1]);
+
+  ncol = n[0];
+  nrow = N[1]/2;
+  for (int irow=0; irow<nrow; irow++)
+  {
+    for (int icol=0; icol<ncol; icol++)
+    {
+      int mat = layersY[irow][icol];
+      for (int irep=0; irep<scale1; irep++)
+      {
+        int y = scale1*irow + irep;
+        int x = icol;
+        int indMat = getGridToVectorIndex(x, y, n[0], n[1]);
+        newMatAssignement2[indMat] = mat;
+      }
+    }
+  }
+  shift = scale1*nrow;
+  for (int irow=0; irow<nrow; irow++)
+  {
+    for (int icol=0; icol<ncol; icol++)
+    {
+      int mat = layersY[irow+nrow][icol];
+      for (int irep=0; irep<scale2; irep++)
+      {
+        int y = shift + scale2*irow + irep;
+        int x = icol;
+        int indMat = getGridToVectorIndex(x, y, n[0], n[1]);
+        newMatAssignement2[indMat] = mat;
+      }
+    }
+  }
+  oNewMaterialAssignment = newMatAssignement2;
+}
+
 void cfgMaterialUtilities::mirrorStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
 {
   int n[2] = {2*Nx, 2*Ny};
@@ -1682,6 +1770,11 @@ void cfgMaterialUtilities::getTetrahedralStructure(int Nx, int Ny, int Nz, const
       }
     }
   }
+}
+
+void cfgMaterialUtilities::getDisconnectedComponents(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents)
+{
+
 }
 
 cfgScalar cfgMaterialUtilities::computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis)

@@ -106,11 +106,11 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
   dy = measureStretchY(em, u[0], grid);
 
   //show rendering
-  for (unsigned int ii = 0; ii < em->x.size(); ii++){
+  /*for (unsigned int ii = 0; ii < em->x.size(); ii++){
     for (int jj = 0; jj < dim; jj++){
-      em->x[ii][jj] = em->X[ii][jj] + u[2][ii*dim + jj];
+      em->x[ii][jj] = em->X[ii][jj] + u[0][ii*dim + jj];
     }
-  }
+  }*/ 
 
   //density objective
   density = 0;
