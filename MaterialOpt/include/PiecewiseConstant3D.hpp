@@ -16,9 +16,7 @@ public:
   virtual double f(const Eigen::VectorXd & x);
 
   virtual Eigen::SparseVector<double> df(const Eigen::VectorXd & x);
-
-  int vertexIndex(int xi, int yi) const;
-
+  
   ///@brief grid index given a point x.
   ///@param x should be inside [0,1]^2.
   Eigen::VectorXi gridIdx(const Eigen::VectorXd & x);

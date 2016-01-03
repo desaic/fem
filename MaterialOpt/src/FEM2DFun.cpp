@@ -118,7 +118,7 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
     density += distribution[ii];
   }
   density /= distribution.size();
-
+  //std::cout << "dx dy: " << dx << " " << dy << "\n";
 }
 
 double FEM2DFun::f()

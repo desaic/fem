@@ -38,7 +38,7 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
 ///@param nSteps maximum number of steps.
 void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps);
 
-void loadBinary(const ConfigFile & conf, std::vector<std::vector<int> > & materialAssignments);
+void loadIntBinary(const ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments);
 
 ///@brief compute material properties
 void computeMat(FEM2DFun * fem, const ConfigFile & conf);
@@ -48,4 +48,5 @@ void optMat(FEM2DFun * fem, int nSteps);
 
 void optMat3D(FEM3DFun * fem, int nSteps);
 
+extern double maxStep;
 #endif

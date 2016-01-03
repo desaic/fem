@@ -33,3 +33,13 @@ int checkSparseIndex(const std::vector<int > & I, const std::vector<int> & J)
   std::cout << "max idx " << maxIdx << "\n";
   return 0;
 }
+
+int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize)
+{
+  return ix * gridSize[1] * gridSize[2] + iy * gridSize[2] + iz;
+}
+
+int linearIdx(const Eigen::VectorXi & idx, const std::vector<int> & gridSize)
+{
+  return idx[0] * gridSize[1] * gridSize[2] + idx[1] * gridSize[2] + idx[2];
+}

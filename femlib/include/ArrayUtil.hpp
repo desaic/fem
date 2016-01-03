@@ -33,4 +33,9 @@ void addmul(std::vector<T> & dst, float f, const std::vector<T> & src)
 }
 
 int checkSparseIndex(const std::vector<int > & I, const std::vector<int> & J);
+
+int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize);
+
+int linearIdx(const Eigen::VectorXi & idx, const std::vector<int> & gridSize);
+
 #endif // ARRAYUTIL_HPP

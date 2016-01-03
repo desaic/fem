@@ -74,6 +74,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     case GLFW_KEY_F:
       render->camera.keyhold[5] = false;
       break;
+    case GLFW_KEY_T:
+      render->toggleForce();
+      break;
     }
   }
 
@@ -195,8 +198,9 @@ void Render::drawEle(int eidx, ElementMesh * m)
 {
   Element * ele = m->e[eidx];
   std::vector<std::array<int , 2> > edges = ele->getEdges();
-  glColor3f(0.4f, 0.5f, 0.9f);
+  glColor3f(ele->color[0], ele->color[1], ele->color[2]);
   glDisable(GL_LIGHTING);
+  glLineWidth(2.0f);
   glBegin(GL_LINES);
   Eigen::Vector3f center(0, 0, 0);
   for (int ii = 0; ii < ele->nV(); ii++){
@@ -215,6 +219,29 @@ void Render::drawEle(int eidx, ElementMesh * m)
 
   glEnable(GL_LIGHTING);
   glEnd();
+}
+
+void Render::toggleForce()
+{
+  if (world->em.size() == 0){
+    return;
+  }
+  if (world->u == 0 || world->fe == 0){
+    return;
+  }
+  int nForce = (int)(world->u->size());
+  forceIdx++;
+  if (forceIdx >= nForce){
+    forceIdx = 0;
+  }
+  ElementMesh * em = world->em[0];
+  int dim = 3;
+  for (unsigned int ii = 0; ii < em->x.size(); ii++){
+    for (int jj = 0; jj < dim; jj++){
+      em->x[ii][jj] = em->X[ii][jj] + (*(world->u))[forceIdx][ii*dim + jj];
+      em->fe[ii][jj] = (*(world->fe))[forceIdx][ii*dim + jj];
+    }
+  }
 }
 
 void Render::drawEle2D(int eidx, ElementMesh2D * m)
@@ -291,7 +318,18 @@ void Render::draw()
 
   for(unsigned int ii = 0;ii<world->em.size();ii++){
     drawEleMesh(world->em[ii]);
+    if (ii>0 || world->u == 0 || world->fe == 0){
+      continue;
+    }
+    int dim = 3;
+    for (unsigned int jj = 0; jj < world->em[0]->x.size(); jj++){
+      for (int kk = 0; kk < dim; kk++){
+        world->em[0]->x[jj][kk] = world->em[0]->X[jj][kk] + (*(world->u))[forceIdx][jj*dim + kk];
+        world->em[0]->fe[jj][kk] = (*(world->fe))[forceIdx][jj*dim + kk];
+      }
+    }
   }
+
   for (unsigned int ii = 0; ii<world->em2d.size(); ii++){
     drawEleMesh2D(world->em2d[ii]);
   }
@@ -376,7 +414,7 @@ Render::init(World * _world)
   glfwGetFramebufferSize(window, &width, &height);
   ratio = width / (float) height;
   glViewport(0, 0, width, height);
-  glClearColor(0.95f, 0.95f, 0.95f, 0.0f);
+  glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -396,7 +434,8 @@ Render::init(World * _world)
 }
 
 Render::Render():world(0),anim(false),xRotSpeed(0.004f),
-  yRotSpeed(0.004f),camSpeed(0.001f)
+  yRotSpeed(0.004f),camSpeed(0.001f),
+  forceIdx(0)
 {}
 
 Render::~Render()
