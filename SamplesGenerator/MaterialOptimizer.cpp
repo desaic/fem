@@ -42,13 +42,156 @@ void MaterialOptimizer::setStructureType(StructureType iType)
   m_structureType = iType;
 }
 
-bool MaterialOptimizer::run(int N[2], const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments)
+bool MaterialOptimizer::run2D(int N[2], const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments)
 { 
   oNewMaterialAssignments.clear();
 
   bool resOk = true;
 
   int nx = N[0], ny = N[1];
+
+  ElementRegGrid2D * em = new ElementRegGrid2D(nx,ny);
+  std::vector<StrainLin2D> ene(1);
+
+  // Materials
+  /*int imat=0, nmat=(int)m_baseMaterials.size();
+  for (imat=0; imat<nmat; imat++)
+  {
+    em->addMaterial(&m_baseMaterials[imat]);
+  }*/ 
+  em->addMaterial(&m_baseMaterials[1]);
+  em->initArrays();
+  em->check();
+
+  //assert(em->me.size()==ioNewMaterials.size());
+  //em->me = ioNewMaterials;
+
+  FEM2DFun * fem = new FEM2DFun();
+  RealField * field = NULL;
+  if (m_structureType == Cubic)
+  {
+    PiecewiseConstantCubic2D * cubicfield = new PiecewiseConstantCubic2D();
+    //PiecewiseConstantSym2D * cubicfield = new PiecewiseConstantSym2D();
+    cubicfield->allocate(nx/2, ny/2);
+    field = cubicfield;
+  }
+  else if (m_structureType == Orthotropic)
+  {
+    //PiecewiseConstant2D * field = new PiecewiseConstant2D();
+    PiecewiseConstantSym2D * symfield = new PiecewiseConstantSym2D();
+    symfield->allocate(nx/2, ny/2);
+    field = symfield;
+  }
+  fem->field = field;
+  fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
+  fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
+
+  fem->em = em;
+  fem->m_nx = nx;
+  fem->m_ny = ny;
+
+  assert(iTargetParams.size()==4);
+  float Y = iTargetParams[1];
+  float nu = iTargetParams[2];
+
+  float fx = 1;
+  float dx0, dy0;
+  computeTargetDisplacements(Y, nu, fx, dx0, dy0);
+
+  fem->dx0 = (double)dx0;
+  fem->dy0 = (double)dy0;
+  fem->dxw = 1;
+  fem->dyw = 1;
+
+  //std::vector< std::vector<double> > externalForces(1);
+  //getExternalForces(em, 0, 2, Vector2S(fx, 0), externalForces[0]);
+  //fem->externalForce = externalForces;
+  fem->forceMagnitude = (double)fx;
+
+  std::vector<int> matAssignment;
+  if (m_structureType == Cubic)
+  {
+    getQuarter(nx, ny, iMaterialAssignments, matAssignment);
+  }
+  else
+  {
+    matAssignment = iMaterialAssignments;
+  }
+
+  double shrink = 0.3;
+  Eigen::VectorXd x0(field->param.size());
+  assert(x0.rows()==(int)matAssignment.size());
+  for (int i=0; i<x0.rows(); i++)
+  {
+    //x0[i] = (float)matAssignment[i];
+    double old_density;
+    if (matAssignment[i]==0)
+    {
+      old_density = 0;
+    }
+    else
+    {
+      old_density = 1;
+    }
+    x0[i] = 0.5 + (old_density - 0.5) * shrink;
+  }
+  fem->init(x0);
+
+  double h = 1e-2;
+  //check_df(fem, x0, h);
+  fem->setParam(x0);
+  Eigen::VectorXd grad = fem->df();
+  h = 1;
+
+  int nbSteps = 500;
+  std::vector<Eigen::VectorXd> parameters;
+  gradientDescent(fem, x0, nbSteps, parameters);
+
+  std::set<std::vector<int> > newMaterials;
+  int ipoint=0, npoint=(int)parameters.size();
+  for (ipoint=0; ipoint<npoint; ipoint++)
+  {
+    const Eigen::VectorXd & x0 = parameters[ipoint];
+    std::vector<int> mat(x0.rows());
+    for (int i=0; i<x0.rows(); i++)
+    {
+      if (x0[i] < 0.5)
+      {
+        mat[i] = 0;
+      }
+      else
+      {
+        mat[i] = 1;
+      }
+    }
+    if (newMaterials.count(mat)==0)
+    {
+      //dumpStructure(nx/2, ny/2, mat);
+
+      newMaterials.insert(mat);
+      if (m_structureType == Cubic)
+      {
+        /*std::vector<int> newMatAssignment;
+        mirrorStructure(nx/2, ny/2, mat, newMatAssignment);
+        oNewMaterialAssignments.push_back(newMatAssignment);*/ 
+        oNewMaterialAssignments.push_back(mat);
+      }
+      else
+      {
+        oNewMaterialAssignments.push_back(mat);
+      }
+    }
+  }
+  return resOk;
+}
+
+bool MaterialOptimizer::run3D(int N[3], const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments)
+{ 
+  oNewMaterialAssignments.clear();
+
+  bool resOk = true;
+
+  int nx = N[0], ny = N[1], nz = N[2];
 
   ElementRegGrid2D * em = new ElementRegGrid2D(nx,ny);
   std::vector<StrainLin2D> ene(1);

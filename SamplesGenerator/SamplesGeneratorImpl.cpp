@@ -43,7 +43,7 @@ SamplesGeneratorImpl::SamplesGeneratorImpl(int iDim)
   m_UseLinearMaterial = true;
   assert(iDim==2||iDim==3);
   //m_dim = iDim;
-  m_dim = 2;
+  m_dim = 3;
   m_blockRep = 1;// (m_dim==2? 8: 4);
   m_nbSubdivisions = 1;
   m_orthotropicOnly = false;
@@ -1834,6 +1834,10 @@ int SamplesGeneratorImpl::computeMaterialParametersIncremental(std::string & iSt
     }
   }
   std::cout << "** Nb manifold comb = " << newMaterialAssignments.size() << std::endl;
+  std::set<std::vector<int> > setNewMaterials = toStdSet(newMaterialAssignments);
+  newMaterialAssignments = toStdVector(setNewMaterials);
+  std::cout << "** Nb manifold comb = " << newMaterialAssignments.size() << std::endl;
+
   oNewMaterialAssignments = newMaterialAssignments;
 
   return ResOk;
@@ -2362,7 +2366,7 @@ void SamplesGeneratorImpl::runContinuousOptimization(int iLevel, int iCycle, boo
   }
   std::cout << "Running continuous optimization..." << std::endl;
   bool writeIntermediateResult = true;
-  int N[2] = {iLevel, iLevel};
+  int N[3] = {iLevel, iLevel, (m_dim==2?1: m_dim)};
   int istruct=0, nstruct=(int)newparticules.size();
   for (istruct=0; istruct<nstruct; istruct++)
   {
@@ -2376,7 +2380,15 @@ void SamplesGeneratorImpl::runContinuousOptimization(int iLevel, int iCycle, boo
     }
     std::vector<std::vector<int> > newMaterials;
      std::vector<cfgScalar> newParameters, newTensors;
-    bool resOk = optimizer.run(N, matAssignment, targetParameters, newMaterials); 
+    bool resOk = true;
+    if (m_dim==2)
+    {
+      resOk = optimizer.run2D(N, matAssignment, targetParameters, newMaterials); 
+    }
+    else
+    {
+      resOk = optimizer.run3D(N, matAssignment, targetParameters, newMaterials); 
+    }
     newMaterials = getNewElements(allNewMaterialAssignments, newMaterials);
     if (resOk)
     {
@@ -3616,46 +3628,52 @@ void SamplesGeneratorImpl::concatenateFiles(int iLevel, const std::string iPostF
     {
       std::cout << "failed to read files 2"<< std::endl;
     }
+    writeFiles(iLevel, allMatAssignments, allBaseMaterialStructures, allParameters, allTensors, iNewPostFix);
   }
   else
   {
     std::cout << "failed to read files 1"<< std::endl;
   }
-  writeFiles(iLevel, allMatAssignments, allBaseMaterialStructures, allParameters, allTensors, iNewPostFix);
 }
 
 int SamplesGeneratorImpl::run()
 {
+  // Concatenate files
   if (0)
   {
     int level = 16;
     int indexMin = 0;
-    int indexMax = 39;
-    std::string postFix = "SMC_after_resampling_";
-    std::string newPostFix = "SMC_result";
-    concatenateFiles(level, indexMin, indexMax, postFix, newPostFix);
+    int indexMax = 4;
+    //std::string postFix = "SMC_after_resampling_";
+    //std::string newPostFix = "SMC_result";
+    std::string postFix = "ContinuousOptimizationResult_";
+    std::string newPostFix = "ContinuousOptimizationResult";
+    //std::string postFix = "SMC_";
+    //std::string newPostFix = "SMC";
+    //concatenateFiles(level, indexMin, indexMax, postFix, newPostFix);
 
-    std::string postFix1 = "SMC_init";
-    std::string postFix2 = "SMC_result";
+    std::string postFix1 = "orthotropic";
+    std::string postFix2 = "";
+    //std::string postFix1 = "SMC_init";
+    //std::string postFix2 = "SMC_result";
+    //std::string postFix1 = "ContinuousOptimizationResult";
+    //std::string postFix2 = "SMC";
     newPostFix = "";
     concatenateFiles(level, postFix1, postFix2, newPostFix);
 
     exit(0);
   }
+  // Convert from isotropic to orthotropic
   if (0)
   {
-    std::string inputFileName =  m_OutputDirectory + "x_level2//StressStrain_2_3";
-    std::string outputFileName =  m_OutputDirectory + "x_level2//StressStrain_2_3_x.txt";
-    concatenateData(inputFileName, 65536, outputFileName);
-    exit(0);
-  }
-  if (0)
-  {
-    std::string inputFileName = m_OutputDirectory + "x_level1//StressStrain_1_3_x.txt";
-    Vector3S forceAxis;
-    std::vector<std::vector<int> > materials;
-    std::vector<std::vector<float> > stresses, strains;
-    bool ResOk = readData(inputFileName,  forceAxis, materials, stresses, strains);
+    int level = 16;
+    std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
+    std::vector<float> cubicParameters, tensors;
+    bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, cubicParameters, tensors);
+
+    std::vector<float> orthotropicParameter;
+    fromCubicToOrthotropicProperties(m_dim, cubicParameters, orthotropicParameter);
+    writeFiles(level, materialAssignments, baseMaterialStructures, orthotropicParameter, tensors, "orthotropic");
     exit(0);
   }
 
@@ -3767,7 +3785,7 @@ int SamplesGeneratorImpl::run()
   // compute homogenised tensors
   if (0)
   {
-    int level = 4;
+    int level = 16;
     std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
     std::vector<float> physicalParameters;
     bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters);
@@ -3835,7 +3853,7 @@ int SamplesGeneratorImpl::run()
   {
     int maxlevel = 2;
     if (m_orthotropicOnly)
-      maxlevel = 4;
+      maxlevel = 8;
     if (m_cubicOnly)
       maxlevel = 8; //maxlevel = (m_dim==2? 8: 4);
 
@@ -3853,6 +3871,7 @@ int SamplesGeneratorImpl::run()
       computeParametersAndTensorValues(n, newMaterialAssignment, physicalParameters, tensors);
       writeFiles(ilevel, newMaterialAssignment, baseMaterialStructures, physicalParameters, tensors);
     }
+    exit(0);
   }
 
   // SMC
@@ -3882,7 +3901,7 @@ int SamplesGeneratorImpl::run()
   }
 
   // SMC + Continuous optimization
-  if (1)
+  if (0)
   {
     int level = 16;
     int prevLevel = level/2;
@@ -3890,7 +3909,7 @@ int SamplesGeneratorImpl::run()
     bool fixNonManifoldStructure = true;
 
     int icycle=0, ncycle=5;
-    for (icycle=1; icycle<ncycle; icycle++)
+    for (icycle=0; icycle<ncycle; icycle++)
     {
       if (icycle>0)
       {
@@ -3936,7 +3955,7 @@ int SamplesGeneratorImpl::run()
   }
 
   // Continuous optimization
-  if (0)
+  if (1)
   {
     int level = 16;
     int n[3] = {level, level, level};

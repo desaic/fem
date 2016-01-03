@@ -777,6 +777,34 @@ bool cfgMaterialUtilities::computeMaterialParameters(const std::vector<std::vect
   return true;
 }
 
+void cfgMaterialUtilities::fromCubicToOrthotropicProperties(int idim, const std::vector<cfgScalar> &iCubicProperties, std::vector<cfgScalar> &oOrthotropicProperties)
+{
+  oOrthotropicProperties.clear();
+
+  // Cubic: density Y, nu, G
+  // Orthotropic 2D: density Yx Yy nu_xy, Gxy
+  
+  assert(iCubicProperties.size()%4==0);
+  
+  int index=0;
+  int istruct, nstruct=iCubicProperties.size()/4;
+  for (istruct=0; istruct<nstruct; istruct++)
+  {
+    cfgScalar density = iCubicProperties[index++];
+    cfgScalar Y_x = iCubicProperties[index++];
+    cfgScalar poissonRatio_xy = iCubicProperties[index++];
+    cfgScalar G_xy = iCubicProperties[index++];
+
+    cfgScalar Y_y = Y_x;
+
+    oOrthotropicProperties.push_back(density);
+    oOrthotropicProperties.push_back(Y_x);
+    oOrthotropicProperties.push_back(Y_y);
+    oOrthotropicProperties.push_back(poissonRatio_xy);
+    oOrthotropicProperties.push_back(G_xy);
+  }
+}
+
 bool cfgMaterialUtilities::getMaterialAssignment(int iDim, std::string iMaterialFile, const std::vector<int> &iMaterialCombination, int iBlockRep, int iNbSubdiv, std::vector<int> &oCellMaterials)
 {
   std::vector<std::vector<int> > baseMaterialStructures;

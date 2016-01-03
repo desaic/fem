@@ -40,6 +40,8 @@ namespace cfgMaterialUtilities
 
   bool getMaterialAssignment(int iDim, std::string iMaterialFile, const std::vector<int> &iMaterialsCombination, int iBlockRep, int iNbSubdiv, std::vector<int> &oCellMaterials);
 
+  // Material properties
+  // -------------------
   cfgScalar computeYoungModulus(cfgScalar iStrain, cfgScalar iStress);
   cfgScalar computeYoungModulus(const std::vector<cfgScalar> &iStrains, const std::vector<cfgScalar>  &iStresses);
   cfgScalar computeMaterialRatio(const std::vector<int> &iMaterialAssignment, const std::vector<std::vector<int> > &iBaseMaterialStructures);
@@ -48,6 +50,8 @@ namespace cfgMaterialUtilities
   cfgScalar computePoissonRatio(cfgScalar &iStrainsAxialDir, cfgScalar&iStrainsTransversalDir);
   cfgScalar computeVonMisesStress(std::vector<cfgScalar> &iStresses);  // iStresses = [sigma_xx sigma_yy sigma_zz sigma_xy sigma_yz sigma_zx]
   cfgScalar computeVonMisesStress2D(std::vector<cfgScalar> &iStresses); //iStresses = [sigma_xx sigma_yy sigma_xy]
+
+  void fromCubicToOrthotropicProperties(int idim, const std::vector<cfgScalar> &iCubicProperties, std::vector<cfgScalar> &oOrthotropicProperties);
 
   // Hexahedral mesh utilities
   // -------------------------

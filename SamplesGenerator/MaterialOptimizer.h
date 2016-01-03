@@ -25,7 +25,8 @@ public:
   void setBaseMaterials(const std::vector<MaterialQuad2D> &iBaseMaterials);
   void setStructureType(StructureType iType);
 
-  bool run(int N[2], const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments);
+  bool run2D(int N[2], const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments);
+  bool run3D(int N[3], const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments);
 
 private:
 
