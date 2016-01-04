@@ -42,11 +42,5 @@ void loadIntBinary(const ConfigFile & conf, std::vector<std::vector<double> > & 
 
 ///@brief compute material properties
 void computeMat(FEM2DFun * fem, const ConfigFile & conf);
-
-///@brief optimize material distribution for each starting point.
-void optMat(FEM2DFun * fem, int nSteps);
-
-void optMat3D(FEM3DFun * fem, int nSteps);
-
 extern double maxStep;
 #endif

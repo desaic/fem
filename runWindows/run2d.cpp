@@ -18,7 +18,7 @@
 #include <thread>
 
 //maximum movement in any parameter.
-double maxStep = 0.5;
+double maxStep = 0.2;
 int logInterval = 10;
 std::ofstream logfile;
 std::ofstream materialOut;
@@ -26,12 +26,12 @@ int nChunk = 6;
 int chunkIdx = 0;
 
 std::vector<std::vector<double> > continuousMaterials;
+
+void optMat2D(FEM2DFun * fem, int nSteps);
 void loadBinary(const ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments);
 
 void run2D(const ConfigFile & conf)
 {
-  int nx = 32;
-  int ny = 32;
   Eigen::VectorXd x0;
 
   if (conf.hasOpt("structurebin")){
@@ -40,7 +40,15 @@ void run2D(const ConfigFile & conf)
   if (conf.hasOpt("structurelist")){
     loadText(conf, continuousMaterials);
   }
-    
+
+  int nx = 16;
+  int ny = 16;
+
+  if (continuousMaterials.size() > 0){
+    nx = (int)(std::sqrt(continuousMaterials[0].size())+0.4);
+    ny = nx;
+  }
+
   x0 = 0.5 * Eigen::VectorXd::Ones(nx * ny);
   ElementRegGrid2D * em = new ElementRegGrid2D(nx, ny);
   std::vector<StrainLin2D> ene(1);
@@ -101,7 +109,7 @@ void run2D(const ConfigFile & conf)
   std::thread thread;
   if (render){
     if (task == "opt"){
-      thread = std::thread(optMat, fem, nSteps);
+      thread = std::thread(optMat2D, fem, nSteps);
     }
     else if (task == "compute"){
       thread = std::thread(computeMat, fem, conf);
@@ -115,7 +123,7 @@ void run2D(const ConfigFile & conf)
   }
   else{
     if (task == "opt"){
-      optMat(fem, nSteps);
+      optMat2D(fem, nSteps);
     }
     else if (task == "compute"){
       computeMat(fem, conf);
@@ -282,7 +290,7 @@ void computeMat(FEM2DFun * fem, const ConfigFile & conf)
 }
 
 //uses orthotropic structure
-void optMat(FEM2DFun * fem, int nSteps)
+void optMat2D(FEM2DFun * fem, int nSteps)
 {
   RealField * field = fem->field;
   Eigen::VectorXd x1 = fem->param;
@@ -297,27 +305,54 @@ void optMat(FEM2DFun * fem, int nSteps)
   std::string materialOutName = sequenceFilename("materialStructure", chunkIdx, ".txt");
   materialOut.open(materialOutName);
   double shrink_ratio = 0.3;
-  for (int ii = startIdx; ii < endIdx; ii++){
-    Eigen::VectorXd x0(continuousMaterials[ii].size());
-    shrinkVector(x0, continuousMaterials[ii], shrink_ratio);
+  
+  std::vector<int> idx;
+  std::ifstream idxin("../idx.txt");
+  int ii = 0;
+  while (1){
+    idxin >> ii;
+    if (idxin.eof()){
+      break;
+    }
+    idx.push_back(ii);
+  }
+  idxin.close();
+
+  for (unsigned int ii = 0; ii < idx.size(); ii++){
+    int mi = idx[ii];
+    Eigen::VectorXd x0(continuousMaterials[mi].size());
+    for (unsigned int jj = 0; jj < continuousMaterials[ii].size(); jj++){
+      continuousMaterials[mi][jj] = std::max(1e-3, continuousMaterials[mi][jj]);
+    }
+    shrinkVector(x0, continuousMaterials[mi], 1);
     x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
     fem->setParam(x1);
-    //printStructure(fem);
-    fem->dx0 = fem->dx;
-    //set up objective for negative poisson ratio.
-    fem->dy0 = fem->dx;
-    fem->m0 = 0.5*sum(fem->distribution) / fem->distribution.size();
-    //scale mass term to roughly displacement term.
-    fem->mw = 0.1 * (fem->dx0 / fem->m0);
-    std::string filename;
-    filename = sequenceFilename("log", ii, ".txt");
-    logfile.open(filename);
-    gradientDescent(fem, x1, nSteps);
+    //if (fem->dx * 0.1 > fem->dy){
+    //  continue;
+    //}
+    std::cout << mi << "\n";
+    //int input;
+    //std::cin >> input;
+    
+    //shrinkVector(x0, continuousMaterials[ii], shrink_ratio);
+    //x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
+    //fem->setParam(x1);
+    ////printStructure(fem);
+    //fem->dx0 = fem->dx;
+    ////set up objective for negative poisson ratio.
+    //fem->dy0 = fem->dx;
+    //fem->m0 = sum(fem->distribution) / fem->distribution.size();
+    ////scale mass term to roughly displacement term.
+    //fem->mw = 0.1 * (fem->dx0 / fem->m0);
+    //std::string filename;
+    //filename = sequenceFilename("log", ii, ".txt");
+    //logfile.open(filename);
+    //gradientDescent(fem, x1, nSteps);
     for (unsigned int jj = 0; jj < fem->distribution.size(); jj++){
       materialOut << fem->distribution[jj] << " ";
     }
     materialOut << "\n";
-    logfile.close();
+    //logfile.close();
   }
   materialOut.close();
 }
@@ -370,7 +405,7 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
     Eigen::VectorXd grad1 = fun->df();
     double norm1 = infNorm(grad1);
     //if gradient norm or function value decrease, return.
-    std::cout << step<<" "<< h << " " << norm1 << " " << f1 << "\n";
+    std::cout << "line search: "<<step<<" "<< h << " (" << norm1<<" "<<norm0<< ") (" << f1 <<" "<<f0<< ")\n";
     if (norm1 < norm0 || f1 < f0){
       x0 = x;
       ret = 0;
@@ -516,7 +551,8 @@ void loadIntBinary(const ConfigFile & conf, std::vector<std::vector<double> > & 
     for (unsigned int jj = 0; jj < materialAssignments[ii].size(); jj++){
       materialAssignments[ii][jj] = intArr[ii][jj];
     }
-    materialAssignments[ii] = upsampleVector(materialAssignments[ii], 32, 32);
+    int nx = (int)(std::sqrt(materialAssignments[ii].size()) + 0.4);
+    //materialAssignments[ii] = upsampleVector(materialAssignments[ii], nx, nx);
   }
 
 }
