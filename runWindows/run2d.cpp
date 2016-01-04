@@ -80,15 +80,11 @@ void run2D(const ConfigFile & conf)
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
 
   fem->em = em;
-  fem->dx0 = 0.22;
-  fem->dy0 = 0.22;
-  fem->dxw = 2;
   fem->field = field;
-  fem->m_nx = nx;
-  fem->m_ny = ny;
   fem->m0 = 0.4;
   fem->mw = 0.1;
-
+  fem->gridSize[0] = nx;
+  fem->gridSize[1] = ny;
   fem->init(x0);
 
   chunkIdx = conf.getInt("chunkIdx");
@@ -99,8 +95,12 @@ void run2D(const ConfigFile & conf)
     maxStep = conf.getFloat("maxStep");
   }
   if (test){
-    double h = 0.001;
+    double h = 0.1;
     nSteps = 1;
+    fem->setParam(x0);
+    fem->G0 = 0.9 * fem->G;
+    fem->m0 = 0.5 * fem->density;
+    fem->mw = 0;
     check_df(fem, x0, h);
     //check_sim(fem, x0);
     return;
@@ -111,13 +111,12 @@ void run2D(const ConfigFile & conf)
     if (task == "opt"){
       thread = std::thread(optMat2D, fem, nSteps);
     }
-    else if (task == "compute"){
-      thread = std::thread(computeMat, fem, conf);
-    }
 
     Render render;
     World * world = new World();
     world->em2d.push_back(em);
+    world->u = &fem->u;
+    world->fe = &fem->externalForce;
     render.init(world);
     render.loop();
   }
@@ -125,18 +124,15 @@ void run2D(const ConfigFile & conf)
     if (task == "opt"){
       optMat2D(fem, nSteps);
     }
-    else if (task == "compute"){
-      computeMat(fem, conf);
-    }
   }
 }
 
 void printStructure(FEM2DFun * fem, std::ostream & out)
 {
-  out << fem->m_nx << " " << fem->m_ny << "\n";
-  for (int ii = 0; ii < fem->m_nx; ii++){
-    for (int jj = 0; jj < fem->m_ny; jj++){
-      double val = fem->distribution[ii*fem->m_ny + jj];
+  out << fem->gridSize[0]<< " " << fem->gridSize[1]<< "\n";
+  for (int ii = 0; ii < fem->gridSize[0]; ii++){
+    for (int jj = 0; jj < fem->gridSize[1]; jj++){
+      double val = fem->distribution[ii*fem->gridSize[1] + jj];
       out << val << " ";
     }
     std::cout << "\n";
@@ -233,62 +229,6 @@ void fill(Eigen::VectorXd & x, double v)
   }
 }
 
-void computeMat(FEM2DFun * fem, const ConfigFile & conf)
-{
-  RealField * field = fem->field;
-  Eigen::VectorXd x1 = fem->param;
-  Eigen::Vector3d fx = fem->forceMagnitude * Eigen::Vector3d(1, 0, 0);
-  Eigen::Vector3d fy = fem->forceMagnitude * Eigen::Vector3d(0, 1, 0);
-  int nrows = (int)fem->externalForce[0].size();
-  fem->externalForce.resize(3);
-  fem->externalForce[1].resize(nrows);
-  fem->externalForce[2].resize(nrows);
-  stretchY(fem->em, fy, fem->grid, fem->externalForce[1]);
-  //shear force
-  stretchY(fem->em, fx, fem->grid, fem->externalForce[2]);
-  for (unsigned int ii = 0; ii < fem->em->fe.size(); ii++){
-    fem->em->fe[ii][0] = fem->externalForce[2][ii*2];
-    fem->em->fe[ii][1] = fem->externalForce[2][ii * 2+1];
-  }
-  fem->initArrays();
-  std::string outputprefix("paraml");
-  if (conf.hasOpt("outputprefix")){
-    outputprefix = conf.getString("outputprefix");
-  }
-  if (conf.hasOpt("interp")){
-    int nStep = conf.getInt("interp");
-    for (unsigned int ii = 0; ii < continuousMaterials.size(); ii++){
-      for (unsigned int jj = 0; jj < continuousMaterials[ii].size(); jj++){
-        continuousMaterials[ii][jj] = std::max(1e-3, continuousMaterials[ii][jj]);
-      }
-    }
-    continuousMaterials = interpArr(continuousMaterials, nStep, 1e-3, 1);
-  }
-  std::string materialOutName = sequenceFilename(outputprefix, chunkIdx, ".txt");
-  materialOut.open(materialOutName);
-  std::ofstream structOut("s.txt");
-  for (int ii = 0; ii < continuousMaterials.size(); ii++){
-    Eigen::VectorXd x0(continuousMaterials[ii].size());
-    shrinkVector(x0, continuousMaterials[ii], 1.0);
-    x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
-    ///check solid material
-    fill(x1, 1.0);
-    fem->setParam(x1);
-    double dx = fem->dx;
-    double dy = fem->dy;
-    //stretch in y direction under stretching force in y
-    double dyy = measureStretchY(fem->em, fem->u[1], fem->grid);
-    double dxy = measureShearX(fem->em, fem->u[2], fem->grid);
-    double F = fem->forceMagnitude;
-    materialOut << F/dx << " " << F/dyy << " " << -dy/dx << " " << F/dxy<<" "<<fem->density << "\n";
-    for (unsigned int jj = 0; jj < fem->distribution.size(); jj++){
-      structOut << fem->distribution[jj] << " ";
-    }
-    structOut << "\n";
-  }
-  materialOut.close();
-}
-
 //uses orthotropic structure
 void optMat2D(FEM2DFun * fem, int nSteps)
 {
@@ -306,48 +246,55 @@ void optMat2D(FEM2DFun * fem, int nSteps)
   materialOut.open(materialOutName);
   double shrink_ratio = 0.3;
   
-  std::vector<int> idx;
-  std::ifstream idxin("../idx.txt");
-  int ii = 0;
-  while (1){
-    idxin >> ii;
-    if (idxin.eof()){
-      break;
-    }
-    idx.push_back(ii);
+  //std::vector<int> idx;
+  //std::ifstream idxin("../idx.txt");
+  //int ii = 0;
+  //while (1){
+  //  idxin >> ii;
+  //  if (idxin.eof()){
+  //    break;
+  //  }
+  //  idx.push_back(ii);
+  //}
+  //idxin.close();
+  
+  //for test only look at the first displacement.
+  for (int jj = 1; jj < fem->wG.size(); jj++){
+    fem->wG(jj) = 0;
+    //  fem->wG(ii) = 1 + (rand() / (float)RAND_MAX - 0.5)*0.3 ;
   }
-  idxin.close();
 
-  for (unsigned int ii = 0; ii < idx.size(); ii++){
-    int mi = idx[ii];
+  for (unsigned int ii = 0; ii < continuousMaterials.size(); ii++){
+    int mi = ii;// idx[ii];
     Eigen::VectorXd x0(continuousMaterials[mi].size());
     for (unsigned int jj = 0; jj < continuousMaterials[ii].size(); jj++){
       continuousMaterials[mi][jj] = std::max(1e-3, continuousMaterials[mi][jj]);
     }
     shrinkVector(x0, continuousMaterials[mi], 1);
-    x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
+    x1 = firstQuadrant(x0, fem->gridSize[0], fem->gridSize[1]);
     fem->setParam(x1);
     //if (fem->dx * 0.1 > fem->dy){
     //  continue;
     //}
-    std::cout << mi << "\n";
+    //std::cout << mi << "\n";
     //int input;
     //std::cin >> input;
     
-    //shrinkVector(x0, continuousMaterials[ii], shrink_ratio);
-    //x1 = firstQuadrant(x0, fem->m_nx, fem->m_ny);
-    //fem->setParam(x1);
-    ////printStructure(fem);
-    //fem->dx0 = fem->dx;
-    ////set up objective for negative poisson ratio.
-    //fem->dy0 = fem->dx;
-    //fem->m0 = sum(fem->distribution) / fem->distribution.size();
-    ////scale mass term to roughly displacement term.
-    //fem->mw = 0.1 * (fem->dx0 / fem->m0);
-    //std::string filename;
-    //filename = sequenceFilename("log", ii, ".txt");
-    //logfile.open(filename);
-    //gradientDescent(fem, x1, nSteps);
+    fem->m0 = 0.5 * sum(fem->distribution) / fem->distribution.size();
+    //scale mass term to roughly displacement term.
+    fem->mw = 0.1 * (fem->G(0,0) / fem->m0);
+    fem->G0 = fem->G;
+    //-0.45 poisson's ratio objective
+    fem->G0(1, 0) = 0.45 * fem->G0(0, 0);
+
+    shrinkVector(x0, continuousMaterials[ii], shrink_ratio);
+    x1 = firstQuadrant(x0, fem->gridSize[0], fem->gridSize[1]);
+    fem->setParam(x1);
+
+    std::string filename;
+    filename = sequenceFilename("log", ii, ".txt");
+    logfile.open(filename);
+    gradientDescent(fem, x1, nSteps);
     for (unsigned int jj = 0; jj < fem->distribution.size(); jj++){
       materialOut << fem->distribution[jj] << " ";
     }
@@ -405,7 +352,7 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
     Eigen::VectorXd grad1 = fun->df();
     double norm1 = infNorm(grad1);
     //if gradient norm or function value decrease, return.
-    std::cout << "line search: "<<step<<" "<< h << " (" << norm1<<" "<<norm0<< ") (" << f1 <<" "<<f0<< ")\n";
+    //std::cout << "line search: "<<step<<" "<< h << " (" << norm1<<" "<<norm0<< ") (" << f1 <<" "<<f0<< ")\n";
     if (norm1 < norm0 || f1 < f0){
       x0 = x;
       ret = 0;
@@ -446,6 +393,8 @@ void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h)
     max_val = std::max(max_val, std::abs(ana_df[ii]));
   }
   std::cout << "max diff " << max_diff << " " << max_val << "\n";
+  //int input;
+  //std::cin >> input;
 }
 
 ///@brief sparse matrix vector mult
