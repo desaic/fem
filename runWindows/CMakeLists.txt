@@ -55,9 +55,42 @@ endif()
 
 add_executable (Run ${src})
 
+#include_directories(${PROJECT_SOURCE_DIR}/../include/amgcl)
+#----------------------------------------------------------------------------
+# Find Boost
+#----------------------------------------------------------------------------
+# if (WIN32)
+    # set(Boost_USE_STATIC_LIBS ON)
+# else ()
+    # option(
+        # USE_STATIC_BOOST_LIBS
+        # "Use static versions of Boost libraries"
+        # OFF
+        # )
+
+    # if (USE_STATIC_BOOST_LIBS)
+        # set(Boost_USE_STATIC_LIBS ON)
+    # else()
+        # set(Boost_USE_STATIC_LIBS OFF)
+        # add_definitions(-DBOOST_TEST_DYN_LINK)
+    # endif()
+# endif ()
+
+# set(BOOST_COMPONENTS ${BOOST_COMPONENTS}
+    # program_options
+    # system
+    # filesystem
+    # serialization
+    # unit_test_framework
+    # )
+
+# find_package(Boost COMPONENTS ${BOOST_COMPONENTS})
+# include_directories( ${Boost_INCLUDE_DIRS} )
+
 target_link_libraries(Run FEMLib MaterialOpt Utilities StepperCPU libopenblas FEMViewer ${Utilities_LIBS})
 if(MSVC)
-  target_link_libraries(Run glfw3 opengl32 glu32)
+  target_link_libraries(Run glfw3 opengl32 glu32 )
+  #target_link_libraries(Run amgcl)
 endif()
 
 if (IS_PARDISO_AVAILABLE)
