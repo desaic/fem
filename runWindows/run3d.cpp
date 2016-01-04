@@ -17,36 +17,73 @@
 #include <iomanip>
 #include <thread>
 
-void computeMat3D(FEM3DFun * fem, const ConfigFile & conf)
-{
+extern std::ofstream logfile;
 
-}
-
-void optMat3D(FEM3DFun * fem, int nSteps)
+struct Opt3DArgs
 {
+  FEM3DFun * fem;
+  const ConfigFile * conf;
+};
+
+void optMat3D(Opt3DArgs * arg)
+{
+  int nSteps = 500;
+  const ConfigFile * conf = arg->conf;
+  FEM3DFun * fem = arg->fem;
+
   RealField * field = fem->field;
-  Eigen::VectorXd x1 = fem->param;
-  for (int ii = 0; ii < x1.size(); ii++){
-    x1[ii] = 0.5 + (rand() / (float)RAND_MAX - 0.5) * 0.3;
-  }
-  fem->setParam(x1);
-  double val = fem->f();
-  fem->m0 = 0.5 * sum(fem->distribution) / fem->distribution.size();
-  fem->mw = 0.1 * fem->G(0, 0) / fem->density;
-  fem->G0 = fem->G;
-  //-0.45 poisson's ratio objective
-  fem->G0(1, 0) = 0.45 * fem->G0(0, 0);
-  fem->G0(2, 0) = 0.45 * fem->G0(0, 0);
+  
+    //for (int ii = 0; ii < x1.size(); ii++){
+  //  x1[ii] = 0.5 + (rand() / (float)RAND_MAX - 0.5) * 0.2;
+  //}
+  std::vector<std::vector<double> > structure2d;
+  loadText(*conf, structure2d);
+  for (unsigned int si = 0; si < structure2d.size(); si++){
+    std::vector<double> s2d = structure2d[si];
+    Eigen::VectorXd x1 = fem->param;
+    //copy 8x8 corner of 2D structure to xy-plane of 3D structure.
+    for (int ii = 0; ii < x1.size(); ii++){
+      x1[ii] = 1e-3;
+    }
+    //copy corner of 2d structure to xy plane of x1
+    std::vector<int> paramSize(3, 0);
+    for (int dim = 0; dim < (int)paramSize.size(); dim++){
+      paramSize[dim] = fem->gridSize[dim] / 2;
+    }
+    for (int ix = 0; ix < paramSize[0]; ix++){
+      for (int iy = 0; iy < paramSize[1]; iy++){
+        x1[ix * paramSize[1] * paramSize[2] + iy *paramSize[2]] = s2d[ix * fem->gridSize[1] + iy];
+      }
+    }
 
-  //for test only look at the first displacement.
-  for (int ii = 1; ii < fem->wG.size(); ii++){
-    //fem->wG(ii) = 0;
-    fem->wG(ii) = 1 + (rand() / (float)RAND_MAX - 0.5) ;
-  }
+    fem->setParam(x1);
 
-  check_df(fem, x1, 1e-3);
-  //scale mass term to roughly displacement term.
-  //gradientDescent(fem, x1, nSteps);
+    //int input;
+    //std::cin >> input;
+    double val = fem->f();
+    fem->m0 = 0.5 * sum(fem->distribution) / fem->distribution.size();
+    fem->mw = 0.1 * fem->G(0, 0) / fem->density;
+    fem->G0 = fem->G;
+    //-0.45 poisson's ratio objective
+    fem->G0(1, 0) = 0.45 * fem->G0(0, 0);
+    fem->G0(2, 0) = 0.45 * fem->G0(0, 0);
+
+    //for test only look at the first displacement.
+    for (int ii = 1; ii < fem->wG.size(); ii++){
+      fem->wG(ii) = 0;
+      //  fem->wG(ii) = 1 + (rand() / (float)RAND_MAX - 0.5)*0.3 ;
+    }
+
+    std::ofstream matStruct("struct.txt");
+    //logfile.open("log3d.txt");
+    //check_df(fem, x1, 1e-3);
+    //scale mass term to roughly displacement term.
+    //gradientDescent(fem, x1, nSteps);
+    for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
+      matStruct << fem->distribution[ii] << " ";
+    }
+    matStruct << "\n";
+  }
 }
 
 void run3D(const ConfigFile & conf)
@@ -70,8 +107,8 @@ void run3D(const ConfigFile & conf)
   ElementRegGrid * em = new ElementRegGrid(nx, ny, nz);
   std::vector<StrainLin> ene(1);
   //E = 1e3.
-  ene[0].param[0] = 3448.275862;
-  ene[0].param[1] = 31034.48276;
+  ene[0].param[0] = 3448.27586f;
+  ene[0].param[1] = 31034.48276f;
 
   std::vector<MaterialQuad * > material(ene.size());
   for (unsigned int ii = 0; ii < material.size(); ii++){
@@ -107,12 +144,11 @@ void run3D(const ConfigFile & conf)
   std::thread thread;
   if (render){
     if (task == "opt"){
-      thread = std::thread(optMat3D, fem, nSteps);
+      Opt3DArgs * arg = new Opt3DArgs;
+      arg->fem = fem;
+      arg->conf = &conf;
+      thread = std::thread(optMat3D, arg);
     }
-    else if (task == "compute"){
-      thread = std::thread(computeMat3D, fem, conf);
-    }
-
     Render render;
     World * world = new World();
     world->em.push_back(em);
