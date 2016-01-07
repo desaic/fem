@@ -2332,12 +2332,13 @@ void SamplesGeneratorImpl::runContinuousOptimization(int iLevel, int iCycle, boo
   cfgScalar coef = 1;
   std::vector<cfgScalar> newPoints = cfgUtil::add<cfgScalar>(iParameters, cfgUtil::mult<cfgScalar>(derivatives, coef));
 
+  cfgScalar minRadius = 0;
   int nTargetParticules = 100;
-  cfgScalar minRadius = 0.1;
+  //minRadius = 0.1;
   if (!m_cubicOnly)
   {
     nTargetParticules = 1000;
-    minRadius = 0.05;
+    //minRadius = 0.05;
   }
 
   std::vector<int> newparticules;
@@ -2693,7 +2694,8 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
   bool useDistanceField = true;
   scoringFunction.setUseDistanceField(useDistanceField);
   std::vector<cfgScalar> scores = scoringFunction.computeScores(physicalParameters);
-  float minRadius = 0.05;
+  float minRadius = 0.;
+  //float minRadius = 0.05;
   Resampler resampler;
   //resampler.resample(scores, nTargetParticules, particules);
   resampler.resample(minRadius, dimparam, physicalParameters, scores, nTargetParticules, particules);
@@ -3794,8 +3796,8 @@ int SamplesGeneratorImpl::run()
     //std::string newPostFix = "SMC";
     //concatenateFiles(level, indexMin, indexMax, postFix, newPostFix);
 
-    std::string postFix1 = "orthotropic";
-    std::string postFix2 = "";
+    std::string postFix1 = "";
+    std::string postFix2 = "3D_fixed";
     //std::string postFix1 = "SMC_init";
     //std::string postFix2 = "SMC_result";
     //std::string postFix1 = "ContinuousOptimizationResult";
@@ -4031,7 +4033,7 @@ int SamplesGeneratorImpl::run()
   }
 
   // Fix non manifold microstructures
-  if (1)
+  if (0)
   {
     int level = 16;
     int n[3] = {level, level, level};
@@ -4114,22 +4116,24 @@ int SamplesGeneratorImpl::run()
       computeParametersAndTensorValues(n, newMaterialAssignment, physicalParameters, tensors);
       writeFiles(ilevel, newMaterialAssignment, baseMaterialStructures, physicalParameters, tensors);
     }
-    exit(0);
+    return 0;
   }
 
   // SMC
-  if (0)
+  if (1)
   {
     int level = 16;
     int prevLevel = level/2;
-    bool growStructure = true;
+    bool growStructure = false;
 
     int icycle=0, ncycle=1;
     for (icycle=0; icycle<ncycle; icycle++)
     {
       std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
       std::vector<float> physicalParameters, tensors;
-      bool ResOk = readFiles((growStructure? prevLevel: level), materialAssignments, baseMaterialStructures, physicalParameters, tensors, (growStructure? "": "SMC_" +std::to_string(icycle-1)) );
+      //std::string fileName =  (growStructure? "": "SMC_" +std::to_string(icycle-1));
+      std::string fileName = "";
+      bool ResOk = readFiles((growStructure? prevLevel: level), materialAssignments, baseMaterialStructures, physicalParameters, tensors, fileName);
       if (ResOk)
       {
         std::vector<std::vector<int> > allNewMaterialAssignments;
@@ -4143,6 +4147,7 @@ int SamplesGeneratorImpl::run()
       }
       growStructure = false;
     }
+    return 0;
   }
 
   // SMC + Continuous optimization
@@ -4196,7 +4201,7 @@ int SamplesGeneratorImpl::run()
     bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors);
     level = nextlevel;
     writeFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors);
-    exit(0);
+    return 0;
   }
 
   // Continuous optimization
@@ -4216,7 +4221,7 @@ int SamplesGeneratorImpl::run()
     std::vector<cfgScalar> newParameters, newTensors;
     runContinuousOptimization(level, icycle, fixNonManifoldStructure, materialAssignments, physicalParameters, tensors, newMaterialAssignments, newParameters, newTensors);
     writeFiles(level, newMaterialAssignments, baseMaterialStructures, newParameters, newTensors, "ContinuousOptimizationResult_"+std::to_string(icycle));
-    exit(0);
+    return 0;
   }
 
   if (0)

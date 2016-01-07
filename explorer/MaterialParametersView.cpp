@@ -250,6 +250,7 @@ void MaterialParametersView::updatePlots()
     labels.push_back("Nu3");
     labels.push_back("Level");
   }
+  srand(0);
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
     vtkVector3i col = matColors[ilevel];
@@ -323,12 +324,12 @@ void MaterialParametersView::updatePlots()
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, "Y1", "Nu1", "Density", green, 15);
-      m_plotsPerLevel[ilevel].push_back(plot3);
+      //m_plotsPerLevel[ilevel].push_back(plot3);
 
       vtkVector3i magenta(255, 0, 255);
       vtkSmartPointer<vtkTable> table4 =  createTable(newPoints, levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot4 = createPointPlot3D(table4, "Y1", "Nu1", "Density", magenta, 10);
-      m_plotsPerLevel[ilevel].push_back(plot4); 
+      //m_plotsPerLevel[ilevel].push_back(plot4); 
 
     }
     if (0)
@@ -355,12 +356,27 @@ void MaterialParametersView::updatePlots()
       bool useDistanceField = true;
       scoringFunction.setUseDistanceField(useDistanceField);
       std::vector<cfgScalar> scores = scoringFunction.computeScores(physicalParametersPerLevel[ilevel]);
+      cfgScalar maxValue = log(*max_element(scores.begin(), scores.end())+1);
+      std::vector<vtkVector3i> colors;
+      for (int ipoint=0; ipoint<npoints; ipoint++)
+      {
+        vtkVector3i matColor;
+        cfgScalar w = log(scores[ipoint]+1)/maxValue;
+        matColor = vtkVector3i(w*255 + (1-w)*255, (1-w)*255, (1-w)*255);
+        colors.push_back(matColor);
+      }
+      std::vector<int> newparticules3;
+      newparticules3= genIncrementalSequence(0, npoints-1);
+      vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
+      vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, "Y1", "Nu1", "Density", colors, 10);
+      //m_plotsPerLevel[ilevel].push_back(plot3);
 
-      cfgScalar minRadius = 0.05;
+
+      cfgScalar minRadius = 0; //0.05;
       int nTargetParticules = 300;
       std::vector<int> newparticules;
       Resampler resampler;
-      //resampler.resample(scores, nTargetParticules, newparticules);
+      resampler.resample(scores, nTargetParticules, newparticules);
       resampler.resample(minRadius, paramdim, physicalParametersPerLevel[ilevel], scores, nTargetParticules, newparticules);
 
       vtkVector3i red(255, 0, 0);

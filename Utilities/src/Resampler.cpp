@@ -28,8 +28,14 @@ void Resampler::resample(cfgScalar iMinRadius, int iDim, const std::vector<cfgSc
   oParticules.clear();
 
   std::vector<int> pointIndices;
-  resampleData(iMinRadius, iDim, iPoints, iScores, pointIndices);
-
+  if (iMinRadius>0)
+  {
+    resampleData(iMinRadius, iDim, iPoints, iScores, pointIndices);
+  }
+  else
+  {
+    pointIndices = genIncrementalSequence(0, (int)iScores.size()-1);
+  }
   std::vector<cfgScalar> scores = getSubVector(iScores, pointIndices);
   normalize(scores);
 
@@ -142,12 +148,14 @@ void Resampler::resampleBoundary(cfgScalar iMinRadius, int iDim, const std::vect
     if (pointsToDiscard.count(indPoint)==0)
     {
       oParticules.push_back(indPoint);
-
-      std::vector<int> closestPoints;
-      distanceTool.getClosestPointIndices(&points[iDim*indPoint], iMinRadius, pointsToDiscard, closestPoints);
-      for (int iclosestPoint=0; iclosestPoint<(int)closestPoints.size(); iclosestPoint++)
+      if (iMinRadius>0)
       {
-        pointsToDiscard.insert(closestPoints[iclosestPoint]);
+        std::vector<int> closestPoints;
+        distanceTool.getClosestPointIndices(&points[iDim*indPoint], iMinRadius, pointsToDiscard, closestPoints);
+        for (int iclosestPoint=0; iclosestPoint<(int)closestPoints.size(); iclosestPoint++)
+        {
+          pointsToDiscard.insert(closestPoints[iclosestPoint]);
+        }
       }
     }
   }

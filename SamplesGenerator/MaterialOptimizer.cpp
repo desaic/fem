@@ -187,6 +187,9 @@ bool MaterialOptimizer::run2D(int N[2], const std::vector<MaterialQuad2D> &iBase
       }
     }
   }
+  delete em;
+  delete fem;
+
   return resOk;
 }
 
@@ -327,6 +330,9 @@ bool MaterialOptimizer::run3D(int N[3], const std::vector<MaterialQuad> &iBaseMa
       }
     }
   }
+  delete em;
+  delete fem;
+
   return resOk;
 }
 
