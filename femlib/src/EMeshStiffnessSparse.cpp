@@ -1,6 +1,8 @@
 #include "ElementMesh.hpp"
 #include "Element.hpp"
 #include "Eigen/Sparse"
+#include "Timer.hpp"
+#include <iostream>
 
 using namespace Eigen;
 
@@ -132,9 +134,11 @@ ElementMesh::getStiffnessSparse(bool trig, bool constrained, bool iFixedRigid)
 
 void ElementMesh::getStiffnessSparse(std::vector<float> &val, bool trig, bool constrained, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic)
 {
+  //Timer t;
   int N = 3* (int)x.size();
   std::vector<Tripletf> coef;
   Eigen::SparseMatrix<float> Ksparse(N,N);
+  //t.start();
   for(unsigned int ii = 0;ii<e.size();ii++){
     Element * ele = e[ii];
     int nV = ele->nV();
@@ -167,7 +171,15 @@ void ElementMesh::getStiffnessSparse(std::vector<float> &val, bool trig, bool co
       }
     }
   }
+  //t.end();
+  //std::cout << " computeStiffness: " <<  t.getSeconds() << std::endl;
+
+  //t.start();
   Ksparse.setFromTriplets(coef.begin(), coef.end());
+  //t.end();
+  //std::cout << " setFromTriplets: " <<  t.getSeconds() << std::endl;
+
+  //t.start();
   if (iFixedTranslation && iFixedRotation)
   {
     fixTranslation(Ksparse, trig, this);
@@ -191,6 +203,8 @@ void ElementMesh::getStiffnessSparse(std::vector<float> &val, bool trig, bool co
      val.push_back(it.value());
    }
   }
+  //t.end();
+  //std::cout << " fixConstraints + setvalues: " <<  t.getSeconds() << std::endl;
 }
 
 void ElementMesh::stiffnessPattern(std::vector<int> & I, std::vector<int> & J,

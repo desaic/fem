@@ -63,6 +63,7 @@ namespace cfgMaterialUtilities
   int getGridToVectorIndex(int i, int j, int nx, int ny);
   int getGridToVectorIndex(int i, int j, int k, int nx, int ny, int nz);
   void getVectorIndexToGrid(int iIndex, int nx, int ny, int &oIndex_i, int &oIndex_j);
+  void getVectorIndexToGrid(int iIndex, int nx, int ny, int nz, int &oIndex_i, int &oIndex_j, int &oIndex_k);
 
   //0: Left, 1: Right, 2: Bottom, 3:Top
   void getSideElements(int iSide, int nx, int ny, std::vector<int> &oElementIndices);
@@ -74,16 +75,19 @@ namespace cfgMaterialUtilities
   void repMaterialAssignment(int nx, int ny, const std::vector<int> &iMaterialCombIndices, int iNbSubdivions, int repX, int repY, std::vector<int> &oMaterials);
   void repMaterialAssignment(int nx, int ny, int nz, const std::vector<int> &iMaterialCombIndices, int repX, int repY, int repZ, int iNbSubdivisions, std::vector<int> &oMaterials);
   bool isVertexManifold(int indx, int indy, int nx, int ny,  const std::vector<int> &iMaterials);
+  bool isVertexManifold(int indx, int indy, int indz, int nx, int ny,  int nz, const std::vector<int> &iMaterials, bool isMirrored, std::vector<int> *ioNonManifoldCells = NULL);
   bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, bool isStructuredMirrored, int iNbCellsToCheck);
   bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, bool isStructuredMirrored);
   bool isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, int nX, int nY, int nZ);
   void getNonManifoldVertices(int nx, int ny, const std::vector<int> &iMaterials, bool isStructuredMirrored, std::vector<int> &oNonManifoldVertices);
+  void getNonManifoldVertices(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, std::vector<int> &oNonManifoldVertices);
   void updateMaterialSubstructure(std::vector<int> &ioMaterialAsssignment, int nx, int ny, const std::vector<int> &iSubMaterialStructure, int Nx, int Ny, int iSubMatStructLocation);
   
   void getLayer(int Nx, int NY, const std::vector<int> &iStructureElements, int iIndex, int iDim, std::vector<int> &oNewLayerElements);
   void getLayer(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, int iIndex, int iDim, std::vector<int> &oNewLayerElements);
   void insertLayer(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &iNewLayerElements, int iIndex, int iDim, std::vector<int> &oNewStructureElements);
   void upscaleStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<int> &oNewMaterialAssignments);
+  void upscaleStructure(int Nx, int Ny, int Nz, const std::vector<int> &iMatAssignment, std::vector<int> &oNewMaterialAssignment);
 
   void mirrorStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
   void mirrorStructure(int Nx, int Ny, int NZ, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
@@ -96,6 +100,7 @@ namespace cfgMaterialUtilities
   void getTriangularStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
   void getTetrahedralStructure(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
   void getTriangleElements(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oTriangleElements);
+  void getTetrahedralElements(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oTetrahedralElements);
 
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis);
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int nz, int iAxis);
@@ -106,8 +111,11 @@ namespace cfgMaterialUtilities
   void clusterByBoundary(int nx, int ny, const std::vector<std::vector<int> > &icellMaterials, int iNbMat, std::vector<std::vector<int> > &oClusters);
 
   void dumpStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment);
+  void dumpStructure(int Nx, int Ny, int Nz, const std::vector<int> &iMatAssignment);
 
   void getDisconnectedComponents(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents);
+
+  void convert2DCubicStructuresTo3DCubicStructures(int N, const std::vector<int> &iMatAssignment2D, std::vector<int> &oMatAssignment3D);
 
   // Point cloud utitlities
   // ----------------------

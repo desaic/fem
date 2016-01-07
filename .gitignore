@@ -222,3 +222,5 @@ pip-log.txt
 include/Eigen/*
 vc/femlib/femlib.v11.suo
 *.suo
+lib/amgcl.lib
+lib/glfw3.lib

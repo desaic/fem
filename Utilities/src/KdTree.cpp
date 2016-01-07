@@ -14,6 +14,7 @@ double*						g_queryOffsets = new double[MAX_DIM];
 double					g_queryPosition[MAX_DIM];
 
 KdTree::KdTree(const double *positions, int idim, const unsigned int nOfPositions, const unsigned int maxBucketSize) {
+  assert(m_dim<=MAX_DIM);
   m_dim = idim;
 	m_bucketSize			= maxBucketSize;
 	m_positions				= positions;

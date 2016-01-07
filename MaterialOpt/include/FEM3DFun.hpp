@@ -18,8 +18,10 @@ public:
 
   ///@brief not freed by ~FEM2DFun destructor.
   ElementMesh * em;
-  ///@brief dimension of space. set to 2.
+  
+  ///@brief dimension of space. set to 3.
   int dim;
+
   ///@brief variables used by simulation and linear solve.
   ///@brief indices of stiffness matrix.
   ///@brief m_I is array of length matrix_rows + 1.
@@ -87,6 +89,7 @@ public:
 
   void init(const Eigen::VectorXd & x0);
   void initArrays();
+
   ///@brief update parameters for computing function value
   ///and gradients.
   ///In case of fem, it runs required fem simulations.
@@ -124,5 +127,4 @@ void shearXY(ElementMesh * em, double ff, const std::vector<int>& gridSize, std:
 void shearYZ(ElementMesh * em, double ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
 void shearXZ(ElementMesh * em, double ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
 
-int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize);
 #endif

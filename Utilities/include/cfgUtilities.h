@@ -33,6 +33,12 @@ namespace cfgUtil
   std::vector<std::vector<T> > getSubVector(const std::vector<std::vector<T> > &iVec, const std::vector<int> &iIndices);
 
   template<class T>
+  void setSubVector(std::vector<T> &ioVec1, const std::vector<T> &iVec2, const std::vector<int> &iIndices);
+
+  template<class T>
+  void setSubVector(std::vector<T> &ioVec1, const std::vector<T> &iVec2, int iDim, const std::vector<int> &iIndices);
+
+  template<class T>
   std::vector<T> toStdVector(const std::set<T> &iSet);
 
   template<class T>
@@ -219,6 +225,35 @@ namespace cfgUtil
       subVector[ielem].insert(subVector[ielem].end(), iVec[ind].begin(), iVec[ind].end());
     }
     return subVector;
+  }
+
+  template<class T>
+  void setSubVector(std::vector<T> &ioVec1, const std::vector<T> &iVec2, const std::vector<int> &iIndices)
+  {
+    size_t ielem, nelem=iIndices.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      int ind = iIndices[ielem];
+      assert(ind>=0 && ind<ioVec1.size());
+      ioVec1[ind] = iVec2;
+    }
+  }
+
+  template<class T>
+  void setSubVector(std::vector<T> &ioVec1, const std::vector<T> &iVec2, int iDim, const std::vector<int> &iIndices)
+  {
+    assert(ioVec1.size()%iDim==0 && iVec2.size()%iDim==0 && iDim>0);
+
+    size_t ielem, nelem=iIndices.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      int ind = iIndices[ielem];
+      assert(ind>=0 && ind<ioVec1.size()/iDim);
+      for (int icoord=0; icoord<iDim; icoord++)
+      {
+        ioVec1[iDim*ind+icoord] = iVec2[iDim*ielem+icoord];
+      }
+    }
   }
 
   template<class T>

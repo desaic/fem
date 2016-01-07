@@ -223,23 +223,40 @@ void Render::drawEle(int eidx, ElementMesh * m)
 
 void Render::toggleForce()
 {
-  if (world->em.size() == 0){
-    return;
+  if (world->em.size() > 0){
+    if (world->u == 0 || world->fe == 0){
+      return;
+    }
+    int nForce = (int)(world->u->size());
+    forceIdx++;
+    if (forceIdx >= nForce){
+      forceIdx = 0;
+    }
+    ElementMesh * em = world->em[0];
+    int dim = 3;
+    for (unsigned int ii = 0; ii < em->x.size(); ii++){
+      for (int jj = 0; jj < dim; jj++){
+        em->x[ii][jj] = em->X[ii][jj] + (*(world->u))[forceIdx][ii*dim + jj];
+        em->fe[ii][jj] = (*(world->fe))[forceIdx][ii*dim + jj];
+      }
+    }
   }
-  if (world->u == 0 || world->fe == 0){
-    return;
-  }
-  int nForce = (int)(world->u->size());
-  forceIdx++;
-  if (forceIdx >= nForce){
-    forceIdx = 0;
-  }
-  ElementMesh * em = world->em[0];
-  int dim = 3;
-  for (unsigned int ii = 0; ii < em->x.size(); ii++){
-    for (int jj = 0; jj < dim; jj++){
-      em->x[ii][jj] = em->X[ii][jj] + (*(world->u))[forceIdx][ii*dim + jj];
-      em->fe[ii][jj] = (*(world->fe))[forceIdx][ii*dim + jj];
+  else if (world->em2d.size() > 0){
+    if (world->u == 0 || world->fe == 0){
+      return;
+    }
+    int nForce = (int)(world->u->size());
+    forceIdx++;
+    if (forceIdx >= nForce){
+      forceIdx = 0;
+    }
+    ElementMesh2D * em = world->em2d[0];
+    int dim = 2;
+    for (unsigned int ii = 0; ii < em->x.size(); ii++){
+      for (int jj = 0; jj < dim; jj++){
+        em->x[ii][jj] = em->X[ii][jj] + (*(world->u))[forceIdx][ii*dim + jj];
+        em->fe[ii][jj] = (*(world->fe))[forceIdx][ii*dim + jj];
+      }
     }
   }
 }

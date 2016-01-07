@@ -225,6 +225,7 @@ void MaterialParametersView::updatePlots()
       labels.push_back("Nu2"); //13
       labels.push_back("Nu3"); //23
       labels.push_back("Mu1");
+
       labels.push_back("Mu2");
       labels.push_back("Mu3");
       labels.push_back("Level");
@@ -266,6 +267,7 @@ void MaterialParametersView::updatePlots()
       std::vector<cfgScalar> derivatives;
       std::vector<cfgScalar> distances = distanceField.computeDistances(physicalParametersPerLevel[ilevel], &derivatives);
 
+      //derivatives = cfgUtil::mult<cfgScalar>(derivatives, 0.2);
       std::vector<cfgScalar> newPoints = cfgUtil::add<cfgScalar>(physicalParametersPerLevel[ilevel], derivatives);
 
       cfgScalar minValue = FLT_MAX;
@@ -321,12 +323,12 @@ void MaterialParametersView::updatePlots()
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, "Y1", "Nu1", "Density", green, 15);
-      //m_plotsPerLevel[ilevel].push_back(plot3);
+      m_plotsPerLevel[ilevel].push_back(plot3);
 
       vtkVector3i magenta(255, 0, 255);
       vtkSmartPointer<vtkTable> table4 =  createTable(newPoints, levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot4 = createPointPlot3D(table4, "Y1", "Nu1", "Density", magenta, 10);
-      //m_plotsPerLevel[ilevel].push_back(plot4); 
+      m_plotsPerLevel[ilevel].push_back(plot4); 
 
     }
     if (0)
@@ -376,6 +378,7 @@ void MaterialParametersView::updatePlots()
       colors.push_back(matColor);
     }
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Density", colors, 10);
+    //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Nu1", colors, 10);
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Nu1", "Nu2", "Density", colors, 10);
     vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Nu1", "Density", colors, 10);
     m_plotsPerLevel[ilevel].push_back(plot);

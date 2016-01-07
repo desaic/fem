@@ -7,6 +7,7 @@ class MaterialQuad2D;
 class MaterialQuad;
 class RealFun;
 class FEM2DFun;
+class FEM3DFun;
 class ElementRegGrid2D;
 
 class MaterialOptimizer
@@ -22,11 +23,10 @@ public:
   MaterialOptimizer();
   ~MaterialOptimizer();
 
-  void setBaseMaterials(const std::vector<MaterialQuad2D> &iBaseMaterials);
   void setStructureType(StructureType iType);
 
-  bool run2D(int N[2], const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments);
-  bool run3D(int N[3], const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments);
+  bool run2D(int N[2], const std::vector<MaterialQuad2D> &iBaseMaterials, const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments);
+  bool run3D(int N[3], const std::vector<MaterialQuad> &iBaseMaterials, const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments);
 
 private:
 
@@ -42,14 +42,17 @@ private:
 
   ///@param nSteps maximum number of steps.
   void gradientDescent(FEM2DFun * fun, Eigen::VectorXd & x0, int nSteps, std::vector<Eigen::VectorXd> &oParameters);
+  void gradientDescent(FEM3DFun * fun, Eigen::VectorXd & x0, int nSteps, std::vector<Eigen::VectorXd> &oParameters);
 
   double infNorm(const Eigen::VectorXd & a);
 
   void computeTargetDisplacements(float iYoungModulus, float iPoissonsRatio, float iFx, float &odx, float &ody);
   void getExternalForces(ElementRegGrid2D * iElementGrid, int iAxis, int iSide, Vector2S &iForceMagnitude, std::vector<double> &oForces);
 
+  Eigen::MatrixXd computeTargetStrains(int idim, float iYoungModulus, float iPoissonRatio, float iShearModulus);
+  Eigen::MatrixXd computeTargetStrains(float iE_x, float iE_y, float iNu_xy, float iMu_xy);
+
 private:
-  std::vector<MaterialQuad2D> m_baseMaterials;
   StructureType m_structureType;
 
   };

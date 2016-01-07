@@ -39,6 +39,11 @@ int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize)
   return ix * gridSize[1] * gridSize[2] + iy * gridSize[2] + iz;
 }
 
+int gridToLinearIdx(int ix, int iy, const std::vector<int> & gridSize)
+{
+  return ix * gridSize[1] + iy;
+}
+
 int linearIdx(const Eigen::VectorXi & idx, const std::vector<int> & gridSize)
 {
   return idx[0] * gridSize[1] * gridSize[2] + idx[1] * gridSize[2] + idx[2];

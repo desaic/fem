@@ -49,7 +49,9 @@ target_link_libraries(explorer ${QT_QTGUI_LIBRARY} ${QT_QTCORE_LIBRARY} ${VTK_LI
 option(COPY_DLL_TO_BUILD_DIR "copy dlls to build directory" ON)
 if (COPY_DLL_TO_BUILD_DIR) 
 	add_custom_command(TARGET explorer POST_BUILD
-				       COMMAND COPY "$ENV{VTK_BUILD_PATH}\\bin\\$<CONFIGURATION>\\*.dll" "C:\\Users\\melina\\Documents\\Projects\\fem\\explorer\\build\\$<CONFIGURATION>" 
+					   COMMAND set "var1=${PROJECT_BINARY_DIR}"
+					   COMMAND set "var1=%var1:/=\\%"
+				       COMMAND COPY "$ENV{VTK_BUILD_PATH}\\bin\\$<CONFIGURATION>\\*.dll" "%var1%\\$<CONFIGURATION>" 
                        COMMENT "copying dlls …"
     )
 endif()

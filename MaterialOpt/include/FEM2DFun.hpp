@@ -3,8 +3,10 @@
 
 #include "RealFun.hpp"
 #include <vector>
+#include "cfgDefs.h"
 
 class ElementMesh2D;
+struct PardisoState;
 class RealField;
 
 typedef std::vector<std::vector< int> > Grid2D;
@@ -18,6 +20,7 @@ public:
 
   ///@brief not freed by ~FEM2DFun destructor.
   ElementMesh2D * em;
+
   ///@brief dimension of space. set to 2.
   int dim;
   ///@brief variables used by simulation and linear solve.
@@ -29,14 +32,25 @@ public:
   bool m_Init;
   bool m_periodic;
   bool m_fixRigid;
+  bool constrained;
 
-  ///@brief displacements produced by the first externalForce after calling setParam(x).
-  double dx, dy;
+  ///@brief 6x6 matrix of coarse strain tensor
+  ///produced by harmonic displacements.
+  ///Each column is a strain.
+  Eigen::MatrixXd G;
+
+  ///@brief target strains corresponding to 6 harmonic displacements.
+  Eigen::MatrixXd G0;
+
+  ///@brief weight for each column of G.
+  ///initialized in init() to all 1s.
+  Eigen::MatrixXd wG;
+
+  ///@brief 6x6 fine energy matrix. 
+  ///\sum_i G^T:C:G
+  //Eigen::MatrixXd GTCG;
+
   double density;
-  ///@brief target displacements.
-  double dx0, dy0;
-  ///@brief weight for displacement objectives.
-  double dxw, dyw;
 
   ///@brief target density fraction.
   double m0;
@@ -48,10 +62,7 @@ public:
   ///@brief total force applied on one side
   double forceMagnitude;
 
-  ///@brief element indices ordered into a grid
-  ///grid[col][row] is the element index.
-  std::vector < std::vector< int> > grid;
-  int m_nx, m_ny;
+  std::vector<int> gridSize;
 
   ///@brief linear static displacements solved using external forces.
   std::vector< std::vector<double> > u;
@@ -70,10 +81,14 @@ public:
   ///@brief material distribution. Currently just ratio between two materials for each element.
   ///Should be the same size as number of elements
   Eigen::VectorXd distribution;
+  PardisoState * pardisoState;
+  MatrixXS K0;
+  MatrixXS getKe(int ei);
+  void getStiffnessSparse();
 
   void init(const Eigen::VectorXd & x0);
-  void computeGrid();
   void initArrays();
+
   ///@brief update parameters for computing function value
   ///and gradients.
   ///In case of fem, it runs required fem simulations.
@@ -104,13 +119,7 @@ public:
 };
 
 ///@brief make stretching force in x direction
-void stretchX(ElementMesh2D * em, const Eigen::Vector3d & ff, const Grid2D& grid, std::vector<double> & externalForce);
-void stretchY(ElementMesh2D * em, const Eigen::Vector3d & ff, const Grid2D& grid, std::vector<double> & externalForce);
-
-double measureStretchX(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid);
-double measureStretchY(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid);
-
-//measure shear displacement in x direction of top and bottom vertices.
-double measureShearX(ElementMesh2D * em, const std::vector<double> & u, const Grid2D & grid);
-
+void stretchX(ElementMesh2D * em, const Eigen::Vector3d & ff, const std::vector<int>& s, std::vector<double> & externalForce);
+void stretchY(ElementMesh2D * em, const Eigen::Vector3d & ff, const std::vector<int>& s, std::vector<double> & externalForce);
+void shearXY(ElementMesh2D * em, double ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
 #endif

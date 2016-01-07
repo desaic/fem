@@ -158,6 +158,17 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
   }
   density /= distribution.size();
 
+  std::vector<int> vidx = cornerVerts(em, gridSize);
+  Eigen::VectorXd X;
+  copyVert3(X, vidx, em->X);
+  for (int ii = 0; ii < G.cols(); ii++){
+    Eigen::Vector3d xi(0, 0, 0);
+    Eigen::VectorXd x;
+    copyVert3(x, vidx, u[ii]);
+    Eigen::VectorXd strain = hexStrain(x, X, xi);
+    G.col(ii) = strain;
+  }
+
 }
 
 void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx, 
@@ -187,16 +198,6 @@ void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
 double FEM3DFun::f()
 {
   double val = 0;
-  std::vector<int> vidx = cornerVerts(em, gridSize);
-  Eigen::VectorXd X;
-  copyVert3(X, vidx, em->X);
-  for (int ii = 0; ii < G.cols(); ii++){
-    Eigen::Vector3d xi(0, 0, 0);
-    Eigen::VectorXd x;
-    copyVert3(x, vidx, u[ii]);
-    Eigen::VectorXd strain = hexStrain(x, X, xi);
-    G.col(ii) = strain;
-  }
   Eigen::MatrixXd diff = G - G0;
   diff = diff.cwiseProduct(diff);
   Eigen::VectorXd p = diff * wG;
@@ -249,22 +250,19 @@ Eigen::VectorXd FEM3DFun::df()
 
   int nrows = (int)m_I.size() - 1;
   compute_dfdu();
-  Eigen::MatrixXd K0 = (em->getStiffness(0)).cast<double>();
   //sensitivity analysis using the adjoint method.
   for (unsigned int ii = 0; ii < u.size(); ii++){
     std::vector<double> lambda(nrows, 0);
     //lambda = K^{-1} dfdu.
     //dfdx = -lambda * dK/dparam * u.
-    std::vector<int> I = m_I;
-    std::vector<int> J = m_J;
     //checkSparseIndex(I, J);
     pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data(), pardisoState);
     for (unsigned int jj = 0; jj < em->e.size(); jj++){
       Element * ele = em->e[jj];
       int nV = ele->nV();
-      Eigen::MatrixXd dKdp;
-      Eigen::VectorXd Ue(nV * dim);
-      Eigen::VectorXd lambda_e(nV * dim);
+      Eigen::MatrixXf dKdp;
+      Eigen::VectorXf Ue(nV * dim);
+      Eigen::VectorXf lambda_e(nV * dim);
       //in this example dK/dParam = K * (1/(3-2*rho)^2).
       double numerator = (3 - 2 * distribution[jj]);
       numerator *= numerator;

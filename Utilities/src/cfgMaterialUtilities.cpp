@@ -851,7 +851,7 @@ void cfgMaterialUtilities::getMaterialAssignment(int nx, int ny, int nz, const s
           {
             for (kk=0; kk<nZ; kk++)
             {       
-              int indMat = matCombination[ii*nY*nZ + jj*nZ + kk];
+              int indMat = matCombination[ii*nY*nZ + jj*nY + kk];
 
               int i,j,k;
               for (i=0; i<repX; i++)
@@ -871,7 +871,7 @@ void cfgMaterialUtilities::getMaterialAssignment(int nx, int ny, int nz, const s
                           int indy = j*(nY*ny*iNbSubdivisions) + nY*m*iNbSubdivisions + jj*iNbSubdivisions + iy;
                           int indz = k*(nZ*nz*iNbSubdivisions) + nZ*n*iNbSubdivisions + kk*iNbSubdivisions + iz;
 
-                          int elementIndex = indx*nY*nZ*repY*repZ*ny*nz*iNbSubdivisions*iNbSubdivisions + indy * nZ*repZ*nz*iNbSubdivisions + indz;
+                          int elementIndex = indx*nY*nZ*repY*repZ*ny*nz*iNbSubdivisions*iNbSubdivisions + indy * nY*repY*ny*iNbSubdivisions + indz;
                           oMaterials[elementIndex] = indMat;
                         }
                       }
@@ -1018,7 +1018,7 @@ int cfgMaterialUtilities::getGridToVectorIndex(int i, int j, int nx, int ny)
 
 int cfgMaterialUtilities::getGridToVectorIndex(int i, int j, int k, int nx, int ny, int nz)
 {
-  int index =  i*ny*nz + j*nz +k;
+  int index =  i*ny*nz + j*ny +k;
   return index;
 }
 
@@ -1026,6 +1026,13 @@ void cfgMaterialUtilities::getVectorIndexToGrid(int iIndex, int nx, int ny, int 
 {
   oIndex_i = iIndex/ ny;
   oIndex_j = iIndex % ny;
+}
+
+void cfgMaterialUtilities::getVectorIndexToGrid(int iIndex, int nx, int ny, int nz, int &oIndex_i, int &oIndex_j, int &oIndex_k)
+{
+  oIndex_i = iIndex/ (ny*nz);
+  oIndex_j = (iIndex % (ny*nz)) / ny;
+  oIndex_k = (iIndex % (ny*nz)) % ny;
 }
 
 void cfgMaterialUtilities::getSideElements(int iSide, int nx, int ny, std::vector<int> &oElementIndices)
@@ -1220,7 +1227,6 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std
             isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
             isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
             isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
-            isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
             isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || (mat111==mat211 && mat111==mat112 && mat111==mat212));
           }
         }
@@ -1256,7 +1262,6 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std
             isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
             isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
             isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
-            isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
             isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
             isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || (mat111==mat211 && mat111==mat112 && mat111==mat212));
           }
@@ -1294,7 +1299,6 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std
             isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
             isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
             isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
-            isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
             isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || (mat111==mat211 && mat111==mat112 && mat111==mat212));
           }
         }
@@ -1320,6 +1324,114 @@ bool cfgMaterialUtilities::isVertexManifold(int indx, int indy, int nx, int ny, 
   int mat22 = iMaterials[indMat22];
 
   bool isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+  return isManifold;
+}
+
+bool cfgMaterialUtilities::isVertexManifold(int indx, int indy, int indz, int nx, int ny,  int nz, const std::vector<int> &iMaterials, bool isMirrored, std::vector<int> *ioNonManifoldCells)
+{
+  int x = indx;
+  int y = indy;
+  int z = indz;
+
+  if (isMirrored && (x==0 || y==0 || z==0))
+  {
+    return true;
+  }
+
+  int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
+  int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
+  int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
+  int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
+  int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
+  int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+  int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
+  int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+
+  int mat111 = iMaterials[indMat111];
+  int mat121 = iMaterials[indMat121];
+  int mat211 = iMaterials[indMat211];
+  int mat221 = iMaterials[indMat221];
+  int mat112 = iMaterials[indMat112];
+  int mat122 = iMaterials[indMat122];
+  int mat212 = iMaterials[indMat212];
+  int mat222 = iMaterials[indMat222];
+
+  bool isManifold = true;
+  if (ioNonManifoldCells)
+  {
+    std::set<int> cells;
+    if (!(mat111!=mat221 || mat121!=mat211 || mat121==mat111))
+    {
+      cells.insert(indMat111);
+      cells.insert(indMat221);
+      cells.insert(indMat121);
+      cells.insert(indMat211);
+      isManifold = false;
+    }
+    if (!(mat112!=mat222 || mat122!=mat212 || mat122==mat112))
+    {
+      cells.insert(indMat112);
+      cells.insert(indMat222);
+      cells.insert(indMat122);
+      cells.insert(indMat212);
+      isManifold = false;
+    }
+    if (!(mat111!=mat122 || mat121!=mat112 || mat111==mat112))
+    {
+      cells.insert(indMat111);
+      cells.insert(indMat122);
+      cells.insert(indMat121);
+      cells.insert(indMat112);
+      isManifold = false;
+    }
+    if (!(mat211!=mat222 || mat212!=mat221 || mat211==mat221))
+    {
+      cells.insert(indMat211);
+      cells.insert(indMat222);
+      cells.insert(indMat212);
+      cells.insert(indMat221);
+      isManifold = false;
+    }
+    if (!(mat111!=mat212 || mat211!=mat112 || mat111==mat112))
+    {
+      cells.insert(indMat111);
+      cells.insert(indMat212);
+      cells.insert(indMat211);
+      cells.insert(indMat112);
+      isManifold = false;
+    }
+    if (!(mat121!=mat222 || mat221!=mat122 || mat121==mat122))
+    {
+      cells.insert(indMat121);
+      cells.insert(indMat222);
+      cells.insert(indMat221);
+      cells.insert(indMat122);
+      isManifold = false;
+    }
+    if (!(mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || (mat111==mat211 && mat111==mat112 && mat111==mat212)))
+    {
+      cells.insert(indMat111);
+      cells.insert(indMat222);
+      cells.insert(indMat211);
+      cells.insert(indMat122);
+      cells.insert(indMat221);
+      cells.insert(indMat112);
+      cells.insert(indMat121);
+      cells.insert(indMat212);
+      isManifold = false;
+    }
+    *ioNonManifoldCells = toStdVector(cells);
+  }
+  else
+  {
+    isManifold = mat111!=mat221 || mat121!=mat211 || mat121==mat111;
+    isManifold &= (mat112!=mat222 || mat122!=mat212 || mat122==mat112);
+    isManifold &= (mat111!=mat122 || mat121!=mat112 || mat111==mat112);
+    isManifold &= (mat211!=mat222 || mat212!=mat221 || mat211==mat221);
+    isManifold &= (mat111!=mat212 || mat211!=mat112 || mat111==mat112);
+    isManifold &= (mat121!=mat222 || mat221!=mat122 || mat121==mat122);
+    isManifold &= (mat111!=mat222 || mat211!=mat122 || mat221!=mat112 || mat121!=mat212 || (mat111==mat211 && mat111==mat112 && mat111==mat212));
+  }
   return isManifold;
 }
 
@@ -1432,6 +1544,24 @@ void cfgMaterialUtilities::getNonManifoldVertices(int nx, int ny, const std::vec
   } 
 }
 
+void cfgMaterialUtilities::getNonManifoldVertices(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, std::vector<int> &oNonManifoldVertices)
+{
+  int startIndex = (isStructuredMirrored? 1: 0);
+  for (int x=startIndex; x<nx; x++)
+  {
+    for (int y=startIndex; y<ny; y++)
+    {
+      for (int z=startIndex; z<nz; z++)
+      {
+        bool isManifold = isVertexManifold(x, y, z, nx, ny, nz, iMaterials, isStructuredMirrored);
+        if (!isManifold)
+        {
+          oNonManifoldVertices.push_back(getGridToVectorIndex(x, y, z, nx, ny, nz));
+        }
+      }
+    } 
+  }
+}
 
 void cfgMaterialUtilities::getLayer(int Nx, int Ny, const std::vector<int> &iStructureElements, int iIndex, int iDim, std::vector<int> &oNewLayerElements)
 {
@@ -1561,7 +1691,6 @@ void cfgMaterialUtilities::upscaleStructure(int Nx, int Ny, const std::vector<in
   {
     getLayer(n[0], N[1], newMatAssignement1, j, 1, layersY[j]);
   }
-
   std::vector<int> newMatAssignement2(n[0]*n[1]);
 
   ncol = n[0];
@@ -1596,6 +1725,164 @@ void cfgMaterialUtilities::upscaleStructure(int Nx, int Ny, const std::vector<in
     }
   }
   oNewMaterialAssignment = newMatAssignement2;
+}
+
+void cfgMaterialUtilities::upscaleStructure(int Nx, int Ny, int Nz, const std::vector<int> &iMatAssignment, std::vector<int> &oNewMaterialAssignment)
+{
+  int N[3] = {Nx, Ny, Nz};
+  int n[3] = {2*N[0], 2*N[1], 2*N[2]};
+
+  if (iMatAssignment.size()==1)
+  {
+    oNewMaterialAssignment.clear();
+    oNewMaterialAssignment.resize(8, iMatAssignment[0]);
+  }
+  else
+  {
+    std::vector<std::vector<int> > layersX(N[0]);
+    for (int i=0; i<N[0]; i++)
+    {
+      getLayer(N[0], N[1], N[2], iMatAssignment, i, 0, layersX[i]);
+    }
+
+    std::vector<int> newMatAssignement1(n[0]*N[1]*N[2]);
+    int scale1 = 2;
+    int scale2 = 2;
+
+    int nx = N[0]/2;
+    int ny = N[1];
+    int nz = N[2];
+    for (int ix=0; ix<nx; ix++)
+    {
+      for (int iy=0; iy<ny; iy++)
+      {
+        for (int iz=0; iz<nz; iz++)
+        {
+          int mat = layersX[ix][nz*iy+iz];
+          for (int irep=0; irep<scale1; irep++)
+          {
+            int x = scale1*ix + irep;
+            int y = iy;
+            int z = iz;
+            int indMat = getGridToVectorIndex(x, y, z, n[0], N[1], N[2]);
+            newMatAssignement1[indMat] = mat;
+          }
+        }
+      }
+    }
+    int shift = scale1*nx;
+    for (int ix=0; ix<nx; ix++)
+    {
+      for (int iy=0; iy<ny; iy++)
+      {
+        for (int iz=0; iz<nz; iz++)
+        {
+          int mat = layersX[nx+ix][nz*iy+iz];
+          for (int irep=0; irep<scale2; irep++)
+          {
+            int x = shift + scale2*ix + irep;
+            int y = iy;
+            int z = iz;
+            int indMat = getGridToVectorIndex(x, y, z, n[0], N[1], N[2]);
+            newMatAssignement1[indMat] = mat;
+          }
+        }
+      }
+    }
+    std::vector<std::vector<int> > layersY(N[1]);
+    for (int j=0; j<N[1]; j++)
+    {
+      getLayer(n[0], N[1], N[2], newMatAssignement1, j, 1, layersY[j]);
+    }
+    std::vector<int> newMatAssignement2(n[0]*n[1]*N[2]);
+    nx = n[0];
+    ny = N[1]/2;
+    for (int iy=0; iy<ny; iy++)
+    {
+      for (int ix=0; ix<nx; ix++)
+      {
+        for (int iz=0; iz<nz; iz++)
+        {
+          int mat = layersY[iy][nz*ix+iz];
+          for (int irep=0; irep<scale1; irep++)
+          {
+            int y = scale1*iy + irep;
+            int x = ix;
+            int z = iz;
+            int indMat = getGridToVectorIndex(x, y, z, n[0], n[1], N[2]);
+            newMatAssignement2[indMat] = mat;
+          }
+        }
+      }
+    }
+    shift = scale1*ny;
+    for (int iy=0; iy<ny; iy++)
+    {
+      for (int ix=0; ix<nx; ix++)
+      {
+        for (int iz=0; iz<nz; iz++)
+        {
+          int mat = layersY[iy+ny][nz*ix+iz];
+          for (int irep=0; irep<scale2; irep++)
+          {
+            int y = shift + scale2*iy + irep;
+            int x = ix;
+            int z = iz;
+            int indMat = getGridToVectorIndex(x, y, z, n[0], n[1], N[2]);
+            newMatAssignement2[indMat] = mat;
+          }
+        }
+      }
+    }
+
+    std::vector<std::vector<int> > layersZ(N[2]);
+    for (int k=0; k<N[2]; k++)
+    {
+      getLayer(n[0], n[1], N[2], newMatAssignement2, k, 2, layersZ[k]);
+    }
+    std::vector<int> newMatAssignement3(n[0]*n[1]*n[2]);
+    nx = n[0];
+    ny = n[1];
+    nz = N[2]/2;
+    for (int iz=0; iz<nz; iz++)
+    {
+      for (int ix=0; ix<nx; ix++)
+      {
+        for (int iy=0; iy<ny; iy++)
+        {
+          int mat = layersZ[iz][ny*ix+iy];
+          for (int irep=0; irep<scale1; irep++)
+          {
+            int x = ix;
+            int y = iy;
+            int z = scale1*iz + irep;
+            int indMat = getGridToVectorIndex(x, y, z, n[0], n[1], n[2]);
+            newMatAssignement3[indMat] = mat;
+          }
+        }
+      }
+    }
+    shift = scale1*nz;
+    for (int iz=0; iz<nz; iz++)
+    {
+      for (int ix=0; ix<nx; ix++)
+      {
+        for (int iy=0; iy<ny; iy++)
+        {
+          int mat = layersZ[iz+nz][ny*ix+iy];
+          for (int irep=0; irep<scale2; irep++)
+          {
+            int x = ix;
+            int y = iy;
+            int z = shift + scale2*iz + irep;
+            int indMat = getGridToVectorIndex(x, y, z, n[0], n[1], n[2]);
+            newMatAssignement3[indMat] = mat;
+          }
+        }
+      }
+    }
+    oNewMaterialAssignment = newMatAssignement3;
+  }
 }
 
 void cfgMaterialUtilities::mirrorStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements)
@@ -1850,6 +2137,23 @@ void cfgMaterialUtilities::getTetrahedralStructure(int Nx, int Ny, int Nz, const
   }
 }
 
+void cfgMaterialUtilities::getTetrahedralElements(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oTetrahedralElements)
+{
+  oTetrahedralElements.clear();
+
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<=i; j++)
+    {
+      for (int k=0; k<=j; k++)
+      {
+        int indMat = getGridToVectorIndex(i, j, k, Nx, Ny, Nz);
+        oTetrahedralElements.push_back(indMat);
+      }
+    }
+  }
+}
+
 void cfgMaterialUtilities::dumpStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment)
 {
   Eigen::MatrixXd mat(Nx,Ny);
@@ -1864,8 +2168,30 @@ void cfgMaterialUtilities::dumpStructure(int Nx, int Ny, const std::vector<int> 
   std::cout << mat << std::endl << std::endl;
 }
 
+void cfgMaterialUtilities::dumpStructure(int Nx, int Ny, int Nz, const std::vector<int> &iMatAssignment)
+{
+  for (int k=0; k<Nz; k++)
+  {
+    Eigen::MatrixXd mat(Nx,Ny);
+    for (int i=0; i<Nx; i++)
+    {
+      for (int j=0; j<Ny; j++)
+      {
+        int indMat = getGridToVectorIndex(i, j, k, Nx, Ny, Nz);
+        mat(i,j) = iMatAssignment[indMat];
+      }
+    }
+    std::cout << mat << std::endl << std::endl;
+  }
+}
+
 void cfgMaterialUtilities::getDisconnectedComponents(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents)
 {
+  std::set<int> elements;
+  //int ielem, nelem=(int)iMatAssignment.size;
+
+
+
   /*void Phys3DMeshUtils::ExtractDisconnectedComponents(const vector<double> &iVertices, const vector<int> &iIndexArray, vector<vector<int> > &oIndexArrays)
 {
   DSMesh Mesh;
@@ -1912,6 +2238,38 @@ void cfgMaterialUtilities::getDisconnectedComponents(int Nx, int Ny, const std::
   }
 }*/ 
 } 
+
+void cfgMaterialUtilities::convert2DCubicStructuresTo3DCubicStructures(int N, const std::vector<int> &iMatAssignment2D, std::vector<int> &oMatAssignment3D)
+{
+  oMatAssignment3D.clear();
+  oMatAssignment3D.resize(N*N*N);
+  for (int i=0; i<N; i++)
+  {
+    for (int j=0; j<N; j++)
+    {
+      int indVertex2D = getGridToVectorIndex(i, j, N, N);
+      int indMat2D = iMatAssignment2D[indVertex2D];
+
+      int indVertex3D = getGridToVectorIndex(i, j, 0, N, N, N);
+      oMatAssignment3D[indVertex3D] = indMat2D;
+
+      indVertex3D = getGridToVectorIndex(i, j, N-1, N, N, N);
+      oMatAssignment3D[indVertex3D] = indMat2D;
+
+      indVertex3D = getGridToVectorIndex(0, i, j, N, N, N);
+      oMatAssignment3D[indVertex3D] = indMat2D;
+
+      indVertex3D = getGridToVectorIndex(N-1, i, j, N, N, N);
+      oMatAssignment3D[indVertex3D] = indMat2D;
+
+      indVertex3D = getGridToVectorIndex(j, 0, i, N, N, N);
+      oMatAssignment3D[indVertex3D] = indMat2D;
+
+      indVertex3D = getGridToVectorIndex(j, N-1, i, N, N, N);
+      oMatAssignment3D[indVertex3D] = indMat2D;
+    }
+  }
+}
 
 cfgScalar cfgMaterialUtilities::computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis)
 {
