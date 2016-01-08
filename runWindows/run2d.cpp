@@ -29,6 +29,7 @@ std::vector<std::vector<double> > continuousMaterials;
 
 void optMat2D(FEM2DFun * fem, int nSteps);
 void loadBinary(const ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments);
+void saveText(const std::vector<std::vector<double> > & continuousMaterials, std::string filename);
 
 void run2D(const ConfigFile & conf)
 {
@@ -36,6 +37,7 @@ void run2D(const ConfigFile & conf)
 
   if (conf.hasOpt("structurebin")){
     loadIntBinary(conf, continuousMaterials);
+    saveText(continuousMaterials, "micro2d.txt");
   }
   if (conf.hasOpt("structurelist")){
     loadText(conf, continuousMaterials);
@@ -500,7 +502,7 @@ void loadIntBinary(const ConfigFile & conf, std::vector<std::vector<double> > & 
     for (unsigned int jj = 0; jj < materialAssignments[ii].size(); jj++){
       materialAssignments[ii][jj] = intArr[ii][jj];
     }
-    int nx = (int)(std::sqrt(materialAssignments[ii].size()) + 0.4);
+    //int nx = (int)(std::sqrt(materialAssignments[ii].size()) + 0.4);
     //materialAssignments[ii] = upsampleVector(materialAssignments[ii], nx, nx);
   }
 
@@ -518,6 +520,24 @@ void loadBinary(const ConfigFile & conf, std::vector<std::vector<double> > & mat
   if (!success){
     std::cout << "Can't read " << matAssignmentFile << "\n";
   }
+}
+
+void saveText(const std::vector<std::vector<double> > & continuousMaterials , std::string filename)
+{
+  std::ofstream out(filename);
+  out << continuousMaterials.size() << " " << continuousMaterials[1].size() << "\n";
+  for (unsigned int ii = 0; ii < continuousMaterials.size(); ii++){
+    for (unsigned int jj = 0; jj < continuousMaterials[ii].size(); jj++){
+      float fval = continuousMaterials[ii][jj];
+      int ival = 0;
+      if (fval > 0.5){
+        ival = 1;
+      }
+      out << ival << " ";
+    }
+    out << "\n";
+  }
+  out.close();
 }
 
 void transposeSave(std::vector<std::vector<double> > & continuousMaterials, int nx, int ny)
