@@ -340,7 +340,7 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
 {
   double f0 = fun->f();
   Eigen::VectorXd grad0 = fun->df();
-  double norm0 = infNorm(grad0);
+  //double norm0 = infNorm(grad0);
   int nSteps = 10;
   int ret = -1;
   for (int step = 0; step<nSteps; step++){
@@ -349,11 +349,11 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
     clampVector(x, fun->lowerBounds, fun->upperBounds);
     fun->setParam(x);
     double f1 = fun->f();
-    Eigen::VectorXd grad1 = fun->df();
-    double norm1 = infNorm(grad1);
+    //Eigen::VectorXd grad1 = fun->df();
+    //double norm1 = infNorm(grad1);
     //if gradient norm or function value decrease, return.
     //std::cout << "line search: "<<step<<" "<< h << " (" << norm1<<" "<<norm0<< ") (" << f1 <<" "<<f0<< ")\n";
-    if (norm1 < norm0 || f1 < f0){
+    if (f1 < f0){
       x0 = x;
       ret = 0;
       break;
