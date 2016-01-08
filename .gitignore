@@ -1,5 +1,7 @@
 ##data files
 data/*
+##prints
+prints/*
 #################
 ## Eclipse
 #################

@@ -1,4 +1,4 @@
-dim 2
+dim 3
 gridres 16
 render true
 test false
