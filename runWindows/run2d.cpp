@@ -246,17 +246,17 @@ void optMat2D(FEM2DFun * fem, int nSteps)
   materialOut.open(materialOutName);
   double shrink_ratio = 0.3;
   
-  //std::vector<int> idx;
-  //std::ifstream idxin("../idx.txt");
-  //int ii = 0;
-  //while (1){
-  //  idxin >> ii;
-  //  if (idxin.eof()){
-  //    break;
-  //  }
-  //  idx.push_back(ii);
-  //}
-  //idxin.close();
+  std::vector<int> idx;
+  std::ifstream idxin("../data/idx.txt");
+  int ii = 0;
+  while (1){
+    idxin >> ii;
+    if (idxin.eof()){
+      break;
+    }
+    idx.push_back(ii);
+  }
+  idxin.close();
   
   //for test only look at the first displacement.
   for (int jj = 1; jj < fem->wG.size(); jj++){
@@ -273,12 +273,12 @@ void optMat2D(FEM2DFun * fem, int nSteps)
     shrinkVector(x0, continuousMaterials[mi], 1);
     x1 = firstQuadrant(x0, fem->gridSize[0], fem->gridSize[1]);
     fem->setParam(x1);
-    //if (fem->dx * 0.1 > fem->dy){
-    //  continue;
-    //}
-    //std::cout << mi << "\n";
-    //int input;
-    //std::cin >> input;
+    if (fem->G(0,0) * 0.2 > fem->G(1,0)){
+      continue;
+    }
+    std::cout << mi << "\n";
+    int input;
+    std::cin >> input;
     
     fem->m0 = 0.5 * sum(fem->distribution) / fem->distribution.size();
     //scale mass term to roughly displacement term.
@@ -292,9 +292,9 @@ void optMat2D(FEM2DFun * fem, int nSteps)
     fem->setParam(x1);
 
     std::string filename;
-    filename = sequenceFilename("log", ii, ".txt");
-    logfile.open(filename);
-    gradientDescent(fem, x1, nSteps);
+    //filename = sequenceFilename("log", ii, ".txt");
+    //logfile.open(filename);
+    //gradientDescent(fem, x1, nSteps);
     for (unsigned int jj = 0; jj < fem->distribution.size(); jj++){
       materialOut << fem->distribution[jj] << " ";
     }
@@ -317,8 +317,8 @@ void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps)
 {
 
   Eigen::VectorXd x = x0;
+  fun->setParam(x);
   for (int ii = 0; ii < nSteps; ii++){
-    fun->setParam(x);
     Eigen::VectorXd grad = fun->df();
     double h = 1;
     double norm = infNorm(grad);

@@ -25,6 +25,13 @@ struct Opt3DArgs
   const ConfigFile * conf;
 };
 
+void shrinkVector(Eigen::VectorXd & x, float shrink_ratio)
+{
+  for (int ii = 0; ii < x.size(); ii++){
+    x[ii] = 0.5 + shrink_ratio * (x[ii] - 0.5);
+  }
+}
+
 void optMat3D(Opt3DArgs * arg)
 {
   int nSteps = 500;
@@ -38,7 +45,9 @@ void optMat3D(Opt3DArgs * arg)
   //}
   std::vector<std::vector<double> > structure2d;
   loadText(*conf, structure2d);
-  for (unsigned int si = 0; si < structure2d.size(); si++){
+  std::ofstream matStruct("struct.txt");
+  double shrinkRatio = 0.3;
+  for (unsigned int si = 12; si < 14; si++){
     std::vector<double> s2d = structure2d[si];
     Eigen::VectorXd x1 = fem->param;
     //copy 8x8 corner of 2D structure to xy-plane of 3D structure.
@@ -61,29 +70,30 @@ void optMat3D(Opt3DArgs * arg)
     //int input;
     //std::cin >> input;
     double val = fem->f();
-    fem->m0 = 0.5 * sum(fem->distribution) / fem->distribution.size();
+    fem->m0 = fem->density;
     fem->mw = 0.1 * fem->G(0, 0) / fem->density;
     fem->G0 = fem->G;
     //-0.45 poisson's ratio objective
     fem->G0(1, 0) = 0.45 * fem->G0(0, 0);
     fem->G0(2, 0) = 0.45 * fem->G0(0, 0);
 
+    std::cout << fem->G << "\n";
     //for test only look at the first displacement.
     for (int ii = 1; ii < fem->wG.size(); ii++){
       fem->wG(ii) = 0;
       //  fem->wG(ii) = 1 + (rand() / (float)RAND_MAX - 0.5)*0.3 ;
     }
-
-    std::ofstream matStruct("struct.txt");
-    //logfile.open("log3d.txt");
+    shrinkVector(x1, shrinkRatio);
+    logfile.open("log3d.txt");
     //check_df(fem, x1, 1e-3);
     //scale mass term to roughly displacement term.
-    //gradientDescent(fem, x1, nSteps);
+    gradientDescent(fem, x1, nSteps);
     for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
       matStruct << fem->distribution[ii] << " ";
     }
     matStruct << "\n";
   }
+  matStruct.close();
 }
 
 void run3D(const ConfigFile & conf)
