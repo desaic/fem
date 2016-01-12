@@ -5,7 +5,7 @@ function a = loadArr2d(file)
     a = zeros(N(1),N(2));
     for ii = 1:N(1)
         for jj = 1:N(2)
-            a(ii,jj) = fscanf(IN, '%f', 1);
+           a(ii,jj) = fscanf(IN, '%f', 1);
         end
     end
     fclose(IN);
