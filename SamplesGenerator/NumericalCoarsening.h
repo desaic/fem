@@ -24,19 +24,23 @@ public:
   NumericalCoarsening();
   ~NumericalCoarsening();
 
-  void init(int N[3], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad> &iBaseMaterials);
+  void init(int N[3], int iNbBlockRep, int iNbSubdiv, const std::vector<MaterialQuad> &iBaseMaterials);
+  void init(int N[2], int iNbBlockRep, int iNbSubdiv, const std::vector<MaterialQuad2D> &iBaseMaterials);
 
   void computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[2], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad2D> &iBaseMaterials, 
                                                      StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
-  void computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[2], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad2D> &iBaseMaterials, 
-                                                     StructureType iType, std::vector<cfgScalar> &iBaseMaterialDensities, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
-
-  void computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[3], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
   void computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[3], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad> &iBaseMaterials, 
                                                      StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
 
+  void computeCoarsenedElasticityTensorAndParameters3D(const std::vector<int> &iMaterials, int N[3], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
+  void computeCoarsenedElasticityTensorAndParameters2D(const std::vector<int> &iMaterials, int N[2], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
+
   MatrixXS computeCoarsenedElasticityTensor(const std::vector<int> &iMaterials, int N[2], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad2D> &iBaseMaterials);
   MatrixXS computeCoarsenedElasticityTensor(const std::vector<int> &iMaterials, int N[3], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad> &iBaseMaterials);
+
+  // continuous material distribution
+  void computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[2], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad2D> &iBaseMaterials, 
+                                                     StructureType iType, std::vector<cfgScalar> &iBaseMaterialDensities, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
 
 private:
   ElementRegGrid2D * createPhysicalSystem(int n[2], std::vector<MaterialQuad2D> &iMaterials, const std::vector<int> &iMatAssignments);
@@ -57,8 +61,12 @@ private:
   void computeHarmonicDisplacements(ElementRegGrid * iPhysicalSystem, Stepper * iStepper, cfgScalar iForceMagnitude, StructureType iType, std::vector<std::vector<cfgScalar> > &oHarmonicDisplacements);
 
   void computeHarmonicDisplacements(ElementRegGrid* iPhysicalSystem, cfgScalar iForceMagnitude, StructureType iType, std::vector<std::vector<cfgScalar> > &oHarmonicDisplacements);
+  void computeHarmonicDisplacements(ElementRegGrid2D * iPhysicalSystem, cfgScalar iForceMagnitude, StructureType iType, std::vector<std::vector<cfgScalar> > &oHarmonicDisplacements);
 
   void getStiffnessSparse(ElementRegGrid * iPhysicalSystem, std::vector<double> &oValues);
+  void getStiffnessSparse(ElementRegGrid2D * iPhysicalSystem, std::vector<double> &oValues);
+
+  void initPardiso();
 
 private:
   ElementRegGrid2D * m_physicalSystem2D;
@@ -70,6 +78,7 @@ private:
   int m_nbBlockRep;
   int m_nbSubdiv;
   MatrixXS m_K0[2];
+  int m_dim;
 
   bool m_init;
 };

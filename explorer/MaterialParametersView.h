@@ -46,6 +46,9 @@ private:
   void updateChart();
   void updatePlots();
 
+  void rescaleParameters(int iIndex, float iScalingFactor, std::vector<float> &ioPoints, int iDim);
+  float getMaxValue(int iIndex, const std::vector<float> &iPoints, int iDim);
+
   private slots:
     void onLevelVisibilityModified();
     void onLevelsModified();

@@ -43,11 +43,13 @@ void optMat3D(Opt3DArgs * arg)
     //for (int ii = 0; ii < x1.size(); ii++){
   //  x1[ii] = 0.5 + (rand() / (float)RAND_MAX - 0.5) * 0.2;
   //}
+ 
   std::vector<std::vector<double> > structures;
   loadIntBinary(*conf, structures);
   std::ofstream matStruct("struct.txt");
   double shrinkRatio = 0.3;
-  for (unsigned int si = 1; si < structures.size(); si++){
+  //for (unsigned int si = 1; si < structures.size(); si++){
+  for (unsigned int si = 2; si < 3; si++){
     std::vector<double> s3d = structures[si];
     Eigen::VectorXd x1 = fem->param;
     //copy 8x8x8 corner to 3D structure.
@@ -61,26 +63,41 @@ void optMat3D(Opt3DArgs * arg)
     for (int ix = 0; ix < paramSize[0]; ix++){
       for (int iy = 0; iy < paramSize[1]; iy++){
         for (int iz = 0; iz < paramSize[2]; iz++){
-          x1[ix * paramSize[1] * paramSize[2] + iy *paramSize[2] + iz] = s3d[ix * fem->gridSize[1] * fem->gridSize[2] + iy * fem->gridSize[2] + iz];
+          x1[ix * paramSize[1] * paramSize[2] + iy *paramSize[2] + iz] = 0.5;//s3d[ix * fem->gridSize[1] * fem->gridSize[2] + iy * fem->gridSize[2] + iz];
         }
       }
     }
 
     fem->setParam(x1);
+    std::cout<<" G:" << std::endl <<  fem->G<<std::endl;
+
+   
+
+    double E_x = 1/0.236;
+    double nu_xy = 0.116 * E_x;
+
+    Eigen::MatrixXd G = Eigen::MatrixXd::Identity(6,6);
+    G(0,1) = -nu_xy;
+    G(0,2) = -nu_xy;
+    G(1,0) = -nu_xy;
+    G(1,2) = -nu_xy;
+    G(2,0) = -nu_xy;
+    G(2,1) = -nu_xy;
+    G *=  1./E_x;
 
     //int input;
     //std::cin >> input;
     double val = fem->f();
-    fem->m0 = 0.5 * fem->density;
-    fem->mw = 0.1 * fem->G(0, 0) / fem->density;
-    fem->G0 = fem->G;
-    //-0.45 poisson's ratio objective
-    fem->G0(1, 0) = -1 * fem->G0(0, 0);
-    fem->G0(2, 0) = -1 * fem->G0(0, 0);
+    fem->m0 = 0 ; //0.5 * fem->density;
+    fem->mw = fem->G(0, 0) / fem->density;
+    fem->G0 = G;
+
+    std::cout << "target G = " << std::endl;
+    std::cout << fem->G0 << std::endl << std::endl;
 
     std::cout << fem->G << "\n";
     //for test only look at the first displacement.
-    for (int ii = 1; ii < fem->wG.size(); ii++){
+    for (int ii = 3; ii < fem->wG.size(); ii++){
       fem->wG(ii) = 0;
       //  fem->wG(ii) = 1 + (rand() / (float)RAND_MAX - 0.5)*0.3 ;
     }
@@ -118,8 +135,11 @@ void run3D(const ConfigFile & conf)
   ElementRegGrid * em = new ElementRegGrid(nx, ny, nz);
   std::vector<StrainLin> ene(1);
   //E = 1e3.
-  ene[0].param[0] = 3448.27586f;
-  ene[0].param[1] = 31034.48276f;
+  //ene[0].param[0] = 3448.27586f;
+  //ene[0].param[1] = 31034.48276f;
+
+  ene[0].param[0] = 100;
+  ene[0].param[1] = 1000;
 
   std::vector<MaterialQuad * > material(ene.size());
   for (unsigned int ii = 0; ii < material.size(); ii++){
@@ -141,6 +161,10 @@ void run3D(const ConfigFile & conf)
 
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
+   
+    float fx = 1;
+    fem->forceMagnitude = (double)fx;
+
 
   fem->em = em;
   fem->field = field;

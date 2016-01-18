@@ -43,8 +43,62 @@ void MaterialOptimizer::setStructureType(StructureType iType)
   m_structureType = iType;
 }
 
-bool MaterialOptimizer::run2D(int N[2], const std::vector<MaterialQuad2D> &iBaseMaterials, const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments)
+bool MaterialOptimizer::run2D(int N[2], const std::vector<MaterialQuad2D> &iBaseMaterials, const std::vector<int> &iMaterialAssignments, const std::vector<float> &iCurrentParams, const std::vector<float> &iTargetParams, 
+                              std::vector<std::vector<int> > &oNewMaterialAssignments)
 { 
+  assert(iTargetParams.size()==4 || iTargetParams.size()==5);
+  int paramdim = (int)iTargetParams.size();
+
+  std::vector<float> targetParams = iTargetParams;
+
+  float currentDensity = iCurrentParams[0];
+  float density = iTargetParams[0];
+
+  float minDensity = 1.f/(N[0]*N[1]);
+  float maxDensity = 1-1.f/(N[0]*N[1]);
+  if (density < minDensity)
+  {
+    float d = currentDensity-density;
+    float ratio = (currentDensity-minDensity)/d;
+
+    float sqNorm = 0;
+    for (int icoord=0; icoord<paramdim; icoord++)
+    {
+      targetParams[icoord] = iCurrentParams[icoord] + ratio*(targetParams[icoord]-iCurrentParams[icoord]);
+      sqNorm += (targetParams[icoord]-iCurrentParams[icoord])*(targetParams[icoord]-iCurrentParams[icoord]);
+    }
+    if ( sqNorm< 1.e-6 && (currentDensity-minDensity)<1./(N[0]*N[1]) )
+    {
+      // too small variation in parameters
+      return true; 
+    }
+  }
+  else if (density > maxDensity)
+  {
+    float d = density-currentDensity;
+    float ratio = (maxDensity-currentDensity)/d;
+  
+    float sqNorm = 0;
+    for (int icoord=0; icoord<paramdim; icoord++)
+    {
+      targetParams[icoord] = iCurrentParams[icoord] + ratio*(targetParams[icoord]-iCurrentParams[icoord]);
+      sqNorm += (targetParams[icoord]-iCurrentParams[icoord])*(targetParams[icoord]-iCurrentParams[icoord]);
+    }
+    if ( sqNorm< 1.e-6 && (maxDensity-currentDensity)<1./(N[0]*N[1]) )
+    {
+      // too small variation in parameters
+      return true; 
+    }
+  }
+  /*else
+  {
+    float ratio = 0.2;
+    for (int icoord=0; icoord<paramdim; icoord++)
+    {
+      targetParams[icoord] = iCurrentParams[icoord] + ratio*(targetParams[icoord]-iCurrentParams[icoord]);
+    }
+  }*/
+
   oNewMaterialAssignments.clear();
 
   bool resOk = true;
@@ -108,24 +162,28 @@ bool MaterialOptimizer::run2D(int N[2], const std::vector<MaterialQuad2D> &iBase
     }
     x0[i] = 0.5 + (old_density - 0.5) * shrink;
   }
+  float fx = 1;
+  fem->forceMagnitude = (double)fx;
+
   fem->init(x0);
   fem->setParam(x0);
 
+  density = targetParams[0];
   Eigen::MatrixXd target_G ;
   if (m_structureType == Cubic)
   {
-    assert(iTargetParams.size()==4);
-    float E = iTargetParams[1];
-    float nu = iTargetParams[2];
+    assert(targetParams.size()==4);
+    float E = targetParams[1];
+    float nu = targetParams[2];
     float mu = (float)fem->G(2,2);
     target_G = computeTargetStrains(2, E, nu, mu);
   }
   else if (m_structureType == Orthotropic)
   {
-    assert(iTargetParams.size()==5);
-    float E_x = iTargetParams[1];
-    float E_y = iTargetParams[2];
-    float nu_xy = iTargetParams[3];
+    assert(targetParams.size()==5);
+    float E_x = targetParams[1];
+    float E_y = targetParams[2];
+    float nu_xy = targetParams[3];
     float mu_xy = (float)fem->G(2,2);
     target_G = computeTargetStrains(E_x, E_y, nu_xy, mu_xy);
   }
@@ -134,14 +192,25 @@ bool MaterialOptimizer::run2D(int N[2], const std::vector<MaterialQuad2D> &iBase
     // not implemented
     assert(0);
   }
-  std::cout << "target G = " << std::endl;
-  std::cout << target_G << std::endl << std::endl;
+  if (1)
+  {
+    std::cout << "target G = " << std::endl;
+    std::cout << target_G << std::endl << std::endl;
 
-  float fx = 1;
-  fem->forceMagnitude = (double)fx;
+    float current_E_x = iCurrentParams[1];
+    float current_E_y = iCurrentParams[2];
+    float current_nu_xy = iCurrentParams[3];
+    float current_mu_xy = (float)fem->G(2,2);
+    Eigen::MatrixXd current_G = computeTargetStrains(current_E_x, current_E_y, current_nu_xy, current_mu_xy);
 
-  fem->m0 = 0.5 * sum(fem->distribution) / fem->distribution.size();
-  fem->mw = 0;//0.1 * fem->G(0, 0) / fem->density;
+    std::cout << "current G = " << std::endl;
+    std::cout << current_G << std::endl << std::endl;
+
+    std::cout << "target density = " << density << std::endl;
+  }
+
+  fem->m0 = density; //0.5 * sum(fem->distribution) / fem->distribution.size();
+  fem->mw = 0.01 * fem->G(0, 0) / fem->density;
   double weightMu = 0.;
   fem->G0 = target_G;
   fem->wG(0) = 1;
@@ -193,9 +262,74 @@ bool MaterialOptimizer::run2D(int N[2], const std::vector<MaterialQuad2D> &iBase
   return resOk;
 }
 
-bool MaterialOptimizer::run3D(int N[3], const std::vector<MaterialQuad> &iBaseMaterials, const std::vector<int> &iMaterialAssignments, const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments)
+bool MaterialOptimizer::run3D(int N[3], const std::vector<MaterialQuad> &iBaseMaterials, const std::vector<int> &iMaterialAssignments, const std::vector<float> &iCurrentParams, 
+                              const std::vector<float> &iTargetParams, std::vector<std::vector<int> > &oNewMaterialAssignments)
 { 
   oNewMaterialAssignments.clear();
+
+  assert(iTargetParams.size()==4);
+  float density = iTargetParams[0];
+  float E = iTargetParams[1];
+  float nu = iTargetParams[2];
+  float mu = iTargetParams[3];
+
+  float currentDensity = iCurrentParams[0];
+  float currentE = iCurrentParams[1];
+  float currentNu = iCurrentParams[2];
+  float currentMu = iCurrentParams[3];
+
+  float minDensity = 1.f/(N[0]*N[1]*N[2]);
+  float maxDensity = 1-1.f/(N[0]*N[1]*N[2]);
+  if (density < minDensity)
+  {
+    float d = currentDensity-density;
+    float ratio = (currentDensity-minDensity)/d;
+    density = currentDensity + ratio*(density-currentDensity);
+ 
+    Vector3S p0(currentE, currentNu, currentMu);
+    Vector3S p(E, nu, mu);
+    if ( (p-p0).squaredNorm() < 1.e-6 && (currentDensity-minDensity)<1./(N[0]*N[1]*N[2]) )
+    {
+      // too small variation in parameters
+      return true; 
+    }
+    else
+    {
+      p = p0 + ratio*(p-p0);
+      E = p[0];
+      nu = p[1];
+      mu = p[2];
+    }
+  }
+  else if (density > maxDensity)
+  {
+    float d = density-currentDensity;
+    float ratio = (maxDensity-currentDensity)/d;
+    density = currentDensity + ratio*(density-currentDensity);
+ 
+    Vector3S p0(currentE, currentNu, currentMu);
+    Vector3S p(E, nu, mu);
+    if ( (p-p0).squaredNorm() < 1.e-6 && (maxDensity-currentDensity)<1./(N[0]*N[1]*N[2]) )
+    {
+      // too small variation in parameters
+      return true; 
+    }
+    else
+    {
+      p = p0 + ratio*(p-p0);
+      E = p[0];
+      nu = p[1];
+      mu = p[2];
+    }
+  }
+  /*else
+  {
+    float ratio = 0.2;
+    E = currentE + ratio*(E-currentE);
+    mu = currentNu + ratio*(mu-currentNu);
+    nu = currentNu + ratio*(nu-currentNu);
+    density = currentDensity + ratio*(density-currentDensity);
+  }*/ 
 
   bool resOk = true;
 
@@ -263,25 +397,35 @@ bool MaterialOptimizer::run3D(int N[3], const std::vector<MaterialQuad> &iBaseMa
       old_density = 1;
     }
     x0[i] = 0.5 + (old_density - 0.5) * shrink;
-  }
+  } 
+  float fx = 1;
+  fem->forceMagnitude = (double)fx;
+
   fem->init(x0);
   fem->setParam(x0);
   double val = fem->f();
 
-  assert(iTargetParams.size()==4);
-  float E = iTargetParams[1];
-  float nu = iTargetParams[2];
-  float mu = (float)fem->G(3,3);
+  mu = (float)fem->G(3,3);
 
   Eigen::MatrixXd target_G = computeTargetStrains(3, E, nu, mu);
-  std::cout << "target G = " << std::endl;
-  std::cout << target_G << std::endl << std::endl;
+  if (1)
+  {
+    std::cout << "target G = " << std::endl;
+    std::cout << target_G << std::endl << std::endl;
 
-  float fx = 1;
-  fem->forceMagnitude = (double)fx;
+    float current_E = iCurrentParams[1];
+    float current_nu = iCurrentParams[2];
+    float current_mu = (float)fem->G(3,3);
+    Eigen::MatrixXd current_G = computeTargetStrains(3, current_E, current_nu, current_mu);
 
-  fem->m0 = 0.5 * sum(fem->distribution) / fem->distribution.size();
-  fem->mw = 0; //0.1 * fem->G(0, 0) / fem->density;
+    std::cout << "current G = " << std::endl;
+    std::cout << current_G << std::endl << std::endl;
+  }
+
+  std::cout << "target density = " << density << std::endl;
+
+  fem->m0 = density; //0.5 * sum(fem->distribution) / fem->distribution.size();
+  fem->mw = 0.01*fem->G(0, 0) / fem->density;
   double weightMu = 0.;
   fem->G0 = target_G;
   fem->wG(0) = 1;
@@ -353,13 +497,13 @@ void MaterialOptimizer::gradientDescent(FEM2DFun * fun, Eigen::VectorXd & x0, in
   double maxStep = 0.5;
   Eigen::VectorXd x = x0;
   double h = 1;
+  fun->setParam(x);
   for (int ii = 0; ii < nSteps; ii++)
   {
     if (ii%50==0)
     {
       std::cout << "step = " << ii << std::endl;
     }
-    fun->setParam(x);
     double val = fun->f();
     Eigen::VectorXd grad = fun->df();
     double norm = infNorm(grad);
@@ -387,14 +531,14 @@ void MaterialOptimizer::gradientDescent(FEM3DFun * fun, Eigen::VectorXd & x0, in
   double maxStep = 0.5;
   Eigen::VectorXd x = x0;
   double h = 1;
-
+  fun->setParam(x);
+  std::cout << "current density = " << fun->density << std::endl;
   for (int ii = 0; ii < nSteps; ii++)
   {
     if (ii%50==0)
     {
       //std::cout << "step = " << ii << std::endl;
     }
-    fun->setParam(x);
     double val = fun->f();
     Eigen::VectorXd grad = fun->df();
     double norm = infNorm(grad);
@@ -405,6 +549,7 @@ void MaterialOptimizer::gradientDescent(FEM3DFun * fun, Eigen::VectorXd & x0, in
     double init_h = h;
     int ret = lineSearch(fun, x, grad, h);
     std::cout << "step = " << ii << "                              " << " f = " << val << " norm = " << norm << " " << "h = " << init_h << " " << h << std::endl;
+    std::cout << "current density = " << fun->density << std::endl;
     if (ret < 0){
       break;
     }
@@ -418,8 +563,6 @@ int MaterialOptimizer::lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eig
 {
   double f0 = fun->f();
   Eigen::VectorXd grad0 = fun->df();
-  double norm0 = infNorm(grad0);
-  double norm1 = norm0;
   double f1 = f0;
   while (h>1.e-8){
     //minus sign here if we want to minimize function value.
@@ -427,10 +570,8 @@ int MaterialOptimizer::lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eig
     clampVector(x, fun->lowerBounds, fun->upperBounds);
     fun->setParam(x);
     f1 = fun->f();
-    Eigen::VectorXd grad1 = fun->df();
-    norm1 = infNorm(grad1);
     //if gradient norm or function value decrease, return.
-    if (/*norm1 < norm0 ||*/ f1 < f0){
+    if (f1 < f0){
       x0 = x;
       h *= 2;
       break;
@@ -439,9 +580,9 @@ int MaterialOptimizer::lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eig
       h /= 2;
     }
   }
-  if (fabs(norm0-norm1)<1.e-8 && fabs(f0-f1)<1.e-8)
+  if (fabs(f0-f1)<1.e-8)
   {
-    std::cout << "diff_norm = " << fabs(norm0-norm1) << " diff_val = " << fabs(f0-f1) << std::endl;
+    std::cout << " diff_val = " << fabs(f0-f1) << std::endl;
     return -1;
   }
   return 0;

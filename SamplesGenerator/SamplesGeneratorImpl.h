@@ -14,7 +14,7 @@ class Stepper2D;
 class SamplesGeneratorImpl
 {
 public:
-  SamplesGeneratorImpl(int iDim);
+  SamplesGeneratorImpl();
   ~SamplesGeneratorImpl();
 
   void setOutputDirectory(const std::string &iDirectory) {m_OutputDirectory = iDirectory;}
@@ -116,8 +116,15 @@ private:
                                  const std::vector<float> &iParameters, const std::vector<float> &iTensors, 
                                  std::vector<std::vector<int> > &oNewMaterialAssignments, std::vector<cfgScalar> &oNewPhysicalParameters, std::vector<cfgScalar> &oNewTensors);
 
+  void runContinuousOptimization(int iLevel, int iCycle, bool iFixNonManifoldStructure, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<float> &iParameters,
+                                 const std::vector<float> &iTensors, const std::vector<float> &iOffsetedParameters, const std::vector<int> &iNewParticules, std::vector<std::vector<int> > &oNewMaterialAssignments,
+                                 std::vector<cfgScalar> &oNewPhysicalParameters, std::vector<cfgScalar> &oNewTensors);
+
   bool fixNonManifoldStructure(int n[3], std::vector<int> &ioMatAssignments);
   bool fixNonManifoldStructure2D(int n[2], std::vector<int> &ioMatAssignments);
+
+  bool readDisneyFiles(const std::string &iFileName, int iDim, bool iCubic, bool iOrthotropic, std::vector<cfgScalar> &ioPhysicalParameters);
+  bool readDisneyFiles(int iDim, bool iCubic, bool iOrthotropic, std::vector<cfgScalar> &oPhysicalParameters);
 
 private:
   std::string m_OutputDirectory;
@@ -130,6 +137,7 @@ private:
   bool m_orthotropicOnly;
   bool m_cubicOnly;
   bool m_continuousMatDist;
+  bool m_filterOutDisconnetedStructures;
 };
 
 #endif

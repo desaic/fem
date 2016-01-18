@@ -83,7 +83,7 @@ public:
           for (int icoord=0; icoord<d; icoord++)
           {
             cfgScalar val = (cfgScalar)normal[icoord];
-            val *= scalingFactors[icoord];
+            val /= scalingFactors[icoord];
             ioDerivatives->push_back(val);
           }
           for (int icoord=d; icoord<m_dim; icoord++)

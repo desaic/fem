@@ -39,6 +39,7 @@ public:
 
   const std::vector<std::vector<cfgScalar> > & getPhysicalParameters() {return m_physicalParametersPerLevel;}
   const std::vector<std::vector<cfgScalar> > & getElasticityTensors() {return m_elasticityTensors;}
+  const std::vector<std::vector<cfgScalar> > & getThermalExpansionCoeffs() {return m_thermalExpansionCoeffs;}
   const std::vector<std::vector<std::vector<int> > > & getMaterialAssignments() {return m_materialAssignments;}
   const std::vector<int>  & getLevels() {return m_levels;}
 
@@ -53,7 +54,7 @@ private:
   bool readBaseMaterialStructures(int iLevel, std::vector<std::vector<int> > &oBaseMaterialStructures);
 
   void addLevelData(int ilevel, const std::vector<std::vector<int> > &iBaseMaterials, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<cfgScalar> > &iMaterialDistributions, 
-                    std::vector<cfgScalar> &iPhysicalParameters, std::vector<cfgScalar> &elasticityTensors);
+                    std::vector<cfgScalar> &iPhysicalParameters, std::vector<cfgScalar> &elasticityTensors, std::vector<cfgScalar> &thermalExpansionCoeffs);
 
 private:
   int m_blockSize;
@@ -75,6 +76,7 @@ private:
   std::vector<std::vector<std::vector<cfgScalar> > > m_materialDistributions;
   std::vector<std::vector<cfgScalar> > m_physicalParametersPerLevel;
   std::vector<std::vector<cfgScalar> > m_elasticityTensors;
+  std::vector<std::vector<cfgScalar> > m_thermalExpansionCoeffs;
 
   std::vector<int> m_levels;
 };

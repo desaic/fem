@@ -35,6 +35,8 @@ NumericalCoarsening::NumericalCoarsening()
   m_nbBlockRep = 1;
   m_nbSubdiv = 1;
 
+  m_dim = 2;
+
   m_init = false;
 }
 
@@ -50,34 +52,40 @@ NumericalCoarsening::~NumericalCoarsening()
   }
 }
 
-void NumericalCoarsening::init(int N[3], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad> &iBaseMaterials)
+void NumericalCoarsening::initPardiso()
 {
-  m_init = true;
-
-  m_nbBlockRep = iNbBlockRep;
-  m_nbSubdiv = iNbSubdiv;
-
-  int n[3] = {N[0]*m_nbBlockRep*m_nbSubdiv, N[1]*m_nbBlockRep*m_nbSubdiv, N[2]*m_nbBlockRep*m_nbSubdiv};
-
-  m_baseMaterials3D = iBaseMaterials;
-
-  std::vector<int> cellMaterials(n[0]*n[1]*n[2], 0);
-  cellMaterials[1] = 1;
-  SAFE_DELETE(m_physicalSystem);
-  m_physicalSystem = createPhysicalSystem(n, m_baseMaterials3D, cellMaterials);
-
-  m_K0[0] = m_physicalSystem->getStiffness(0);
-  m_K0[1] = m_physicalSystem->getStiffness(1);
-
   //Timer t;
   bool triangular = true;
   m_I.clear();
   m_J.clear();
 
-  //t.start();
-  m_physicalSystem->stiffnessPattern(m_I, m_J, triangular, true, true, true);
-  //t.end();
-  //std::cout << " stiffnessPattern: " <<  t.getSeconds() << std::endl;
+  if (m_dim==2)
+  {
+    assert(m_physicalSystem2D);
+    m_K0[0] = m_physicalSystem2D->m[0]->getStiffness(m_physicalSystem2D->e[0], m_physicalSystem2D);
+    m_K0[1] = m_physicalSystem2D->m[1]->getStiffness(m_physicalSystem2D->e[0], m_physicalSystem2D);
+    //t.start();
+    m_physicalSystem2D->stiffnessPattern(m_I, m_J, triangular, true, true, true);
+    //t.end();
+    //std::cout << " stiffnessPattern: " <<  t.getSeconds() << std::endl;
+  }
+  else
+  {
+    assert(m_physicalSystem);
+    m_K0[0] = m_physicalSystem->m[0]->getStiffness(m_physicalSystem->e[0], m_physicalSystem);
+    m_K0[1] = m_physicalSystem->m[1]->getStiffness(m_physicalSystem->e[0], m_physicalSystem);
+    //t.start();
+    m_physicalSystem->stiffnessPattern(m_I, m_J, triangular, true, true, true);
+    //t.end();
+    //std::cout << " stiffnessPattern: " <<  t.getSeconds() << std::endl;
+  }
+  if (0)
+  {
+    std::cout << "K0[0] = " << std::endl;
+    std::cout << m_K0[0] << std::endl << std::endl;
+    std::cout << "K0[1] = " << std::endl;
+    std::cout << m_K0[1] << std::endl << std::endl;
+  }
   //pardiso uses 1-based
   for (unsigned int ii = 0; ii < m_I.size(); ii++){
     m_I[ii] ++;
@@ -95,6 +103,46 @@ void NumericalCoarsening::init(int N[3], int iNbBlockRep, int iNbSubdiv, std::ve
   pardisoSymbolicFactorize(m_I.data(), m_J.data(), (int)m_I.size()-1, m_pardisoState);
   //t.end();
   //std::cout << " pardisoSymbolicFactorize: " <<  t.getSeconds() << std::endl;
+}
+
+void NumericalCoarsening::init(int N[3], int iNbBlockRep, int iNbSubdiv, const std::vector<MaterialQuad> &iBaseMaterials)
+{
+  m_init = true;
+
+  m_dim = 3;
+  m_nbBlockRep = iNbBlockRep;
+  m_nbSubdiv = iNbSubdiv;
+
+  int n[3] = {N[0]*m_nbBlockRep*m_nbSubdiv, N[1]*m_nbBlockRep*m_nbSubdiv, N[2]*m_nbBlockRep*m_nbSubdiv};
+
+  m_baseMaterials3D = iBaseMaterials;
+
+  std::vector<int> cellMaterials(n[0]*n[1]*n[2], 0);
+  cellMaterials[1] = 1;
+  SAFE_DELETE(m_physicalSystem);
+  m_physicalSystem = createPhysicalSystem(n, m_baseMaterials3D, cellMaterials);
+
+  initPardiso();
+}
+
+void NumericalCoarsening::init(int N[2], int iNbBlockRep, int iNbSubdiv, const std::vector<MaterialQuad2D> &iBaseMaterials)
+{
+  m_init = true;
+
+  m_dim = 2;
+  m_nbBlockRep = iNbBlockRep;
+  m_nbSubdiv = iNbSubdiv;
+
+  int n[2] = {N[0]*m_nbBlockRep*m_nbSubdiv, N[1]*m_nbBlockRep*m_nbSubdiv};
+
+  m_baseMaterials2D = iBaseMaterials;
+
+  std::vector<int> cellMaterials(n[0]*n[1], 0);
+  cellMaterials[1] = 1;
+  SAFE_DELETE(m_physicalSystem);
+  m_physicalSystem2D = createPhysicalSystem(n, m_baseMaterials2D, cellMaterials);
+
+  initPardiso();
 }
 
 void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[2], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad2D> &iBaseMaterials, 
@@ -209,10 +257,10 @@ void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters(const st
   delete physicalSystem;
 }
 
-void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[3], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters)
+void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters3D(const std::vector<int> &iMaterials, int N[3], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters)
 {
   std::vector<int> cellMaterials;
-  repMaterialAssignment(N[0], N[1], N[1], iMaterials, m_nbBlockRep, m_nbBlockRep, m_nbBlockRep, m_nbSubdiv, cellMaterials); 
+  repMaterialAssignment(N[0], N[1], N[2], iMaterials, m_nbBlockRep, m_nbBlockRep, m_nbBlockRep, m_nbSubdiv, cellMaterials); 
 
   int n[3] = {N[0]*m_nbBlockRep*m_nbSubdiv, N[1]*m_nbBlockRep*m_nbSubdiv, N[2]*m_nbBlockRep*m_nbSubdiv};
   ElementRegGrid * physicalSystem = createPhysicalSystem(n, m_baseMaterials3D, cellMaterials);
@@ -271,6 +319,60 @@ void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters(const st
     cfgScalar G = C(3+i,3+i);
     ioParameters.push_back(G);
   }
+  delete physicalSystem;
+}
+
+void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters2D(const std::vector<int> &iMaterials, int N[2], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters)
+{
+  std::vector<int> cellMaterials;
+  repMaterialAssignment(N[0], N[1], iMaterials, m_nbBlockRep, m_nbBlockRep, m_nbSubdiv, cellMaterials); 
+
+  int n[2] = {N[0]*m_nbBlockRep*m_nbSubdiv, N[1]*m_nbBlockRep*m_nbSubdiv};
+  ElementRegGrid2D * physicalSystem = createPhysicalSystem(n, m_baseMaterials2D, cellMaterials);
+
+  cfgScalar forceMagnitude = 1;
+  std::vector<std::vector<cfgScalar> > harmonicDisp;
+  computeHarmonicDisplacements(physicalSystem, forceMagnitude, iType, harmonicDisp);
+
+  MatrixXS C;
+  meshUtil::computeCoarsenedElasticityTensor(*physicalSystem, harmonicDisp, C);
+  //std::cout << "C = " << C << std::endl << std::endl;
+
+  std::vector<float> Cvalues;
+  for (int i=0; i<3; i++)
+  {
+    for (int j=0; j<3; j++)
+    {
+      if (j<=i)
+      {
+        ioTensorValues.push_back(C(i,j));
+      }
+    }
+  }
+
+  std::vector<std::vector<cfgScalar> > strains;
+  meshUtil::computeStrains(*physicalSystem, harmonicDisp, strains);
+
+  std::vector<std::vector<int> > baseMaterials(2);
+  baseMaterials[0].push_back(0);
+  baseMaterials[1].push_back(1);
+
+  cfgScalar r = computeMaterialRatio(iMaterials, baseMaterials);
+  ioParameters.push_back(r);
+
+  int naxis = (iType==Cubic? 1: 2);
+  for (int iaxis=0; iaxis<naxis; iaxis++)
+  {
+    cfgScalar Y = computeYoungModulus(strains[iaxis][iaxis], forceMagnitude);
+    ioParameters.push_back(Y);
+  }
+
+  cfgScalar poissonRatio_xy = computePoissonRatio(strains[0][0], strains[0][1]); 
+  ioParameters.push_back(poissonRatio_xy);
+
+  cfgScalar G = C(2,2);
+  ioParameters.push_back(G);
+
   delete physicalSystem;
 }
 
@@ -981,6 +1083,51 @@ void NumericalCoarsening::computeHarmonicDisplacements(ElementRegGrid * iPhysica
   }
 }
 
+void NumericalCoarsening::computeHarmonicDisplacements(ElementRegGrid2D * iPhysicalSystem, cfgScalar iForceMagnitude, StructureType iType, std::vector<std::vector<cfgScalar> > &oHarmonicDisplacements)
+{
+  oHarmonicDisplacements.clear();
+
+  cfgScalar forces[3][2] = { {iForceMagnitude,0}, {0,iForceMagnitude}, {iForceMagnitude/2, iForceMagnitude/2 }};
+
+  std::vector<std::vector<double> > externalForces(3);
+  for (int idisp=0; idisp<3; idisp++)
+  {
+    std::vector<cfgScalar> currentForces;
+    getExternalForcesForHarmonicDisp(forces[idisp][0], forces[idisp][1], iPhysicalSystem, currentForces);
+    externalForces[idisp] = convertVec<cfgScalar, double>(currentForces);
+  } 
+  int nforce = externalForces[0].size();
+
+  bool triangular = true;
+  //Timer t;
+  //t.start();
+  std::vector<double> val;
+  getStiffnessSparse(iPhysicalSystem, val);
+  std::vector<float> Kvalues;
+  //iPhysicalSystem->getStiffnessSparse(Kvalues, triangular, true, true, true, true);
+  //std::vector<double> val = convertVec<cfgScalar, double>(Kvalues);
+  //t.end();
+  //std::cout << " getStiffnessSparse: " <<  t.getSeconds() << std::endl;
+
+  //t.start();
+  int nrows = (int)m_I.size() - 1;
+  pardisoNumericalFactorize(m_I.data(), m_J.data(), val.data(), nrows, m_pardisoState);
+  //t.end();
+  //std::cout << " pardisoNumericalFactorize: " <<  t.getSeconds() << std::endl;
+
+  for (unsigned int ii = 0; ii < externalForces.size(); ii++)
+  {
+    externalForces[ii].resize(nrows);
+    std::vector<double> u(nrows, 0.);
+    //t.start();
+    pardisoBackSubstitute(m_I.data(), m_J.data(), val.data(), nrows, u.data(), externalForces[ii].data(), m_pardisoState);
+    //t.end();
+    //std::cout << " pardisoBackSubstitute: " <<  t.getSeconds() << std::endl;
+    u.resize(nforce);
+    oHarmonicDisplacements.push_back(convertVec<double, cfgScalar>(u));
+  }
+}
+
 void NumericalCoarsening::getStiffnessSparse(ElementRegGrid * iPhysicalSystem, std::vector<double> &oValues)
 {
   bool fixRigid = true;
@@ -993,6 +1140,68 @@ void NumericalCoarsening::getStiffnessSparse(ElementRegGrid * iPhysicalSystem, s
   Eigen::SparseMatrix<cfgScalar> Ksparse(N, N);
   for (unsigned int ii = 0; ii<iPhysicalSystem->e.size(); ii++){
     Element * ele = iPhysicalSystem->e[ii];
+    int nV = ele->nV();
+    MatrixXS &K = m_K0[iPhysicalSystem->me[ii]];
+
+    for (int jj = 0; jj<nV; jj++){
+      int vj = ele->at(jj);
+      for (int kk = 0; kk<nV; kk++){
+        int vk = ele->at(kk);
+        for (int dim1 = 0; dim1<dim; dim1++){
+          for (int dim2 = 0; dim2<dim; dim2++){
+            if (trig && (dim * vk + dim2 > dim * vj + dim1)) {
+              continue;
+            }
+            cfgScalar val = K(dim * jj + dim1, dim * kk + dim2);
+            if (constrained){
+              if ( (iPhysicalSystem->fixed[vk] || iPhysicalSystem->fixed[vj]) 
+                && (vj != vk || dim1 != dim2)){
+                val = 0;
+              }
+            }
+            if (dim * vj + dim1 == dim * vk + dim2){
+              val *= 1 + 1e-5;
+            }
+            TripletS triple(dim * vj + dim1, dim * vk + dim2, val);
+            coef.push_back(triple);
+          }
+        }
+      }
+    }
+  }
+  Ksparse.setFromTriplets(coef.begin(), coef.end());
+  if (fixRigid)
+  {
+    iPhysicalSystem->fixTranslation(Ksparse, trig, iPhysicalSystem);
+    iPhysicalSystem->fixRotation(Ksparse, trig, iPhysicalSystem);
+  }
+  if (periodic)
+  {
+    iPhysicalSystem->enforcePeriodicity(Ksparse, trig, iPhysicalSystem);
+  }
+
+  oValues.resize(Ksparse.nonZeros());
+  int idx = 0;
+  for (int ii = 0; ii<Ksparse.rows(); ii++){
+    for (Eigen::SparseMatrix<cfgScalar>::InnerIterator it(Ksparse, ii); it; ++it){
+      oValues[idx] = it.value();
+      idx++;
+    }
+  }
+}
+
+void NumericalCoarsening::getStiffnessSparse(ElementRegGrid2D * iPhysicalSystem, std::vector<double> &oValues)
+{
+  bool fixRigid = true;
+  bool periodic = true;
+  bool constrained = false;
+  bool trig = true;
+  int dim = 2;
+  int N = dim * (int)iPhysicalSystem->x.size();
+  std::vector<TripletS> coef;
+  Eigen::SparseMatrix<cfgScalar> Ksparse(N, N);
+  for (unsigned int ii = 0; ii<iPhysicalSystem->e.size(); ii++){
+    Element2D * ele = iPhysicalSystem->e[ii];
     int nV = ele->nV();
     MatrixXS &K = m_K0[iPhysicalSystem->me[ii]];
 

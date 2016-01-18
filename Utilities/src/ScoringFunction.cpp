@@ -108,7 +108,8 @@ std::vector<cfgScalar> ScoringFunction::computeScores(const std::vector<cfgScala
       for (ipoint=0; ipoint<npoint; ipoint++)
       {
         scores[ipoint] = (scores[ipoint]-scoreMin)/(scoreMax-scoreMin);
-        scores[ipoint] /= densities[ipoint];
+        scores[ipoint] /= (densities[ipoint]*densities[ipoint]);
+        //scores[ipoint] /= densities[ipoint];
         scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
         //scores[ipoint] *= scores[ipoint];
       }

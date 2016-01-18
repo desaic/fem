@@ -113,7 +113,15 @@ namespace cfgMaterialUtilities
   void dumpStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment);
   void dumpStructure(int Nx, int Ny, int Nz, const std::vector<int> &iMatAssignment);
 
+  void getNeighbours(int Nx, int Ny, int indCell, std::vector<int> &oNeighbours, bool iUseTiling=true);
   void getDisconnectedComponents(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents);
+  bool isComponentConnectedToBorder(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<int> &iComponentcell);
+  bool filterOutNonConnectedComponents(int Nx, int Ny, std::vector<int> &ioMatAssignment, bool &oModified);
+
+  void getNeighbours(int Nx, int Ny, int Nz, int indCell, std::vector<int> &oNeighbours, bool iUseTiling=true);
+  void getDisconnectedComponents(int Nx, int Ny, int Nz, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents);
+  bool isComponentConnectedToBorder(int Nx, int Ny, int Nz, const std::vector<int> &iMatAssignment, std::vector<int> &iComponentcell);
+  bool filterOutNonConnectedComponents(int Nx, int Ny, int Nz, std::vector<int> &ioMatAssignment, bool &oModified);
 
   void convert2DCubicStructuresTo3DCubicStructures(int N, const std::vector<int> &iMatAssignment2D, std::vector<int> &oMatAssignment3D);
 
@@ -157,6 +165,7 @@ namespace cfgMaterialUtilities
 
   std::vector<float> toVectorFloat(const std::vector<Eigen::Vector3f> &iPoints);
   std::vector<float> toVectorFloat(const std::vector<Eigen::Vector2f> &iPoints);
+  MatrixXS toMatrixXS(const std::vector<cfgScalar> &iValues);
 
   std::vector<cfgScalar> toVectorScalar(const std::vector<Vector3S> &iPoints);
   std::vector<cfgScalar> toVectorScalar(const std::vector<Vector2S> &iPoints);

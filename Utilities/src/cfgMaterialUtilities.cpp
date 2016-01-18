@@ -2185,58 +2185,292 @@ void cfgMaterialUtilities::dumpStructure(int Nx, int Ny, int Nz, const std::vect
   }
 }
 
-void cfgMaterialUtilities::getDisconnectedComponents(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents)
+void cfgMaterialUtilities::getNeighbours(int Nx, int Ny, int Nz, int indCell, std::vector<int> &oNeighbours, bool iUseTiling)
 {
-  std::set<int> elements;
-  //int ielem, nelem=(int)iMatAssignment.size;
+   oNeighbours.clear();
 
+  int x, y, z;
+  getVectorIndexToGrid(indCell, Nx, Ny, Nz, x, y, z);
 
-
-  /*void Phys3DMeshUtils::ExtractDisconnectedComponents(const vector<double> &iVertices, const vector<int> &iIndexArray, vector<vector<int> > &oIndexArrays)
-{
-  DSMesh Mesh;
-  Mesh.init(iVertices, iIndexArray);
-
-  std::set<int> Faces;
-  int iface=0, nface=(int)iIndexArray.size()/3;
-  for (iface=0; iface<nface; iface++)
+  int neighbour;
+  if (iUseTiling || x < Nx-1)
   {
-    Faces.insert(iface);
+    neighbour = getGridToVectorIndex((x+1)%Nx, y, z, Nx, Ny, Nz);
+    oNeighbours.push_back(neighbour);
   }
-
-  oIndexArrays.clear();
-  while (Faces.size()>0)
+  if (iUseTiling || x > 0)
   {
-    vector<DSMesh::FaceHandle> FacesToProcess;
-    std::set<int> ComponentFaces;
+    neighbour = getGridToVectorIndex((x+Nx-1)%Nx, y, z, Nx, Ny, Nz);
+    oNeighbours.push_back(neighbour);
+  }
+  if (iUseTiling || y < Ny-1)
+  {
+    neighbour = getGridToVectorIndex(x, (y+1)%Ny, z, Nx, Ny, Nz);
+    oNeighbours.push_back(neighbour);
+  }
+  if (iUseTiling || y > 0)
+  {
+    neighbour = getGridToVectorIndex(x, (y+Ny-1)%Ny, z, Nx, Ny, Nz);
+    oNeighbours.push_back(neighbour);
+  }
+  if (iUseTiling || z < Nz-1)
+  {
+    neighbour = getGridToVectorIndex(x, y, (z+1)%Nz, Nx, Ny, Nz);
+    oNeighbours.push_back(neighbour);
+  }
+  if (iUseTiling || z > 0)
+  {
+    neighbour = getGridToVectorIndex(x, y, (z+Nz-1)%Nz, Nx, Ny, Nz);
+    oNeighbours.push_back(neighbour);
+  }
+}
 
-    std::set<int>::iterator it = Faces.begin();
+void cfgMaterialUtilities::getNeighbours(int Nx, int Ny, int indCell, std::vector<int> &oNeighbours, bool iUseTiling)
+{
+  oNeighbours.clear();
 
-    DSMesh::FaceHandle fh = Mesh.face_handle(*it);
-    ComponentFaces.insert(fh.idx());
-    Faces.erase(fh.idx());
+  int x, y;
+  getVectorIndexToGrid(indCell, Nx, Ny, x, y);
 
-    FacesToProcess.push_back(fh);
-    while (FacesToProcess.size()>0)
+  int neighbour;
+  if (iUseTiling || x < Nx-1)
+  {
+    neighbour = getGridToVectorIndex((x+1)%Nx, y, Nx, Ny);
+    oNeighbours.push_back(neighbour);
+  }
+  if (iUseTiling || x > 0)
+  {
+    neighbour = getGridToVectorIndex((x+Nx-1)%Nx, y, Nx, Ny);
+    oNeighbours.push_back(neighbour);
+  }
+  if (iUseTiling || y < Ny-1)
+  {
+    neighbour = getGridToVectorIndex(x, (y+1)%Ny, Nx, Ny);
+    oNeighbours.push_back(neighbour);
+  }
+  if (iUseTiling || y > 0)
+  {
+    neighbour = getGridToVectorIndex(x, (y+Ny-1)%Ny, Nx, Ny);
+    oNeighbours.push_back(neighbour);
+  }
+}
+
+bool cfgMaterialUtilities::filterOutNonConnectedComponents(int Nx, int Ny, int Nz, std::vector<int> &ioMatAssignment, bool &oModified)
+{
+  oModified = false;
+  std::vector<std::vector<int> > components;
+  getDisconnectedComponents(Nx, Ny, Nz, ioMatAssignment, components);
+
+  int nbConnectedComponents = 0;
+  int icomponent, ncomponent=(int)components.size();
+  for (icomponent=0; icomponent<ncomponent; icomponent++)
+  {
+    std::vector<int> &compElements = components[icomponent];
+    assert(compElements.size()>0);
+    int indMat = ioMatAssignment[compElements[0]];
+    if (indMat==1)
     {
-      DSMesh::FaceHandle fh = FacesToProcess.back();
-      FacesToProcess.pop_back();
-
-      DSMesh::FaceFaceIter ff_it = Mesh.ff_iter(fh);
-      for (; ff_it; ++ff_it)
+      if (!isComponentConnectedToBorder(Nx, Ny, Nz, ioMatAssignment, compElements))
       {
-        int index = ff_it.handle().idx();
-        if (!ComponentFaces.count(index))
+        int icell, ncell=(int)compElements.size();
+        for (icell=0; icell<ncell; icell++)
         {
-          ComponentFaces.insert(index);
-          Faces.erase(index);
-          FacesToProcess.push_back(ff_it.handle());
+          int indCell = compElements[icell];
+          assert(ioMatAssignment[indCell] == 1);
+          ioMatAssignment[indCell] = 0;
+        }
+        oModified = true;
+      }
+      else
+      {
+        nbConnectedComponents++;
+      }
+    }
+  }
+  return (nbConnectedComponents>0);
+}
+
+bool cfgMaterialUtilities::filterOutNonConnectedComponents(int Nx, int Ny, std::vector<int> &ioMatAssignment, bool &oModified)
+{
+  oModified = false;
+  std::vector<std::vector<int> > components;
+  getDisconnectedComponents(Nx, Ny, ioMatAssignment, components);
+
+  int nbConnectedComponents = 0;
+  int icomponent, ncomponent=(int)components.size();
+  for (icomponent=0; icomponent<ncomponent; icomponent++)
+  {
+    std::vector<int> &compElements = components[icomponent];
+    assert(compElements.size()>0);
+    int indMat = ioMatAssignment[compElements[0]];
+    if (indMat==1)
+    {
+      if (!isComponentConnectedToBorder(Nx, Ny, ioMatAssignment, compElements))
+      {
+        int icell, ncell=(int)compElements.size();
+        for (icell=0; icell<ncell; icell++)
+        {
+          int indCell = compElements[icell];
+          assert(ioMatAssignment[indCell] == 1);
+          ioMatAssignment[indCell] = 0;
+        }
+        oModified = true;
+      }
+      else
+      {
+        nbConnectedComponents++;
+      }
+    }
+  }
+  return (nbConnectedComponents>0);
+}
+
+bool cfgMaterialUtilities::isComponentConnectedToBorder(int Nx, int Ny, int Nz, const std::vector<int> &iMatAssignment, std::vector<int> &iComponentcells)
+{
+  int xmin = Nx;
+  int xmax = -1;
+  int ymin = Ny;
+  int ymax = -1;
+  int zmin = Nz;
+  int zmax = -1;
+
+  int icell=0, ncell=(int)iComponentcells.size();
+  for (icell=0; icell<ncell; icell++)
+  {
+    int indCell = iComponentcells[icell];
+    int x, y, z;
+    getVectorIndexToGrid(indCell, Nx, Ny, Nz, x, y, z);
+    if (x < xmin)
+      xmin = x;
+    if (x > xmax)
+      xmax = x;
+    if (y < ymin)
+      ymin = y;
+    if (y > ymax)
+      ymax = y;
+    if (z < zmin)
+      zmin = z;
+    if (z > zmax)
+      zmax = z;
+  }
+  bool connectedToBorder = (xmin==0 && xmax==Nx-1 && ymin==0 && ymax==Ny-1 && zmin==0 && zmax==Nz-1);
+  return connectedToBorder;
+}
+
+
+bool cfgMaterialUtilities::isComponentConnectedToBorder(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<int> &iComponentcells)
+{
+  int xmin = Nx;
+  int xmax = -1;
+  int ymin = Ny;
+  int ymax = -1;
+
+  int icell=0, ncell=(int)iComponentcells.size();
+  for (icell=0; icell<ncell; icell++)
+  {
+    int indCell = iComponentcells[icell];
+    int x, y;
+    getVectorIndexToGrid(indCell, Nx, Ny, x, y);
+    if (x < xmin)
+      xmin = x;
+    if (x > xmax)
+      xmax = x;
+    if (y < ymin)
+      ymin = y;
+    if (y > ymax)
+      ymax = y;
+  }
+  bool connectedToBorder = (xmin==0 && xmax==Nx-1 && ymin==0 && ymax==Ny-1);
+  return connectedToBorder;
+}
+
+void cfgMaterialUtilities::getDisconnectedComponents(int Nx, int Ny, int Nz, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents)
+{
+  oComponents.clear();
+
+  std::set<int> elements = toStdSet(genIncrementalSequence(0, iMatAssignment.size()-1));
+  while (elements.size()>0)
+  {
+    std::set<int> componentElements;
+
+    std::set<int>::iterator it = elements.begin();
+    int indCell = *it;
+    elements.erase(it);
+    componentElements.insert(indCell);
+
+    int indMat0 = iMatAssignment[indCell];
+    std::vector<int> elementsToProcess;
+    elementsToProcess.push_back(indCell);
+    while (elementsToProcess.size()>0)
+    {
+      int indCell = elementsToProcess.back();
+      elementsToProcess.pop_back();
+
+      std::vector<int> neighbours;
+      getNeighbours(Nx, Ny, Nz, indCell, neighbours, false);
+      int icell=0, ncell=(int)neighbours.size();
+      for (icell=0; icell<ncell; icell++)
+      {
+        int indAdjCell = neighbours[icell];
+        if (!componentElements.count(indAdjCell))
+        {
+          int indMat = iMatAssignment[indAdjCell];
+          if (indMat == indMat0)
+          {
+            componentElements.insert(indAdjCell);
+            elements.erase(indAdjCell);
+            elementsToProcess.push_back(indAdjCell);
+          }
         }
       }
     }
-    oIndexArrays.push_back(Phys3DMatrixUtils::GetVector(ComponentFaces));
+    oComponents.push_back(toStdVector(componentElements));
   }
-}*/ 
+}
+
+
+void cfgMaterialUtilities::getDisconnectedComponents(int Nx, int Ny, const std::vector<int> &iMatAssignment, std::vector<std::vector<int> > &oComponents)
+{
+  oComponents.clear();
+
+  std::set<int> elements = toStdSet(genIncrementalSequence(0, iMatAssignment.size()-1));
+  while (elements.size()>0)
+  {
+    std::set<int> componentElements;
+
+    std::set<int>::iterator it = elements.begin();
+    int indCell = *it;
+    elements.erase(it);
+    componentElements.insert(indCell);
+
+    int indMat0 = iMatAssignment[indCell];
+    std::vector<int> elementsToProcess;
+    elementsToProcess.push_back(indCell);
+    while (elementsToProcess.size()>0)
+    {
+      int indCell = elementsToProcess.back();
+      elementsToProcess.pop_back();
+
+      std::vector<int> neighbours;
+      getNeighbours(Nx, Ny, indCell, neighbours, false);
+      int icell=0, ncell=(int)neighbours.size();
+      for (icell=0; icell<ncell; icell++)
+      {
+        int indAdjCell = neighbours[icell];
+        if (!componentElements.count(indAdjCell))
+        {
+          int indMat = iMatAssignment[indAdjCell];
+          if (indMat == indMat0)
+          {
+            componentElements.insert(indAdjCell);
+            elements.erase(indAdjCell);
+            elementsToProcess.push_back(indAdjCell);
+          }
+        }
+      }
+    }
+    oComponents.push_back(toStdVector(componentElements));
+  }
 } 
 
 void cfgMaterialUtilities::convert2DCubicStructuresTo3DCubicStructures(int N, const std::vector<int> &iMatAssignment2D, std::vector<int> &oMatAssignment3D)
@@ -2962,6 +3196,17 @@ std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Eigen::
      }
    }
    return vec;
+ }
+
+ MatrixXS cfgMaterialUtilities::toMatrixXS(const std::vector<cfgScalar> &iValues)
+ {
+   MatrixXS mat = MatrixXS::Zero(iValues.size(), 1);
+   int icoord, ncoord=iValues.size();
+   for (icoord=0; icoord<ncoord; icoord++)
+   {
+     mat(icoord, 0) = iValues[icoord];
+   }
+   return mat;
  }
 
  std::vector<Eigen::Vector2f> cfgMaterialUtilities::toVector2f(const std::vector<float> &iPoints)

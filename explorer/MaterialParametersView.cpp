@@ -158,11 +158,38 @@ std::vector<cfgScalar> computeScores(const std::vector<cfgScalar> &iPoints, int 
   return scores;
 }
 
+void MaterialParametersView::rescaleParameters(int iIndex, cfgScalar iScalingFactor, std::vector<cfgScalar> &ioPoints, int iDim)
+{
+  assert(ioPoints.size()%iDim==0);
+  int ipoint=0, npoint=(int)ioPoints.size()/iDim;
+  for (ipoint=0; ipoint<npoint; ipoint++)
+  {
+    ioPoints[iDim*ipoint + iIndex] *= iScalingFactor;
+  }
+}
+
+cfgScalar MaterialParametersView::getMaxValue(int iIndex, const std::vector<cfgScalar> &iPoints, int iDim)
+{
+  cfgScalar maxValue = -FLT_MAX;
+
+  assert(iPoints.size()%iDim==0);
+  int ipoint=0, npoint=(int)iPoints.size()/iDim;
+  for (ipoint=0; ipoint<npoint; ipoint++)
+  {
+    if (iPoints[iDim*ipoint + iIndex]>maxValue)
+    {
+      maxValue = iPoints[iDim*ipoint + iIndex];
+    }
+  }
+  return maxValue;
+}
+
 void MaterialParametersView::updatePlots()
 {
   Q_ASSERT(m_project);
 
-  const std::vector<std::vector<cfgScalar> > & physicalParametersPerLevel = m_project->getPhysicalParameters();
+  const std::vector<std::vector<cfgScalar> > & physicalParametersPerLevelInit = m_project->getPhysicalParameters();
+  std::vector<std::vector<cfgScalar> > physicalParametersPerLevel = physicalParametersPerLevelInit;
   int ilevel, nlevel=(int)physicalParametersPerLevel.size();
 
   std::vector<vtkVector3i> matColors(nlevel, vtkVector3i(0, 0, 255));
@@ -179,21 +206,15 @@ void MaterialParametersView::updatePlots()
   m_plotsPerLevel.clear();
   m_plotsPerLevel.resize(nlevel);
 
-  //int paramdim = m_project->getDim()+1;
-  //int paramdim = 2*m_project->getDim()+1;
+  cfgScalar scalingFactor_E = 1.f/290.91;
+  std::vector<int> dimToRescale;
+
   int paramdim = 0;
   bool cubic = true;
-  bool orthotropic = true;
+  bool orthotropic = false;
 
   std::vector<std::string> labels;
-  if (paramdim==3)
-  {
-    labels.push_back("Density");
-    labels.push_back("Y1");
-    labels.push_back("Y2");
-    labels.push_back("Level");
-  }
-  else if (cubic)
+  if (cubic)
   {
     paramdim = 4;
     labels.push_back("Density");
@@ -201,6 +222,7 @@ void MaterialParametersView::updatePlots()
     labels.push_back("Nu1");
     labels.push_back("Mu1");
     labels.push_back("Level");
+    dimToRescale.push_back(1);
   }
   else if (orthotropic)
   {
@@ -213,6 +235,8 @@ void MaterialParametersView::updatePlots()
       labels.push_back("Nu1");
       labels.push_back("Mu1");
       labels.push_back("Level");
+      dimToRescale.push_back(1);
+      dimToRescale.push_back(2);
     }
     else
     {
@@ -229,30 +253,24 @@ void MaterialParametersView::updatePlots()
       labels.push_back("Mu2");
       labels.push_back("Mu3");
       labels.push_back("Level");
+
+      dimToRescale.push_back(1);
+      dimToRescale.push_back(2);
+      dimToRescale.push_back(3);
     }
-  }
-  else if (paramdim==5 && cubic)
-  {
-    labels.push_back("Density");
-    labels.push_back("Y1");
-    labels.push_back("Nu1");
-    labels.push_back("Mu1");
-    labels.push_back("Level");
-  }
-  else if (paramdim==7)
-  {
-    labels.push_back("Density");
-    labels.push_back("Y1");
-    labels.push_back("Y2");
-    labels.push_back("Y3");
-    labels.push_back("Nu1");
-    labels.push_back("Nu2");
-    labels.push_back("Nu3");
-    labels.push_back("Level");
   }
   srand(0);
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
+    for (int idim=0; idim<dimToRescale.size(); idim++)
+    {
+      float maxE = getMaxValue(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim);
+      if (maxE > 2)
+      {
+        rescaleParameters(dimToRescale[idim], scalingFactor_E, physicalParametersPerLevel[ilevel], paramdim);
+      }
+    }
+
     vtkVector3i col = matColors[ilevel];
     //if (nlevel>1)
     //  col = matColors[1-ilevel];
@@ -261,7 +279,7 @@ void MaterialParametersView::updatePlots()
     std::cout << "npoints = " << npoints << std::endl;
     std::vector<int> levels(npoints, ilevel);
     vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels);
-   
+
     if (0)
     {
       DistanceField distanceField(paramdim);
@@ -369,8 +387,7 @@ void MaterialParametersView::updatePlots()
       newparticules3= genIncrementalSequence(0, npoints-1);
       vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, "Y1", "Nu1", "Density", colors, 10);
-      //m_plotsPerLevel[ilevel].push_back(plot3);
-
+      m_plotsPerLevel[ilevel].push_back(plot3);
 
       cfgScalar minRadius = 0; //0.05;
       int nTargetParticules = 300;
@@ -379,24 +396,72 @@ void MaterialParametersView::updatePlots()
       resampler.resample(scores, nTargetParticules, newparticules);
       resampler.resample(minRadius, paramdim, physicalParametersPerLevel[ilevel], scores, nTargetParticules, newparticules);
 
+      int ind = newparticules[0];
+      //newparticules.clear();
+      //newparticules.push_back(ind);
+
       vtkVector3i red(255, 0, 0);
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
       vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Nu1", "Density", green, 15);
+      //m_plotsPerLevel[ilevel].push_back(plot2);
+    }
+
+    if (0)
+    {
+      vtkVector3i green(0, 255, 0);
+
+      std::vector<int> indices;
+      indices.push_back(4);
+      vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &indices);
+      vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Nu1", "Density", green, 15);
       m_plotsPerLevel[ilevel].push_back(plot2);
     }
-   
+
     std::vector<vtkVector3i> colors;
-    for (int ipoint=0; ipoint<npoints; ipoint++)
+    const std::vector<std::vector<cfgScalar> > & thermalExpansionCoeffs = m_project->getThermalExpansionCoeffs();
+    if (0)//thermalExpansionCoeffs[ilevel].size()>0)
     {
-      cfgScalar w = 1 ;//scores[ipoint];
-      vtkVector3i matColor(w*col[0] + (1-w)*255, w*col[1] + (1-w)*255, w*col[2] + (1-w)*255);
-      colors.push_back(matColor);
+      cfgScalar coeffMin = *std::min_element(thermalExpansionCoeffs[ilevel].begin(), thermalExpansionCoeffs[ilevel].end());
+      cfgScalar coeffMax = *std::max_element(thermalExpansionCoeffs[ilevel].begin(), thermalExpansionCoeffs[ilevel].end());
+      cfgScalar maxVal = 20; //50;
+      cfgScalar minVal = 0;
+      if (coeffMax>maxVal)
+        coeffMax = maxVal;
+      for (int ipoint=0; ipoint<npoints; ipoint++)
+      {
+        vtkVector3i matColor;
+        cfgScalar val = thermalExpansionCoeffs[ilevel][ipoint];
+        if (val > coeffMax)
+          val = coeffMax;
+        //cfgScalar w = (val-coeffMin)/(coeffMax-coeffMin);
+        if (val < 0)
+        {
+          cfgScalar w = log(-val+1)/log(-coeffMin+1);
+          matColor = vtkVector3i((1-w)*255, (1-w)*255, w*255 + (1-w)*255);
+        }
+        else
+        {
+          //cfgScalar w = log(val+1)/log(coeffMax+1);
+          cfgScalar w = (val-minVal)/(coeffMax-minVal);
+          matColor = vtkVector3i(w*255 + (1-w)*255, (1-w)*255, (1-w)*255);
+        }
+        colors.push_back(matColor);
+      }
+    }
+    else
+    {
+      for (int ipoint=0; ipoint<npoints; ipoint++)
+      {
+        cfgScalar w = 1 ;//scores[ipoint];
+        vtkVector3i matColor(w*col[0] + (1-w)*255, w*col[1] + (1-w)*255, w*col[2] + (1-w)*255);
+        colors.push_back(matColor);
+      }
     }
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Density", colors, 10);
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Nu1", colors, 10);
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Nu1", "Nu2", "Density", colors, 10);
-    vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Nu1", "Density", colors, 10);
+    vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Nu1", "Density", colors, 3);
     m_plotsPerLevel[ilevel].push_back(plot);
   }
   updateChart();

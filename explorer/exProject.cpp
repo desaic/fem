@@ -61,16 +61,19 @@ bool exProject::loadFile(const QString &iFileName, int &oLevel, QString &oLabel)
     std::string fileRootName = stringRoot.toStdString();
     std::string fileExtension = ".bin";
 
-    std::vector<cfgScalar> physicalParameters, elasticityTensors;
+    std::vector<cfgScalar> physicalParameters, elasticityTensors, thermalExpansionCoeffs;
     std::vector<std::vector<int> > baseMaterials, materialAssignments;
     std::vector<std::vector<cfgScalar> > materialDistributions;
     resOk = cfgUtil::readBinary<float>(fileRootName + "params" + fileExtension, physicalParameters);
     //if (resOk)
     //  resOk = cfgUtil::readBinary<int>(fileRootName + "baseMat" + fileExtension, baseMaterials);
     if (resOk)
-      resOk = cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, materialAssignments) ||
-              cfgUtil::readBinary<cfgScalar>(fileRootName + "matDistributions" + fileExtension, materialDistributions);
-    cfgUtil::readBinary<cfgScalar>(fileRootName + "elasticityTensors" + fileExtension, elasticityTensors);
+    {
+      cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, materialAssignments);
+      cfgUtil::readBinary<cfgScalar>(fileRootName + "matDistributions" + fileExtension, materialDistributions);
+      cfgUtil::readBinary<cfgScalar>(fileRootName + "elasticityTensors" + fileExtension, elasticityTensors);
+      cfgUtil::readBinary<cfgScalar>(fileRootName + "thermalExpansionCoefficients" + fileExtension, thermalExpansionCoeffs);
+    }
 
     if (resOk)
     {
@@ -81,14 +84,14 @@ bool exProject::loadFile(const QString &iFileName, int &oLevel, QString &oLabel)
       oLabel.chop(1);
       oLabel.remove(str);
 
-      addLevelData(level, baseMaterials, materialAssignments, materialDistributions, physicalParameters, elasticityTensors);
+      addLevelData(level, baseMaterials, materialAssignments, materialDistributions, physicalParameters, elasticityTensors, thermalExpansionCoeffs);
     }
   }
   return resOk;
 }
 
 void exProject::addLevelData(int ilevel, const std::vector<std::vector<int> > &iBaseMaterials, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<cfgScalar> > &iMaterialDistributions, 
-                             std::vector<cfgScalar> &iPhysicalParameters, std::vector<cfgScalar> &elasticityTensors)
+                             std::vector<cfgScalar> &iPhysicalParameters, std::vector<cfgScalar> &elasticityTensors, std::vector<cfgScalar> &thermalExpansionCoeffs)
 {
   m_levels.push_back(ilevel);
   m_baseMaterials.push_back(iBaseMaterials);
@@ -96,6 +99,7 @@ void exProject::addLevelData(int ilevel, const std::vector<std::vector<int> > &i
   m_materialDistributions.push_back(iMaterialDistributions);
   m_physicalParametersPerLevel.push_back(iPhysicalParameters);
   m_elasticityTensors.push_back(elasticityTensors);
+  m_thermalExpansionCoeffs.push_back(thermalExpansionCoeffs);
 
   int defaultVisibility = 1;
   m_levelVisibility.push_back(defaultVisibility);
@@ -349,8 +353,8 @@ QSharedPointer<ElementMesh> exProject::computeElementMeshIncr(int iCombIndex, in
     materialAssignment = convertVec<float, int>(mult(m_materialDistributions[iLevel][iCombIndex], 255.f));
   }
 
-  bool isManifold = cfgMaterialUtilities::isStructureManifold(N[0], N[1], N[2], materialAssignment, true, 1, 1, 1);
-  std::cout << "isManifold = " << (isManifold? "true": "false") << std::endl;
+  //bool isManifold = cfgMaterialUtilities::isStructureManifold(N[0], N[1], N[2], materialAssignment, true, 1, 1, 1);
+  //std::cout << "isManifold = " << (isManifold? "true": "false") << std::endl;
 
   int blockSize = 3;
   if (m_dim==3)
