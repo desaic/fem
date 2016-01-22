@@ -78,7 +78,7 @@ SamplesGeneratorImpl::SamplesGeneratorImpl()
   {
     m_dim = 3;
     m_cubicOnly = true;
-    setOutputDirectory("..//..//Output_3D_cubic//");
+    setOutputDirectory("..//..//Output//");
     //setOutputDirectory("..//..//Output_Disney//");
   }
   else
@@ -4332,7 +4332,7 @@ int SamplesGeneratorImpl::run()
     std::vector<int> connectedStructures, fixedStructures, invalidStructures;
     std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
     std::vector<float> physicalParameters, tensors;
-    std::string suffix = "3D_fixed";
+    std::string suffix = "SMC_5";
     bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors, suffix);
     if (ResOk)
     {
@@ -4354,7 +4354,7 @@ int SamplesGeneratorImpl::run()
         {
           if (modified)
           {
-            fixedStructures.push_back(imat);
+            //fixedStructures.push_back(imat);
           }
           else
           {

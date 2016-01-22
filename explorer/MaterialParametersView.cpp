@@ -210,8 +210,8 @@ void MaterialParametersView::updatePlots()
   std::vector<int> dimToRescale;
 
   int paramdim = 0;
-  bool cubic = true;
-  bool orthotropic = false;
+  bool cubic = false;
+  bool orthotropic = true;
 
   std::vector<std::string> labels;
   if (cubic)
@@ -461,7 +461,7 @@ void MaterialParametersView::updatePlots()
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Density", colors, 10);
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Nu1", colors, 10);
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Nu1", "Nu2", "Density", colors, 10);
-    vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Nu1", "Density", colors, 3);
+    vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Nu1", "Density", colors, 10);
     m_plotsPerLevel[ilevel].push_back(plot);
   }
   updateChart();
