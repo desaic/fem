@@ -1018,7 +1018,7 @@ int cfgMaterialUtilities::getGridToVectorIndex(int i, int j, int nx, int ny)
 
 int cfgMaterialUtilities::getGridToVectorIndex(int i, int j, int k, int nx, int ny, int nz)
 {
-  int index =  i*ny*nz + j*ny +k;
+  int index =  i*ny*nz + j*nz +k;
   return index;
 }
 
@@ -1031,8 +1031,8 @@ void cfgMaterialUtilities::getVectorIndexToGrid(int iIndex, int nx, int ny, int 
 void cfgMaterialUtilities::getVectorIndexToGrid(int iIndex, int nx, int ny, int nz, int &oIndex_i, int &oIndex_j, int &oIndex_k)
 {
   oIndex_i = iIndex/ (ny*nz);
-  oIndex_j = (iIndex % (ny*nz)) / ny;
-  oIndex_k = (iIndex % (ny*nz)) % ny;
+  oIndex_j = (iIndex % (ny*nz)) / nz;
+  oIndex_k = (iIndex % (ny*nz)) % nz;
 }
 
 void cfgMaterialUtilities::getSideElements(int iSide, int nx, int ny, std::vector<int> &oElementIndices)

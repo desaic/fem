@@ -20,7 +20,7 @@ MainWindow::MainWindow()
 
   setAcceptDrops(true);
 
-  int dim = 3;
+  int dim = 2;
   m_project = new exProject(dim);
   m_project->setFileDirectory("..//..//Output//");
   
