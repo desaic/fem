@@ -44,15 +44,19 @@ void optMat3D(Opt3DArgs * arg)
   //  x1[ii] = 0.5 + (rand() / (float)RAND_MAX - 0.5) * 0.2;
   //}
   std::vector<std::vector<double> > structures;
+  std::vector<int> idx;
+  cfgUtil::readBinary<int>("../data/boundaryPoints.bin", idx);
   loadIntBinary(*conf, structures);
-  std::ofstream matStruct("struct.txt");
+  //std::ofstream matStruct("struct.txt");
   double shrinkRatio = 0.3;
-  for (unsigned int si = 1; si < structures.size(); si++){
-    std::vector<double> s3d = structures[si];
+  std::vector<float> param;
+  for (unsigned int si = 0; si < idx.size(); si++){
+    std::cout << si << "\n";
+    std::vector<double> s3d = structures[idx[si]];
     Eigen::VectorXd x1 = fem->param;
     //copy 8x8x8 corner to 3D structure.
     for (int ii = 0; ii < x1.size(); ii++){
-      x1[ii] = 1e-3;
+      x1[ii] = 1;// 1e-3;
     }
     std::vector<int> paramSize(3, 0);
     for (int dim = 0; dim < (int)paramSize.size(); dim++){
@@ -61,40 +65,45 @@ void optMat3D(Opt3DArgs * arg)
     for (int ix = 0; ix < paramSize[0]; ix++){
       for (int iy = 0; iy < paramSize[1]; iy++){
         for (int iz = 0; iz < paramSize[2]; iz++){
-          x1[ix * paramSize[1] * paramSize[2] + iy *paramSize[2] + iz] = s3d[ix * fem->gridSize[1] * fem->gridSize[2] + iy * fem->gridSize[2] + iz];
+          x1[ix * paramSize[1] * paramSize[2] + iy *paramSize[2] + iz] = 1;// s3d[ix * fem->gridSize[1] * fem->gridSize[2] + iy * fem->gridSize[2] + iz];
         }
       }
     }
-
+    clampVector(x1, fem->lowerBounds, fem->upperBounds);
     fem->setParam(x1);
+    param.push_back(fem->density);
+    param.push_back(1.0 / fem->G(0, 0));
+    param.push_back(-fem->G(1, 0)/fem->G(0,0));
+    param.push_back(1.0 / fem->G(3, 3));
+    std::cout << fem->G(0, 0) << " " << fem->G(1, 0) << " " << fem->G(2, 0) << " " << fem->G(3, 3) << "\n";
+    int input;
+    std::cin >> input;
+    //double val = fem->f();
+    //fem->m0 = 0.5 * fem->density;
+    //fem->mw = 0.1 * fem->G(0, 0) / fem->density;
+    //fem->G0 = fem->G;
+    ////-0.45 poisson's ratio objective
+    //fem->G0(1, 0) = -1 * fem->G0(0, 0);
+    //fem->G0(2, 0) = -1 * fem->G0(0, 0);
 
-    //int input;
-    //std::cin >> input;
-    double val = fem->f();
-    fem->m0 = 0.5 * fem->density;
-    fem->mw = 0.1 * fem->G(0, 0) / fem->density;
-    fem->G0 = fem->G;
-    //-0.45 poisson's ratio objective
-    fem->G0(1, 0) = -1 * fem->G0(0, 0);
-    fem->G0(2, 0) = -1 * fem->G0(0, 0);
-
-    std::cout << fem->G << "\n";
+    //std::cout << fem->G << "\n";
     //for test only look at the first displacement.
-    for (int ii = 1; ii < fem->wG.size(); ii++){
-      fem->wG(ii) = 0;
-      //  fem->wG(ii) = 1 + (rand() / (float)RAND_MAX - 0.5)*0.3 ;
-    }
-    shrinkVector(x1, shrinkRatio);
-    logfile.open("log3d.txt");
+    //for (int ii = 1; ii < fem->wG.size(); ii++){
+    //  fem->wG(ii) = 0;
+    //  //  fem->wG(ii) = 1 + (rand() / (float)RAND_MAX - 0.5)*0.3 ;
+    //}
+    //shrinkVector(x1, shrinkRatio);
+    //logfile.open("log3d.txt");
     //check_df(fem, x1, 1e-3);
     //scale mass term to roughly displacement term.
-    gradientDescent(fem, x1, nSteps);
-    for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
-      matStruct << fem->distribution[ii] << " ";
-    }
-    matStruct << "\n";
+    //gradientDescent(fem, x1, nSteps);
+  //  for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
+  //    matStruct << fem->distribution[ii] << " ";
+  //  }
+  //  matStruct << "\n";
   }
-  matStruct.close();
+  //matStruct.close();
+    cfgUtil::writeBinary<float>("param2d.bin", param);
 }
 
 void run3D(const ConfigFile & conf)
@@ -118,8 +127,8 @@ void run3D(const ConfigFile & conf)
   ElementRegGrid * em = new ElementRegGrid(nx, ny, nz);
   std::vector<StrainLin> ene(1);
   //E = 1e3.
-  ene[0].param[0] = 3448.27586f;
-  ene[0].param[1] = 31034.48276f;
+  ene[0].param[0] = 100;
+  ene[0].param[1] = 2400;
 
   std::vector<MaterialQuad * > material(ene.size());
   for (unsigned int ii = 0; ii < material.size(); ii++){
@@ -138,7 +147,7 @@ void run3D(const ConfigFile & conf)
   //PiecewiseConstantSym3D * field = new PiecewiseConstantSym3D();
   PiecewiseConstantCubic3D * field = new PiecewiseConstantCubic3D();
   field->allocate(nx / 2, ny / 2, nz / 2 );
-
+  fem->forceMagnitude = 1;
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
 

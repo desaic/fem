@@ -385,10 +385,18 @@ typedef Matrix<Type, Dynamic, Size> Matrix##X##Size##TypeSuffix;
 EIGEN_MAKE_TYPEDEFS(Type, TypeSuffix, 2, 2) \
 EIGEN_MAKE_TYPEDEFS(Type, TypeSuffix, 3, 3) \
 EIGEN_MAKE_TYPEDEFS(Type, TypeSuffix, 4, 4) \
+EIGEN_MAKE_TYPEDEFS(Type, TypeSuffix, 5, 5) \
+EIGEN_MAKE_TYPEDEFS(Type, TypeSuffix, 6, 6) \
+EIGEN_MAKE_TYPEDEFS(Type, TypeSuffix, 7, 7) \
+EIGEN_MAKE_TYPEDEFS(Type, TypeSuffix, 8, 8) \
 EIGEN_MAKE_TYPEDEFS(Type, TypeSuffix, Dynamic, X) \
 EIGEN_MAKE_FIXED_TYPEDEFS(Type, TypeSuffix, 2) \
 EIGEN_MAKE_FIXED_TYPEDEFS(Type, TypeSuffix, 3) \
-EIGEN_MAKE_FIXED_TYPEDEFS(Type, TypeSuffix, 4)
+EIGEN_MAKE_FIXED_TYPEDEFS(Type, TypeSuffix, 4) \
+EIGEN_MAKE_FIXED_TYPEDEFS(Type, TypeSuffix, 5) \
+EIGEN_MAKE_FIXED_TYPEDEFS(Type, TypeSuffix, 6) \
+EIGEN_MAKE_FIXED_TYPEDEFS(Type, TypeSuffix, 7) \
+EIGEN_MAKE_FIXED_TYPEDEFS(Type, TypeSuffix, 8)
 
 EIGEN_MAKE_TYPEDEFS_ALL_SIZES(int,                  i)
 EIGEN_MAKE_TYPEDEFS_ALL_SIZES(float,                f)
