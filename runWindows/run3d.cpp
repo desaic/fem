@@ -43,6 +43,7 @@ void optMat3D(Opt3DArgs * arg)
     //for (int ii = 0; ii < x1.size(); ii++){
   //  x1[ii] = 0.5 + (rand() / (float)RAND_MAX - 0.5) * 0.2;
   //}
+ 
   std::vector<std::vector<double> > structures;
   std::vector<int> idx;
   cfgUtil::readBinary<int>("../data/boundaryPoints.bin", idx);
@@ -150,6 +151,10 @@ void run3D(const ConfigFile & conf)
   fem->forceMagnitude = 1;
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
+   
+    float fx = 1;
+    fem->forceMagnitude = (double)fx;
+
 
   fem->em = em;
   fem->field = field;

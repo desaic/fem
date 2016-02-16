@@ -118,7 +118,7 @@ vtkSmartPointer<vtkPolyData> MaterialStructureView::createVtkPolyData(const Elem
     Element * ele = iElementMesh->e[ielement];
     const std::vector<int> & nodes = ele->getNodeIndices();
     int indMat = iElementMesh->me[ielement];
-    if (indMat==1)
+    if (indMat>0)
     {
       for (int iaxis=0; iaxis<3; iaxis++)
       {
@@ -131,11 +131,14 @@ vtkSmartPointer<vtkPolyData> MaterialStructureView::createVtkPolyData(const Elem
             int ind = externalFaceIndices[iaxis][iside][ivertex];
             int indNode = nodes[ind];
 
-            Vector3f v = iElementMesh->X[indNode];
+            Vector3S v = iElementMesh->X[indNode];
             points->InsertNextPoint (v[0], v[1], v[2]);
             polygon->GetPointIds()->SetId(ivertex, indPoint++);
           }
           faces->InsertNextCell(polygon);
+
+          unsigned char color[4] = {255-indMat, 255-indMat, 255, 255};
+          //colors->InsertNextTupleValue(color);
           colors->InsertNextTupleValue(colMat[indMat]);
         }
       }

@@ -397,6 +397,7 @@ int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir,
     //if gradient norm or function value decrease, return.
     //std::cout << "line search: "<<step<<" "<< h << " (" << norm1<<" "<<norm0<< ") (" << f1 <<" "<<f0<< ")\n";
     if (f1 < f0){
+      std::cout << "h = " << h << std::endl;
       x0 = x;
       ret = 0;
       break;

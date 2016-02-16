@@ -5,7 +5,7 @@
 #include "PriorityQueue.h"
 
 #define SQR(x) (x*x)
-#define MAX_DIM 4
+#define MAX_DIM 5
 
 typedef MaxPriorityQueue<int, double> PQueue;
 typedef PQueue::Element Neighbour;
