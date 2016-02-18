@@ -44,6 +44,7 @@ n1 = [nodenrs(end, [1,end], 1), nodenrs(1, [end,1], 1)...
     nodenrs(end, [1,end], end), nodenrs(1, [end,1], end)];
 d1 = reshape([ (3*n1-2) ; (3*n1-1); 3*n1 ] , 1, 24);
 %lower left faces
+%nodenrs(y2, y1, y3)
 %                  y2
 %                 /|\
 %                  |
@@ -52,27 +53,46 @@ d1 = reshape([ (3*n1-2) ; (3*n1-1); 3*n1 ] , 1, 24);
 %
 n3 = [reshape(nodenrs(2:end-1, 1, 1:end),   1, (nelx-1)*(nelz+1)) ...
 reshape(nodenrs([1 end], 1, 2:end-1), 1, 2*(nelz-1)) ...
-reshape(nodenrs(2:end-1, 1, 1:end),   1, (nelx-1)*(nelz+1)) ...
-reshape(nodenrs([1 end], 1, 2:end-1), 1, 2*(nelz-1)) ...
-reshape(nodenrs(2:end-1, 1, 1:end),   1, (nelx-1)*(nelz+1)) ...
-reshape(nodenrs([1 end], 1, 2:end-1), 1, 2*(nelz-1))];
+reshape(nodenrs(end, 2:end-1, 1:end), 1, (nely-1)*(nelz+1)) ...
+reshape(nodenrs(end, [1 end], 2:end-1), 1, 2*(nelz-1)) ...
+reshape(nodenrs(2:end-1,   1:end, 1),   1, (nelx-1)*(nely+1)) ...
+reshape(nodenrs([1 end], 2:end-1, 1), 1, 2*(nely-1))];
+d3 = reshape([(3*n3-2);(3*n3-1);3*n3], 1, 3*length(n3));
 
-d3 = reshape([(2*n3-1);2*n3],1,2*(nelx+nely-2));
-n4 = [nodenrs(2:end-1,end)',nodenrs(1,2:end-1)];
-d4 = reshape([(2*n4-1);2*n4],1,2*(nelx+nely-2));
+n4 = [reshape(nodenrs(2:end-1, end, 1:end),   1, (nelx-1)*(nelz+1)) ...
+reshape(nodenrs([1 end], end, 2:end-1), 1, 2*(nelz-1)) ...
+reshape(nodenrs(1, 2:end-1, 1:end), 1, (nely-1)*(nelz+1)) ...
+reshape(nodenrs(1, [1 end], 2:end-1), 1, 2*(nelz-1)) ...
+reshape(nodenrs(2:end-1,   1:end, end),   1, (nelx-1)*(nely+1)) ...
+reshape(nodenrs([1 end], 2:end-1, end), 1, 2*(nely-1))];
+
+d4 = reshape([(3*n3-2);(3*n3-1);3*n3], 1, 3*length(n4));
 d2 = setdiff(alldofs,[d1,d3,d4]);
 %ordering of ufixed must be consistent with n1 and d1
+%voigt
+% 1 6 5
+%   2 4
+%     3
 for j = 1:6
-  ufixed(3:4,j) =[e0(1,j),e0(3,j)/2;e0(3,j)/2,e0(2,j)]*[nelx;0];
-  ufixed(7:8,j) = [e0(1,j),e0(3,j)/2;e0(3,j)/2,e0(2,j)]*[0;nely];
-  ufixed(5:6,j) = ufixed(3:4,j)+ufixed(7:8,j);
+  strain = [e0(1,j)  ,e0(6,j)/2,e0(5,j)/2
+            e0(6,j)/2,e0(2,j)  ,e0(4,j)/2
+            e0(5,j)/2,e0(4,j)  ,e0(3,j)/2];
+  ufixed(4 :6,  j) = strain*[nelx;0;0];
+  ufixed(7 :9,  j) = strain*[nelx;nely;0];
+  ufixed(10:12, j) = strain*[0;nely;0];
+  
+  ufixed(13:15, j) = strain*[0;0;nelz];
+  ufixed(16:18, j) = strain*[nelx;0;nelz];
+  ufixed(19:21, j) = strain*[nelx;nely;nelz];
+  ufixed(22:24, j) = strain*[0;nely;nelz];
 end
-wfixed = [repmat(ufixed(3:4,:),nely-1,1); repmat(ufixed(7:8,:),nelx-1,1)];
-change = 1;
-loop = 0;
+%w must be consistent with d3 and d4
+wfixed = [repmat(ufixed(4:6,:), (nelz+1)*(nely+1)-4, 1)
+    repmat(ufixed(10:12,:), (nelz+1)*(nelx+1)-4, 1)
+    repmat(ufixed(13:15,:), (nelz+1)*(nely+1)-4, 1)];
 
 %% FE-ANALYSIS
-sK = reshape(KE(:) * xPhys(:)', 64*nelx*nely,1);
+sK = reshape(KE(:) * xPhys(:)', 576*nelx*nely*nelz,1);
 K = sparse(iK,jK,sK); K = (K+K')/2;
 max(diag(K))
 
@@ -81,11 +101,14 @@ U(d1,:) = ufixed;
 U([d2,d3],:) = Kr\(-[K(d2,d1); K(d3,d1)+K(d4,d1)]*ufixed-[K(d2,d4); K(d3,d4)+K(d4,d4)]*wfixed);
 U(d4,:) = U(d3,:)+wfixed;
 %% OBJECTIVE FUNCTION AND SENSITIVITY ANALYSIS
-for i = 1:3
-for j = 1:3
+qe = cell(6,6);
+Q = zeros(6,6);
+dQ = cell(6,6);
+for i = 1:6
+for j = 1:6
   U1 = U(:,i); U2 = U(:,j);
-  qe{i,j} = reshape(sum((U1(edofMat)*KE).*U2(edofMat),2),nely,nelx)/(nelx*nely);
-  Q(i,j) = sum(sum((xPhys).*qe{i,j}));
+  qe{i,j} = reshape(sum((U1(edofMat)*KE).*U2(edofMat),2),nely,nelx,nelz)/(nelx*nely*nelz);
+  Q(i,j) = sum(sum(sum((xPhys).*qe{i,j})));
 end
 end
 C=Q;
