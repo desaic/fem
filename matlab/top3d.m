@@ -26,12 +26,12 @@ KE = lk_H8(nu);
 nodegrd = reshape(1:(nely+1)*(nelx+1),nely+1,nelx+1);
 nodeids = reshape(nodegrd(1:end-1,1:end-1),nely*nelx,1);
 nodeidz = 0:(nely+1)*(nelx+1):(nelz-1)*(nely+1)*(nelx+1);
-nodeids = repmat(nodeids,size(nodeidz))+repmat(nodeidz,size(nodeids));
-edofVec = 3*nodeids(:)+1;
+nodeids = repmat(nodeids,size(nodeidz))+repmat(nodeidz,size(nodeids))
+edofVec = 3*nodeids(:)+1
 edofMat = repmat(edofVec,1,24)+ ...
     repmat([0 1 2 3*nely + [3 4 5 0 1 2] -3 -2 -1 ...
-    3*(nely+1)*(nelx+1)+[0 1 2 3*nely + [3 4 5 0 1 2] -3 -2 -1]],nele,1);
-iK = reshape(kron(edofMat,ones(24,1))',24*24*nele,1);
+    3*(nely+1)*(nelx+1)+[0 1 2 3*nely + [3 4 5 0 1 2] -3 -2 -1]],nele,1)
+iK = reshape(kron(edofMat,ones(24,1))',24*24*nele,1)
 jK = reshape(kron(edofMat,ones(1,24))',24*24*nele,1);
 % PREPARE FILTER
 iH = ones(nele*(2*(ceil(rmin)-1)+1)^2,1);
