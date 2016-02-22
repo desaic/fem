@@ -7,18 +7,51 @@
 #include "pardiso_sym.hpp"
 #include "Timer.hpp"
 
+//#include <amgcl/amgcl.hpp>
+//#include <amgcl/make_solver.hpp>
+//#include <amgcl/backend/builtin.hpp>
+//#include <amgcl/adapter/crs_builder.hpp>
+//#include <amgcl/adapter/crs_tuple.hpp>
+//#include <amgcl/coarsening/aggregation.hpp>
+//#include <amgcl/coarsening/plain_aggregates.hpp>
+//#include <amgcl/coarsening/smoothed_aggregation.hpp>
+//#include <amgcl/coarsening/pointwise_aggregates.hpp>
+//#include <amgcl/relaxation/multicolor_gauss_seidel.hpp>
+//#include <amgcl/solver/cg.hpp>
+//#include <amgcl/profiler.hpp>
+//namespace amgcl {
+//  profiler<> prof;
+//}
+
 typedef Eigen::Triplet<cfgScalar> TripletS;
 
 static const int sw[8][3] =
-{ { -1, -1, -1 },
-{ -1, -1, 1 },
-{ -1, 1, -1 },
-{ -1, 1, 1 },
-{ 1, -1, -1 },
-{ 1, -1, 1 },
-{ 1, 1, -1 },
-{ 1, 1, 1 }
+{
+  { -1, -1, -1 },
+  { -1, -1, 1 },
+  { -1, 1, -1 },
+  { -1, 1, 1 },
+  { 1, -1, -1 },
+  { 1, -1, 1 },
+  { 1, 1, -1 },
+  { 1, 1, 1 }
 };
+
+static const int twistY[8][3] = 
+{
+  { 1, 0, -1 },
+  { -1, 0, -1 },
+  { -1, 0, 1 },
+  { 1, 0, 1 },
+
+  { 1, 0, 1 },
+  { -1, 0, 1 },
+  { -1, 0, -1 },
+  { 1, 0, -1 }
+};
+
+//void amgLinSolve(std::vector<int> & I, std::vector<int> &J, std::vector<double> & val,
+//  std::vector<double> & b, std::vector<double> & x);
 
 std::vector<int> topVerts(ElementMesh * em, const std::vector<int> & gridSize);
 std::vector<int> botVerts(ElementMesh * em, const std::vector<int> & gridSize);
@@ -64,9 +97,10 @@ void FEM3DFun::initArrays()
 
 void FEM3DFun::init(const Eigen::VectorXd & x0)
 {  
+  //triangular = false;
+  triangular = true;
   //6 harmonic displacements.
   int nForce = 6;
-  bool triangular = true;
   m_I.clear();
   m_J.clear();
   em->stiffnessPattern(m_I, m_J, triangular, m_fixRigid, m_fixRigid, m_periodic);
@@ -90,6 +124,17 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
   }
   Eigen::Vector3d forceDir = forceMagnitude * Eigen::Vector3d(1, 0, 0);
   stretchX(em, forceDir, gridSize, externalForce[0]);
+
+  //std::fill(externalForce[0].begin(), externalForce[0].end(), 0);
+  //for (unsigned int ii = 0; ii < em->e.size(); ii++){
+  //  for (int jj = 0; jj < em->e[ii]->nV(); jj++){
+  //    int vidx = em->e[ii]->at(jj);
+  //    for (int kk = 0; kk < dim; kk++){
+  //      externalForce[0][vidx * dim + kk] += 1e-2 * forceMagnitude * twistY[jj][kk];
+  //    }
+  //  }
+  //}
+
   forceDir = forceMagnitude * Eigen::Vector3d(0, 1, 0);
   stretchY(em, forceDir, gridSize, externalForce[1]);
   forceDir = forceMagnitude * Eigen::Vector3d(0, 0, 1);
@@ -106,8 +151,6 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
 
 void FEM3DFun::setParam(const Eigen::VectorXd & x0)
 {
-  bool triangle = true;
-  bool constrained = false;
   Vector3S color0(0.8f, 0.8f, 1.0f);
   param = x0;
 
@@ -125,6 +168,11 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
         coord[2] = (kk + 0.5) / gridSize[2];
         distribution[eIdx] = field->f(coord);
         em->e[eIdx]->color = distribution[eIdx] * color0;
+        if (jj == 0){
+          for (int ll = 0; ll < em->e[eIdx]->nV(); ll++){
+            em->fixed[em->e[eIdx]->at(ll)] = 1;
+          }
+        }
       }
     }
   }
@@ -138,7 +186,7 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
   int nrows = (int)m_I.size() - 1;
 
   //timer.startWall();
-  pardisoNumericalFactorize(m_I.data(), m_J.data(), m_val.data(), nrows, pardisoState);
+  //pardisoNumericalFactorize(m_I.data(), m_J.data(), m_val.data(), nrows, pardisoState);
   //timer.endWall();
   //std::cout << "num fact time " << timer.getSecondsWall() << "\n";
 
@@ -147,6 +195,7 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
     //timer.startWall();
     //checkSparseIndex(I, J);
     pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data(), pardisoState);
+    //amgLinSolve(m_I, m_J, m_val, externalForce[ii], u[ii]);
     //timer.endWall();
     //std::cout<<"Lin subst time " << timer.getSecondsWall() << "\n";
   }
@@ -256,7 +305,7 @@ Eigen::VectorXd FEM3DFun::df()
     //lambda = K^{-1} dfdu.
     //dfdx = -lambda * dK/dparam * u.
     //checkSparseIndex(I, J);
-    pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data(), pardisoState);
+    //pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data(), pardisoState);
     for (unsigned int jj = 0; jj < em->e.size(); jj++){
       Element * ele = em->e[jj];
       int nV = ele->nV();
@@ -310,7 +359,8 @@ m_Init(false),
 m_periodic(true),
 m_fixRigid(true),
 constrained(false),
-forceMagnitude(100),
+triangular(true),
+forceMagnitude(0.5),
 gridSize(3,0),
 field(0)
 {
@@ -325,7 +375,7 @@ MatrixXS FEM3DFun::getKe(int ei)
 
 void FEM3DFun::getStiffnessSparse()
 {
-  bool trig = true;
+  bool trig = triangular;
   int dim = 3;
   int N = dim * (int)em->x.size();
   std::vector<TripletS> coef;
@@ -628,3 +678,78 @@ Eigen::VectorXd hexStrain(const Eigen::VectorXd & u, const Eigen::VectorXd & X,
   Eigen::VectorXd strain = B*u;
   return strain;
 }
+
+//void amgLinSolve(std::vector<int> & I, std::vector<int> &J, std::vector<double> & val, std::vector<double> & b,
+//  std::vector<double> & x)
+//{
+//  using amgcl::prof;
+//  int n = I.size() - 1;
+//  prof.tic("build");
+//  typedef amgcl::make_solver<
+//    amgcl::amg<
+//    amgcl::backend::builtin<double>,
+//    amgcl::coarsening::smoothed_aggregation,
+//    amgcl::relaxation::multicolor_gauss_seidel
+//    >,
+//    amgcl::solver::cg<
+//    amgcl::backend::builtin<double>
+//    >
+//  > Solver;
+//  std::vector<int> ptr = I;
+//  std::vector<int> col = J;
+//  for (unsigned int ii = 0; ii < ptr.size(); ii++){
+//    ptr[ii] --;
+//  }
+//  for (unsigned int ii = 0; ii < col.size(); ii++){
+//    col[ii] --;
+//  }
+//
+//  Solver::params prm;
+//  prm.precond.npre = 1;
+//  prm.precond.npost = 1;
+//  prm.precond.ncycle = 1;
+//  prm.solver.maxiter = 1000;
+//  //prm.precond.coarsening.aggr.block_size= 3;	////for pointwise aggregation
+//  prm.solver.tol = 1;
+//
+//  Solver solve(boost::tie(n, ptr, col, val), prm);
+//  prof.toc("build");
+//
+//  std::cout << solve.precond() << std::endl;
+//
+//  prof.tic("solve");
+//  size_t iters;
+//  double resid;
+//  boost::fill(x, 0);
+//  boost::tie(iters, resid) = solve(b, x);
+//  prof.toc("solve");
+//
+//  std::cout << "Solver:" << std::endl
+//    << "  Iterations: " << iters << std::endl
+//    << "  Error:      " << resid << std::endl
+//    << std::endl;
+//
+//  // Use the constructed solver as a preconditioner for another iterative
+//  // solver.
+//  //
+//  // Iterative methods use estimated residual for exit condition. For some
+//  // problems the value of estimated residual can get too far from true
+//  // residual due to round-off errors.
+//  //
+//  // Nesting iterative solvers in this way allows to shave last bits off the
+//  // error.
+//  amgcl::solver::cg< amgcl::backend::builtin<double> > S(n);
+//  boost::fill(x, 0);
+//
+//  prof.tic("nested solver");
+//  boost::tie(iters, resid) = S(solve.system_matrix(), solve, b, x);
+//  prof.toc("nested solver");
+//
+//  std::cout << "Nested solver:" << std::endl
+//    << "  Iterations: " << iters << std::endl
+//    << "  Error:      " << resid << std::endl
+//    << std::endl;
+//
+//  std::cout << prof << std::endl;
+//
+//}
