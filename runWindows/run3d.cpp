@@ -45,15 +45,16 @@ void optMat3D(Opt3DArgs * arg)
   //}
  
   std::vector<std::vector<double> > structures;
-  std::vector<int> idx;
-  cfgUtil::readBinary<int>("../data/boundaryPoints.bin", idx);
+  //std::vector<int> idx;
+  //cfgUtil::readBinary<int>("../data/boundaryPoints.bin", idx);
   loadIntBinary(*conf, structures);
   //std::ofstream matStruct("struct.txt");
   double shrinkRatio = 0.3;
   std::vector<float> param;
-  for (unsigned int si = 0; si < idx.size(); si++){
+  structures.push_back(std::vector<double>(4096, 1));
+  for (unsigned int si = 0; si < structures.size(); si++){
     std::cout << si << "\n";
-    std::vector<double> s3d = structures[idx[si]];
+    std::vector<double> s3d = structures[si];
     Eigen::VectorXd x1 = fem->param;
     //copy 8x8x8 corner to 3D structure.
     for (int ii = 0; ii < x1.size(); ii++){
