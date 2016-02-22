@@ -10,8 +10,8 @@ end
 
 nx = int32(sqrt(size(a,2)));
 ny = nx;
-p = reshape(a, [nx ny]);
-p = imresize(p, [r r]);
+p = reshape(a, [nx ny])';
+p = imresize(p, [r r],'nearest');
 thresh = 0.5;
 p(p>=thresh) = 1;
 p(p<thresh) = 0;

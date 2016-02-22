@@ -8,6 +8,7 @@
 
 class ElementRegGrid;
 class ElementRegGrid2D;
+class ElementMesh2D;
 
 namespace meshUtil
 {
@@ -29,8 +30,8 @@ namespace meshUtil
   void getSideVertices(int iSide, const ElementRegGrid2D * iElementGrid, std::vector<int> &oVertexIndices);
   void getSideVertices(int iSide, const ElementRegGrid2D * iElementGrid, std::vector<int> &oElemIndices, std::vector<std::vector<int> > &oFaceVertexIndices);
   void getVertexValences(const ElementRegGrid2D * iElementGrid, const std::vector<int> &iElemIndices, const std::vector<std::vector<int> > &iEvIndices, std::map<int,int> &oind2Valence);
-  cfgScalar getVonMisesStress(int iElementIndex, ElementRegGrid2D &iElementGrid);
-  std::vector<cfgScalar> getVonMisesStressesPerElement(ElementRegGrid2D &iElementGrid);
+  cfgScalar getVonMisesStress(int iElementIndex, ElementMesh2D &iElementGrid);
+  std::vector<cfgScalar> getVonMisesStressesPerElement(ElementMesh2D &iElementGrid);
 
   void computeCoarsenedElasticityTensor(ElementRegGrid2D &iElementGrid, const std::vector<std::vector<cfgScalar> > &iHarmonicDisplacements, MatrixXS &oCoarsenedTensor);
   void computeCoarsenedElasticityTensor(ElementRegGrid &iElementGrid, const std::vector<std::vector<cfgScalar> > &iHarmonicDisplacements, MatrixXS &oCoarsenedTensor);

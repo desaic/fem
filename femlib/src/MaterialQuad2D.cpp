@@ -25,6 +25,11 @@ MaterialQuad2D::MaterialQuad2D(const std::vector<StrainEne2D *> & ene, Quadratur
   m_planeStress = true;
 }
 
+void MaterialQuad2D::setPlaneStress(bool iPlaneStress)
+{
+  m_planeStress = iPlaneStress;
+}
+
 void MaterialQuad2D::init(ElementMesh2D * m)
 {
   Element2D * e = m->e[0];

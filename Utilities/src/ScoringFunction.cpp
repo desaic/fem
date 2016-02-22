@@ -85,13 +85,22 @@ std::vector<cfgScalar> ScoringFunction::computeScores(const std::vector<cfgScala
   std::vector<cfgScalar> scores;
   if (m_useDistanceField)
   {
+    std::vector<cfgScalar> points = iPoints;
+    std::vector<cfgScalar> lengths(m_dim, 1);
+    rescaleData(points, m_dim, lengths);
+    if (m_densityRadius==0)
+    {
+      m_densityRadius = estimateDensityRadius(points);
+    }
+    
     DistanceField distanceField(m_dim);
     scores = distanceField.computeDistances(iPoints);
 
+    std::vector<cfgScalar> densities = computeDensities(points);
     cfgScalar scoreMax = *std::max_element(scores.begin(), scores.end());
     cfgScalar scoreMin = *std::min_element(scores.begin(), scores.end());
 
-    cfgScalar minProba = 0.1;
+    cfgScalar minProba = 0 ;//0.1;
 
     if (scoreMax-scoreMin > 1.e-6)
     {
@@ -99,24 +108,41 @@ std::vector<cfgScalar> ScoringFunction::computeScores(const std::vector<cfgScala
       for (ipoint=0; ipoint<npoint; ipoint++)
       {
         scores[ipoint] = (scores[ipoint]-scoreMin)/(scoreMax-scoreMin);
+        scores[ipoint] /= (densities[ipoint]*densities[ipoint]);
+        //scores[ipoint] /= densities[ipoint];
         scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
+        //scores[ipoint] *= scores[ipoint];
       }
     }
   }
   else
   {
-    std::vector<cfgScalar> densities = computeDensities(iPoints);
+    std::vector<cfgScalar> points = iPoints;
+    std::vector<cfgScalar> lengths(m_dim, 1);
+    rescaleData(points, m_dim, lengths);
+
+    if (m_densityRadius==0)
+    {
+      m_densityRadius = estimateDensityRadius(points);
+    }
+    std::cout << "density radius = " << m_densityRadius << std::endl;
+    std::vector<cfgScalar> densities = computeDensities(points);
+    cfgScalar densityMax = *std::max_element(densities.begin(), densities.end());
+    cfgScalar densityMin = *std::min_element(densities.begin(), densities.end());
+    std::cout << "density min = " << densityMin << "  density max = " << densityMax << std::endl;
+
     scores = computePropertiesScores(iPoints);
     int ipoint, npoint=(int)scores.size();
     for (ipoint=0; ipoint<npoint; ipoint++)
     {
-      densities[ipoint] = 1-densities[ipoint];
+      //densities[ipoint] = 1-densities[ipoint];
+      densities[ipoint] = 1/densities[ipoint];
     }
 
     //scores = mult(scores, densities);
     scores = densities;
 
-    cfgScalar scoreMax = *std::max_element(scores.begin(), scores.end());
+    /*cfgScalar scoreMax = *std::max_element(scores.begin(), scores.end());
     cfgScalar scoreMin = *std::min_element(scores.begin(), scores.end());
 
     cfgScalar minProba = 0.01;
@@ -130,7 +156,7 @@ std::vector<cfgScalar> ScoringFunction::computeScores(const std::vector<cfgScala
 
         scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
       }
-    }
+    }*/ 
   }
   return scores;
 }

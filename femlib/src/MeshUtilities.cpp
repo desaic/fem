@@ -750,7 +750,7 @@ void meshUtil::getVertexValences(const ElementRegGrid2D * iElementGrid, const st
   }
 }
 
-cfgScalar meshUtil::getVonMisesStress(int iElementIndex, ElementRegGrid2D &iElementGrid)
+cfgScalar meshUtil::getVonMisesStress(int iElementIndex, ElementMesh2D &iElementGrid)
 {
   cfgScalar maxStress = 0;
 
@@ -779,7 +779,7 @@ cfgScalar meshUtil::getVonMisesStress(int iElementIndex, ElementRegGrid2D &iElem
   return maxStress;
  }
 
-std::vector<cfgScalar> meshUtil::getVonMisesStressesPerElement(ElementRegGrid2D &iElementGrid)
+std::vector<cfgScalar> meshUtil::getVonMisesStressesPerElement(ElementMesh2D &iElementGrid)
 {
   std::vector<cfgScalar> stresses;
   int ielem, nelem=(int)iElementGrid.e.size();

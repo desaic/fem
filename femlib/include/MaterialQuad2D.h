@@ -13,6 +13,7 @@ public:
   MaterialQuad2D(StrainEne2D * ene = 0, Quadrature2D * _q = 0);
 
   MaterialQuad2D(const std::vector<StrainEne2D *> &ene, Quadrature2D * _q = 0);
+  void setPlaneStress(bool iPlaneStress);
   
   ///@brief precompute gradN.
   void init(ElementMesh2D * mesh);

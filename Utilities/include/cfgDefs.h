@@ -13,6 +13,8 @@ typedef Eigen::Matrix<double, 2, 1> Vector2d;
 typedef Eigen::Matrix<cfgScalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXS;
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> MatrixEXd;
 
+#define Vec(d) Eigen::Matrix<cfgScalar, d, 1>
+
 #include <vector>
 
 #define SAFE_DELETE(x) { \

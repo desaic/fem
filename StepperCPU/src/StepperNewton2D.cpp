@@ -9,6 +9,7 @@
 
 #include <fstream>
 #include <assert.h>
+#include <iostream>
 
 StepperNewton2D::StepperNewton2D():dense(true),dx_tol(1e-5f),h(1.0f)
 {
@@ -78,10 +79,16 @@ int StepperNewton2D::oneStep()
   if (status>0)
     return status;
 
+  double maxVal = -FLT_MAX;
   double totalMag = 0;
   for(int ii = 0;ii<ndof;ii++){
     totalMag += std::abs(bb[ii]);
+    /*if (abs(bb[ii])>maxVal)
+    {
+      maxVal = abs(bb[ii]);
+    }*/ 
   }
+  //std::cout << "norm forces = " << totalMag << ", max val = " << maxVal << std::endl;
 
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
     for(int jj = 0;jj<2;jj++){
@@ -89,6 +96,7 @@ int StepperNewton2D::oneStep()
     }
   }
   //line search
+  h = 1;
   std::vector<Vector2S> x0 = m->x;
   cfgScalar E1=E;
   while(1){
@@ -109,6 +117,7 @@ int StepperNewton2D::oneStep()
       break;
     }
   }
+  //std::cout << "h = " << h << std::endl;
   if (std::abs(E - E1) < 1e-3f){
     return -1;
   }

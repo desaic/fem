@@ -40,4 +40,15 @@ int gridToLinearIdx(int ix, int iy, const std::vector<int> & gridSize);
 
 int linearIdx(const Eigen::VectorXi & idx, const std::vector<int> & gridSize);
 
+
+///@brief add f to each 3 subvector of a.
+void addVector3d(std::vector<double> & a, const Eigen::Vector3d & f,
+  const std::vector<int> & idx);
+
+void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
+  const std::vector<double> & u);
+
+void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
+  const std::vector<Eigen::Vector3f> & X);
+
 #endif // ARRAYUTIL_HPP

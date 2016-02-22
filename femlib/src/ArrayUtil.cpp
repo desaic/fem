@@ -48,3 +48,40 @@ int linearIdx(const Eigen::VectorXi & idx, const std::vector<int> & gridSize)
 {
   return idx[0] * gridSize[1] * gridSize[2] + idx[1] * gridSize[2] + idx[2];
 }
+
+
+
+void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
+  const std::vector<Eigen::Vector3f> & X)
+{
+  int dim = 3;
+  x = Eigen::VectorXd(dim * vidx.size());
+  for (unsigned int ii = 0; ii < vidx.size(); ii++){
+    for (int jj = 0; jj < dim; jj++){
+      x[ii*dim + jj] = X[vidx[ii]][jj];
+    }
+  }
+}
+
+void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
+  const std::vector<double> & u)
+{
+  int dim = 3;
+  x = Eigen::VectorXd(dim * vidx.size());
+  for (unsigned int ii = 0; ii < vidx.size(); ii++){
+    for (int jj = 0; jj < dim; jj++){
+      x[ii*dim + jj] = u[dim*vidx[ii] + jj];
+    }
+  }
+}
+
+void addVector3d(std::vector<double> & a, const Eigen::Vector3d & f,
+  const std::vector<int> & idx)
+{
+  int dim = (int)f.size();
+  for (unsigned int ii = 0; ii < idx.size(); ii++){
+    for (int jj = 0; jj < dim; jj++){
+      a[dim * idx[ii] + jj] += f[jj];
+    }
+  }
+}
