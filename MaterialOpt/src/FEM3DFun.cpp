@@ -8,24 +8,26 @@
 #include "pardiso_sym.hpp"
 #include "Timer.hpp"
 
-//#include <amgcl/amgcl.hpp>
-//#include <amgcl/make_solver.hpp>
-//#include <amgcl/backend/builtin.hpp>
-//#include <amgcl/adapter/crs_builder.hpp>
-//#include <amgcl/adapter/crs_tuple.hpp>
-//#include <amgcl/coarsening/aggregation.hpp>
-//#include <amgcl/coarsening/plain_aggregates.hpp>
-//#include <amgcl/coarsening/smoothed_aggregation.hpp>
-//#include <amgcl/coarsening/pointwise_aggregates.hpp>
-//#include <amgcl/relaxation/multicolor_gauss_seidel.hpp>
-//#include <amgcl/solver/cg.hpp>
-//#include <amgcl/profiler.hpp>
-//namespace amgcl {
-//  profiler<> prof;
-//}
+#include <amgcl/amg.hpp>
+#include <amgcl/make_solver.hpp>
+#include <amgcl/backend/builtin.hpp>
+#include <amgcl/adapter/crs_builder.hpp>
+#include <amgcl/adapter/crs_tuple.hpp>
+#include <amgcl/coarsening/aggregation.hpp>
+#include <amgcl/coarsening/plain_aggregates.hpp>
+#include <amgcl/coarsening/smoothed_aggregation.hpp>
+#include <amgcl/coarsening/pointwise_aggregates.hpp>
+#include <amgcl/relaxation/multicolor_gauss_seidel.hpp>
+#include <amgcl/relaxation/gauss_seidel.hpp>
+#include <amgcl/solver/cg.hpp>
+#include <amgcl/profiler.hpp>
+namespace amgcl {
+  profiler<> prof;
+}
 
 typedef Eigen::Triplet<cfgScalar> TripletS;
-
+void amgLinSolve(std::vector<int> & I, std::vector<int> &J, std::vector<double> & val, std::vector<double> & b,
+  std::vector<double> & x);
 void FEM3DFun::initArrays()
 {
   int nForce = (int)externalForce.size();
@@ -41,8 +43,8 @@ void FEM3DFun::initArrays()
 
 void FEM3DFun::init(const Eigen::VectorXd & x0)
 {  
-  //triangular = false;
-  triangular = true;
+  triangular = false;
+  //triangular = true;
   //6 harmonic displacements.
   int nForce = 6;
   m_I.clear();
@@ -58,7 +60,7 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
 
   pardisoState = new PardisoState();
   pardisoInit(pardisoState);
-  pardisoSymbolicFactorize(m_I.data(), m_J.data(), (int)m_I.size()-1, pardisoState);
+  //pardisoSymbolicFactorize(m_I.data(), m_J.data(), (int)m_I.size()-1, pardisoState);
   param = x0;
   distribution = Eigen::VectorXd::Zero(em->e.size());
   int nrow = (int)m_I.size() - 1;
@@ -130,7 +132,7 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
   int nrows = (int)m_I.size() - 1;
 
   timer.startWall();
-  pardisoNumericalFactorize(m_I.data(), m_J.data(), m_val.data(), nrows, pardisoState);
+  //pardisoNumericalFactorize(m_I.data(), m_J.data(), m_val.data(), nrows, pardisoState);
   timer.endWall();
   std::cout << "num fact time " << timer.getSecondsWall() << "\n";
 
@@ -138,10 +140,8 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
     std::fill(u[ii].begin(), u[ii].end(), 0);
     timer.startWall();
     //checkSparseIndex(I, J);
-    pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data(), pardisoState);
-    //amgLinSolve(m_I, m_J, m_val, externalForce[ii], u[ii]);
-    //timer.endWall();
-    //std::cout<<"Lin subst time " << timer.getSecondsWall() << "\n";
+    //pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data(), pardisoState);
+    amgLinSolve(m_I, m_J, m_val, externalForce[ii], u[ii]);
     timer.endWall();
     std::cout<<"Lin subst time " << timer.getSecondsWall() << "\n";
   }
@@ -227,7 +227,7 @@ Eigen::VectorXd FEM3DFun::df()
     //lambda = K^{-1} dfdu.
     //dfdx = -lambda * dK/dparam * u.
     //checkSparseIndex(I, J);
-    //pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data(), pardisoState);
+    pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, lambda.data(), dfdu[ii].data(), pardisoState);
     for (unsigned int jj = 0; jj < em->e.size(); jj++){
       Element * ele = em->e[jj];
       int nV = ele->nV();
@@ -356,77 +356,80 @@ void FEM3DFun::getStiffnessSparse()
   }
 }
 
-//void amgLinSolve(std::vector<int> & I, std::vector<int> &J, std::vector<double> & val, std::vector<double> & b,
-//  std::vector<double> & x)
-//{
-//  using amgcl::prof;
-//  int n = I.size() - 1;
-//  prof.tic("build");
-//  typedef amgcl::make_solver<
-//    amgcl::amg<
-//    amgcl::backend::builtin<double>,
-//    amgcl::coarsening::smoothed_aggregation,
-//    amgcl::relaxation::multicolor_gauss_seidel
-//    >,
-//    amgcl::solver::cg<
-//    amgcl::backend::builtin<double>
-//    >
-//  > Solver;
-//  std::vector<int> ptr = I;
-//  std::vector<int> col = J;
-//  for (unsigned int ii = 0; ii < ptr.size(); ii++){
-//    ptr[ii] --;
-//  }
-//  for (unsigned int ii = 0; ii < col.size(); ii++){
-//    col[ii] --;
-//  }
-//
-//  Solver::params prm;
-//  prm.precond.npre = 1;
-//  prm.precond.npost = 1;
-//  prm.precond.ncycle = 1;
-//  prm.solver.maxiter = 1000;
-//  //prm.precond.coarsening.aggr.block_size= 3;	////for pointwise aggregation
-//  prm.solver.tol = 1;
-//
-//  Solver solve(boost::tie(n, ptr, col, val), prm);
-//  prof.toc("build");
-//
-//  std::cout << solve.precond() << std::endl;
-//
-//  prof.tic("solve");
-//  size_t iters;
-//  double resid;
-//  boost::fill(x, 0);
-//  boost::tie(iters, resid) = solve(b, x);
-//  prof.toc("solve");
-//
-//  std::cout << "Solver:" << std::endl
-//    << "  Iterations: " << iters << std::endl
-//    << "  Error:      " << resid << std::endl
-//    << std::endl;
-//
-//  // Use the constructed solver as a preconditioner for another iterative
-//  // solver.
-//  //
-//  // Iterative methods use estimated residual for exit condition. For some
-//  // problems the value of estimated residual can get too far from true
-//  // residual due to round-off errors.
-//  //
-//  // Nesting iterative solvers in this way allows to shave last bits off the
-//  // error.
-//  amgcl::solver::cg< amgcl::backend::builtin<double> > S(n);
-//  boost::fill(x, 0);
-//
-//  prof.tic("nested solver");
-//  boost::tie(iters, resid) = S(solve.system_matrix(), solve, b, x);
-//  prof.toc("nested solver");
-//
-//  std::cout << "Nested solver:" << std::endl
-//    << "  Iterations: " << iters << std::endl
-//    << "  Error:      " << resid << std::endl
-//    << std::endl;
-//
-//  std::cout << prof << std::endl;
-//
-//}
+void amgLinSolve(std::vector<int> & I, std::vector<int> &J, std::vector<double> & val, std::vector<double> & b,
+  std::vector<double> & x)
+{
+  using amgcl::prof;
+  int n = I.size() - 1;
+  
+  prof.tic("build");
+  typedef amgcl::make_solver<
+    amgcl::amg<
+    amgcl::backend::builtin<double>,
+    amgcl::coarsening::aggregation,
+    amgcl::relaxation::gauss_seidel
+    >,
+    amgcl::solver::cg<
+    amgcl::backend::builtin<double>
+    >
+  > Solver;
+
+  std::vector<int> ptr = I;
+  std::vector<int> col = J;
+  for (unsigned int ii = 0; ii < ptr.size(); ii++){
+    ptr[ii] --;
+  }
+  for (unsigned int ii = 0; ii < col.size(); ii++){
+    col[ii] --;
+  }
+
+  Solver::params prm;
+  prm.precond.npre = 1;
+  prm.precond.npost = 1;
+  prm.precond.ncycle = 1;
+  prm.solver.maxiter = 100;
+  prm.precond.coarsening.aggr.block_size= 3;	////for pointwise aggregation
+  prm.solver.tol = 1;
+  prm.precond.coarse_enough = 2500;
+  Solver solve(boost::tie(n, ptr, col, val), prm);
+  
+  prof.toc("build");
+
+  std::cout << solve.precond() << std::endl;
+
+  prof.tic("solve");
+  size_t iters;
+  double resid;
+  boost::fill(x, 0);
+  boost::tie(iters, resid) = solve(b, x);
+  prof.toc("solve");
+
+  std::cout << "Solver:" << std::endl
+    << "  Iterations: " << iters << std::endl
+    << "  Error:      " << resid << std::endl
+    << std::endl;
+
+  // Use the constructed solver as a preconditioner for another iterative
+  // solver.
+  //
+  // Iterative methods use estimated residual for exit condition. For some
+  // problems the value of estimated residual can get too far from true
+  // residual due to round-off errors.
+  //
+  // Nesting iterative solvers in this way allows to shave last bits off the
+  // error.
+  amgcl::solver::cg< amgcl::backend::builtin<double> > S(n);
+  boost::fill(x, 0);
+
+  prof.tic("nested solver");
+  boost::tie(iters, resid) = S(solve.system_matrix(), solve, b, x);
+  prof.toc("nested solver");
+
+  std::cout << "Nested solver:" << std::endl
+    << "  Iterations: " << iters << std::endl
+    << "  Error:      " << resid << std::endl
+    << std::endl;
+
+  std::cout << prof << std::endl;
+
+}
