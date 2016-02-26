@@ -115,8 +115,9 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
         distribution[eIdx] = field->f(coord);
         em->e[eIdx]->color = distribution[eIdx] * color0;
         if (jj == 0){
-          for (int ll = 0; ll < em->e[eIdx]->nV(); ll++){
-            em->fixed[em->e[eIdx]->at(ll)] = 1;
+          int b[4] = { 0, 1, 4, 5 };
+          for (int ll = 0; ll < 4; ll++){
+            em->fixed[em->e[eIdx]->at(b[ll])] = 1;
           }
         }
       }
@@ -392,7 +393,6 @@ void amgLinSolve(std::vector<int> & I, std::vector<int> &J, std::vector<double> 
   prm.solver.tol = 1;
   prm.precond.coarse_enough = 2500;
   Solver solve(boost::tie(n, ptr, col, val), prm);
-  
   prof.toc("build");
 
   std::cout << solve.precond() << std::endl;
@@ -418,17 +418,17 @@ void amgLinSolve(std::vector<int> & I, std::vector<int> &J, std::vector<double> 
   //
   // Nesting iterative solvers in this way allows to shave last bits off the
   // error.
-  amgcl::solver::cg< amgcl::backend::builtin<double> > S(n);
-  boost::fill(x, 0);
+  //amgcl::solver::cg< amgcl::backend::builtin<double> > S(n);
+  //boost::fill(x, 0);
 
-  prof.tic("nested solver");
-  boost::tie(iters, resid) = S(solve.system_matrix(), solve, b, x);
-  prof.toc("nested solver");
+  //prof.tic("nested solver");
+  //boost::tie(iters, resid) = S(solve.system_matrix(), solve, b, x);
+  //prof.toc("nested solver");
 
-  std::cout << "Nested solver:" << std::endl
-    << "  Iterations: " << iters << std::endl
-    << "  Error:      " << resid << std::endl
-    << std::endl;
+  //std::cout << "Nested solver:" << std::endl
+  //  << "  Iterations: " << iters << std::endl
+  //  << "  Error:      " << resid << std::endl
+  //  << std::endl;
 
   std::cout << prof << std::endl;
 

@@ -86,3 +86,69 @@ double sum(const Eigen::VectorXd & x)
   }
   return sum;
 }
+
+std::vector<int>
+expandIdx(const std::vector<int> & I,
+  int block_size)
+{
+  std::vector<int> J(I.size() * block_size);
+  for (size_t ii = 0; ii < I.size(); ii++){
+    for (int bb = 0; bb < block_size; bb++){
+      J[ii*block_size + bb] = I[ii] * block_size + bb;
+    }
+  }
+  return J;
+}
+
+///@param subrow subset of indices.
+///@brief assuming column major matrix. Which is default of Eigen.
+template <typename T>
+Eigen::SparseMatrix<T>submatrix(const Eigen::SparseMatrix<T> & K,
+  const std::vector<int> & _subrow,
+  const std::vector<int> & _subcol,
+  int block_size)
+{
+  std::vector<int> subrow = expandIdx(_subrow, block_size);
+  std::vector<int> subcol = expandIdx(_subcol, block_size);
+  int ncol = (int)subcol.size();
+  int nrow = (int)subrow.size();
+  Eigen::SparseMatrix<T> sub(nrow, ncol);
+  std::vector<int> rowmap(K.rows(), -1);
+
+  for (auto ii = 0; ii < subrow.size(); ii++){
+    rowmap[subrow[ii]] = ii;
+  }
+  int maxnnz = 0;
+  auto I = K.outerIndexPtr();
+  for (auto ii = 0; ii < subcol.size(); ii++){
+    int col = subcol[ii];
+    maxnnz = std::max(I[col + 1] - I[col], maxnnz);
+  }
+  maxnnz = std::min(maxnnz, nrow);
+  sub.reserve(Eigen::VectorXi::Constant(ncol, maxnnz));
+  for (int cc = 0; cc < (int)subcol.size(); cc++){
+    int col = subcol[cc];
+    for (Eigen::SparseMatrix<T>::InnerIterator it(K, col); it; ++it){
+      int row = it.row();
+      int rowInSubmatrix = rowmap[row];
+      if (rowInSubmatrix < 0){
+        continue;
+      }
+      T val = it.value();
+      sub.insert(rowInSubmatrix, cc) = val;
+    }
+  }
+  return sub;
+}
+
+template 
+Eigen::SparseMatrix<double>submatrix<double>(const Eigen::SparseMatrix<double> & K,
+  const std::vector<int> & subrow,
+  const std::vector<int> & subcol,
+  int block_size);
+
+template 
+Eigen::SparseMatrix<float>submatrix<float>(const Eigen::SparseMatrix<float> & K,
+  const std::vector<int> & subrow,
+  const std::vector<int> & subcol,
+  int block_size);
