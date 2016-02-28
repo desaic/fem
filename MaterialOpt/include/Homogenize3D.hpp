@@ -18,11 +18,20 @@ public:
   int dim;
   ElementMesh * em;
   std::vector<int> gridSize;
-  std::vector<int> d1, d2, d3, d4;
+  
+  std::vector<int> d1, d2;
+  ///@brief edge dof followed by face dof.
+  ///x y z axis then x y z faces.
+  std::vector<int> d3, d4;
   std::vector<int> m_I, m_J;
 
-  //@brief corner displacements
-  std::vector<Eigen::VectorXf> U1;
+  ///@brief corner displacements
+  Eigen::MatrixXf ufixed;
+  ///@brief edge displacements followed by face displacements
+  Eigen::MatrixXf wfixed;
+  ///@brief map from dof in d3 to d4
+  ///d4 = M43d3 + wfixed
+  Eigen::SparseMatrix<float> M43;
   ///@brief values in stiffness matrix.
   std::vector<double> m_val;
   Eigen::MatrixXd G;
