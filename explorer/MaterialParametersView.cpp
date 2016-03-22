@@ -210,55 +210,77 @@ void MaterialParametersView::updatePlots()
   std::vector<int> dimToRescale;
 
   int paramdim = 0;
-  bool cubic = false;
-  bool orthotropic = true;
 
+  std::vector<std::string> LabelStrings;
+  LabelStrings.push_back("Density");
+
+  std::vector<std::string> materialParameterStrings((int)exProject::UndefinedType);
+  materialParameterStrings[exProject::EXType] = "EX";
+  materialParameterStrings[exProject::EYType] = "EY";
+  materialParameterStrings[exProject::EZType] = "EZ";
+  materialParameterStrings[exProject::NuXYType] = "NuXY";
+  materialParameterStrings[exProject::NuXZType] = "NuXZ";
+  materialParameterStrings[exProject::NuYZType] = "NuYZ";
+  materialParameterStrings[exProject::MuXYType] = "MuXY";
+  materialParameterStrings[exProject::MuXZType] = "MuXZ";
+  materialParameterStrings[exProject::MuYZType] = "MuYZ";
+  materialParameterStrings[exProject::DensityType] = "Density";
+
+  exProject::MicrostructureType type = m_project->getType();
   std::vector<std::string> labels;
-  if (cubic)
+  std::vector<exProject::MaterialParameterType> validTypes;
+  if (type == exProject::CubicType)
   {
     paramdim = 4;
-    labels.push_back("Density");
-    labels.push_back("Y1");
-    labels.push_back("Nu1");
-    labels.push_back("Mu1");
-    labels.push_back("Level");
+    validTypes.push_back(exProject::DensityType);
+    validTypes.push_back(exProject::EXType);
+    validTypes.push_back(exProject::NuXYType);
+    validTypes.push_back(exProject::MuXYType);
+  
     dimToRescale.push_back(1);
   }
-  else if (orthotropic)
+  else if (type == exProject::OrthotropicType)
   {
     if (m_project->getDim()==2)
     {
       paramdim = 5;
-      labels.push_back("Density");
-      labels.push_back("Y1");
-      labels.push_back("Y2");
-      labels.push_back("Nu1");
-      labels.push_back("Mu1");
-      labels.push_back("Level");
+      validTypes.push_back(exProject::DensityType);
+      validTypes.push_back(exProject::EXType);
+      validTypes.push_back(exProject::EYType);
+      validTypes.push_back(exProject::NuXYType);
+      validTypes.push_back(exProject::MuXYType);
+ 
       dimToRescale.push_back(1);
       dimToRescale.push_back(2);
     }
     else
     {
       paramdim = 10;
-      labels.push_back("Density");
-      labels.push_back("Y1");
-      labels.push_back("Y2");
-      labels.push_back("Y3");
-      labels.push_back("Nu1"); //12
-      labels.push_back("Nu2"); //13
-      labels.push_back("Nu3"); //23
-      labels.push_back("Mu1");
-
-      labels.push_back("Mu2");
-      labels.push_back("Mu3");
-      labels.push_back("Level");
+      validTypes.push_back(exProject::DensityType);
+      validTypes.push_back(exProject::EXType);
+      validTypes.push_back(exProject::EYType);
+      validTypes.push_back(exProject::EZType);
+      validTypes.push_back(exProject::NuXYType);
+      validTypes.push_back(exProject::NuXZType);
+      validTypes.push_back(exProject::NuYZType);
+      validTypes.push_back(exProject::MuXYType);
+      validTypes.push_back(exProject::MuXZType);
+      validTypes.push_back(exProject::MuYZType);
 
       dimToRescale.push_back(1);
       dimToRescale.push_back(2);
       dimToRescale.push_back(3);
     }
   }
+
+  for (int itype=0; itype<(int)validTypes.size(); itype++)
+  {
+    labels.push_back(materialParameterStrings[validTypes[itype]]);
+  }
+  labels.push_back("Level");
+
+  std::set<exProject::MaterialParameterType> setValidTypes = toStdSet<exProject::MaterialParameterType>(validTypes);
+
   srand(0);
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
@@ -419,12 +441,13 @@ void MaterialParametersView::updatePlots()
     }
 
     std::vector<vtkVector3i> colors;
-    const std::vector<std::vector<cfgScalar> > & thermalExpansionCoeffs = m_project->getThermalExpansionCoeffs();
-    if (0)//thermalExpansionCoeffs[ilevel].size()>0)
+    //const std::vector<std::vector<cfgScalar> > & thermalExpansionCoeffs = m_project->getThermalExpansionCoeffs();
+    const std::vector<std::vector<cfgScalar> > & thermalExpansionCoeffs = m_project->getUltimateStrengths();
+    if (0) //thermalExpansionCoeffs[ilevel].size()>0)
     {
       cfgScalar coeffMin = *std::min_element(thermalExpansionCoeffs[ilevel].begin(), thermalExpansionCoeffs[ilevel].end());
       cfgScalar coeffMax = *std::max_element(thermalExpansionCoeffs[ilevel].begin(), thermalExpansionCoeffs[ilevel].end());
-      cfgScalar maxVal = 20; //50;
+      cfgScalar maxVal = 1; //20//50;
       cfgScalar minVal = 0;
       if (coeffMax>maxVal)
         coeffMax = maxVal;
@@ -432,19 +455,40 @@ void MaterialParametersView::updatePlots()
       {
         vtkVector3i matColor;
         cfgScalar val = thermalExpansionCoeffs[ilevel][ipoint];
-        if (val > coeffMax)
-          val = coeffMax;
-        //cfgScalar w = (val-coeffMin)/(coeffMax-coeffMin);
-        if (val < 0)
+
+        if (ipoint % 100==0)
+          std::cout << "ipoint " << ipoint << std::endl;
+        int n = m_project->getLevels()[ilevel];
+        std::vector<int> matAssignment = m_project->getMaterialAssignments()[ilevel][ipoint];
+        bool modified=false;
+        bool resOk = filterOutNonConnectedComponents(n, n, n, matAssignment, modified);
+        if (!resOk)
         {
-          cfgScalar w = log(-val+1)/log(-coeffMin+1);
-          matColor = vtkVector3i((1-w)*255, (1-w)*255, w*255 + (1-w)*255);
+          val = coeffMin;
+        }
+
+        if (val > 1.01)
+        {
+          matColor = vtkVector3i(0,0,255);
         }
         else
         {
-          //cfgScalar w = log(val+1)/log(coeffMax+1);
-          cfgScalar w = (val-minVal)/(coeffMax-minVal);
-          matColor = vtkVector3i(w*255 + (1-w)*255, (1-w)*255, (1-w)*255);
+          if (val > coeffMax)
+            val = coeffMax;
+          if (val <0)
+            val = 0;
+          //cfgScalar w = (val-coeffMin)/(coeffMax-coeffMin);
+          if (val < 0)
+          {
+            cfgScalar w = log(-val+1)/log(-coeffMin+1);
+            matColor = vtkVector3i((1-w)*255, (1-w)*255, w*255 + (1-w)*255);
+          }
+          else
+          {
+            cfgScalar w = log(val+1)/log(coeffMax+1);
+            //cfgScalar w = (val-minVal)/(coeffMax-minVal);
+            matColor = vtkVector3i(w*255 + (1-w)*255, (1-w)*255, (1-w)*255);
+          }
         }
         colors.push_back(matColor);
       }
@@ -461,8 +505,18 @@ void MaterialParametersView::updatePlots()
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Density", colors, 10);
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Y2", "Nu1", colors, 10);
     //vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Nu1", "Nu2", "Density", colors, 10);
-    vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, "Y1", "Nu1", "Density", colors, 10);
-    m_plotsPerLevel[ilevel].push_back(plot);
+    exProject::MaterialParameterType paramType1 = m_project->getParameterToVisualize(0);
+    exProject::MaterialParameterType paramType2 = m_project->getParameterToVisualize(1);
+    exProject::MaterialParameterType paramType3 = m_project->getParameterToVisualize(02);
+
+    std::string paramString1 = materialParameterStrings[(int)paramType1];
+    std::string paramString2 = materialParameterStrings[(int)paramType2];
+    std::string paramString3 = materialParameterStrings[(int)paramType3];
+    if (setValidTypes.count(paramType1)>0 && setValidTypes.count(paramType2)>0 && setValidTypes.count(paramType3)>0)
+    {
+      vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, paramString1, paramString2, paramString3, colors, 10);
+      m_plotsPerLevel[ilevel].push_back(plot);
+    }
   }
   updateChart();
 }
@@ -474,6 +528,7 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
 
   connect(m_project, SIGNAL(levelVisibilityModified()), this, SLOT(onLevelVisibilityModified()));
   connect(m_project, SIGNAL(levelsModified()), this, SLOT(onLevelsModified()));
+  connect(m_project, SIGNAL(paramsToVisualizeModified()), this, SLOT(onParamsToVisualizeModified()));
 
 #if 0
   // read data
@@ -898,6 +953,11 @@ void MaterialParametersView::onLevelVisibilityModified()
 }
 
 void MaterialParametersView::onLevelsModified()
+{
+  updatePlots();
+}
+
+void MaterialParametersView::onParamsToVisualizeModified()
 {
   updatePlots();
 }

@@ -15,8 +15,35 @@ class exProject: public QObject
   Q_OBJECT
 
 public:
-  exProject(int iDim);
+  enum MicrostructureType
+  {
+    CubicType=0,
+    OrthotropicType
+  };
+
+  enum MaterialParameterType
+  {
+    EXType=0,
+    EYType,
+    EZType,
+    NuXYType,
+    NuXZType,
+    NuYZType,
+    MuXYType,
+    MuXZType,
+    MuYZType,
+    DensityType,
+    UndefinedType,
+  };
+
+public:
+  exProject();
   virtual ~exProject();
+
+  void setDimension(int iDim);
+  void setType(MicrostructureType iType) {m_type = iType;}
+  void setParameterToVisualize(int indParam, MaterialParameterType iType);
+  void updateParameterToVisualize(int indParam, MaterialParameterType iType);
 
   bool loadFile(const QString &iFileName, int &oLevel, QString &oLabel);
 
@@ -40,25 +67,31 @@ public:
   const std::vector<std::vector<cfgScalar> > & getPhysicalParameters() {return m_physicalParametersPerLevel;}
   const std::vector<std::vector<cfgScalar> > & getElasticityTensors() {return m_elasticityTensors;}
   const std::vector<std::vector<cfgScalar> > & getThermalExpansionCoeffs() {return m_thermalExpansionCoeffs;}
+  const std::vector<std::vector<cfgScalar> > & getUltimateStrengths() {return m_ultimateStrengths;}
   const std::vector<std::vector<std::vector<int> > > & getMaterialAssignments() {return m_materialAssignments;}
   const std::vector<int>  & getLevels() {return m_levels;}
 
   int getDim() {return m_dim;}
+  MicrostructureType getType() {return m_type;}
+  MaterialParameterType getParameterToVisualize(int indParam);
 
 signals:
   void pickedStructureModified();
   void levelVisibilityModified();
   void levelsModified();
+  void paramsToVisualizeModified();
 
 private:
   bool readBaseMaterialStructures(int iLevel, std::vector<std::vector<int> > &oBaseMaterialStructures);
 
   void addLevelData(int ilevel, const std::vector<std::vector<int> > &iBaseMaterials, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<cfgScalar> > &iMaterialDistributions, 
-                    std::vector<cfgScalar> &iPhysicalParameters, std::vector<cfgScalar> &elasticityTensors, std::vector<cfgScalar> &thermalExpansionCoeffs);
+                    const std::vector<cfgScalar> &iPhysicalParameters, const std::vector<cfgScalar> &iElasticityTensors, const std::vector<cfgScalar> &iThermalExpansionCoeffs, const std::vector<cfgScalar> &iUltimateStrengths);
 
 private:
   int m_blockSize;
   int m_dim;
+  MicrostructureType m_type;
+  std::vector<MaterialParameterType> m_paramsToVisualize;
 
   int m_pickedStructureIndex;
   int m_pickedStructureLevel;
@@ -77,6 +110,7 @@ private:
   std::vector<std::vector<cfgScalar> > m_physicalParametersPerLevel;
   std::vector<std::vector<cfgScalar> > m_elasticityTensors;
   std::vector<std::vector<cfgScalar> > m_thermalExpansionCoeffs;
+  std::vector<std::vector<cfgScalar> > m_ultimateStrengths;
 
   std::vector<int> m_levels;
 };

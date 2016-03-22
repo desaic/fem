@@ -25,9 +25,21 @@ protected:
 
 private:
   void addLevelCheckBox(QWidget * iParent, int iLevel, QString iLabel="");
+  void addMaterialParameterOptions(QComboBox &iBox, const std::vector<QString> &iStrings);
+
+  void setType();
+  void setDim();
+  void setParamToVisualize(int indParam, int ParamType);
+  void updateParamToVisualize(int indParam, int ParamType);
 
 private slots:
   void levelCheckBoxModified();
+  void on_m_action2D_triggered();
+  void on_m_type_comboBox_currentIndexChanged();
+  void on_m_x_comboBox_currentIndexChanged();
+  void on_m_y_comboBox_currentIndexChanged();
+  void on_m_z_comboBox_currentIndexChanged();
+  void on_m_col_comboBox_currentIndexChanged();
 
 private:
   MaterialParametersView * m_matParametersView;

@@ -100,7 +100,56 @@ std::vector<cfgScalar> DensityEstimator::computeDensities()
   int ipoint=0, npoint=(int)m_x.size()/m_dim;
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
+    if (ipoint % 1000 == 0)
+      std::cout << ipoint << "/" << npoint << std::endl;
     cfgScalar * P = &m_x[m_dim*ipoint];
+    cfgScalar density = computeDensity(P);
+    densities.push_back(density);
+  }
+  return densities;
+}
+
+std::vector<cfgScalar> DensityEstimator::computeDensities(int iIndexStart, int iIndexEnd, std::vector<cfgScalar> &ioPreviousDensities)
+{
+  std::set<int> touchedPoints;
+  std::vector<cfgScalar> densities;
+  for (int ipoint=iIndexStart; ipoint<iIndexEnd; ipoint++)
+  {
+    if (ipoint % 1000 == 0)
+      std::cout << ipoint << "/" << iIndexEnd-iIndexStart << std::endl;
+
+    cfgScalar * P = &m_x[m_dim*ipoint];
+    cfgScalar density = computeDensity(P);
+    densities.push_back(density);
+
+    std::vector<int> neighbours;
+    getNeighbours(P, neighbours);
+    int nneighbour = (int)neighbours.size();
+    for (int ineighbour=0; ineighbour<nneighbour; ineighbour++)
+    {
+      int indPoint = neighbours[ineighbour];
+      if (indPoint<iIndexStart)
+      {
+        cfgScalar * Q = &m_x[m_dim*indPoint];
+        double phi = evalKernel(Q, P);
+        ioPreviousDensities[indPoint] += phi;
+      }
+    }
+  }
+  return densities;
+}
+
+std::vector<cfgScalar> DensityEstimator::computeDensities(const std::vector<int> &iPointIndices)
+{
+  std::vector<cfgScalar> densities;
+  int npoint=(int)iPointIndices.size();
+  for (int ipoint=0; ipoint<npoint; ipoint++)
+  {
+    if (ipoint % 1000 == 0)
+      std::cout << ipoint << "/" << npoint << std::endl;
+
+    int indPoint = iPointIndices[ipoint];
+    cfgScalar * P = &m_x[m_dim*indPoint];
     cfgScalar density = computeDensity(P);
     densities.push_back(density);
   }

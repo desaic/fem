@@ -39,12 +39,24 @@ using namespace cfgMaterialUtilities;
 #include "DistanceField.h"
 
 #include "ThermalAnalysis.h"
+#include "StrengthAnalysis.h"
+
+#include "ConfigFile.hpp"
 
 enum Type
 {
   Cubic2D,
   Orthotropic2D,
   Cubic3D
+};
+
+enum Stage
+{
+  ExhaustiveGamutComputationStage,
+  DiscreteAndContinuousOptimizationStage,
+  DiscreteOptimizationStage,
+  ContinuousOptimizationStage,
+  StrengthAnalysisStage,
 };
 
 SamplesGeneratorImpl::SamplesGeneratorImpl()
@@ -59,8 +71,8 @@ SamplesGeneratorImpl::SamplesGeneratorImpl()
   m_cubicOnly = false;
   m_filterOutDisconnetedStructures = true;
 
-  //Type type = Cubic2D;
-  Type type = Cubic3D;
+ /* Type type = Cubic2D;
+  //Type type = Cubic3D;
   //Type type = Orthotropic2D;
   if (type == Cubic2D)
   {
@@ -84,7 +96,7 @@ SamplesGeneratorImpl::SamplesGeneratorImpl()
   else
   {
     assert(0);
-  }
+  }*/ 
 }
 
 SamplesGeneratorImpl::~SamplesGeneratorImpl()
@@ -2772,9 +2784,11 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
   std::vector<int> particules;
   std::vector<cfgScalar> scores;
 
-  ScoringFunction scoringFunction(dimparam);
   bool useDistanceField = true;
+  bool cacheDensities = false;
+  ScoringFunction scoringFunction(dimparam);
   scoringFunction.setUseDistanceField(useDistanceField);
+  scoringFunction.setCacheDensities(cacheDensities);
 
   float minRadius = 0.;
   //float minRadius = 0.05;
@@ -2791,6 +2805,7 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
   std::vector<cfgScalar> initParams;
   if (growStructure)
   {
+    std::cout << "growing structures..." << std::endl;
     /*if (useBaseCells)
     {
       scores = scoringFunction.computeScores(physicalParameters);
@@ -2822,7 +2837,9 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
           }
         }
       }
+      std::cout << "resampling particules..." << std::endl;
       physicalParameters = initParams;
+      scoringFunction.setNewPointIndexStart(0);
       scores = scoringFunction.computeScores(physicalParameters);
       resampler.resample(minRadius, dimparam, physicalParameters, scores, nTargetParticules, particules);
     }
@@ -2833,6 +2850,7 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
     materialSet = toStdSet(iMaterialAssignments);
     allMaterialAssignments = iMaterialAssignments;
 
+    scoringFunction.setNewPointIndexStart(0);
     scores = scoringFunction.computeScores(physicalParameters);
     resampler.resample(minRadius, dimparam, physicalParameters, scores, nTargetParticules, particules);
   }
@@ -2872,10 +2890,12 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
 
   bool mirroredStructure = m_orthotropicOnly||m_cubicOnly;
 
+  std::cout << "processing particules..." << std::endl;
   std::set<int> particulesToProcess = toStdSet(genIncrementalSequence(0, nparticule-1));
   int icycle=0;
   while (particulesToProcess.size())
   {
+    std::cout << "nb particules to process = " << particulesToProcess.size() << std::endl;
     std::vector<std::vector<int> > newVoxelsToProcess;
     std::vector<std::vector<int> > newMaterialAssignments;
     std::set<int>::iterator it, it_end=particulesToProcess.end();
@@ -2991,6 +3011,7 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
       break;
     }
 
+    scoringFunction.setNewPointIndexStart(nbPrevStructures);
     std::vector<cfgScalar> scores = scoringFunction.computeScores(allPhysicalParameters);
     scores = getSubVector(scores, genIncrementalSequence(nbPrevStructures, (int)scores.size()-1));
 
@@ -4034,8 +4055,163 @@ bool SamplesGeneratorImpl::readDisneyFiles(const std::string &iFileName, int iDi
   return true;
 }
 
+int SamplesGeneratorImpl::runExhaustiveGamutComputation(int iLevel)
+{
+  assert(iLevel <=2 || ( iLevel<=8 && (m_cubicOnly || m_orthotropicOnly) ) );
+
+  std::vector<std::vector<int> > baseMaterialStructures(2);
+  baseMaterialStructures[0].push_back(0);
+  baseMaterialStructures[1].push_back(1);
+  int N[3] = {1,1,1};
+
+  int level = iLevel;
+  int n[3] = {level, level, level};
+
+  std::string stepperType = "newton";
+  std::vector<std::vector<int> > newMaterialAssignment;
+  computeMaterialParametersIncremental(stepperType, level, newMaterialAssignment);
+
+  std::vector<float> tensors;
+  std::vector<float> physicalParameters;
+  computeParametersAndTensorValues(n, newMaterialAssignment, physicalParameters, tensors);
+  writeFiles(level, newMaterialAssignment, baseMaterialStructures, physicalParameters, tensors);
+
+  return 0;
+}
+
+int SamplesGeneratorImpl::runDiscreteOptimization(int iLevel, int iNbCycles)
+{
+  int level = iLevel;
+  int prevLevel = level/2;
+  bool growStructure = true;
+  std::string stepperType = "newton";
+
+  int icycle=0, ncycle=iNbCycles;
+  for (icycle=0; icycle<ncycle; icycle++)
+  {
+    std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
+    std::vector<float> physicalParameters, tensors;
+    std::string fileName =  (growStructure? "": "SMC_" +std::to_string(icycle-1));
+    //std::string fileName = "";
+    bool ResOk = readFiles((growStructure? prevLevel: level), materialAssignments, baseMaterialStructures, physicalParameters, tensors, fileName);
+    if (ResOk)
+    {
+      std::vector<std::vector<int> > allNewMaterialAssignments;
+      std::vector<cfgScalar> allParameters, allTensors;
+      std::vector<std::vector<std::vector<float> > > x[2];
+
+      computeVariationsSMC(level, stepperType, materialAssignments, baseMaterialStructures, physicalParameters, tensors, growStructure, allNewMaterialAssignments, allParameters, allTensors); 
+      writeFiles(level, allNewMaterialAssignments, baseMaterialStructures, allParameters, allTensors, "SMC_" +std::to_string(icycle));
+
+      writeFiles(level, allNewMaterialAssignments, baseMaterialStructures, allParameters, allTensors);
+    }
+    growStructure = false;
+  }
+  return 0;
+}
+
+int SamplesGeneratorImpl::runStrengthAnalysis(int iLevel)
+{
+  int level = iLevel;
+  std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
+  std::vector<float> physicalParameters, tensors;
+  bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors);
+  if (ResOk)
+  {
+    int n[3] = {level, level, m_dim==2?1: level};
+    StrengthAnalysis::StructureType type = (m_cubicOnly? StrengthAnalysis::Cubic: (m_orthotropicOnly? StrengthAnalysis::Orthotropic:  StrengthAnalysis::General));
+
+    StrengthAnalysis strengthAnalysis;
+    std::vector<float> strengths;
+    if (m_dim==2)
+    {
+      strengthAnalysis.run2D(n, type, m_mat2D, materialAssignments, physicalParameters, tensors, m_blockRep, m_nbSubdivisions, strengths);
+    }
+    else
+    {
+      strengthAnalysis.run3D(n, type, m_mat, materialAssignments, physicalParameters, tensors, m_blockRep, m_nbSubdivisions, strengths);
+    }
+    if (strengths.size()>0)
+    {
+    std::string fileRootName = m_OutputDirectory + "level" + std::to_string(level) + "_";
+    std::string fileExtension = ".bin";
+    cfgUtil::writeBinary<float>(fileRootName + "ultimateStrengths" + fileExtension, strengths);
+    }
+  }
+  return 0;
+}
+
 int SamplesGeneratorImpl::run()
 {
+  // Init parameters
+  Stage stage = DiscreteAndContinuousOptimizationStage;
+  int level = 16;
+  int ncycle = 1;
+
+  const char * filename = "config.txt";
+  ConfigFile conf;
+  conf.load(filename);
+
+  if (conf.hasOpt("type"))
+  {
+    std::string str = conf.getString("type");
+    if (str == "Cubic2D")
+    {
+      m_dim = 2;
+      m_cubicOnly = true;
+      setOutputDirectory("..//..//Output_2D_cubic//");
+    }
+    else if (str == "Orthotropic2D")
+    {
+      m_dim = 2;
+      m_orthotropicOnly = true;
+      setOutputDirectory("..//..//Output_2D_ortho//");
+    }
+    else if (str == "Cubic3D")
+    {
+      m_dim = 3;
+      m_cubicOnly = true;
+      setOutputDirectory("..//..//Output_3D_cubic//");
+      //setOutputDirectory("..//..//Output_Disney//");
+    }
+    else
+    {
+      assert(0);
+    }
+  }
+  if (conf.hasOpt("stage"))
+  {
+    std::string str = conf.getString("stage");
+    if (str == "ExhaustiveGamutComputation")
+    {
+      stage = ExhaustiveGamutComputationStage;
+    }
+    else if (str == "DiscreteAndContinuousOptimization")
+    {
+      stage = DiscreteAndContinuousOptimizationStage;
+    }
+    else if (str == "DiscreteOptimization")
+    {
+      stage = DiscreteOptimizationStage;
+    }
+    else if (str == "ContinuousOptimization")
+    {
+      stage = ContinuousOptimizationStage;
+    }
+    else if (str == "StrengthAnalysis")
+    {
+      stage = StrengthAnalysisStage;
+    }
+  }
+  if (conf.hasOpt("level"))
+  {
+    level = conf.getInt("level");
+  }
+  if (conf.hasOpt("nbCycles"))
+  {
+    ncycle = conf.getInt("nbCycles");
+  }
+
   // Concatenate files
   if (0)
   {
@@ -4324,7 +4500,7 @@ int SamplesGeneratorImpl::run()
   }
 
   // Fix disconnected microstructures
-  if (1)
+  if (0)
   {
     int level = 16;
     int n[3] = {level, level, level};
@@ -4464,60 +4640,20 @@ int SamplesGeneratorImpl::run()
   baseMaterialStructures[1].push_back(1);
   int N[3] = {1,1,1};
 
-  if (0)
+  if (stage == ExhaustiveGamutComputationStage)
   {
-    int maxlevel = 2;
-    if (m_orthotropicOnly)
-      maxlevel = 8;
-    if (m_cubicOnly)
-      maxlevel = 8; //maxlevel = (m_dim==2? 8: 4);
-
-    for (int ilevel=1; ilevel<=maxlevel; ilevel*=2)
-    {
-      int n[3] = {ilevel, ilevel, ilevel};
-      std::vector<std::vector<int> > newMaterialAssignment;
-      computeMaterialParametersIncremental(stepperType, ilevel, newMaterialAssignment);
-      //computeMaterialParameters(stepperType, newMaterialAssignment, n, baseMaterialStructures, N, ilevel, m_blockRep, true, true);
-
-      std::vector<float> tensors;
-      std::vector<float> physicalParameters;
-      //std::vector<std::vector<std::vector<float> > > x[3];
-      //computeParameters(stepperType, newMaterialAssignment, n, baseMaterialStructures, N, physicalParameters, x); 
-      computeParametersAndTensorValues(n, newMaterialAssignment, physicalParameters, tensors);
-      writeFiles(ilevel, newMaterialAssignment, baseMaterialStructures, physicalParameters, tensors);
-    }
-    return 0;
+    int status = runExhaustiveGamutComputation(level);
+    return status;
   }
-
-  // SMC
-  if (0)
+  else if (stage == DiscreteOptimizationStage) // SMC
   {
-    int level = 16;
-    int prevLevel = level/2;
-    bool growStructure = true;
-
-    int icycle=0, ncycle=100;
-    for (icycle=0; icycle<ncycle; icycle++)
-    {
-      std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
-      std::vector<float> physicalParameters, tensors;
-      std::string fileName =  (growStructure? "": "SMC_" +std::to_string(icycle-1));
-      //std::string fileName = "";
-      bool ResOk = readFiles((growStructure? prevLevel: level), materialAssignments, baseMaterialStructures, physicalParameters, tensors, fileName);
-      if (ResOk)
-      {
-        std::vector<std::vector<int> > allNewMaterialAssignments;
-        std::vector<cfgScalar> allParameters, allTensors;
-        std::vector<std::vector<std::vector<float> > > x[2];
-
-        computeVariationsSMC(level, stepperType, materialAssignments, baseMaterialStructures, physicalParameters, tensors, growStructure, allNewMaterialAssignments, allParameters, allTensors); 
-        writeFiles(level, allNewMaterialAssignments, baseMaterialStructures, allParameters, allTensors, "SMC_" +std::to_string(icycle));
-
-        writeFiles(level, allNewMaterialAssignments, baseMaterialStructures, allParameters, allTensors);
-      }
-      growStructure = false;
-    }
-    return 0;
+    int status = runDiscreteOptimization(level, ncycle);
+    return status;
+  }
+  else if (stage == StrengthAnalysisStage)
+  {
+    int status = runStrengthAnalysis(level);
+    return status;
   }
 
   // thermal properties

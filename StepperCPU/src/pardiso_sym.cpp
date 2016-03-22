@@ -183,6 +183,17 @@ sparseSolve(int * ia, int * ja, double * a, int n, double* x, double * b)
         printf("\nERROR during solution: %d", error);
     }
 
+    /*double  norm_b = 0.0;
+    for (int i = 0; i < n; ++i)
+      norm_b  += b[i] * b[i];
+    norm_b = sqrt(norm_b );
+    printf("norm(b) = %f \n", norm_b );
+    double  norm_x = 0.0;
+    for (i = 0; i < n; ++i)
+      norm_x  += x[i] * x[i];
+    norm_x = sqrt(norm_x );
+    printf("norm(x) = %f \n", norm_x );*/ 
+
 //    printf("\nSolve completed ... ");
 //    printf("\nThe solution of the system is: ");
 //    for (i = 0; i < n; i++) {

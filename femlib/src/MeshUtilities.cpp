@@ -845,7 +845,7 @@ void meshUtil::computeStrains(ElementRegGrid &iElementGrid, const std::vector<st
   assert(ndisp==6);
   for (idisp=0; idisp<ndisp; idisp++)
   {
-    std::vector<Eigen::Vector3f> h = cfgMaterialUtilities::toVector3f(iHarmonicDisplacements[idisp]);
+    std::vector<Eigen::Vector3f> h = cfgMaterialUtilities::toVector3f(cfgUtil::convertVec<cfgScalar,float>(iHarmonicDisplacements[idisp]));
     std::vector<Eigen::Vector3f> x = cfgUtil::add(iElementGrid.X, h);
     Eigen::Matrix3f coarseF = coarseElem.defGrad(Eigen::Vector3f::Zero(), iElementGrid.X, x);
     Eigen::Matrix3f currentStrainTensor = strainLin.getStrainTensor(coarseF);
@@ -980,7 +980,7 @@ void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid &iElementGrid, co
   assert(ndisp==6);
   for (idisp=0; idisp<ndisp; idisp++)
   {
-    std::vector<Eigen::Vector3f> h = cfgMaterialUtilities::toVector3f(iHarmonicDisplacements[idisp]);
+    std::vector<Eigen::Vector3f> h = cfgMaterialUtilities::toVector3f(cfgUtil::convertVec<cfgScalar, float>(iHarmonicDisplacements[idisp]));
     std::vector<Eigen::Vector3f> x = cfgUtil::add(iElementGrid.X, h);
     Eigen::Matrix3f coarseF = coarseElem.defGrad(Eigen::Vector3f::Zero(), iElementGrid.X, x);
     Eigen::Matrix3f currentStrainTensor = strainLin.getStrainTensor(coarseF);
@@ -1014,7 +1014,12 @@ void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid &iElementGrid, co
     Element* element = iElementGrid.e[ielem];
     assert(element);
 
-    std::vector<MatrixXS> C = mat->getElasticityTensors();
+    std::vector<Eigen::MatrixXf> Ctmp = mat->getElasticityTensors();
+    std::vector<MatrixXS> C;
+    for (int imat=0; imat<Ctmp.size(); imat++)
+    {
+      C.push_back(cfgMaterialUtilities::toMatrixScalar(Ctmp[imat]));
+    }
     if (0)
     {
       std::cout << "C = " <<  C[0] << std::endl;
@@ -1025,7 +1030,7 @@ void meshUtil::computeCoarsenedElasticityTensor(ElementRegGrid &iElementGrid, co
     assert(ndisp==6);
     for (idisp=0; idisp<ndisp; idisp++)
     {
-      std::vector<Eigen::Vector3f> h = cfgMaterialUtilities::toVector3f(iHarmonicDisplacements[idisp]);
+      std::vector<Eigen::Vector3f> h = cfgMaterialUtilities::toVector3f(cfgUtil::convertVec<cfgScalar, float>(iHarmonicDisplacements[idisp]));
       std::vector<Eigen::Vector3f> x = cfgUtil::add(iElementGrid.X, h);
       std::vector<Eigen::Matrix3f> currentStrainTensors = mat->getStrainTensors(element, &iElementGrid, x);
       strainTensors.push_back(currentStrainTensors);

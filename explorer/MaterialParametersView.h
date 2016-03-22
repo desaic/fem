@@ -52,6 +52,7 @@ private:
   private slots:
     void onLevelVisibilityModified();
     void onLevelsModified();
+    void onParamsToVisualizeModified();
 
 private:
   vtkContextView * m_vtkView;

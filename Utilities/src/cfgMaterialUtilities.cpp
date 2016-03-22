@@ -2590,14 +2590,14 @@ void cfgMaterialUtilities::getFurthestPointsGreedy(int iOutputNbPoints, const st
     for (it=points.begin(); it!=it_end; it++)
     {
       int indVertex = *it;
-      Eigen::Vector3f p = getVector3f(indVertex, iPoints);
+      Vector3S p = getVector3S(indVertex, iPoints);
 
       cfgScalar currentMinDist = FLT_MAX;
       int jpoint, njpoint=(int)oPointIndices.size();
       for (jpoint=0; jpoint<njpoint; jpoint++)
       {
         int indPoint2 = oPointIndices[jpoint];
-        Eigen::Vector3f q = getVector3f(indPoint2, iPoints);
+        Vector3S q = getVector3S(indPoint2, iPoints);
         cfgScalar dist = (p-q).squaredNorm();
         if (dist < currentMinDist)
         {
@@ -3257,7 +3257,7 @@ std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Eigen::
    return vec;
  }
 
- MatrixXS cfgMaterialUtilities::toMatrixScalar(const MatrixEXd &iMatrix)
+ MatrixXS cfgMaterialUtilities::toMatrixScalar(const Eigen::MatrixXd &iMatrix)
  {
    int nrow = iMatrix.rows();
    int ncol = iMatrix.cols();
@@ -3273,12 +3273,28 @@ std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Eigen::
    return mat;
  }
 
- MatrixEXd cfgMaterialUtilities::toMatrixDouble(const MatrixXS &iMatrix)
+ MatrixXS cfgMaterialUtilities::toMatrixScalar(const Eigen::MatrixXf &iMatrix)
  {
    int nrow = iMatrix.rows();
    int ncol = iMatrix.cols();
 
-   MatrixEXd mat(nrow, ncol);
+   MatrixXS mat(nrow, ncol);
+   for (int irow=0; irow<nrow; irow++)
+   {
+     for (int icol=0; icol<ncol; icol++)
+     {
+       mat(irow, icol) = (cfgScalar)iMatrix(irow, icol);
+     }
+   }
+   return mat;
+ }
+
+ Eigen::MatrixXd cfgMaterialUtilities::toMatrixDouble(const MatrixXS &iMatrix)
+ {
+   int nrow = iMatrix.rows();
+   int ncol = iMatrix.cols();
+
+   Eigen::MatrixXd mat(nrow, ncol);
    for (int irow=0; irow<nrow; irow++)
    {
      for (int icol=0; icol<ncol; icol++)
@@ -3324,6 +3340,26 @@ void cfgMaterialUtilities::sampleMesh(const std::vector<float> &iPoints, const s
         oPoints.push_back(newPoint[icoord]);
       }
     }
+  }
+}
+
+// Pardiso: row major, Eigen (default): col major
+void cfgMaterialUtilities::toPardisoMatrix(Eigen::SparseMatrix<cfgScalar> &iMatrix, bool iTriangular, std::vector<int> &oRowIndicesRowMajor, std::vector<int> &oColIndicesRowMajor, std::vector<double> &oValues)
+{
+  assert(iTriangular == true);
+
+  const cfgScalar * values = iMatrix.valuePtr();
+  int nvalues = iMatrix.nonZeros();
+  const int * innerIndexPtr = iMatrix.innerIndexPtr();
+  const int * outerIndexPtr = iMatrix.outerIndexPtr();
+  int outerSize  = iMatrix.outerSize();
+
+  oValues.clear();
+  oRowIndicesRowMajor.assign(innerIndexPtr, innerIndexPtr+nvalues);
+  oColIndicesRowMajor.assign(outerIndexPtr, outerIndexPtr+outerSize+1);
+  for (int ival=0; ival<nvalues; ival++)
+  {
+    oValues.push_back(values[ival]);
   }
 }
 
@@ -3444,6 +3480,101 @@ void cfgMaterialUtilities::sortValues(const std::vector<cfgScalar> &iValues, std
     oOrderedIndices.push_back(it->second);
   }
 }
+
+//iMat entries should be in this order: xx, yy, xy
+void cfgMaterialUtilities::getEigenValues2x2SymmetricMatrix(const cfgScalar *iMatValues, cfgScalar oEigenValues[2])
+{
+  // iMat = [a b; b c];
+  const cfgScalar & a = iMatValues[0];
+  const cfgScalar & b = iMatValues[2];
+  const cfgScalar & c = iMatValues[1];
+  
+  cfgScalar t = a+c;
+  cfgScalar det = a*c -b*b;
+  
+  cfgScalar delta = t*t-4*det;
+  if (delta>0)
+  {
+    cfgScalar sqrtDelta = sqrt(delta);
+    oEigenValues[0] = 0.5*(t + sqrtDelta);
+    oEigenValues[1] = 0.5+(t - sqrtDelta);
+  }
+  else
+  {
+    oEigenValues[0] = 0;
+    oEigenValues[1] = 0;
+  }
+}
+
+//iMat entries should be in this order: xx, yy, zz, yz, xz, xy
+void cfgMaterialUtilities::getEigenValues3x3SymmetricMatrix(const cfgScalar *iMatValues, cfgScalar oEigenValues[3]) 
+{
+  // iMat = [a d e; d b f; e f c];
+  cfgScalar a = iMatValues[0];
+  cfgScalar b = iMatValues[1];
+  cfgScalar c = iMatValues[2];
+  cfgScalar d = iMatValues[5];
+  cfgScalar e = iMatValues[4];
+  cfgScalar f = iMatValues[3];
+
+  cfgScalar eps = 1.e-6;
+  cfgScalar p1 = d*d + e*e + f*f;
+  if (fabs(p1)<eps) 
+  {
+    // diagonal matrix
+    if (c > b)
+    {
+        std::swap(c, b);
+    }
+    if (b > a)
+    {
+        std::swap(b, a);
+    }
+    if (c > b)
+    {
+        std::swap(c, b);
+    }
+    oEigenValues[0] = a;
+    oEigenValues[1] = b;
+    oEigenValues[2] = c; 
+  }
+  else
+  {
+    cfgScalar t = a+b+c;
+    cfgScalar q = t/3;
+    cfgScalar p2 = (a-q)*(a-q) + (b-q)*(b-q) + (c-q)*(c-q) + 2*p1;
+    cfgScalar p = sqrt(p2/6);
+
+    cfgScalar B[6];
+    memcpy(B, iMatValues, 6*sizeof(cfgScalar));
+    for (int i=0; i<3; i++)
+    {
+      B[i] = (1 / p) * (iMatValues[i] - q); 
+    }
+    cfgScalar detB = a*b*c + 2*d*e*f -e*e*b - d*d*c - f*f*a;
+    cfgScalar r = detB / 2;
+
+    // In exact arithmetic for a symmetric matrix  -1 <= r <= 1 but computation error can leave it slightly outside this range.
+    cfgScalar phi;
+    if (r <= -1) 
+    {
+      phi = M_PI/3;
+    }
+    else if (r >= 1)
+    {
+      phi = 0;
+    }
+    else
+    {
+      phi = acos(r)/3;
+    }
+    // the eigenvalues satisfy eig3 <= eig2 <= eig1
+    oEigenValues[0] = q + 2 * p * cos(phi);
+    oEigenValues[2] = q + 2 * p * cos(phi + (2*M_PI/3));
+    oEigenValues[1] = 3 * q -  oEigenValues[0] - oEigenValues[2]; // since trace(A) = eig1 + eig2 + eig3
+  }
+}
+
 
 
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>1055</width>
+    <height>857</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1055</width>
      <height>26</height>
     </rect>
    </property>
@@ -37,6 +37,104 @@
    </attribute>
    <widget class="QWidget" name="layersWidgetContents"/>
   </widget>
+  <widget class="QDockWidget" name="parametersWidget">
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QWidget" name="m_parametersWidget">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="2">
+      <widget class="QLabel" name="m_x_label">
+       <property name="text">
+        <string>   X</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4">
+      <widget class="QLabel" name="m_y_label">
+       <property name="text">
+        <string>   Y</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="9">
+      <widget class="QComboBox" name="m_col_comboBox"/>
+     </item>
+     <item row="0" column="7">
+      <widget class="QComboBox" name="m_z_comboBox"/>
+     </item>
+     <item row="0" column="3">
+      <widget class="QComboBox" name="m_x_comboBox"/>
+     </item>
+     <item row="0" column="5">
+      <widget class="QComboBox" name="m_y_comboBox"/>
+     </item>
+     <item row="0" column="10" rowspan="2">
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="0" column="8">
+      <widget class="QLabel" name="m_col_label">
+       <property name="text">
+        <string>   Color</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="6">
+      <widget class="QLabel" name="m_z_label">
+       <property name="text">
+        <string>   Z</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="m_type_label">
+       <property name="text">
+        <string>Type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="m_type_comboBox"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="m_action2D"/>
+  </widget>
+  <action name="m_action2D">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>2D</string>
+   </property>
+   <property name="toolTip">
+    <string>2D</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>

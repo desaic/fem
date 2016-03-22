@@ -11,6 +11,9 @@
 #include <assert.h>
 #include <iostream>
 
+#include "cfgUtilities.h"
+#include "cfgMaterialUtilities.h"
+
 StepperNewton2D::StepperNewton2D():dense(true),dx_tol(1e-5f),h(1.0f)
 {
   m_Init = false;
@@ -83,12 +86,12 @@ int StepperNewton2D::oneStep()
   double totalMag = 0;
   for(int ii = 0;ii<ndof;ii++){
     totalMag += std::abs(bb[ii]);
-    /*if (abs(bb[ii])>maxVal)
+    if (abs(bb[ii])>maxVal)
     {
       maxVal = abs(bb[ii]);
-    }*/ 
+    } 
   }
-  //std::cout << "norm forces = " << totalMag << ", max val = " << maxVal << std::endl;
+  std::cout << "norm forces = " << totalMag << ", max val = " << maxVal << " E = " << E << std::endl;
 
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
     for(int jj = 0;jj<2;jj++){
@@ -112,16 +115,17 @@ int StepperNewton2D::oneStep()
       if(h<1e-12){
         break;
       }
-    }else{
+    }
+    else
+    {
      // h=1.1f*h;
       break;
     }
   }
-  //std::cout << "h = " << h << std::endl;
+  std::cout << "h = " << h << std::endl;
   if (std::abs(E - E1) < 1e-3f){
     return -1;
   }
-  //std::cout << E << "\n";
   return 0;
 }
 
@@ -213,8 +217,9 @@ int StepperNewton2D::compute_dx_sparse(ElementMesh2D * iMesh, const std::vector<
   assert(iMesh);
   int ndof = (int)(2*iMesh->x.size());
  
+  Eigen::SparseMatrix<cfgScalar> Ksparse;
   std::vector<cfgScalar> Kvalues;
-  iMesh->getStiffnessSparse(Kvalues, triangular, true, iRemoveTranslation, iRemoveRotation, iPeriodic);
+  iMesh->getStiffnessSparse(Kvalues, triangular, true, iRemoveTranslation, iRemoveRotation, iPeriodic, &Ksparse);
    
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
     for(int jj = 0;jj<2;jj++){
@@ -260,13 +265,57 @@ int StepperNewton2D::compute_dx_sparse(ElementMesh2D * iMesh, const std::vector<
   }
   ia[nrow] = indVal;
 
+  std::vector<int> colIndicesRowMajor;
+  std::vector<int> rowIndicesRowMajor;
+  std::vector<double> values2;
+  cfgMaterialUtilities::toPardisoMatrix(Ksparse, true, rowIndicesRowMajor, colIndicesRowMajor, values2);
+  std::vector<int> ia2 = colIndicesRowMajor;
+  std::vector<int> ja2 = rowIndicesRowMajor;
+
+  MatrixXS vecx(nrow, 1);
   int status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
    //   std::cout<< "sparse solve " << status << "\n";
+
+  bool regularize = true;
+  if (regularize)
+  {
+    Eigen::SparseMatrix<cfgScalar> I(nrow, nrow);
+    I.setIdentity();
+
+    double dotProd = cfgUtil::innerProd<double>(x,rhs);
+
+    bool regularized = false;
+    double maxLambda = 1.e+20;
+    double lambda = 1.e-3;
+    while ((status<0 || dotProd<0) && lambda<maxLambda)
+    {
+      Ksparse += lambda*I;
+      cfgMaterialUtilities::toPardisoMatrix(Ksparse, true, ja, ia, val);
+      x.clear();
+      x.resize(nrow);
+
+      status = sparseSolve( &(ia[0]), &(ja[0]), &(val[0]), nrow, &(x[0]), &(rhs[0]));
+      dotProd = cfgUtil::innerProd<double>(x,rhs);
+      if (status<0 || dotProd<0)
+      {
+        lambda = 2*lambda;
+      }
+      regularized = true;
+    }
+    if (regularized)
+    {
+      std::cout<< "lambda " << lambda << "\n";
+    }
+  }
   for(int ii = 0;ii<x.size();ii++){
     bb[ii] = x[ii];
   }
+
   if (status<0)
     return 1;
 
   return 0;
 }
+
+
+

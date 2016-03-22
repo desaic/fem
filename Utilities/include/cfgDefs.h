@@ -11,7 +11,6 @@ typedef Eigen::Matrix<cfgScalar, 3, 3> Matrix3S;
 typedef Eigen::Matrix<double, 3, 1> Vector3d;
 typedef Eigen::Matrix<double, 2, 1> Vector2d;
 typedef Eigen::Matrix<cfgScalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXS;
-typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> MatrixEXd;
 
 #define Vec(d) Eigen::Matrix<cfgScalar, d, 1>
 

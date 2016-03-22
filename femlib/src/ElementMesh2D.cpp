@@ -336,7 +336,7 @@ void ElementMesh2D::enforcePeriodicity(Eigen::SparseMatrix<cfgScalar> & K, bool 
   K += KConstraint;
 }
 
-void ElementMesh2D::getStiffnessSparse(std::vector<cfgScalar> &val, bool trig, bool constrained, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic)
+void ElementMesh2D::getStiffnessSparse(std::vector<cfgScalar> &val, bool trig, bool constrained, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic, Eigen::SparseMatrix<cfgScalar> *oMatrix)
 {
   int N = 2* (int)x.size();
   std::vector<TripletS> coef;
@@ -392,6 +392,10 @@ void ElementMesh2D::getStiffnessSparse(std::vector<cfgScalar> &val, bool trig, b
   if (iPeriodic)
   {
     enforcePeriodicity(Ksparse, trig, this);
+  }
+  if (oMatrix)
+  {
+    *oMatrix = Ksparse;
   }
 
   for(int ii = 0; ii<Ksparse.rows(); ii++){

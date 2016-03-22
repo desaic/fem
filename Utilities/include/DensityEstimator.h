@@ -17,6 +17,8 @@ public:
 
   cfgScalar computeDensity(const cfgScalar *iP);
   std::vector<cfgScalar> computeDensities();
+  std::vector<cfgScalar> computeDensities(int iIndexStart, int iIndexEnd, std::vector<cfgScalar> &ioPreviousDensities);
+  std::vector<cfgScalar> computeDensities(const std::vector<int> &iPointIndices);
 
   cfgScalar estimateRadius();
 

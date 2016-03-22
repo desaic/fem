@@ -16,6 +16,8 @@ public:
   ScoringFunction(int idim);
   virtual ~ScoringFunction();
 
+  void setCacheDensities(bool iCache);
+  void setNewPointIndexStart(int iNewPointsIndex);
   std::vector<cfgScalar> computeScores(const std::vector<cfgScalar> &iPoints);
 
   void setUseDistanceField(bool iUseField);
@@ -30,6 +32,9 @@ protected:
   int m_dim;
   cfgScalar m_densityRadius;
   bool m_useDistanceField;
+  bool m_cacheDensities;
+  std::vector<cfgScalar> m_cachedUnscaledDensities;
+  int m_newPointIndexStart;
 };
 
 #endif

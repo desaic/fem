@@ -210,7 +210,7 @@ bool MaterialOptimizer::run2D(int N[2], const std::vector<MaterialQuad2D> &iBase
   }
 
   fem->m0 = density; //0.5 * sum(fem->distribution) / fem->distribution.size();
-  fem->mw = 0.01 * fem->G(0, 0) / fem->density;
+  fem->mw = 0; //0.01 * fem->G(0, 0) / fem->density;
   double weightMu = 0.;
   fem->G0 = target_G;
   fem->wG(0) = 1;

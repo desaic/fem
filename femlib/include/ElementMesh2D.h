@@ -49,7 +49,7 @@ public:
   MatrixXS getStiffness(int eIdx);
 
   ///@param trig if true, return only the upper triangle of the symmetric matrix.
-  void getStiffnessSparse(std::vector<cfgScalar> &val, bool trig = false, bool constrained=false, bool iFixedTranslation=false, bool iFixedRotation=false, bool iPeriodic=false);
+  void getStiffnessSparse(std::vector<cfgScalar> &val, bool trig = false, bool constrained=false, bool iFixedTranslation=false, bool iFixedRotation=false, bool iPeriodic=false, Eigen::SparseMatrix<cfgScalar> *oMatrix=NULL);
 
   ///@param I row offsets. I.size() = matrix size + 1. I[size()-1]=number of non-zeros.
   ///@param J column indices.

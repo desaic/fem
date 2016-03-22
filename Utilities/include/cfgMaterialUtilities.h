@@ -175,13 +175,18 @@ namespace cfgMaterialUtilities
   std::vector<Eigen::Vector3f> toVector3f(const std::vector<float> &iPoints);
    std::vector<Vector3S> toVector3S(const std::vector<cfgScalar> &iPoints);
 
-  MatrixXS toMatrixScalar(const MatrixEXd &iMatrix);
-  MatrixEXd toMatrixDouble(const MatrixXS &iMatrix);
+  MatrixXS toMatrixScalar(const Eigen::MatrixXf &iMatrix);
+  MatrixXS toMatrixScalar(const Eigen::MatrixXd &iMatrix);
+  Eigen::MatrixXd toMatrixDouble(const MatrixXS &iMatrix);
+
+  void toPardisoMatrix(Eigen::SparseMatrix<cfgScalar> &iMatrix, bool iTriangular, std::vector<int> &oRowIndicesRowMajor, std::vector<int> &oColIndicesRowMajor, std::vector<double> &oValues);
 
   // Misc
   // ----
   std::vector<int> genIncrementalSequence(int iMin, int iMax, int iStep=1);
   void sortValues(const std::vector<cfgScalar> &iValues, std::vector<int> &oOrderedIndices);
+  void getEigenValues2x2SymmetricMatrix(const cfgScalar *iMatValues, cfgScalar oEigenValues[2]); //iMat entries should be in this order: xx, yy, xy
+  void getEigenValues3x3SymmetricMatrix(const cfgScalar *iMatValues, cfgScalar oEigenValues[3]); //iMat entries should be in this order: xx, yy, zz, yz, xz, xy
 };
 
 #endif 

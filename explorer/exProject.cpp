@@ -11,17 +11,45 @@ using namespace cfgUtil;
 
 #include <QStringList>
 
-exProject::exProject(int idim)
+exProject::exProject()
 {
   m_blockSize = 1;
-  Q_ASSERT(idim==2 || idim==3);
-  m_dim = idim;
+  m_dim = 3;
   m_readSingleFile = true;
   m_readFullDeformation = true;
+
+  m_paramsToVisualize.push_back(EXType);
+  m_paramsToVisualize.push_back(NuXYType);
+  m_paramsToVisualize.push_back(DensityType);
+  m_paramsToVisualize.push_back(MuXYType);
 }
 
 exProject::~exProject()
 {
+}
+
+void exProject::setDimension(int iDim)
+{
+  Q_ASSERT(iDim==2 || iDim==3);
+  m_dim = iDim;
+}
+
+void exProject::setParameterToVisualize(int indParam, MaterialParameterType iType)
+{
+  assert(indParam>=0 && indParam < 4);
+  m_paramsToVisualize[indParam] = iType;
+}
+
+void exProject::updateParameterToVisualize(int indParam, MaterialParameterType iType)
+{
+  setParameterToVisualize(indParam, iType);
+  emit paramsToVisualizeModified();
+}
+
+exProject::MaterialParameterType exProject::getParameterToVisualize(int indParam)
+{
+  assert(indParam>=0 && indParam < 4);
+  return m_paramsToVisualize[indParam];
 }
 
 void exProject::setPickedStructure(int iStructureIndex, int iStructureLevel) 
@@ -61,7 +89,7 @@ bool exProject::loadFile(const QString &iFileName, int &oLevel, QString &oLabel)
     std::string fileRootName = stringRoot.toStdString();
     std::string fileExtension = ".bin";
 
-    std::vector<cfgScalar> physicalParameters, elasticityTensors, thermalExpansionCoeffs;
+    std::vector<cfgScalar> physicalParameters, elasticityTensors, thermalExpansionCoeffs, ultimateStrengths;
     std::vector<std::vector<int> > baseMaterials, materialAssignments;
     std::vector<std::vector<cfgScalar> > materialDistributions;
     resOk = cfgUtil::readBinary<float>(fileRootName + "params" + fileExtension, physicalParameters);
@@ -73,6 +101,7 @@ bool exProject::loadFile(const QString &iFileName, int &oLevel, QString &oLabel)
       cfgUtil::readBinary<cfgScalar>(fileRootName + "matDistributions" + fileExtension, materialDistributions);
       cfgUtil::readBinary<cfgScalar>(fileRootName + "elasticityTensors" + fileExtension, elasticityTensors);
       cfgUtil::readBinary<cfgScalar>(fileRootName + "thermalExpansionCoefficients" + fileExtension, thermalExpansionCoeffs);
+      cfgUtil::readBinary<cfgScalar>(fileRootName + "ultimateStrengths" + fileExtension, ultimateStrengths);
     }
 
     if (resOk)
@@ -84,22 +113,24 @@ bool exProject::loadFile(const QString &iFileName, int &oLevel, QString &oLabel)
       oLabel.chop(1);
       oLabel.remove(str);
 
-      addLevelData(level, baseMaterials, materialAssignments, materialDistributions, physicalParameters, elasticityTensors, thermalExpansionCoeffs);
+      addLevelData(level, baseMaterials, materialAssignments, materialDistributions, physicalParameters, elasticityTensors, thermalExpansionCoeffs, ultimateStrengths);
     }
   }
+  std::cout << (resOk? "ok": "ko") << std::endl;
   return resOk;
 }
 
 void exProject::addLevelData(int ilevel, const std::vector<std::vector<int> > &iBaseMaterials, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<std::vector<cfgScalar> > &iMaterialDistributions, 
-                             std::vector<cfgScalar> &iPhysicalParameters, std::vector<cfgScalar> &elasticityTensors, std::vector<cfgScalar> &thermalExpansionCoeffs)
+                             const std::vector<cfgScalar> &iPhysicalParameters, const std::vector<cfgScalar> &iElasticityTensors, const std::vector<cfgScalar> &iThermalExpansionCoeffs, const std::vector<cfgScalar> &iUltimateStrengths)
 {
   m_levels.push_back(ilevel);
   m_baseMaterials.push_back(iBaseMaterials);
   m_materialAssignments.push_back(iMaterialAssignments);
   m_materialDistributions.push_back(iMaterialDistributions);
   m_physicalParametersPerLevel.push_back(iPhysicalParameters);
-  m_elasticityTensors.push_back(elasticityTensors);
-  m_thermalExpansionCoeffs.push_back(thermalExpansionCoeffs);
+  m_elasticityTensors.push_back(iElasticityTensors);
+  m_thermalExpansionCoeffs.push_back(iThermalExpansionCoeffs);
+  m_ultimateStrengths.push_back(iUltimateStrengths);
 
   int defaultVisibility = 1;
   m_levelVisibility.push_back(defaultVisibility);

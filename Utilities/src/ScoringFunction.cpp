@@ -20,10 +20,22 @@ ScoringFunction::ScoringFunction(int iDim)
   m_dim = iDim;
   m_densityRadius = 0;
   m_useDistanceField = 0;
+  m_cacheDensities = false;
+  m_newPointIndexStart = 0;
 }
 
 ScoringFunction::~ScoringFunction()
 {
+}
+
+void ScoringFunction::setCacheDensities(bool iCache)
+{
+  m_cacheDensities = iCache;
+}
+ 
+void ScoringFunction::setNewPointIndexStart(int iNewPointIndex)
+{
+  m_newPointIndexStart = iNewPointIndex;
 }
 
 void ScoringFunction::setUseDistanceField(bool iUseField)
@@ -50,12 +62,25 @@ std::vector<cfgScalar> ScoringFunction::computeDensities(const std::vector<cfgSc
   densityEstimator.setPoints(iPoints);
   densityEstimator.setKernelRadius(m_densityRadius);
   densityEstimator.init();
-  std::vector<cfgScalar> densities = densityEstimator.computeDensities();
-
+  std::vector<cfgScalar> densities;
+  if (m_cacheDensities)
+  {
+    densities = m_cachedUnscaledDensities;
+    std::vector<cfgScalar> newDensities = densityEstimator.computeDensities(m_newPointIndexStart, (int)iPoints.size()/m_dim, densities);
+    densities.insert(densities.end(), newDensities.begin(), newDensities.end());
+  }
+  else
+  {
+    densities = densityEstimator.computeDensities();
+  }
+  if (m_cacheDensities)
+  {
+    m_cachedUnscaledDensities = densities;
+  }
   cfgScalar densityMax = *std::max_element(densities.begin(), densities.end());
   cfgScalar densityMin = *std::min_element(densities.begin(), densities.end());
   densities = mult(densities, 1/densityMax);
-
+  
   return densities;
 }
 
@@ -93,9 +118,11 @@ std::vector<cfgScalar> ScoringFunction::computeScores(const std::vector<cfgScala
       m_densityRadius = estimateDensityRadius(points);
     }
     
+    std::cout << "computing distances..." << std::endl;
     DistanceField distanceField(m_dim);
     scores = distanceField.computeDistances(iPoints);
 
+    std::cout << "computing densities..." << std::endl;
     std::vector<cfgScalar> densities = computeDensities(points);
     cfgScalar scoreMax = *std::max_element(scores.begin(), scores.end());
     cfgScalar scoreMin = *std::min_element(scores.begin(), scores.end());

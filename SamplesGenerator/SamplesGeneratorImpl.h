@@ -126,6 +126,10 @@ private:
   bool readDisneyFiles(const std::string &iFileName, int iDim, bool iCubic, bool iOrthotropic, std::vector<cfgScalar> &ioPhysicalParameters);
   bool readDisneyFiles(int iDim, bool iCubic, bool iOrthotropic, std::vector<cfgScalar> &oPhysicalParameters);
 
+  int runExhaustiveGamutComputation(int iLevel);
+  int runDiscreteOptimization(int iLevel, int iNbCycles);
+  int runStrengthAnalysis(int iLevel);
+
 private:
   std::string m_OutputDirectory;
   bool m_UseLinearMaterial;
