@@ -31,10 +31,10 @@ using namespace cfgMaterialUtilities;
 #include <cfgUtilities.h>
 using namespace cfgUtil;
 
-#include "ScoringFunction.h"
-#include "Resampler.h"
+//#include "ScoringFunction.h"
+//#include "Resampler.h"
 
-#include "DistanceField.h"
+//#include "DistanceField.h"
 
 MaterialParametersView::MaterialParametersView()
   :QVTKWidget()
@@ -302,7 +302,7 @@ void MaterialParametersView::updatePlots()
     std::vector<int> levels(npoints, ilevel);
     vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels);
 
-    if (0)
+    /*if (0)
     {
       DistanceField distanceField(paramdim);
       std::vector<cfgScalar> derivatives;
@@ -356,10 +356,10 @@ void MaterialParametersView::updatePlots()
       Resampler resampler;
       resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, newparticules3);
       
-      /*std::vector<int> newparticules3tmp = newparticules3;
-      newparticules3.clear();
-      int ind = 0;
-      newparticules3.push_back(newparticules3tmp[ind]);*/ 
+      //std::vector<int> newparticules3tmp = newparticules3;
+      //newparticules3.clear();
+      //int ind = 0;
+      //newparticules3.push_back(newparticules3tmp[ind]);
 
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
@@ -438,7 +438,7 @@ void MaterialParametersView::updatePlots()
       vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &indices);
       vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Nu1", "Density", green, 15);
       m_plotsPerLevel[ilevel].push_back(plot2);
-    }
+    }*/ 
 
     std::vector<vtkVector3i> colors;
     //const std::vector<std::vector<cfgScalar> > & thermalExpansionCoeffs = m_project->getThermalExpansionCoeffs();

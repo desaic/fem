@@ -27,7 +27,7 @@ QT4_WRAP_UI(QtUIs ${ui_sources})
 # utilities
 include_directories(${PROJECT_SOURCE_DIR}/../Utilities/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/Utilities)
-link_directories($ENV{QHULL_BUILD_PATH})
+#link_directories($ENV{QHULL_BUILD_PATH})
 
 # math
 #include_directories(${PROJECT_SOURCE_DIR}/../vecmath/include)
