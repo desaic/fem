@@ -85,7 +85,7 @@ void FEM2DFun::init(const Eigen::VectorXd & x0)
 void FEM2DFun::setParam(const Eigen::VectorXd & x0)
 {
   bool triangle = true;
-  Vector3S color0(0.6, 0.6, 1.0);
+  Vector3S color0(1, 1, 1);
   param = x0;
 
   //read material distribution from field
@@ -139,8 +139,8 @@ void FEM2DFun::setParam(const Eigen::VectorXd & x0)
     G.col(ii) = strain;
   }
   std::cout << G(0, 0) << " " << G(1, 0) << " " << G(2, 0) << "\n";
-  //std::cout << G(0, 1) << " " << G(1, 1) << " " << G(2, 1) << "\n";
-  //std::cout << G(0, 2) << " " << G(1, 2) << " " << G(2, 2) << "\n";
+  std::cout << G(0, 1) << " " << G(1, 1) << " " << G(2, 1) << "\n";
+  std::cout << G(0, 2) << " " << G(1, 2) << " " << G(2, 2) << "\n";
 }
 
 void copyVert2(Eigen::VectorXd & x, const std::vector<int> & vidx,
@@ -269,7 +269,7 @@ Eigen::VectorXd FEM2DFun::df()
 
 void FEM2DFun::log(std::ostream & out)
 {
-  out << G << "\n";
+  out << G(0, 0) << " " << G(1, 0) << "\n";
 }
 
 FEM2DFun::FEM2DFun() :em(0), dim(2),
@@ -277,7 +277,7 @@ m_Init(false),
 m_periodic(true),
 m_fixRigid(true),
 constrained(false),
-forceMagnitude(100),
+forceMagnitude(1),
 gridSize(2,0),
 field(0)
 {
@@ -287,7 +287,8 @@ FEM2DFun::~FEM2DFun(){}
 
 MatrixXS FEM2DFun::getKe(int ei)
 {
-  return (cfgScalar)(distribution[ei] / (3 - 2 * distribution[ei])) * K0;
+  return (cfgScalar)(distribution[ei]) * K0;
+  //(cfgScalar)(distribution[ei] / (3 - 2 * distribution[ei])) * K0;
 }
 
 void FEM2DFun::getStiffnessSparse()

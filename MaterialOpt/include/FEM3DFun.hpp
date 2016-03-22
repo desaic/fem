@@ -32,6 +32,7 @@ public:
   bool m_periodic;
   bool m_fixRigid;
   bool constrained;
+  bool triangular;
   ///@brief 6x6 matrix of coarse strain tensor
   ///produced by harmonic displacements.
   ///Each column is a strain.
@@ -117,14 +118,8 @@ public:
   virtual Eigen::VectorXd df();
 
   void log(std::ostream & out);
+
 };
 
-///@brief make stretching force in x direction
-void stretchX(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
-void stretchY(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
-void stretchZ(ElementMesh * em, const Eigen::Vector3d & ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
-void shearXY(ElementMesh * em, double ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
-void shearYZ(ElementMesh * em, double ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
-void shearXZ(ElementMesh * em, double ff, const std::vector<int>& gridSize, std::vector<double> & externalForce);
 
 #endif

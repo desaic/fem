@@ -18,8 +18,8 @@
 #include <thread>
 
 //maximum movement in any parameter.
-double maxStep = 0.2;
-int logInterval = 10;
+double maxStep = 0.5;
+int logInterval = 1;
 std::ofstream logfile;
 std::ofstream materialOut;
 int nChunk = 6;
@@ -37,14 +37,15 @@ void run2D(const ConfigFile & conf)
 
   if (conf.hasOpt("structurebin")){
     loadIntBinary(conf, continuousMaterials);
-    saveText(continuousMaterials, "micro2d.txt");
+    //saveText(continuousMaterials, "micro2d.txt");
+    //return;
   }
   if (conf.hasOpt("structurelist")){
     loadText(conf, continuousMaterials);
   }
 
-  int nx = 16;
-  int ny = 16;
+  int nx = 32;
+  int ny = 32;
 
   if (continuousMaterials.size() > 0){
     nx = (int)(std::sqrt(continuousMaterials[0].size())+0.4);
@@ -54,8 +55,8 @@ void run2D(const ConfigFile & conf)
   x0 = 0.5 * Eigen::VectorXd::Ones(nx * ny);
   ElementRegGrid2D * em = new ElementRegGrid2D(nx, ny);
   std::vector<StrainLin2D> ene(1);
-  ene[0].param[0] = 3448.275862;
-  ene[0].param[1] = 31034.48276;
+  ene[0].param[0] = 0.344828;//100;
+  ene[0].param[1] = 3.10345;// 2400;
 
   std::vector<MaterialQuad2D * > material(ene.size());
   for (unsigned int ii = 0; ii < material.size(); ii++){
@@ -69,8 +70,8 @@ void run2D(const ConfigFile & conf)
   em->check();
 
   FEM2DFun * fem = new FEM2DFun();
-  //PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
-  PiecewiseConstantCubic2D * field = new PiecewiseConstantCubic2D();
+  PiecewiseConstantSym2D * field = new PiecewiseConstantSym2D();
+  //PiecewiseConstantCubic2D * field = new PiecewiseConstantCubic2D();
   field->allocate(nx / 2, ny / 2);
   //for example, the parameterization can have lower resolution. Effectively refining each cell to 2x2 block.
   //PiecewiseConstant2D * field = new PiecewiseConstant2D();
@@ -247,27 +248,29 @@ void optMat2D(FEM2DFun * fem, int nSteps)
   std::string materialOutName = sequenceFilename("materialStructure", chunkIdx, ".txt");
   materialOut.open(materialOutName);
   double shrink_ratio = 0.3;
-  
-  std::vector<int> idx;
-  std::ifstream idxin("../data/idx.txt");
-  int ii = 0;
-  while (1){
-    idxin >> ii;
-    if (idxin.eof()){
-      break;
-    }
-    idx.push_back(ii);
-  }
-  idxin.close();
+  std::vector<float> param;
+  //std::vector<int> idx;
+  //std::ifstream idxin("../data/idx.txt");
+  //int ii = 0;
+  //while (1){
+  //  idxin >> ii;
+  //  if (idxin.eof()){
+  //    break;
+  //  }
+  //  idx.push_back(ii);
+  //}
+  //idxin.close();
   
   //for test only look at the first displacement.
   for (int jj = 1; jj < fem->wG.size(); jj++){
     fem->wG(jj) = 0;
     //  fem->wG(ii) = 1 + (rand() / (float)RAND_MAX - 0.5)*0.3 ;
   }
-
+  //materialOut << continuousMaterials.size() << " 256\n";
+  //ii = 12146
   for (unsigned int ii = 0; ii < continuousMaterials.size(); ii++){
     int mi = ii;// idx[ii];
+    std::cout << ii << "\n";
     Eigen::VectorXd x0(continuousMaterials[mi].size());
     for (unsigned int jj = 0; jj < continuousMaterials[ii].size(); jj++){
       continuousMaterials[mi][jj] = std::max(1e-3, continuousMaterials[mi][jj]);
@@ -275,35 +278,73 @@ void optMat2D(FEM2DFun * fem, int nSteps)
     shrinkVector(x0, continuousMaterials[mi], 1);
     x1 = firstQuadrant(x0, fem->gridSize[0], fem->gridSize[1]);
     fem->setParam(x1);
-    if (fem->G(0,0) * 0.2 > fem->G(1,0)){
-      continue;
-    }
+
+    std::string filename;
+    filename = sequenceFilename("log", ii, ".txt");
+    logfile.open(filename);
+    fem->log(logfile);
+
+    //param.push_back(fem->density);
+    //param.push_back(1.0 / fem->G(0, 0));
+    //param.push_back(1.0 / fem->G(1, 1));
+    //param.push_back(-fem->G(1, 0)/fem->G(0,0));
+    //param.push_back(1.0 / fem->G(2, 2));
+    
+    //if (fem->G(0,0) * 0.2 > fem->G(1,0)){
+    //  continue;
+    //}
+    printStructure(fem, materialOut);
+    materialOut.close();
     std::cout << mi << "\n";
     int input;
     std::cin >> input;
     
-    fem->m0 = 0.5 * sum(fem->distribution) / fem->distribution.size();
-    //scale mass term to roughly displacement term.
+    fem->m0 = sum(fem->distribution) / fem->distribution.size();
+    ////scale mass term to roughly displacement term.
     fem->mw = 0.1 * (fem->G(0,0) / fem->m0);
     fem->G0 = fem->G;
     //-0.45 poisson's ratio objective
-    fem->G0(1, 0) = 0.45 * fem->G0(0, 0);
+    fem->G0(1, 0) = 0.5 * fem->G0(0, 0);
 
     shrinkVector(x0, continuousMaterials[ii], shrink_ratio);
     x1 = firstQuadrant(x0, fem->gridSize[0], fem->gridSize[1]);
     fem->setParam(x1);
-
-    std::string filename;
-    //filename = sequenceFilename("log", ii, ".txt");
-    //logfile.open(filename);
-    //gradientDescent(fem, x1, nSteps);
-    for (unsigned int jj = 0; jj < fem->distribution.size(); jj++){
-      materialOut << fem->distribution[jj] << " ";
+    for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
+      logfile << fem->distribution[ii] << " ";
     }
-    materialOut << "\n";
-    //logfile.close();
+    logfile << "\n";
+    fem->log(logfile);
+
+    
+    gradientDescent(fem, x1, nSteps);
+    for (unsigned int jj = 0; jj < fem->distribution.size(); jj++){
+      //materialOut << fem->distribution[jj] << " ";
+      //materialOut << continuousMaterials[mi][jj] << " ";
+    }
+    for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
+      logfile << fem->distribution[ii] << " ";
+    }
+    logfile << "\n";
+    for (unsigned int ii = 0; ii < field->param.size(); ii++){
+      if (field->param[ii] >= 0.45){
+        field->param[ii] = 1;
+      }
+      if (field->param[ii] < 0.45){
+        field->param[ii] = 0.001;
+      }
+    }
+    fem->setParam(field->param);
+    std::cin >> input;
+
+    //materialOut << "\n";
+    for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
+      logfile << fem->distribution[ii] << " ";
+    }
+    logfile << "\n";
+    logfile.close();
   }
-  materialOut.close();
+  //materialOut.close();
+  //cfgUtil::writeBinary<float>("param2d.bin", param);
 }
 
 double infNorm(const Eigen::VectorXd & a)

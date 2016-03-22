@@ -1,10 +1,22 @@
 #include "runtime.hpp"
 #include "cfgUtilities.h"
+#include "Homogenize3D.hpp"
+#include "ElementRegGrid.hpp"
 
 ///@brief convert binary to text for plotting in matlabs
 void binaryParamToText(const ConfigFile & conf);
 
 void loadMicrostructuresBin(const ConfigFile & conf, std::vector<std::vector<int> > & st);
+
+void run3Dh(ConfigFile & conf)
+{
+  Homogenize3D h;
+  int N = 4;
+  ElementRegGrid * em = new ElementRegGrid(N,N,N);
+  h.em = em;
+  h.init();
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -16,17 +28,13 @@ int main(int argc, char* argv[])
     binaryParamToText(conf);
   }
 
-  std::vector<std::vector<int> > st;
-  if (conf.hasOpt("structurebin")){
-    loadMicrostructuresBin(conf, st);
-  }
-
   int dim = conf.getInt("dim");
   if (dim == 2){
     run2D(conf);
   }
   else if (dim == 3){
-    run3D(conf);
+    //run3D(conf);
+    run3Dh(conf);
   }
   return 0;
 }
@@ -35,6 +43,7 @@ void binaryParamToText(const ConfigFile & conf)
 {
   std::string filename = conf.dir + "/" + conf.getString("paramfile");
   bool success;
+  std::vector<float> paramOut;
   std::vector<float> params;
   success = cfgUtil::readBinary<float>(filename, params);
   if (!success){
@@ -47,9 +56,25 @@ void binaryParamToText(const ConfigFile & conf)
   }
   std::ofstream out(outname);
   out << params.size() << "\n";
+  //float m = 0;
+  //int mi=0;
   for (unsigned int ii = 0; ii < params.size(); ii++){
+    //if (ii % 5 == 0){
+    //  paramOut.push_back(params[ii]);
+    //  paramOut.push_back(params[ii + 1]);
+    //  paramOut.push_back(params[ii + 3]);
+    //  paramOut.push_back(params[ii + 4]);
+    //}
+    //if (ii % 4 == 0){
+    //  if (params[ii] > m){
+    //    m = params[ii];
+    //    mi = ii;
+    //  }
+    //}
     out << params[ii] << "\n";
   }
+  //std::cout << m << " " << mi << "\n";
+  //cfgUtil::writeBinary<float>("cubic-2d.bin", paramOut);
 }
 
 void loadMicrostructuresBin(const ConfigFile & conf, std::vector<std::vector<int> > & st)
