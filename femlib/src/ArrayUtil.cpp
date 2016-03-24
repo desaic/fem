@@ -21,12 +21,20 @@ int checkSparseIndex(const std::vector<int > & I, const std::vector<int> & J)
 {
   int nrow = (int)I.size() - 1;
   int maxIdx = 0;
+  std::cout << "nnz " << I[I.size() - 1] << " "<< J.size() << "\n";
   for (int ii = 0; ii < I.size() - 1; ii++){
+    //pardiso needs diagonal even if 0
+    bool hasDiagonal = false;
     for (int jj = I[ii]; jj < I[ii + 1]; jj++){
-      maxIdx = std::max(J[ii], maxIdx);
       if (J[jj] >= nrow){
-        std::cout << ii << " " << jj << "\n";
+        std::cout << ii << " " << jj << " "<<J[jj]<<  "\n";
         return -1;
+      }
+      if (J[jj] == ii){
+        hasDiagonal = true;
+      }
+      if (!hasDiagonal){
+        std::cout << "Col " << ii << " has no diagonal.\n";
       }
     }
   }
@@ -83,5 +91,12 @@ void addVector3d(std::vector<double> & a, const Eigen::Vector3d & f,
     for (int jj = 0; jj < dim; jj++){
       a[dim * idx[ii] + jj] += f[jj];
     }
+  }
+}
+
+void add(std::vector<int> & a, int v)
+{
+  for (size_t i = 0; i < a.size(); i++){
+    a[i] += v;
   }
 }

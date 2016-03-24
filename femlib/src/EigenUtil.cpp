@@ -66,15 +66,34 @@ void write_matlab_lists(std::ostream &output,
   }
 }
 
+template <typename T>
 void write_vega_lists(std::ostream &output,
-                        const Eigen::SparseMatrix<double> & M)
+  const Eigen::SparseMatrix<T> & M)
 {
   output<<M.rows()<<"\n"<<M.cols()<<"\n";
-  output.precision(16);
+  output.precision(12);
   for(int i=0; i<M.cols(); ++i){
-    for (Eigen::SparseMatrix<double>::InnerIterator it(M, i); it; ++it){
+    for (Eigen::SparseMatrix<T>::InnerIterator it(M, i); it; ++it){
       output<< i << " " << it.row() << " " << it.value() <<"\n";
     }
+  }
+}
+
+void sparseToIJ(std::vector<int> & I,
+  std::vector<int> & J, const Eigen::SparseMatrix<float> & K,
+  bool triangular)
+{
+  I.resize(K.cols() + 1);
+  J.clear();
+  I[0] = 0;
+  for (int col = 0; col < K.cols(); col++){
+    for (Eigen::SparseMatrix<float>::InnerIterator it(K, col); it; ++it){
+      if (triangular && it.row() > it.col()){
+        continue;
+      }
+      J.push_back(it.row());
+    }
+    I[col + 1] = J.size();
   }
 }
 
@@ -152,3 +171,11 @@ Eigen::SparseMatrix<float>submatrix<float>(const Eigen::SparseMatrix<float> & K,
   const std::vector<int> & subrow,
   const std::vector<int> & subcol,
   int block_size);
+
+template
+void write_vega_lists(std::ostream &output,
+const Eigen::SparseMatrix<double> & M);
+
+template
+void write_vega_lists(std::ostream &output,
+  const Eigen::SparseMatrix<float> & M);

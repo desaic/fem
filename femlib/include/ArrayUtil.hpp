@@ -50,5 +50,5 @@ void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
 
 void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
   const std::vector<Eigen::Vector3f> & X);
-
+void add(std::vector<int> & a, int v);
 #endif // ARRAYUTIL_HPP

@@ -16,9 +16,9 @@ void write_matlab_lists(std::ostream &output,
                         const Eigen::SparseMatrix<double> & M);
 
 ///@brief write sparse matrix in Vega format for loading with vega sparsematrix.
+template <typename T>
 void write_vega_lists(std::ostream &output,
-                        const Eigen::SparseMatrix<double> & M);
-
+              const Eigen::SparseMatrix<T> & M);
 
 ///@brief zero out off-diagonal terms of row and col ii if fixed[ii]!=0.
 template <typename T>
@@ -33,7 +33,9 @@ void zeroOffDiag(Eigen::SparseMatrix<T> & K, const std::vector<int> & fixed)
     }
   }
 }
-
+void sparseToIJ(std::vector<int> & I,
+  std::vector<int> & J, const Eigen::SparseMatrix<float> & K,
+  bool triangular = false);
 
 template <typename T>
 Eigen::SparseMatrix<T>
@@ -94,7 +96,7 @@ template <typename T>
 Eigen::SparseMatrix<T>concatRow(const Eigen::SparseMatrix<T> & A,
   const Eigen::SparseMatrix<T> & B)
 {
-  Eigen::SparseMatrix<double> C(A.rows(), A.cols() + B.cols());
+  Eigen::SparseMatrix<T> C(A.rows(), A.cols() + B.cols());
   if (A.rows() != B.rows()){
     std::cout << "Concat Row wrong rows " << A.rows() << " " << B.rows() << "\n";
     return C;
@@ -120,7 +122,7 @@ Eigen::SparseMatrix<T>concatCol(const Eigen::SparseMatrix<T> & A,
   }
   maxnnz = std::min(maxnnz, nrow);
   
-  Eigen::SparseMatrix<double> C(nrow, A.cols());
+  Eigen::SparseMatrix<T> C(nrow, A.cols());
   C.reserve(Eigen::VectorXi::Constant(A.cols(), maxnnz));
   if (A.cols() != B.cols()){
     std::cout << "Concat Col wrong cols " << A.cols() << " " << B.cols() << "\n";
