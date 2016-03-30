@@ -55,13 +55,12 @@ makePeriodicSystem(const Eigen::SparseMatrix<float> & K0,
   Eigen::SparseMatrix<float> A21 = A12.transpose();
   Eigen::SparseMatrix<float> Kbottom = concatRow(A21, A22);
   Eigen::SparseMatrix<float> A = concatCol(Ktop, Kbottom);
-  return A;
-
+  
   //debug output to matlatb.
   std::ofstream mout("A.txt");
   write_CSR(mout, A);
   mout.close();
-  mout.open("P.txt");
+  mout.open("K.txt");
   write_CSR(mout, K0);
   mout.close();
   mout.open("d.txt");
@@ -76,7 +75,10 @@ makePeriodicSystem(const Eigen::SparseMatrix<float> & K0,
   mout.close();
   mout.open("K22.txt");
   write_CSR(mout, K22);
-  mout.close();
+  mout.close(); 
+  
+  return A;
+  //return K22;
 }
 
 void Homogenize3D::init()
@@ -223,7 +225,7 @@ void Homogenize3D::init()
         int n4idx = 3 * i + k;
         int vp = n4[n4idx];
         Eigen::Vector3f disp = em->X[vp] - em->X[vm];
-        wfixed.block(n4idx * 3, 0, 3, 1) = dx * strain * disp;
+        wfixed.block(n4idx * 3, j, 3, 1) = strain * disp;
       }
     }
   }
@@ -239,7 +241,7 @@ void Homogenize3D::init()
         e0(j, 5) / 2, e0(j, 1), e0(j, 3) / 2,
         e0(j, 4) / 2, e0(j, 3) / 2, e0(j, 2);
       Eigen::Vector3f disp = em->X[vp] - em->X[vm];
-      wfixed.block(n4idx * 3, 0, 3, 1) = dx * strain * disp;
+      wfixed.block(n4idx * 3, j, 3, 1) = strain * disp;
     }
   }
   
@@ -286,6 +288,16 @@ void Homogenize3D::solve()
   int nrows = (int)m_I.size() - 1;
   //number of dof in the mesh;
   int ndof = dim * em->x.size();
+
+  std::vector<int> vertGridSize = gridSize;
+  for (size_t ii = 0; ii < vertGridSize.size(); ii++){
+    vertGridSize[ii] ++;
+  }
+  int nEdgeVert = vertGridSize[0] + vertGridSize[1] + vertGridSize[2] - 6;
+  int nEdgeDof = dim * nEdgeVert;
+  int nFaceVert = ((vertGridSize[0] - 2) * (vertGridSize[1] - 2) + (vertGridSize[0] - 2) * (vertGridSize[2] - 2) +
+    (vertGridSize[1] - 2) * (vertGridSize[2] - 2));
+  int nFaceDof = dim * nFaceVert;
   //Compute full stiffness matrix
   getStiffnessSparse();
   //K for lhs
@@ -298,16 +310,27 @@ void Homogenize3D::solve()
   Eigen::SparseMatrix<float> K41 = submatrix(m_K, d4, d1, 1);
   Eigen::SparseMatrix<float> K24 = submatrix(m_K, d2, d4, 1);
   Eigen::SparseMatrix<float> K44 = submatrix(m_K, d4, d4, 1);
-  Eigen::SparseMatrix<float> Kbot = K31 + K34 * K41;
+  Eigen::SparseMatrix<float> Kbot = K31 + M43.transpose() * K41;
   Eigen::SparseMatrix<float> Umat = concatCol(K21, Kbot);
-  Kbot = K34 + K34 * K44;
+  Kbot = K34 + M43.transpose() * K44;
   Eigen::SparseMatrix<float> Wmat = concatCol(K24, Kbot);
+  std::ofstream mout("W.txt");
+  write_CSR(mout, Wmat);
+  mout.close();
+  mout.open("U.txt");
+  write_CSR(mout, Umat);
+  mout.close();
   //solve
   //|K22            K23 + K24M43                         | = - |  K21          | U1 - |   K24         | W
   //|(K23+K24M43)'  K33 + M34K43 + K43'M43 + M43'K44M43  |     | K31 + M43'K41 |      | K34 + M43'K44 |
   u.resize(ufixed.cols());
   for (int i = 0; i < ufixed.cols(); i++){
     Eigen::VectorXf rhs = -Umat * ufixed.col(i) - Wmat * wfixed.col(i);
+    if (i == 0){
+      mout.open("rhs.txt");
+      saveArr(rhs, mout);
+      mout.close();
+    }
     Eigen::VectorXd b = rhs.cast<double>();
     std::vector<double> x(nrows, 0);
     pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, x.data(), b.data(), pardisoState);
@@ -316,11 +339,28 @@ void Homogenize3D::solve()
     for (int j = 0; j < (int)d1.size(); j++){
       u[i][d1[j]] = ufixed(j,i);
     }
-    //u(d4) = U(d3) + wfixed.
-    for (int j = 0; j < (int)d4.size(); j++){
-      u[i][d4[j]] = wfixed(j,i);
+    //u(d2 d3) = x
+    for (int j = 0; j < (int)d2.size(); j++){
+      u[i][d2[j]] = x[j];
     }
-
+    for (int j = 0; j < (int)d3.size(); j++){
+      u[i][d3[j]] = x[j+d2.size()];
+    }
+    //u(d4) = U(d3) + wfixed.
+    //edges followed by faces
+    for (int j = 0; j < nEdgeVert; j++){
+      for (int k = 0; k < 3; k++){
+        for (int di = 0; di < 3; di++){
+          int dof = 3 * (3 * j + k) + di;
+          int vp = d4[dof];
+          u[i][vp] = wfixed(dof, i) + x[d2.size() + 3*j+di];
+        }
+      }
+    }
+    for (int j = 0; j < nFaceDof; j++){
+      int vp = d4[j + 3 * nEdgeDof];
+      u[i][vp] = wfixed(3 * nEdgeDof + j, i) + x[j + nEdgeDof + d2.size()];
+    }
   }
 }
 
