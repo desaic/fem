@@ -63,8 +63,8 @@ rmConstrained(const Eigen::SparseMatrix<T> & K,
 
   int maxnnz = 0;
   auto I = K.outerIndexPtr();
-  for (auto ii = 0; ii < K.cols(); ii++){
-    maxnnz = std::max(I[ii-1] - I[ii], maxnnz);
+  for (auto ii = 1; ii <= K.cols(); ii++){
+    maxnnz = std::max(I[ii] - I[ii-1], maxnnz);
   }
   maxnnz = std::min(maxnnz, nrow);
   Kc.reserve(Eigen::VectorXi::Constant(N, maxnnz));
@@ -121,8 +121,8 @@ Eigen::SparseMatrix<T>concatCol(const Eigen::SparseMatrix<T> & A,
   int maxnnz = 0;
   auto Ia = A.outerIndexPtr();
   auto Ib = B.outerIndexPtr();
-  for (auto ii = 0; ii < A.cols(); ii++){
-    int nnz = Ia[ii - 1] - Ia[ii] + Ib[ii - 1] - Ib[ii];
+  for (auto ii = 1; ii <= A.cols(); ii++){
+    int nnz = Ia[ii] - Ia[ii - 1] + Ib[ii] - Ib[ii - 1];
     maxnnz = std::max(nnz, maxnnz);
   }
   maxnnz = std::min(maxnnz, nrow);
