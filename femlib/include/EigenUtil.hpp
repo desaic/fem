@@ -17,7 +17,7 @@ void write_matlab_lists(std::ostream &output,
 
 ///@brief write sparse matrix in Vega format for loading with vega sparsematrix.
 template <typename T>
-void write_vega_lists(std::ostream &output,
+void write_CSR(std::ostream &output,
               const Eigen::SparseMatrix<T> & M);
 
 ///@brief zero out off-diagonal terms of row and col ii if fixed[ii]!=0.
@@ -33,9 +33,14 @@ void zeroOffDiag(Eigen::SparseMatrix<T> & K, const std::vector<int> & fixed)
     }
   }
 }
+
 void sparseToIJ(std::vector<int> & I,
   std::vector<int> & J, const Eigen::SparseMatrix<float> & K,
   bool triangular = false);
+
+void sparseToVal(std::vector<double> & val,
+  const Eigen::SparseMatrix<float> & K,
+  bool triangular);
 
 template <typename T>
 Eigen::SparseMatrix<T>

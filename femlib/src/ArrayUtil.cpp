@@ -33,9 +33,9 @@ int checkSparseIndex(const std::vector<int > & I, const std::vector<int> & J)
       if (J[jj] == ii){
         hasDiagonal = true;
       }
-      if (!hasDiagonal){
-        std::cout << "Col " << ii << " has no diagonal.\n";
-      }
+    }
+    if (!hasDiagonal){
+      std::cout << "Col " << ii << " has no diagonal.\n";
     }
   }
   std::cout << "max idx " << maxIdx << "\n";
@@ -98,5 +98,13 @@ void add(std::vector<int> & a, int v)
 {
   for (size_t i = 0; i < a.size(); i++){
     a[i] += v;
+  }
+}
+
+void saveArr(const Eigen::VectorXf & v, std::ostream & out)
+{
+  out << v.size() << "\n";
+  for (int i = 0; i < v.size(); i++){
+    out << v[i] << "\n";
   }
 }

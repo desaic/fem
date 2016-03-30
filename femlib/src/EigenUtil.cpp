@@ -67,7 +67,7 @@ void write_matlab_lists(std::ostream &output,
 }
 
 template <typename T>
-void write_vega_lists(std::ostream &output,
+void write_CSR(std::ostream &output,
   const Eigen::SparseMatrix<T> & M)
 {
   output<<M.rows()<<"\n"<<M.cols()<<"\n";
@@ -88,12 +88,29 @@ void sparseToIJ(std::vector<int> & I,
   I[0] = 0;
   for (int col = 0; col < K.cols(); col++){
     for (Eigen::SparseMatrix<float>::InnerIterator it(K, col); it; ++it){
-      if (triangular && it.row() > it.col()){
+      if (triangular && it.row() < it.col()){
         continue;
       }
       J.push_back(it.row());
     }
     I[col + 1] = J.size();
+  }
+}
+
+void sparseToVal(std::vector<double> & val,
+  const Eigen::SparseMatrix<float> & K,
+  bool triangular)
+{
+  val.resize(K.nonZeros());
+  int idx = 0;
+  for (int ii = 0; ii < K.cols(); ii++){
+    for (Eigen::SparseMatrix<float>::InnerIterator it(K, ii); it; ++it){
+      if (triangular && it.row() < it.col()){
+        continue;
+      }
+      val[idx] = it.value();
+      idx++;
+    }
   }
 }
 
@@ -173,9 +190,9 @@ Eigen::SparseMatrix<float>submatrix<float>(const Eigen::SparseMatrix<float> & K,
   int block_size);
 
 template
-void write_vega_lists(std::ostream &output,
+void write_CSR(std::ostream &output,
 const Eigen::SparseMatrix<double> & M);
 
 template
-void write_vega_lists(std::ostream &output,
+void write_CSR(std::ostream &output,
   const Eigen::SparseMatrix<float> & M);

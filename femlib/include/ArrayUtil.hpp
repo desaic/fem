@@ -3,6 +3,8 @@
 #include <vector>
 #include <Eigen/Dense>
 
+#include <iostream>
+
 void BBox(const std::vector<Eigen::Vector3f >& v,
   Eigen::Vector3f & mn, Eigen::Vector3f & mx);
 
@@ -51,4 +53,6 @@ void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
 void copyVert3(Eigen::VectorXd & x, const std::vector<int> & vidx,
   const std::vector<Eigen::Vector3f> & X);
 void add(std::vector<int> & a, int v);
+
+void saveArr(const Eigen::VectorXf & v, std::ostream & out);
 #endif // ARRAYUTIL_HPP
