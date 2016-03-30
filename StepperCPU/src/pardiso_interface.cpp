@@ -79,15 +79,16 @@ int pardisoSymbolicFactorize(int * ia, int * ja, int n, PardisoState *state)
   int      idum;              /* Integer dummy. */
   int phase=0;
 
-    phase = 11;
 
-    pardiso (state->pt, &state->maxfct, &state->mnum, &state->mtype, &phase,
-       &n, &ddum, ia, ja, &idum, &nrhs,
-       state->iparm, &state->msglvl, &ddum, &ddum, &error, state->dparm);
+  phase = 11;
 
-    if (error != 0) {
-        printf("\nERROR during symbolic factorization: %d", error);
-    }
+  pardiso (state->pt, &state->maxfct, &state->mnum, &state->mtype, &phase,
+      &n, &ddum, ia, ja, &idum, &nrhs,
+      state->iparm, &state->msglvl, &ddum, &ddum, &error, state->dparm);
+
+  if (error != 0) {
+      printf("\nERROR during symbolic factorization: %d", error);
+  }
 
     //timer.endWall();
     //printf("up to symbolic factorization: %f \n",timer.getSecondsWall());
@@ -103,6 +104,14 @@ int pardisoNumericalFactorize(int *ia, int *ja, double *val, int n, PardisoState
   double   ddum;              /* Double dummy */
   int      idum;              /* Integer dummy. */
   int phase=22;
+
+#ifdef _DEBUG
+  pardiso_chkmatrix(&state->mtype, &n, val, ia, ja, &error);
+  if (error != 0) {
+    printf("\nERROR in consistency of matrix: %d", error);
+    return -1;
+  }
+#endif
 
   pardiso (state->pt, &state->maxfct, &state->mnum, &state->mtype, &phase,
            &n, val, ia, ja, &idum, &nrhs,

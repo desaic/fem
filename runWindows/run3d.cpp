@@ -51,7 +51,7 @@ void optMat3D(Opt3DArgs * arg)
   //std::ofstream matStruct("struct.txt");
   double shrinkRatio = 0.3;
   std::vector<float> param;
-  structures.push_back(std::vector<double>(4096, 1));
+  structures.push_back(std::vector<double>(4096*8, 1));
   for (unsigned int si = 0; si < structures.size(); si++){
     std::cout << si << "\n";
     std::vector<double> s3d = structures[si];
@@ -67,7 +67,10 @@ void optMat3D(Opt3DArgs * arg)
     for (int ix = 0; ix < paramSize[0]; ix++){
       for (int iy = 0; iy < paramSize[1]; iy++){
         for (int iz = 0; iz < paramSize[2]; iz++){
-          x1[ix * paramSize[1] * paramSize[2] + iy *paramSize[2] + iz] = 1;// s3d[ix * fem->gridSize[1] * fem->gridSize[2] + iy * fem->gridSize[2] + iz];
+          x1[ix * paramSize[1] * paramSize[2] + iy *paramSize[2] + iz] = 0.1;// s3d[ix * fem->gridSize[1] * fem->gridSize[2] + iy * fem->gridSize[2] + iz];
+          if (ix % 2 == 0){
+            x1[ix * paramSize[1] * paramSize[2] + iy *paramSize[2] + iz] = 1;
+          }
         }
       }
     }
@@ -113,7 +116,7 @@ void run3D(const ConfigFile & conf)
   bool render = conf.getBool("render");
   std::string task = conf.getString("task");
 
-  int gridres = 16;
+  int gridres = 32;
   if (conf.hasOpt("gridres")){
     gridres = conf.getInt("gridres");
   }
@@ -157,9 +160,9 @@ void run3D(const ConfigFile & conf)
   fem->forceMagnitude = (double)fx;
 
 
-  fem->m_fixRigid = true;
-  fem->m_periodic = true;
-  fem->constrained = false;
+  fem->m_fixRigid = false;
+  fem->m_periodic = false;
+  fem->constrained = true;
 
   fem->em = em;
   fem->field = field;
