@@ -209,6 +209,7 @@ double FEM3DFun::f()
   val = 0.5 * sum;
   val += 0.5 * mw * (density - m0) * (density - m0);
   std::cout<<"rho "<<density<<", G " << G(0, 0) << " " << G(0, 1) << "\n";
+  std::cout << "m0 " << m0 << ", G0 " << G0(0, 0) << " " << G0(0, 1) << "\n";
   std::cout << val << "\n";
   return val ;
 }

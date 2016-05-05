@@ -84,7 +84,7 @@ void optMat3D(Opt3DArgs * arg)
     double mu = 0.5*E / (1 + targetNu);
 
     fem->G0 = fem->G;
-    fem->G0(0, 0) = lambda + 2*nu;
+    fem->G0(0, 0) = lambda + 2 * mu;
     fem->G0(0, 1) = lambda;
     fem->G0(0, 2) = lambda;
     //std::cout << fem->G << "\n";
@@ -105,7 +105,7 @@ void optMat3D(Opt3DArgs * arg)
       matStruct << fem->gridSize[0] << " " << fem->gridSize[1] << " " << fem->gridSize[2] << "\n";
       for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
         matStruct << fem->distribution[ii] << " ";
-        if (ii % fem->gridSize[0] == 0){
+        if (ii % fem->gridSize[0] == fem->gridSize[0] - 1){
           matStruct << "\n";
         }
       }
