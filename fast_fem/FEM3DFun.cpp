@@ -18,12 +18,12 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
 }
 
 double femCoef(double x){
-  return x;// (x) / (3 - 2 * x);
+  return x / (3 - 2 * x);
 }
 
 double dfemCoef(double x){
   double denom = 3 - 2 * x;
-  return 1;// 3 / (denom*denom);
+  return 3 / (denom*denom);
 }
 
 ///@param N grid size of u. 1 greater than u0.
@@ -203,12 +203,12 @@ double FEM3DFun::f()
   double sum = 0;
   for (int i = 0; i < G.rows(); i++){
     for (int j = 0; j < G.cols(); j++){
-      sum += wG(i, j) * diff(i, j) * diff(i, j);
+      sum += wG(i, j) * diff(i, j);
     }
   }
-  val = wG(0,0) * G(0, 0);// 0.5 * sum;
+  val = 0.5 * sum;
   val += 0.5 * mw * (density - m0) * (density - m0);
-  std::cout << G(0,0)<<" "<<G(0,1)<<" "<<G(0,2) << "\n";
+  std::cout<<"rho "<<density<<", G " << G(0, 0) << " " << G(0, 1) << "\n";
   std::cout << val << "\n";
   return val ;
 }
@@ -235,7 +235,7 @@ Eigen::VectorXd FEM3DFun::df()
   int mat_id = 0;
   for (int row = 0; row < G.rows(); row++){
     for (int col = 0; col < G.cols(); col++){
-      double dfdG = wG(row, col);// *(G(row, col) - G0(row, col)) / vol;
+      double dfdG = wG(row, col) *(G(row, col) - G0(row, col)) / vol;
       for (int i = 0; i < nEle; i++){
         Eigen::VectorXd ui = cell_u(i, gridSize[0], u[row]);
         Eigen::VectorXd uj = cell_u(i, gridSize[0], u[col]);
@@ -245,9 +245,9 @@ Eigen::VectorXd FEM3DFun::df()
       }
     }
   }
-  for (int i = 0; i < nEle; i++){
-    std::cout<<dfddist[i]<<"\n";
-  }
+  //for (int i = 0; i < nEle; i++){
+  //  std::cout<<dfddist[i]<<"\n";
+  //}
   Eigen::VectorXd coord = Eigen::VectorXd::Zero(3);
   for (int ii = 0; ii < gridSize[0]; ii++){
     for (int jj = 0; jj < gridSize[1]; jj++){

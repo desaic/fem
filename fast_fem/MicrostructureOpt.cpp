@@ -101,7 +101,8 @@ void computeCTensor(const MicrostructureOpt & opt)
 
 void TestMicrostructureOpt(PARSE_ARGS & parse_args)
 {
-  std::string conffile("../config.txt");
+  std::string conffile;
+  conffile = parse_args.Get_String_Value("-conf");
   ConfigFile conf;
   conf.load(conffile.c_str());
   MicrostructureOpt o;

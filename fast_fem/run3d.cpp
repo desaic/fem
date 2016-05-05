@@ -65,8 +65,8 @@ void optMat3D(Opt3DArgs * arg)
       for (int iy = 0; iy < paramSize[1]; iy++){
         for (int iz = 0; iz < paramSize[2]; iz++){
           int linearIdx = ix * paramSize[1] * paramSize[2] + iy *paramSize[2] + iz;
-          //int inputIdx = ix / 2 * paramSize[1] * paramSize[2] + iy / 2 * paramSize[2] + iz / 2;
-          int inputIdx = ix * fem->gridSize[1] * fem->gridSize[2] + iy * fem->gridSize[2] + iz;
+          int inputIdx = ix / 2 * paramSize[1] * paramSize[2] + iy / 2 * paramSize[2] + iz / 2;
+          //int inputIdx = ix * fem->gridSize[1] * fem->gridSize[2] + iy * fem->gridSize[2] + iz;
           x1[linearIdx] = s3d[inputIdx];
         }
       }
@@ -91,17 +91,18 @@ void optMat3D(Opt3DArgs * arg)
     //for test only look at the first two components.
     fem->m0 = 0.5*fem->density;
     ////scale mass term to roughly displacement term.
-    fem->mw = 0;// 0.1 * fem->G(0, 0) / fem->density;
+    fem->mw = 0.1 * fem->G(0, 0) / fem->density;
     fem->wG(0, 0) =  0.5;
-    fem->wG(0, 1) =  0;
+    fem->wG(0, 1) =  0.5;
 
     double val = fem->f();
     shrinkVector(x1, shrinkRatio);
-    ////logfile.open("log3d.txt");
-    check_df(fem, x1, 1e-3);
+    //logfile.open("log3d.txt");
+    //check_df(fem, x1, 1e-3);
     for (int j = 0; j < 50; j++){
       nSteps = 10;
       gradientDescent(fem, x1, nSteps, 0.5, 10);
+      matStruct << fem->gridSize[0] << " " << fem->gridSize[1] << " " << fem->gridSize[2] << "\n";
       for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
         matStruct << fem->distribution[ii] << " ";
         if (ii % fem->gridSize[0] == 0){

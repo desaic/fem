@@ -678,6 +678,7 @@ int main(int argc,char* argv[])
 	parse_args.Add_Integer_Argument("-test",1,"test");
 	parse_args.Add_Integer_Argument("-mt",0,"material pattern");
 	parse_args.Add_Integer_Argument("-mg_lv",4,"multigrid levels");
+  parse_args.Add_String_Argument("-conf", "", "config file");
     parse_args.Parse(argc,argv);
 
 	int test=parse_args.Get_Integer_Value("-test");
