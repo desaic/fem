@@ -1,3 +1,4 @@
+#include "ArrayUtil.hpp"
 #include "cfgUtilities.h"
 #include "ConfigFile.hpp"
 #include "EigenUtil.hpp"
@@ -12,11 +13,14 @@
 #include <iomanip>
 #include <thread>
 
-extern std::ofstream logfile;
+static std::ofstream logfile;
 static const int d = 3;
 Type_Define_VectorD_Outside_Class(d); Type_Define_VectorDi_Outside_Class(d); Type_Define_MatrixD_Outside_Class(d);
 
 void loadIntBinary(const ConfigFile & conf, std::vector<std::vector<double> > & materialAssignments);
+void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps,
+  double maxStep, int logInterval);
+void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h);
 
 struct Opt3DArgs
 {
@@ -36,9 +40,8 @@ void optMat3D(Opt3DArgs * arg)
   int nSteps = 500;
   const ConfigFile * conf = arg->conf;
   FEM3DFun * fem = arg->fem;
-
   RealField * field = fem->field;
-  
+  fem->initArrays();
     //for (int ii = 0; ii < x1.size(); ii++){
   //  x1[ii] = 0.5 + (rand() / (float)RAND_MAX - 0.5) * 0.2;
   //}
@@ -64,39 +67,49 @@ void optMat3D(Opt3DArgs * arg)
           int linearIdx = ix * paramSize[1] * paramSize[2] + iy *paramSize[2] + iz;
           //int inputIdx = ix / 2 * paramSize[1] * paramSize[2] + iy / 2 * paramSize[2] + iz / 2;
           int inputIdx = ix * fem->gridSize[1] * fem->gridSize[2] + iy * fem->gridSize[2] + iz;
-          x1[linearIdx] = 1;// s3d[inputIdx];
+          x1[linearIdx] = s3d[inputIdx];
         }
       }
     }
     clampVector(x1, fem->lowerBounds, fem->upperBounds);
     fem->setParam(x1);
-    T a = fem->G(0, 1) / fem->G(0, 0); T poisson = a / ((T)1 + a);
-    T youngs = fem->G(0, 1)*((T)1 + poisson)*((T)1 - (T)2 * poisson) / poisson;
-    std::cout << fem->G(0, 0) << " " << fem->G(1, 0) << " " << fem->G(2, 0) << " " << fem->G(3, 3) << "\n";
-    std::cout << "rho: " << fem->density << ", E: " << youngs << ", nu: " << poisson << "\n";
-    system("pause");
-    //double val = fem->f();
-    //fem->m0 = 0.5*fem->density;
-    ////scale mass term to roughly displacement term.
-    //fem->mw = 0.1 * fem->G(0, 0) / fem->density;
-    //fem->G0 = fem->G;
-    ////poisson's ratio objective
-    //fem->G0(1, 0) = 0.5 * fem->G0(0, 0);
-    //fem->G0(2, 0) = 0.5 * fem->G0(0, 0);
+    T a = fem->G(0, 1) / fem->G(0, 0); T nu = a / ((T)1 + a);
+    T E = fem->G(0, 1)*((T)1 + nu)*((T)1 - (T)2 * nu) / nu;
+    std::cout << fem->G(0, 0) << " " << fem->G(0, 1) << " " << fem->G(0, 2) << " " << fem->G(3, 3) << "\n";
+    std::cout << "rho: " << fem->density << ", E: " << E << ", nu: " << nu << "\n";
 
-    ////std::cout << fem->G << "\n";
-    ////for test only look at the first displacement.
-    //for (int ii = 1; ii < fem->wG.size(); ii++){
-    //  fem->wG(ii) = 0;
-    //}
-    //shrinkVector(x1, shrinkRatio);
+    ////poisson's ratio objective
+    double targetNu = -0.5;
+    double lambda = E*targetNu / ((1+targetNu)*(1-2*targetNu));
+    double mu = 0.5*E / (1 + targetNu);
+
+    fem->G0 = fem->G;
+    fem->G0(0, 0) = lambda + 2*nu;
+    fem->G0(0, 1) = lambda;
+    fem->G0(0, 2) = lambda;
+    //std::cout << fem->G << "\n";
+    //for test only look at the first two components.
+    fem->m0 = 0.5*fem->density;
+    ////scale mass term to roughly displacement term.
+    fem->mw = 0;// 0.1 * fem->G(0, 0) / fem->density;
+    fem->wG(0, 0) =  0.5;
+    fem->wG(0, 1) =  0;
+
+    double val = fem->f();
+    shrinkVector(x1, shrinkRatio);
     ////logfile.open("log3d.txt");
-    ////check_df(fem, x1, 1e-3);
-    //gradientDescent(fem, x1, nSteps);
-    //for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
-    //  matStruct << fem->distribution[ii] << " ";
-    //}
-    //matStruct << "\n";
+    check_df(fem, x1, 1e-3);
+    for (int j = 0; j < 50; j++){
+      nSteps = 10;
+      gradientDescent(fem, x1, nSteps, 0.5, 10);
+      for (unsigned int ii = 0; ii < fem->distribution.size(); ii++){
+        matStruct << fem->distribution[ii] << " ";
+        if (ii % fem->gridSize[0] == 0){
+          matStruct << "\n";
+        }
+      }
+      matStruct << "\n";
+    }
   }
   system("pause");
 }
@@ -219,4 +232,91 @@ void loadIntBinary(const ConfigFile & conf, std::vector<std::vector<double> > & 
     //materialAssignments[ii] = upsampleVector(materialAssignments[ii], nx, nx);
   }
 
+}
+
+int lineSearch(RealFun * fun, Eigen::VectorXd & x0, const Eigen::VectorXd & dir, double & h)
+{
+  double f0 = fun->f();
+  Eigen::VectorXd grad0 = fun->df();
+  //double norm0 = infNorm(grad0);
+  int nSteps = 10;
+  int ret = -1;
+  for (int step = 0; step<nSteps; step++){
+    //minus sign here if we want to minimize function value.
+    Eigen::VectorXd x = x0 - h*dir;
+    clampVector(x, fun->lowerBounds, fun->upperBounds);
+    fun->setParam(x);
+    double f1 = fun->f();
+    //Eigen::VectorXd grad1 = fun->df();
+    //double norm1 = infNorm(grad1);
+    //if gradient norm or function value decrease, return.
+    //std::cout << "line search: "<<step<<" "<< h << " (" << norm1<<" "<<norm0<< ") (" << f1 <<" "<<f0<< ")\n";
+    if (f1 < f0){
+      std::cout << "h = " << h << std::endl;
+      x0 = x;
+      ret = 0;
+      break;
+    }
+    else{
+      h /= 2;
+    }
+  }
+  return ret;
+}
+
+void gradientDescent(RealFun * fun, Eigen::VectorXd & x0, int nSteps,
+  double maxStep, int logInterval)
+{
+  Eigen::VectorXd x = x0;
+  fun->setParam(x);
+  for (int ii = 0; ii < nSteps; ii++){
+    Eigen::VectorXd grad = fun->df();
+    double h = 1;
+    double norm = infNorm(grad);
+    h = maxStep / norm;
+    int ret = lineSearch(fun, x, grad, h);
+    //std::cout << ii << " " << fun->f() << " " << h << "\n";
+    if (ret < 0){
+      break;
+    }
+    x0 = x;
+    if (ii % logInterval == 0 && logfile.is_open()){
+      fun->log(logfile);
+    }
+  }
+  fun->log(logfile);
+}
+
+void check_df(RealFun * fun, const Eigen::VectorXd & x0, double h)
+{
+  fun->setParam(x0);
+  Eigen::VectorXd x = x0;
+  Eigen::VectorXd ana_df = fun->df();
+  Eigen::VectorXd num_df = Eigen::VectorXd::Zero(x0.size());
+
+  double max_diff = 0;
+  double max_val = 0;
+  std::cout << "ana num\n";
+  for (int ii = 0; ii < x0.rows(); ii++){
+    x[ii] += h;
+    fun->setParam(x);
+    double f_plus = fun->f();
+
+    x[ii] -= 2 * h;
+    fun->setParam(x);
+    double f_minus = fun->f();
+
+    x[ii] += h;
+
+    num_df[ii] = (f_plus - f_minus) / (2 * h);
+    double diff = ana_df[ii] - num_df[ii];
+    max_diff = std::max(max_diff, std::abs(diff));
+    max_val = std::max(max_val, std::abs(ana_df[ii]));
+  }
+  for (int i = 0; i < x0.rows(); i++){
+    std::cout << i << " " << ana_df[i] << " " << num_df[i] << "\n";
+  }
+  std::cout << "max diff " << max_diff << " " << max_val << "\n";
+  //int input;
+  //std::cin >> input;
 }

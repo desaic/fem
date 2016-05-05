@@ -8,6 +8,8 @@ Type_Define_VectorD_Outside_Class(d); Type_Define_VectorDi_Outside_Class(d); Typ
 void FEM3DFun::initArrays()
 {
   G = Eigen::MatrixXd(6, 6);
+  G0 = G;
+  wG = Eigen::MatrixXd::Zero(6, 6);
 }
 
 void FEM3DFun::init(const Eigen::VectorXd & x0)
@@ -16,7 +18,12 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
 }
 
 double femCoef(double x){
-  return (x) / (3 - 2 * x);
+  return x;// (x) / (3 - 2 * x);
+}
+
+double dfemCoef(double x){
+  double denom = 3 - 2 * x;
+  return 1;// 3 / (denom*denom);
 }
 
 ///@param N grid size of u. 1 greater than u0.
@@ -48,9 +55,14 @@ void copyPeriodicU(int N, double dx, Eigen::VectorXd & u, const Eigen::VectorXd 
   }
 }
 
-///@param N size of cell. size of verts is N+1.
-Eigen::VectorXd cell_u(int cellIdx, int N, const Eigen::VectorXd & u)
+static const int oneV[8][3] = { { 0, 0, 0 }, { 0, 0, 1 },
+{ 0, 1, 0 }, { 0, 1, 1 }, { 1, 0, 0 }, { 1, 0, 1 },
+{ 1, 1, 0 }, { 1, 1, 1 } };
+
+std::vector<int> cell_verts(int cellIdx, int N)
 {
+  int nVert = 8;
+  std::vector<int> vidx(nVert);
   int dim = 3;
   Eigen::VectorXd ue(24);
   int i = cellIdx / (N * N);
@@ -58,16 +70,25 @@ Eigen::VectorXd cell_u(int cellIdx, int N, const Eigen::VectorXd & u)
   int j = cellIdx / N;
   cellIdx -= j*N;
   int k = cellIdx;
-  int oneV[8][3] = { { 0, 0, 0 }, { 0, 0, 1 },
-  { 0, 1, 0 }, { 0, 1, 1 }, { 1, 0, 0 }, { 1, 0, 1 },
-  { 1, 1, 0 }, { 1, 1, 1 } };
-  for (int v = 0; v < 8; v++){
+  for (int v = 0; v < nVert; v++){
     int ui = i + oneV[v][0];
     int uj = j + oneV[v][1];
     int uk = k + oneV[v][2];
     int uidx = ui*(N + 1)*(N + 1) + uj*(N + 1) + uk;
+    vidx[v] = uidx;
+  }
+  return vidx;
+}
+
+///@param N size of cell. size of verts is N+1.
+Eigen::VectorXd cell_u(int cellIdx, int N, const Eigen::VectorXd & u)
+{
+  int dim = 3;
+  Eigen::VectorXd ue(24);
+  std::vector<int> vidx = cell_verts(cellIdx, N);
+  for (int v = 0; v < 8; v++){
     for (int d = 0; d < dim; d++){
-      ue[v * dim + d] = u[3 * uidx + d];
+      ue[v * dim + d] = u[3 * vidx[v] + d];
     }
   }
   return ue;
@@ -179,10 +200,15 @@ double FEM3DFun::f()
   double val = 0;
   Eigen::MatrixXd diff = G - G0;
   diff = diff.cwiseProduct(diff);
-  Eigen::VectorXd p = diff * wG;
-  val = 0.5 * p.sum();
+  double sum = 0;
+  for (int i = 0; i < G.rows(); i++){
+    for (int j = 0; j < G.cols(); j++){
+      sum += wG(i, j) * diff(i, j) * diff(i, j);
+    }
+  }
+  val = wG(0,0) * G(0, 0);// 0.5 * sum;
   val += 0.5 * mw * (density - m0) * (density - m0);
-  std::cout << G(0,0)<<" "<<G(1,0)<<" "<<G(2,0) << "\n";
+  std::cout << G(0,0)<<" "<<G(0,1)<<" "<<G(0,2) << "\n";
   std::cout << val << "\n";
   return val ;
 }
@@ -203,6 +229,25 @@ Eigen::VectorXd FEM3DFun::df()
     dfddist[ii] += (mw / distribution.size()) * (density - m0);
   }
 
+  //volume of entire domain.
+  double vol = std::pow(lattice.dx * gridSize[0], 3);
+  int nEle = gridSize[0] * gridSize[1] * gridSize[2];
+  int mat_id = 0;
+  for (int row = 0; row < G.rows(); row++){
+    for (int col = 0; col < G.cols(); col++){
+      double dfdG = wG(row, col);// *(G(row, col) - G0(row, col)) / vol;
+      for (int i = 0; i < nEle; i++){
+        Eigen::VectorXd ui = cell_u(i, gridSize[0], u[row]);
+        Eigen::VectorXd uj = cell_u(i, gridSize[0], u[col]);
+        double dKdx = dfemCoef(distribution[i]);
+        double dGdxi = dKdx * ui.dot(Ke0[mat_id] * uj);
+        dfddist[i] += dfdG * dGdxi;
+      }
+    }
+  }
+  for (int i = 0; i < nEle; i++){
+    std::cout<<dfddist[i]<<"\n";
+  }
   Eigen::VectorXd coord = Eigen::VectorXd::Zero(3);
   for (int ii = 0; ii < gridSize[0]; ii++){
     for (int jj = 0; jj < gridSize[1]; jj++){

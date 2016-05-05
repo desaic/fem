@@ -34,6 +34,8 @@ void addmul(std::vector<T> & dst, float f, const std::vector<T> & src)
   }
 }
 
+double infNorm(const Eigen::VectorXd & a);
+
 int checkSparseIndex(const std::vector<int > & I, const std::vector<int> & J);
 
 int gridToLinearIdx(int ix, int iy, int iz, const std::vector<int> & gridSize);
