@@ -76,11 +76,11 @@ public:
   ///parameterization for material assignments.
   ///BilinearField2D for bilinearly interpolated material distributsions
   ///over a grid and PiecewiseConstant2D for constant material in each cell.
-  RealField * field;
+  RealField * field[2];
 
   ///@brief material distribution. Currently just ratio between two materials for each element.
   ///Should be the same size as number of elements
-  Eigen::VectorXd distribution;
+  Eigen::VectorXd distribution[2];
   
   PardisoState * pardisoState;
 

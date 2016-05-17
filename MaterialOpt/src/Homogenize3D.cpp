@@ -306,9 +306,9 @@ void Homogenize3D::solve()
   pardisoNumericalFactorize(m_I.data(), m_J.data(), m_val.data(), nrows, pardisoState);
   Eigen::SparseMatrix<float> K21 = submatrix(m_K, d2, d1, 1);
   Eigen::SparseMatrix<float> K31 = submatrix(m_K, d3, d1, 1);
-  Eigen::SparseMatrix<float> K34 = submatrix(m_K, d3, d4, 1);
   Eigen::SparseMatrix<float> K41 = submatrix(m_K, d4, d1, 1);
   Eigen::SparseMatrix<float> K24 = submatrix(m_K, d2, d4, 1);
+  Eigen::SparseMatrix<float> K34 = submatrix(m_K, d3, d4, 1);
   Eigen::SparseMatrix<float> K44 = submatrix(m_K, d4, d4, 1);
   Eigen::SparseMatrix<float> Kbot = K31 + M43.transpose() * K41;
   Eigen::SparseMatrix<float> Umat = concatCol(K21, Kbot);
@@ -324,6 +324,7 @@ void Homogenize3D::solve()
   //|K22            K23 + K24M43                         | = - |  K21          | U1 - |   K24         | W
   //|(K23+K24M43)'  K33 + M34K43 + K43'M43 + M43'K44M43  |     | K31 + M43'K41 |      | K34 + M43'K44 |
   u.resize(ufixed.cols());
+  Eigen::SparseMatrix<double> Kld = Kl.cast<double>();
   for (int i = 0; i < ufixed.cols(); i++){
     Eigen::VectorXf rhs = -Umat * ufixed.col(i) - Wmat * wfixed.col(i);
     if (i == 0){
@@ -332,8 +333,14 @@ void Homogenize3D::solve()
       mout.close();
     }
     Eigen::VectorXd b = rhs.cast<double>();
-    std::vector<double> x(nrows, 0);
+    Eigen::VectorXd x = Eigen::VectorXd::Zero(nrows);
     pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, x.data(), b.data(), pardisoState);
+    Eigen::VectorXd residual = Kld * x - b;
+    double maxR = 0;
+    for (int j = 0; j < residual.size(); j++){
+      maxR = std::max(maxR, residual[j]);
+    }
+    std::cout << "max residual " << maxR << "\n";
     u[i].resize(ndof);
     //u(d1) = ufixed
     for (int j = 0; j < (int)d1.size(); j++){
@@ -366,7 +373,7 @@ void Homogenize3D::solve()
 
 MatrixXS Homogenize3D::getKe(int ei)
 {
-  return (cfgScalar)(distribution[ei] / (3 - 2 * distribution[ei])) * K0;
+  return (cfgScalar)(distribution[ei] / (3 - 2 * distribution[ei])) * 0.5* (K0+K0.transpose());
 }
 
 void Homogenize3D::getStiffnessSparse()

@@ -1,4 +1,5 @@
 #include "runtime.hpp"
+#include "FileUtil.hpp"
 #include "Render.hpp"
 #include "World.hpp"
 #include "EigenUtil.hpp"
@@ -16,7 +17,7 @@ void run3Dh(ConfigFile & conf)
 {
   //testEigenUtil();
   Homogenize3D h;
-  int N = 4;
+  int N = 3;
   ElementRegGrid * em = new ElementRegGrid(N,N,N);
   h.gridSize = std::vector<int>(3, N);
   h.em = em;
@@ -37,6 +38,69 @@ void run3Dh(ConfigFile & conf)
   }
 }
 
+///@brief select a subset of structures using idxfile.
+///and save the subset as a bin file.
+void selectStructure(const ConfigFile & conf)
+{
+  std::string idxFile = conf.getString("idxfile");
+  std::vector<int> idx;
+  bool binary = false;
+  binary = conf.getBool("binaryIdx");
+  if (!binary){
+    FileUtilIn in(idxFile.c_str());
+    int size = 0;
+    in.in >> size;
+    for (int i = 0; i < size; i++){
+      int ival;
+      in.in >> ival;
+      idx.push_back(ival);
+      if (!in.good()){
+        break;
+      }
+    }
+    in.close();
+  }
+  else{
+    cfgUtil::readBinary<int>(idxFile, idx);
+    std::ofstream out("struct_idx.txt");
+    out << idx.size() << "\n";
+    for (size_t i = 0; i < idx.size(); i++){
+      out << idx[i] << "\n";
+    }
+    out.close();
+  }
+
+  //load structures and save selected.
+  std::string fileName("../data/level16_matAssignments.bin");
+  if (conf.hasOpt("structurebin")){
+    fileName = conf.getString("structurebin");
+  }
+  bool success;
+  std::string matAssignmentFile = conf.dir + "/" + fileName;
+  std::vector<std::vector<int> > intArr;
+  success = cfgUtil::readBinary<int>(matAssignmentFile, intArr);
+  if (!success){
+    std::cout << "Can't read " << matAssignmentFile << "\n";
+    return;
+  }
+
+  std::vector<std::vector<int> > subset;
+  std::ofstream out("subset.txt");
+  for (size_t i = 0; i < idx.size(); i++){
+    out << "16 16 16\n";
+    for (size_t j = 0; j < intArr[idx[i]].size(); j++){
+      out << intArr[idx[i]][j] << " ";
+      if (j % 16 == 15){
+        out << "\n";
+      }
+    }
+    subset.push_back(intArr[idx[i]]);
+  }
+  out.close();
+  cfgUtil::writeBinary<int>("subset.bin", subset);
+
+}
+
 int main(int argc, char* argv[])
 {
   const char * filename = "config.txt";
@@ -47,13 +111,16 @@ int main(int argc, char* argv[])
     binaryParamToText(conf);
   }
 
+  if (conf.hasOpt("idxfile")){
+    selectStructure(conf);
+  }
   int dim = conf.getInt("dim");
   if (dim == 2){
     run2D(conf);
   }
   else if (dim == 3){
-    //run3D(conf);
-    run3Dh(conf);
+    run3D(conf);
+    //run3Dh(conf);
   }
   return 0;
 }

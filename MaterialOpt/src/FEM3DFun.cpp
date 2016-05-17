@@ -43,8 +43,8 @@ void FEM3DFun::initArrays()
 
 void FEM3DFun::init(const Eigen::VectorXd & x0)
 {  
-  triangular = false;
-  //triangular = true;
+  //triangular = false;
+  triangular = true;
   //6 harmonic displacements.
   int nForce = 6;
   m_I.clear();
@@ -60,17 +60,16 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
 
   pardisoState = new PardisoState();
   pardisoInit(pardisoState);
-  //pardisoSymbolicFactorize(m_I.data(), m_J.data(), (int)m_I.size()-1, pardisoState);
+  pardisoSymbolicFactorize(m_I.data(), m_J.data(), (int)m_I.size()-1, pardisoState);
   param = x0;
-  distribution = Eigen::VectorXd::Zero(em->e.size());
+  distribution[0] = Eigen::VectorXd::Zero(em->e.size());
+  distribution[1] = Eigen::VectorXd::Zero(em->e.size());
   int nrow = (int)m_I.size() - 1;
   externalForce.resize(nForce);
   for (int ii = 0; ii < (int)externalForce.size(); ii++){
     externalForce[ii].resize(nrow, 0);
   }
-  Eigen::Vector3d forceDir = forceMagnitude * Eigen::Vector3d(1, 0, 0);
-  stretchX(em, forceDir, gridSize, externalForce[0]);
-
+  
   //std::fill(externalForce[0].begin(), externalForce[0].end(), 0);
   //for (unsigned int ii = 0; ii < em->e.size(); ii++){
   //  for (int jj = 0; jj < em->e[ii]->nV(); jj++){
@@ -80,7 +79,8 @@ void FEM3DFun::init(const Eigen::VectorXd & x0)
   //    }
   //  }
   //}
-
+  Eigen::Vector3d forceDir = forceMagnitude * Eigen::Vector3d(1, 0, 0);
+  stretchX(em, forceDir, gridSize, externalForce[0]);
   forceDir = forceMagnitude * Eigen::Vector3d(0, 1, 0);
   stretchY(em, forceDir, gridSize, externalForce[1]);
   forceDir = forceMagnitude * Eigen::Vector3d(0, 0, 1);
@@ -101,8 +101,10 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
   param = x0;
 
   //read material distribution from field
-  for (int ii = 0; ii < field->param.size(); ii++){
-    field->setParam(ii, x0[ii]);
+  for (int ii = 0; ii < field[0]->param.size(); ii++){
+    field[0]->setParam(ii, x0[2*ii]);
+    field[1]->setParam(ii, x0[2 * ii + 1]);
+    //std::cout << x0[ii] << "\n";
   }
   for (int ii = 0; ii < gridSize[0]; ii++){
     for (int jj = 0; jj < gridSize[1]; jj++){
@@ -112,8 +114,10 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
         coord[0] = (ii + 0.5) / gridSize[0];
         coord[1] = (jj + 0.5) / gridSize[1];
         coord[2] = (kk + 0.5) / gridSize[2];
-        distribution[eIdx] = field->f(coord);
-        em->e[eIdx]->color = distribution[eIdx] * color0;
+        distribution[0][eIdx] = field[0]->f(coord);
+        distribution[1][eIdx] = 1;// field[1]->f(coord);
+        em->e[eIdx]->color = distribution[0][eIdx] * color0;
+        em->e[eIdx]->color[2] *= distribution[1][eIdx];
         if (jj == 0){
           int b[4] = { 0, 1, 4, 5 };
           for (int ll = 0; ll < 4; ll++){
@@ -133,7 +137,7 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
   int nrows = (int)m_I.size() - 1;
 
   timer.startWall();
-  //pardisoNumericalFactorize(m_I.data(), m_J.data(), m_val.data(), nrows, pardisoState);
+  pardisoNumericalFactorize(m_I.data(), m_J.data(), m_val.data(), nrows, pardisoState);
   timer.endWall();
   std::cout << "num fact time " << timer.getSecondsWall() << "\n";
 
@@ -141,18 +145,18 @@ void FEM3DFun::setParam(const Eigen::VectorXd & x0)
     std::fill(u[ii].begin(), u[ii].end(), 0);
     timer.startWall();
     //checkSparseIndex(I, J);
-    //pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data(), pardisoState);
-    amgLinSolve(m_I, m_J, m_val, externalForce[ii], u[ii]);
+    pardisoBackSubstitute(m_I.data(), m_J.data(), m_val.data(), nrows, u[ii].data(), externalForce[ii].data(), pardisoState);
+    //amgLinSolve(m_I, m_J, m_val, externalForce[ii], u[ii]);
     timer.endWall();
-    std::cout<<"Lin subst time " << timer.getSecondsWall() << "\n";
+    //std::cout<<"Lin subst time " << timer.getSecondsWall() << "\n";
   }
 
   //density objective
   density = 0;
-  for (unsigned int ii = 0; ii < distribution.size(); ii++){
-    density += distribution[ii];
+  for (unsigned int ii = 0; ii < distribution[0].size(); ii++){
+    density += distribution[0][ii];
   }
-  density /= distribution.size();
+  density /= distribution[0].size();
 
   std::vector<int> vidx = cornerVerts(em, gridSize);
   Eigen::VectorXd X;
@@ -175,7 +179,7 @@ double FEM3DFun::f()
   Eigen::VectorXd p = diff * wG;
   val = 0.5 * p.sum();
   val += 0.5 * mw * (density - m0) * (density - m0);
-  std::cout << G(0,0)<<" "<<G(1,0)<<" "<<G(2,0) << "\n";
+  std::cout << G(0,0)<<" "<<G(1,0)<<" "<<G(2,0) << " "<<G(3,3)<<"\n";
   std::cout << val << "\n";
   return val ;
 }
@@ -213,12 +217,51 @@ Eigen::MatrixXd FEM3DFun::dKdp(int eidx, int pidx)
   return Eigen::MatrixXd();
 }
 
+double dx_rho(double rho)
+{
+  //2 materioals
+  return (1 - 1e-3) * 3 / ((3 - 2 * rho)*(3 - 2 * rho));
+}
+
+void dx_rho(double r0, double r1, double * drho)
+{
+  //3 materioals
+  double p = 3;
+  double E1 = 1;
+  double E2 = 1;
+
+  double x0 = std::pow(r0, p);
+  double x01 = std::pow(r0, p-1);
+  double x1 = 1;// std::pow(r1, p);
+  double x11 = 0;// std::pow(r1, p - 1);
+  double s;
+  drho[0] = p * x01 * (x1*E1 + (1 - x1)*E2);
+  s = p*x0 * (x11*E1 - x11*E2);
+  drho[1] = 0;// s;
+
+}
+
+MatrixXS FEM3DFun::getKe(int ei)
+{
+  //return (cfgScalar)(distribution[ei] / (3 - 2 * distribution[ei])) * K0;
+  //3 materials
+  double p = 3;
+  double E1 = 1;
+  double E2 = 1;
+
+  double x0 = 1e-3 + (1 - 1e-3)*std::pow(distribution[0][ei], p);
+  double x1 = 1;// std::pow(distribution[1][ei], p);
+  double s;
+  s = x0;// *(x1*E1 + (1 - x1)*E2);
+  return s*K0;
+}
+
 Eigen::VectorXd FEM3DFun::df()
 {
   //gradient of f with respect to parameters.
   Eigen::VectorXd grad = Eigen::VectorXd::Zero(param.size());
   //gradient of f with respect to material distribution.
-  Eigen::VectorXd dfddist = Eigen::VectorXd::Zero(distribution.size());
+  Eigen::VectorXd dfddist = Eigen::VectorXd::Zero(2*distribution[0].size());
 
   int nrows = (int)m_I.size() - 1;
   compute_dfdu();
@@ -232,13 +275,14 @@ Eigen::VectorXd FEM3DFun::df()
     for (unsigned int jj = 0; jj < em->e.size(); jj++){
       Element * ele = em->e[jj];
       int nV = ele->nV();
-      Eigen::MatrixXf dKdp;
+      Eigen::MatrixXf dKdp[2];
       Eigen::VectorXf Ue(nV * dim);
       Eigen::VectorXf lambda_e(nV * dim);
-      //in this example dK/dParam = K * (1/(3-2*rho)^2).
-      double numerator = (3 - 2 * distribution[jj]);
-      numerator *= numerator;
-      dKdp =  (3.0/numerator) * K0;
+      double drho[2];
+      dx_rho(distribution[0][ii], distribution[1][ii], drho);
+      dKdp[0] =  drho[0] * K0;
+      dKdp[1] = drho[1] * K0;
+      
       for (int kk = 0; kk < ele->nV(); kk++){
         int vidx = em->e[jj]->at(kk);
         for (int ll = 0; ll < dim; ll++){
@@ -246,12 +290,13 @@ Eigen::VectorXd FEM3DFun::df()
           lambda_e[kk*dim + ll] = lambda[vidx*dim + ll];
         }
       }
-      dfddist[jj] += -lambda_e.dot(dKdp * Ue);
+      dfddist[2*jj] += -lambda_e.dot(dKdp[0] * Ue);
+      dfddist[2 * jj+1] += -lambda_e.dot(dKdp[0] * Ue);
     }
   }
 
-  for (unsigned int ii = 0; ii < dfddist.size(); ii++){
-    dfddist[ii] += (mw / distribution.size()) * (density - m0);
+  for (unsigned int ii = 0; ii < distribution[0].size(); ii++){
+    dfddist[2*ii] += (mw / distribution[0].size()) * (density - m0);
   }
 
   Eigen::VectorXd coord = Eigen::VectorXd::Zero(dim);
@@ -262,9 +307,10 @@ Eigen::VectorXd FEM3DFun::df()
         coord[0] = (ii + 0.5) / gridSize[0];
         coord[1] = (jj + 0.5) / gridSize[1];
         coord[2] = (kk + 0.5) / gridSize[2];
-        Eigen::SparseVector<double> ddistdp = field->df(coord);
+        Eigen::SparseVector<double> ddistdp = field[0]->df(coord);
         for (Eigen::SparseVector<double>::InnerIterator it(ddistdp); it; ++it){
-          grad[it.index()] += dfddist[eidx] * it.value();
+          grad[2* it.index()] += dfddist[2*eidx] * it.value();
+          grad[2 * it.index() + 1] += dfddist[2 * eidx + 1] * it.value();
         }
       }
     }
@@ -284,17 +330,13 @@ m_fixRigid(true),
 constrained(false),
 triangular(true),
 forceMagnitude(0.5),
-gridSize(3,0),
-field(0)
+gridSize(3,0)
+//field(0)
 {
 }
 
 FEM3DFun::~FEM3DFun(){}
 
-MatrixXS FEM3DFun::getKe(int ei)
-{
-  return (cfgScalar)(distribution[ei] / (3 - 2 * distribution[ei])) * K0;
-}
 
 void FEM3DFun::getStiffnessSparse()
 {
