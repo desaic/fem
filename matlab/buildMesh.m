@@ -25,8 +25,8 @@ cnt = 1;
 for ii = 1:sx
     for jj = 1:sy
         for kk = 1:sz
-            eidx = (ii-1)*sy*sz+(jj-1)*sz+kk
-            cnt = cnt+1
+            eidx = (ii-1)*sy*sz+(jj-1)*sz+kk;
+            cnt = cnt+1;
             for ll = 1:8
                 e(eidx,ll) = VX(ii+hexV(ll,1), jj+hexV(ll,2), kk+hexV(ll,3), sy,sz);
             end

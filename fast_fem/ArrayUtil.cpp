@@ -17,6 +17,15 @@ void BBox(const std::vector<Eigen::Vector3f >& v,
   }
 }
 
+double infNorm(const Eigen::VectorXd & a)
+{
+  double maxval = 0;
+  for (int ii = 0; ii < a.rows(); ii++){
+    maxval = std::max(maxval, std::abs(a[ii]));
+  }
+  return maxval;
+}
+
 int checkSparseIndex(const std::vector<int > & I, const std::vector<int> & J)
 {
   int nrow = (int)I.size() - 1;

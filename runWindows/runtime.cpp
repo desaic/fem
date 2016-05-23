@@ -1,4 +1,8 @@
 #include "runtime.hpp"
+#include "Render.hpp"
+#include "World.hpp"
+#include "EigenUtil.hpp"
+#include "Element.hpp"
 #include "cfgUtilities.h"
 #include "Homogenize3D.hpp"
 #include "ElementRegGrid.hpp"
@@ -10,12 +14,27 @@ void loadMicrostructuresBin(const ConfigFile & conf, std::vector<std::vector<int
 
 void run3Dh(ConfigFile & conf)
 {
+  //testEigenUtil();
   Homogenize3D h;
   int N = 4;
   ElementRegGrid * em = new ElementRegGrid(N,N,N);
+  h.gridSize = std::vector<int>(3, N);
   h.em = em;
   h.init();
-
+  h.solve();
+  for (size_t i = 0; i < em->e.size(); i++){
+    em->e[i]->color = h.distribution[i] * Eigen::Vector3f(1, 1, 1);
+  }
+  bool render = true;
+  if (render){
+    Render render;
+    World * world = new World();
+    world->em.push_back(em);
+    world->u = &h.u;
+    //world->fe = &h->externalForce;
+    render.init(world);
+    render.loop();
+  }
 }
 
 int main(int argc, char* argv[])

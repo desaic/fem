@@ -224,7 +224,7 @@ void Render::drawEle(int eidx, ElementMesh * m)
 void Render::toggleForce()
 {
   if (world->em.size() > 0){
-    if (world->u == 0 || world->fe == 0){
+    if (world->u == 0 ){
       return;
     }
     int nForce = (int)(world->u->size());
@@ -237,7 +237,13 @@ void Render::toggleForce()
     for (unsigned int ii = 0; ii < em->x.size(); ii++){
       for (int jj = 0; jj < dim; jj++){
         em->x[ii][jj] = em->X[ii][jj] + (*(world->u))[forceIdx][ii*dim + jj];
-        em->fe[ii][jj] = (*(world->fe))[forceIdx][ii*dim + jj];
+      }
+    }
+    if (world->fe != 0){
+      for (unsigned int ii = 0; ii < em->x.size(); ii++){
+        for (int jj = 0; jj < dim; jj++){
+          em->fe[ii][jj] = (*(world->fe))[forceIdx][ii*dim + jj];
+        }
       }
     }
   }
@@ -364,13 +370,13 @@ void Render::draw()
   GLfloat s = 10;
   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &s);
   
-  glBegin(GL_TRIANGLE_STRIP);
-  glNormal3f(0, 1, 0);
-  glVertex3f( -1.0f, -.5f , -1.0f);
-  glVertex3f( -1.0f, -.5f,  1.0f );
-  glVertex3f(  1.0f, -.5f , -1.0f);
-  glVertex3f(  1.0f, -.5f ,  1.0f);
-  glEnd();
+  //glBegin(GL_TRIANGLE_STRIP);
+  //glNormal3f(0, 1, 0);
+  //glVertex3f( -1.0f, -.5f , -1.0f);
+  //glVertex3f( -1.0f, -.5f,  1.0f );
+  //glVertex3f(  1.0f, -.5f , -1.0f);
+  //glVertex3f(  1.0f, -.5f ,  1.0f);
+  //glEnd();
 
   glfwSwapBuffers(window);
 }
@@ -431,7 +437,7 @@ Render::init(World * _world)
   glfwGetFramebufferSize(window, &width, &height);
   ratio = width / (float) height;
   glViewport(0, 0, width, height);
-  glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
+  glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();

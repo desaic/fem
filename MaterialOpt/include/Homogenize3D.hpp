@@ -12,8 +12,14 @@ public:
   
   Homogenize3D() :em(0), dim(3), gridSize(3,0){}
   
+  MatrixXS getKe(int ei);
+  void getStiffnessSparse();
   void init();
   void solve();
+
+  Eigen::SparseMatrix<float> m_K;
+  MatrixXS K0;
+  Eigen::VectorXd distribution;
 
   int dim;
   ElementMesh * em;

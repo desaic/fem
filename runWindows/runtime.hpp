@@ -43,4 +43,6 @@ void loadIntBinary(const ConfigFile & conf, std::vector<std::vector<double> > & 
 ///@brief compute material properties
 void computeMat(FEM2DFun * fem, const ConfigFile & conf);
 extern double maxStep;
+
+void testEigenUtil();
 #endif
