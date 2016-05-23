@@ -51,6 +51,8 @@ MatrixXS StrainLin2D::getElasticityTensor()
 
   cfgScalar & mu = param[0];
   cfgScalar & lambda = param[1];
+  if (mu == 0)
+    return C;
 
   cfgScalar E = mu*(3*lambda+2*mu)/(lambda+mu);
   cfgScalar nu = lambda/(2*(lambda+mu));

@@ -1,30 +1,30 @@
 #include "Element.hpp"
 #include "femError.hpp"
 using namespace Eigen;
-float Element::getVol(const std::vector<Vector3f> & X)
+cfgScalar Element::getVol(const std::vector<Vector3S> & X)
 {
   return 0;
 }
 
-Vector3f Element::getDisp(const Vector3f & p, const std::vector<Vector3f> & X,
-    const std::vector<Vector3f>x)
+Vector3S Element::getDisp(const Vector3S & p, const std::vector<Vector3S> & X,
+    const std::vector<Vector3S>x)
 {
-  std::vector<float> w = shapeFun(p);
-  Vector3f u(0,0,0);
+  std::vector<cfgScalar> w = shapeFun(p);
+  Vector3S u(0,0,0);
   for(unsigned int ii = 0; ii<w.size(); ii++){
     u += w[ii]*(x[ii] - X[ii]);
   }
   return u;
 }
 
-Matrix3f
-Element::defGrad(Vector3f p, const std::vector<Vector3f> & X,
-  const std::vector<Vector3f> & x) const
+Matrix3S
+Element::defGrad(Vector3S p, const std::vector<Vector3S> & X,
+  const std::vector<Vector3S> & x) const
 {
-  Matrix3f F=Matrix3f::Identity();
+  Matrix3S F=Matrix3S::Identity();
   for(int ii = 0; ii<nV(); ii++){
     int vi = at(ii);
-    Vector3f gradN = shapeFunGrad(ii,p,X);
+    Vector3S gradN = shapeFunGrad(ii,p,X);
     //outer product
     F += (x[vi] - X[vi]) * (gradN.transpose());
   }

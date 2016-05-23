@@ -23,10 +23,29 @@ Resampler::~Resampler()
 {
 }
 
-void Resampler::resample(cfgScalar iMinRadius, int iDim, const std::vector<cfgScalar> &iPoints, const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules)
+void Resampler::resample(cfgScalar iMinRadius, int iDim, const std::vector<cfgScalar> &iPoints, const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules, cfgScalar iRatio)
 {
   oParticules.clear();
 
+  int ntargetparticules = iNbTargetParticules;
+  cfgScalar ratio = iRatio;
+  if (ratio>0)
+  {
+    int ntop = ratio*iNbTargetParticules;
+    std::multimap<cfgScalar, int> score2Particule;
+    int npoint = (int)iScores.size();
+    for (int ipoint=0; ipoint<npoint; ipoint++)
+    {
+      score2Particule.insert(std::make_pair(iScores[ipoint], ipoint));
+    }
+    int ind=0;
+    std::multimap<cfgScalar,int>::reverse_iterator it;
+    for (it=score2Particule.rbegin(); it!=score2Particule.rend() && ind<npoint; it++, ind++)
+    {
+      oParticules.push_back(it->second);
+    }
+    ntargetparticules -= ntop;
+  }
   std::vector<int> pointIndices;
   if (iMinRadius>0)
   {
@@ -44,10 +63,10 @@ void Resampler::resample(cfgScalar iMinRadius, int iDim, const std::vector<cfgSc
   std::partial_sum(scores.begin(), scores.end(), &partialSums[0]);
 
   cfgScalar r0 = (cfgScalar)rand()/(cfgScalar)RAND_MAX;
-  cfgScalar step = (cfgScalar)1/(cfgScalar)(iNbTargetParticules);
+  cfgScalar step = (cfgScalar)1/(cfgScalar)(ntargetparticules);
   int indParticule = 0;
 
-  for (int iparticule=0; iparticule<iNbTargetParticules; iparticule++)
+  for (int iparticule=0; iparticule<ntargetparticules; iparticule++)
   {
     cfgScalar r = r0 + iparticule*step;
     if (r>1)
@@ -65,9 +84,29 @@ void Resampler::resample(cfgScalar iMinRadius, int iDim, const std::vector<cfgSc
   }
 }
 
-void Resampler::resample(const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules)
+void Resampler::resample(const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules, cfgScalar iRatio)
 {
   oParticules.clear();
+
+  int ntargetparticules = iNbTargetParticules;
+  cfgScalar ratio = iRatio;
+  if (ratio>0)
+  {
+    int ntop = ratio*iNbTargetParticules;
+    std::multimap<cfgScalar, int> score2Particule;
+    int npoint = (int)iScores.size();
+    for (int ipoint=0; ipoint<npoint; ipoint++)
+    {
+      score2Particule.insert(std::make_pair(iScores[ipoint], ipoint));
+    }
+    int ind=0;
+    std::multimap<cfgScalar,int>::reverse_iterator it;
+    for (it=score2Particule.rbegin(); it!=score2Particule.rend() && ind<npoint; it++, ind++)
+    {
+      oParticules.push_back(it->second);
+    }
+    ntargetparticules -= ntop;
+  }
 
 
   std::vector<cfgScalar> scores = iScores;
@@ -78,10 +117,10 @@ void Resampler::resample(const std::vector<cfgScalar> &iScores, int iNbTargetPar
   std::partial_sum(scores.begin(), scores.end(), &partialSums[0]);
 
   cfgScalar r0 = (cfgScalar)rand()/(cfgScalar)RAND_MAX;
-  cfgScalar step = (cfgScalar)1/(cfgScalar)(iNbTargetParticules);
+  cfgScalar step = (cfgScalar)1/(cfgScalar)(ntargetparticules);
   int indParticule = 0;
 
-  for (int iparticule=0; iparticule<iNbTargetParticules; iparticule++)
+  for (int iparticule=0; iparticule<ntargetparticules; iparticule++)
   {
     cfgScalar r = r0 + iparticule*step;
     if (r>1)
@@ -103,7 +142,7 @@ void Resampler::resample(const std::vector<cfgScalar> &iScores, int iNbTargetPar
   int indParticule = 0;
 
   std::vector<int> particules;
-  while (particules.size()<iNbTargetParticules)
+  while (particules.size()<ntargetparticules)
   {
     float r = (float)rand()/float(RAND_MAX);
     int indParticule = rand() % nInitParticules;

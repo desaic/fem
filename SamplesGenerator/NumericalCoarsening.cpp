@@ -59,11 +59,15 @@ void NumericalCoarsening::initPardiso()
   m_I.clear();
   m_J.clear();
 
+  m_K0.clear();
   if (m_dim==2)
   {
     assert(m_physicalSystem2D);
-    m_K0[0] = m_physicalSystem2D->m[0]->getStiffness(m_physicalSystem2D->e[0], m_physicalSystem2D);
-    m_K0[1] = m_physicalSystem2D->m[1]->getStiffness(m_physicalSystem2D->e[0], m_physicalSystem2D);
+    int nmat = (int)m_physicalSystem2D->m.size();
+    for (int imat=0; imat<nmat; imat++)
+    {
+      m_K0.push_back(m_physicalSystem2D->m[imat]->getStiffness(m_physicalSystem2D->e[0], m_physicalSystem2D));
+    }
     //t.start();
     m_physicalSystem2D->stiffnessPattern(m_I, m_J, triangular, true, true, true);
     //t.end();
@@ -72,8 +76,11 @@ void NumericalCoarsening::initPardiso()
   else
   {
     assert(m_physicalSystem);
-    m_K0[0] = m_physicalSystem->m[0]->getStiffness(m_physicalSystem->e[0], m_physicalSystem);
-    m_K0[1] = m_physicalSystem->m[1]->getStiffness(m_physicalSystem->e[0], m_physicalSystem);
+    int nmat = (int)m_physicalSystem->m.size();
+    for (int imat=0; imat<nmat; imat++)
+    {
+      m_K0.push_back(m_physicalSystem->m[imat]->getStiffness(m_physicalSystem->e[0], m_physicalSystem));
+    }
     //t.start();
     m_physicalSystem->stiffnessPattern(m_I, m_J, triangular, true, true, true);
     //t.end();
@@ -81,10 +88,9 @@ void NumericalCoarsening::initPardiso()
   }
   if (0)
   {
-    std::cout << "K0[0] = " << std::endl;
-    std::cout << m_K0[0] << std::endl << std::endl;
-    std::cout << "K0[1] = " << std::endl;
-    std::cout << m_K0[1] << std::endl << std::endl;
+    int imat=0;
+    std::cout << "K0[" << imat << "] = " << std::endl;
+    std::cout << m_K0[imat] << std::endl << std::endl;
   }
   //pardiso uses 1-based
   for (unsigned int ii = 0; ii < m_I.size(); ii++){
@@ -118,7 +124,6 @@ void NumericalCoarsening::init(int N[3], int iNbBlockRep, int iNbSubdiv, const s
   m_baseMaterials3D = iBaseMaterials;
 
   std::vector<int> cellMaterials(n[0]*n[1]*n[2], 0);
-  cellMaterials[1] = 1;
   SAFE_DELETE(m_physicalSystem);
   m_physicalSystem = createPhysicalSystem(n, m_baseMaterials3D, cellMaterials);
 
@@ -138,7 +143,6 @@ void NumericalCoarsening::init(int N[2], int iNbBlockRep, int iNbSubdiv, const s
   m_baseMaterials2D = iBaseMaterials;
 
   std::vector<int> cellMaterials(n[0]*n[1], 0);
-  cellMaterials[1] = 1;
   SAFE_DELETE(m_physicalSystem);
   m_physicalSystem2D = createPhysicalSystem(n, m_baseMaterials2D, cellMaterials);
 
@@ -257,13 +261,20 @@ void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters(const st
   delete physicalSystem;
 }
 
-void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters3D(const std::vector<int> &iMaterials, int N[3], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters)
+void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters3D(const std::vector<int> &iMaterials, int N[3], const std::vector<cfgScalar> &iBaseMaterialDensities, StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters)
 {
   std::vector<int> cellMaterials;
   repMaterialAssignment(N[0], N[1], N[2], iMaterials, m_nbBlockRep, m_nbBlockRep, m_nbBlockRep, m_nbSubdiv, cellMaterials); 
 
   int n[3] = {N[0]*m_nbBlockRep*m_nbSubdiv, N[1]*m_nbBlockRep*m_nbSubdiv, N[2]*m_nbBlockRep*m_nbSubdiv};
   ElementRegGrid * physicalSystem = createPhysicalSystem(n, m_baseMaterials3D, cellMaterials);
+
+  int indVoidMaterial = std::min_element(iBaseMaterialDensities.begin(), iBaseMaterialDensities.end()) - iBaseMaterialDensities.begin();
+  if (iBaseMaterialDensities[indVoidMaterial]==0)
+  {
+    std::vector<int> isolatedPoints = getIsolatedPoints(cellMaterials, n[0], n[1], n[2], indVoidMaterial);
+    setSubVector<int>(physicalSystem->fixed, 1, isolatedPoints);
+  }
 
   cfgScalar forceMagnitude = 1;
   std::vector<std::vector<cfgScalar> > harmonicDisp;
@@ -288,11 +299,15 @@ void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters3D(const 
   std::vector<std::vector<cfgScalar> > strains;
   meshUtil::computeStrains(*physicalSystem, harmonicDisp, strains);
 
-  std::vector<std::vector<int> > baseMaterials(2);
-  baseMaterials[0].push_back(0);
-  baseMaterials[1].push_back(1);
+  int nmat = (int)m_K0.size();
+  std::vector<std::vector<int> > baseMaterials(nmat);
+  for (int imat=0; imat<nmat; imat++)
+  {
+    baseMaterials[imat].push_back(imat);
+  }
 
-  cfgScalar r = computeMaterialRatio(iMaterials, baseMaterials);
+  //cfgScalar r = computeMaterialRatio(iMaterials, baseMaterials);
+  cfgScalar r = computeMaterialDensity(iMaterials, iBaseMaterialDensities);
   ioParameters.push_back(r);
 
   int naxis = (iType==Cubic? 1: 3);
@@ -322,13 +337,100 @@ void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters3D(const 
   delete physicalSystem;
 }
 
-void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters2D(const std::vector<int> &iMaterials, int N[2], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters)
+std::vector<int> NumericalCoarsening::getIsolatedPoints(const std::vector<int> &iMaterials, int nx, int ny, int indVoidMaterial)
+{
+  std::vector<int> isolatedPoints;
+
+  for (int x=0; x<nx; x++)
+  {
+    for (int y=0; y<ny; y++)
+    {
+      int indMat11 = getGridToVectorIndex(x, y, nx, ny);
+      int indMat12 = getGridToVectorIndex(x, (y+ny-1)%ny, nx, ny);
+      int indMat21 = getGridToVectorIndex((x+nx-1)%nx, y, nx, ny);
+      int indMat22 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, nx, ny);
+
+      std::vector<int> materials;
+      materials.push_back(iMaterials[indMat11]);
+      materials.push_back(iMaterials[indMat12]);
+      materials.push_back(iMaterials[indMat21]);
+      materials.push_back(iMaterials[indMat22]);
+      bool isolated = true;
+      for (int imat=0; imat<(int)materials.size(); imat++)
+      {
+        int mat = materials[imat];
+        isolated = isolated && (mat==indVoidMaterial);
+      }
+      if (isolated)
+      {
+        int indPoint = getGridToVectorIndex(x, y, nx+1, ny+1);
+        isolatedPoints.push_back(indPoint);
+      }
+    }
+  }
+  return isolatedPoints;
+}
+
+std::vector<int> NumericalCoarsening::getIsolatedPoints(const std::vector<int> &iMaterials, int nx, int ny, int nz, int indVoidMaterial)
+{
+  std::vector<int> isolatedPoints;
+
+  for (int x=0; x<nx; x++)
+  {
+    for (int y=0; y<ny; y++)
+    {
+      for (int z=0; z<nz; z++)
+      {
+        int indMat111 = getGridToVectorIndex(x, y, z, nx, ny, nz);
+        int indMat121 = getGridToVectorIndex(x, (y+ny-1)%ny, z, nx, ny, nz);
+        int indMat211 = getGridToVectorIndex((x+nx-1)%nx, y, z, nx, ny, nz);
+        int indMat221 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, z, nx, ny, nz);
+        int indMat112 = getGridToVectorIndex(x, y, (z+nz-1)%nz, nx, ny, nz);
+        int indMat122 = getGridToVectorIndex(x, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+        int indMat212 = getGridToVectorIndex((x+nx-1)%nx, y, (z+nz-1)%nz, nx, ny, nz);
+        int indMat222 = getGridToVectorIndex((x+nx-1)%nx, (y+ny-1)%ny, (z+nz-1)%nz, nx, ny, nz);
+
+        std::vector<int> materials;
+        materials.push_back(iMaterials[indMat111]);
+        materials.push_back(iMaterials[indMat121]);
+        materials.push_back(iMaterials[indMat211]);
+        materials.push_back(iMaterials[indMat221]);
+        materials.push_back(iMaterials[indMat112]);
+        materials.push_back(iMaterials[indMat122]);
+        materials.push_back(iMaterials[indMat212]);
+        materials.push_back(iMaterials[indMat222]);
+        bool isolated = true;
+        for (int imat=0; imat<(int)materials.size(); imat++)
+        {
+          int mat = materials[imat];
+          isolated = isolated && (mat==indVoidMaterial);
+        }
+        if (isolated)
+        {
+          int indPoint = getGridToVectorIndex(x, y, z, nx+1, ny+1, nz+1);
+          isolatedPoints.push_back(indPoint);
+        }
+      }
+    }
+  }
+  return isolatedPoints;
+}
+
+
+void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters2D(const std::vector<int> &iMaterials, int N[2], const std::vector<cfgScalar> &iBaseMaterialDensities, StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters)
 {
   std::vector<int> cellMaterials;
   repMaterialAssignment(N[0], N[1], iMaterials, m_nbBlockRep, m_nbBlockRep, m_nbSubdiv, cellMaterials); 
 
   int n[2] = {N[0]*m_nbBlockRep*m_nbSubdiv, N[1]*m_nbBlockRep*m_nbSubdiv};
   ElementRegGrid2D * physicalSystem = createPhysicalSystem(n, m_baseMaterials2D, cellMaterials);
+
+  int indVoidMaterial = std::min_element(iBaseMaterialDensities.begin(), iBaseMaterialDensities.end()) - iBaseMaterialDensities.begin();
+  if (iBaseMaterialDensities[indVoidMaterial]==0)
+  {
+    std::vector<int> isolatedPoints = getIsolatedPoints(cellMaterials, n[0], n[1], indVoidMaterial);
+    setSubVector<int>(physicalSystem->fixed, 1, isolatedPoints);
+  }
 
   cfgScalar forceMagnitude = 1;
   std::vector<std::vector<cfgScalar> > harmonicDisp;
@@ -353,11 +455,14 @@ void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters2D(const 
   std::vector<std::vector<cfgScalar> > strains;
   meshUtil::computeStrains(*physicalSystem, harmonicDisp, strains);
 
-  std::vector<std::vector<int> > baseMaterials(2);
-  baseMaterials[0].push_back(0);
-  baseMaterials[1].push_back(1);
-
-  cfgScalar r = computeMaterialRatio(iMaterials, baseMaterials);
+  int nmat = (int)m_K0.size();
+  std::vector<std::vector<int> > baseMaterials(nmat);
+  for (int imat=0; imat<nmat; imat++)
+  {
+    baseMaterials[imat].push_back(imat);
+  }
+  //cfgScalar r = computeMaterialRatio(iMaterials, baseMaterials);
+  cfgScalar r = computeMaterialDensity(iMaterials, iBaseMaterialDensities);
   ioParameters.push_back(r);
 
   int naxis = (iType==Cubic? 1: 2);
@@ -1132,7 +1237,7 @@ void NumericalCoarsening::getStiffnessSparse(ElementRegGrid * iPhysicalSystem, s
 {
   bool fixRigid = true;
   bool periodic = true;
-  bool constrained = false;
+  bool constrained = true;
   bool trig = true;
   int dim = 3;
   int N = dim * (int)iPhysicalSystem->x.size();
@@ -1153,10 +1258,18 @@ void NumericalCoarsening::getStiffnessSparse(ElementRegGrid * iPhysicalSystem, s
               continue;
             }
             cfgScalar val = K(dim * jj + dim1, dim * kk + dim2);
-            if (constrained){
-              if ( (iPhysicalSystem->fixed[vk] || iPhysicalSystem->fixed[vj]) 
-                && (vj != vk || dim1 != dim2)){
-                val = 0;
+            if (constrained)
+            {
+              if (iPhysicalSystem->fixed[vk] || iPhysicalSystem->fixed[vj])
+              {
+                if (vj != vk || dim1 != dim2)
+                {
+                  val = 0;
+                }
+                else
+                {
+                  val = 1;
+                }
               }
             }
             if (dim * vj + dim1 == dim * vk + dim2){
@@ -1194,7 +1307,7 @@ void NumericalCoarsening::getStiffnessSparse(ElementRegGrid2D * iPhysicalSystem,
 {
   bool fixRigid = true;
   bool periodic = true;
-  bool constrained = false;
+  bool constrained = true;
   bool trig = true;
   int dim = 2;
   int N = dim * (int)iPhysicalSystem->x.size();
@@ -1215,10 +1328,18 @@ void NumericalCoarsening::getStiffnessSparse(ElementRegGrid2D * iPhysicalSystem,
               continue;
             }
             cfgScalar val = K(dim * jj + dim1, dim * kk + dim2);
-            if (constrained){
-              if ( (iPhysicalSystem->fixed[vk] || iPhysicalSystem->fixed[vj]) 
-                && (vj != vk || dim1 != dim2)){
-                val = 0;
+            if (constrained)
+            {
+              if (iPhysicalSystem->fixed[vk] || iPhysicalSystem->fixed[vj]) 
+              {
+                if (vj != vk || dim1 != dim2)
+                {
+                  val = 0;
+                }
+                else
+                {
+                  val = 1;
+                }
               }
             }
             if (dim * vj + dim1 == dim * vk + dim2){

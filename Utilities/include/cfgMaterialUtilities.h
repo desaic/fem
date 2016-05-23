@@ -79,6 +79,7 @@ namespace cfgMaterialUtilities
   bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, int nX, int nY, bool isStructuredMirrored, int iNbCellsToCheck);
   bool isStructureManifold(int nx, int ny, const std::vector<int> &iMaterials, bool isStructuredMirrored);
   bool isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, int nX, int nY, int nZ);
+  bool isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, int nX, int nY, int nZ, int nmat);
   void getNonManifoldVertices(int nx, int ny, const std::vector<int> &iMaterials, bool isStructuredMirrored, std::vector<int> &oNonManifoldVertices);
   void getNonManifoldVertices(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, std::vector<int> &oNonManifoldVertices);
   void updateMaterialSubstructure(std::vector<int> &ioMaterialAsssignment, int nx, int ny, const std::vector<int> &iSubMaterialStructure, int Nx, int Ny, int iSubMatStructLocation);
@@ -101,6 +102,9 @@ namespace cfgMaterialUtilities
   void getTetrahedralStructure(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oNewStructureElements);
   void getTriangleElements(int Nx, int Ny, const std::vector<int> &iStructureElements, std::vector<int> &oTriangleElements);
   void getTetrahedralElements(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, std::vector<int> &oTetrahedralElements);
+
+  void translateStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, int Tx, int Ty, std::vector<int> &oTranslatedStructure);
+  void translateStructure(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, int Tx, int Ty, int Tz, std::vector<int> &oTranslatedStructure);
 
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int iAxis);
   cfgScalar computeStrain(const std::vector<cfgScalar> &ix, int nx, int ny, int nz, int iAxis);
@@ -131,6 +135,7 @@ namespace cfgMaterialUtilities
 
   void getBoundingBox(const std::vector<cfgScalar> &iPoints, int iDim, std::vector<cfgScalar> oBox[2]);
   bool rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths, std::vector<cfgScalar> *ioScalingFactors=NULL);
+  void convertToLogValues(std::vector<cfgScalar> &ioPoints, int iDim, const std::vector<int> &iDimToScale, cfgScalar iEpsilon=1.e-6);
 
   // Triangle mesh utilities
   //------------------------

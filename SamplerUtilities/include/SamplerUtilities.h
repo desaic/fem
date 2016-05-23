@@ -8,7 +8,7 @@
 
 namespace SamplerUtilities
 {
-  // Point cloud utitlities
+  // Point cloud utilities
   // ----------------------
   void computeConvexHull(const std::vector<float> &iPoints, int iDim, std::vector<int> &oConvexHullVertices);
   void computeDelaundayTriangulation(const std::vector<float> &iPoints, int iDim, std::vector<int> &oFaces, std::vector<int> &oBoundaryVertices, std::vector<int> &oBoundaryFaces, std::vector<float> *oDistancesToBoundary=NULL);
@@ -16,6 +16,10 @@ namespace SamplerUtilities
   
   void getClosestPoints(const std::vector<float> &iPoints, int iDim, std::vector<int> &iRefPointIndices, float iRange, std::vector<int> &oPoints);
   void computeDistancesToPointCloud(const std::vector<float> &iPoints, const std::vector<float> &iPointCloud, std::vector<float> &oDistances);
+
+  void samplePointsGreedy(int iOutputNbPoints, const std::vector<cfgScalar> &iPoints, int iDim, cfgScalar iMinRadius, std::vector<int> &oPointIndices);
+  void samplePointsGreedyV2(int iOutputNbPoints, const std::vector<cfgScalar> &iPoints, int iDim, cfgScalar iMinRadius, std::vector<int> &oPointIndices);
+  void samplePointsRandom(int iOutputNbPoints, const std::vector<cfgScalar> &iPoints, int iDim, cfgScalar iMinRadius, std::vector<int> &oPointIndices);
 };
 
 #endif 

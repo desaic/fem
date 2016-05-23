@@ -6,11 +6,11 @@ class StrainEneNeo:public StrainEne
 {
 public:
   StrainEneNeo();
-  float getEnergy(const Eigen::Matrix3f & F);
-  Eigen::Matrix3f getPK1(const Eigen::Matrix3f & F);
-  Eigen::Matrix3f getdPdx(const Eigen::Matrix3f & F, const Eigen::Matrix3f & dF);
+  cfgScalar getEnergy(const Matrix3S & F);
+  Matrix3S getPK1(const Matrix3S & F);
+  Matrix3S getdPdx(const Matrix3S & F, const Matrix3S & dF);
 
-  Eigen::MatrixXf EMatrix();
-  Eigen::Matrix3f getStrainTensor(const Eigen::Matrix3f & F);
+  MatrixXS EMatrix();
+  Matrix3S getStrainTensor(const Matrix3S & F);
 };
 #endif

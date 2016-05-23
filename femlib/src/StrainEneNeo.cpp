@@ -7,19 +7,19 @@ StrainEneNeo::StrainEneNeo()
   param[1] =10;
 }
 
-Matrix3f StrainEneNeo::getStrainTensor(const Matrix3f & F)
+Matrix3S StrainEneNeo::getStrainTensor(const Matrix3S & F)
 {
   return F.transpose() * F;
 }
 
-Eigen::MatrixXf StrainEneNeo::EMatrix()
+MatrixXS StrainEneNeo::EMatrix()
 {
-  Eigen::MatrixXf E = Eigen::MatrixXf::Zero(6, 6);
-  float G = param[0];
-  float l = param[1];
-  float e = G*(3 * l + 2 * G) / (l + G);
-  float nu = l / (2 * (l + G));
-  float c = e / ((1 + nu)*(1 - 2 * nu));
+  MatrixXS E = MatrixXS::Zero(6, 6);
+  cfgScalar G = param[0];
+  cfgScalar l = param[1];
+  cfgScalar e = G*(3 * l + 2 * G) / (l + G);
+  cfgScalar nu = l / (2 * (l + G));
+  cfgScalar c = e / ((1 + nu)*(1 - 2 * nu));
   for (int ii = 0; ii < 3; ii++){
     for (int jj = 0; jj < 3; jj++){
       E(ii, jj) = nu;
@@ -30,33 +30,33 @@ Eigen::MatrixXf StrainEneNeo::EMatrix()
   return c*E;
 }
 
-float StrainEneNeo::getEnergy(const Matrix3f & F)
+cfgScalar StrainEneNeo::getEnergy(const Matrix3S & F)
 {
-  float I1 = (F.transpose()*F).trace();
-  float JJ = std::log(F.determinant());
-  float mu = param[0],lambda=param[1];
-  float Psi = (mu/2) * (I1-3) - mu*JJ + (lambda/2)*JJ*JJ;
-  return (float)Psi;
+  cfgScalar I1 = (F.transpose()*F).trace();
+  cfgScalar JJ = std::log(F.determinant());
+  cfgScalar mu = param[0],lambda=param[1];
+  cfgScalar Psi = (mu/2) * (I1-3) - mu*JJ + (lambda/2)*JJ*JJ;
+  return (cfgScalar)Psi;
 }
 
-Matrix3f StrainEneNeo::getPK1(const Matrix3f & F)
+Matrix3S StrainEneNeo::getPK1(const Matrix3S & F)
 {
-  float JJ = std::log(F.determinant());
-  Matrix3f Finv = F.inverse().transpose();
-  float mu = param[0],lambda=param[1];
-  Matrix3f PP = mu*(F-Finv) + lambda*JJ*Finv;
+  cfgScalar JJ = std::log(F.determinant());
+  Matrix3S Finv = F.inverse().transpose();
+  cfgScalar mu = param[0],lambda=param[1];
+  Matrix3S PP = mu*(F-Finv) + lambda*JJ*Finv;
   return PP;
 }
 
-Matrix3f StrainEneNeo::getdPdx(const Matrix3f & F,const Matrix3f & dF)
+Matrix3S StrainEneNeo::getdPdx(const Matrix3S & F,const Matrix3S & dF)
 {
-  Matrix3f dP = Matrix3f();
-  float JJ = std::log(F.determinant());
-  Matrix3f Finv = F.inverse();
-  Matrix3f FinvT = Finv.transpose();
-  float mu = param[0],lambda=param[1];
+  Matrix3S dP = Matrix3S();
+  cfgScalar JJ = std::log(F.determinant());
+  Matrix3S Finv = F.inverse();
+  Matrix3S FinvT = Finv.transpose();
+  cfgScalar mu = param[0],lambda=param[1];
   dP = mu*dF;
-  float c1 = mu-lambda * JJ;
+  cfgScalar c1 = mu-lambda * JJ;
   dP += c1 * FinvT*dF.transpose()*FinvT;
   dP += lambda*(Finv*dF).trace()*FinvT;
   return dP;

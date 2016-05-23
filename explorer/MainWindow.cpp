@@ -31,6 +31,7 @@ MainWindow::MainWindow()
   materialParameterStrings[exProject::MuXZType] = "MuXZ";
   materialParameterStrings[exProject::MuYZType] = "MuYZ";
   materialParameterStrings[exProject::DensityType] = "Density";
+  materialParameterStrings[exProject::StrengthType] = "Strength";
 
   addMaterialParameterOptions(*m_x_comboBox, materialParameterStrings);
   addMaterialParameterOptions(*m_y_comboBox, materialParameterStrings);

@@ -28,6 +28,8 @@ using namespace ExplorerUtilities;
 #include "cfgMaterialUtilities.h"
 using namespace cfgMaterialUtilities;
 
+#include "cfgUtilities.h";
+
 MaterialStructureView::MaterialStructureView()
   :QVTKWidget()
 {
@@ -100,7 +102,14 @@ vtkSmartPointer<vtkPolyData> MaterialStructureView::createVtkPolyData(const Elem
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   vtkSmartPointer<vtkCellArray> faces = vtkSmartPointer<vtkCellArray>::New();
 
-  unsigned char colMat[2][4] =  {{200, 200, 200, 120}, {0, 0, 255, 255}};
+  //unsigned char colMat[2][4] =  {{200, 200, 200, 120}, {150, 150, 150, 255}};
+  unsigned char colMat[3][4] =  {{50, 50, 50, 255}, {200, 200, 200, 255}, {255, 255, 255, 255}};
+  std::vector<int> ind2Color(3);
+  ind2Color[0] = 0;
+  ind2Color[1] = 1;
+  ind2Color[2] = 2;
+
+  //saveStructure();
 
   vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New();
   colors->SetNumberOfComponents(4);
@@ -118,7 +127,9 @@ vtkSmartPointer<vtkPolyData> MaterialStructureView::createVtkPolyData(const Elem
     Element * ele = iElementMesh->e[ielement];
     const std::vector<int> & nodes = ele->getNodeIndices();
     int indMat = iElementMesh->me[ielement];
-    if (indMat>0)
+    int indColor = ind2Color[indMat];
+    if (indColor!=2)
+    //if (indMat>0)
     {
       for (int iaxis=0; iaxis<3; iaxis++)
       {
@@ -137,9 +148,9 @@ vtkSmartPointer<vtkPolyData> MaterialStructureView::createVtkPolyData(const Elem
           }
           faces->InsertNextCell(polygon);
 
-          unsigned char color[4] = {255-indMat, 255-indMat, 255, 255};
+          //unsigned char color[4] = {255-indMat, 255-indMat, 255, 255};
           //colors->InsertNextTupleValue(color);
-          colors->InsertNextTupleValue(colMat[indMat]);
+          colors->InsertNextTupleValue(colMat[indColor]);
         }
       }
     }
@@ -198,9 +209,14 @@ void MaterialStructureView::saveStructure()
     const std::vector<int> & levels = m_project->getLevels();
 
     int n = levels[pickedStructureLevel];
-    std::string fileName = m_project->getFileDirectory() + "MaterialAssignment_" + std::to_string(n) + "_" + std::to_string(pickedStructureIndex) + ".txt";
-
+    std::string fileName = /*m_project->getFileDirectory() +*/  "MaterialAssignment_" + std::to_string(n) + "_" + std::to_string(pickedStructureIndex) + ".txt";
+    std::string fileName2 = /*m_project->getFileDirectory() +*/  "MaterialAssignment_" + std::to_string(n) + "_" + std::to_string(pickedStructureIndex) + ".txt";
     saveMicrostructure(fileName, n, n, matAssignment);
+    saveMicrostructure(fileName2, n, n, matAssignment);
+
+    std::string fileNameBin = /*m_project->getFileDirectory() +*/  "MaterialAssignment_" + std::to_string(n) + "_" + std::to_string(pickedStructureIndex);
+    std::string fileExtension = ".bin";
+    cfgUtil::writeBinary<int>(fileNameBin, matAssignment);
   }
 }
 

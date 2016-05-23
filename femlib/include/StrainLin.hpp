@@ -5,13 +5,13 @@
 class StrainLin :public StrainEne{
 public:
 	StrainLin();
-  virtual float getEnergy(const Eigen::Matrix3f & F);
-  virtual Eigen::Matrix3f getPK1(const Eigen::Matrix3f & F);
-  virtual Eigen::Matrix3f getdPdx(const Eigen::Matrix3f & F, const Eigen::Matrix3f & dF);
+  virtual cfgScalar getEnergy(const Matrix3S & F);
+  virtual Matrix3S getPK1(const Matrix3S & F);
+  virtual Matrix3S getdPdx(const Matrix3S & F, const Matrix3S & dF);
 
-	virtual Eigen::MatrixXf EMatrix();
+	virtual MatrixXS EMatrix();
 
-  virtual Eigen::Matrix3f getStrainTensor(const Eigen::Matrix3f & F);
+  virtual Matrix3S getStrainTensor(const Matrix3S & F);
 };
 
 #endif

@@ -32,8 +32,8 @@ public:
   void computeCoarsenedElasticityTensorAndParameters(const std::vector<int> &iMaterials, int N[3], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad> &iBaseMaterials, 
                                                      StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
 
-  void computeCoarsenedElasticityTensorAndParameters3D(const std::vector<int> &iMaterials, int N[3], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
-  void computeCoarsenedElasticityTensorAndParameters2D(const std::vector<int> &iMaterials, int N[2], StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
+  void computeCoarsenedElasticityTensorAndParameters3D(const std::vector<int> &iMaterials, int N[3], const std::vector<cfgScalar> &iBaseMaterialDensities, StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
+  void computeCoarsenedElasticityTensorAndParameters2D(const std::vector<int> &iMaterials, int N[2], const std::vector<cfgScalar> &iBaseMaterialDensities, StructureType iType, std::vector<cfgScalar> &ioTensorValues, std::vector<cfgScalar> &ioParameters);
 
   MatrixXS computeCoarsenedElasticityTensor(const std::vector<int> &iMaterials, int N[2], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad2D> &iBaseMaterials);
   MatrixXS computeCoarsenedElasticityTensor(const std::vector<int> &iMaterials, int N[3], int iNbBlockRep, int iNbSubdiv, std::vector<MaterialQuad> &iBaseMaterials);
@@ -66,6 +66,9 @@ private:
   void getStiffnessSparse(ElementRegGrid * iPhysicalSystem, std::vector<double> &oValues);
   void getStiffnessSparse(ElementRegGrid2D * iPhysicalSystem, std::vector<double> &oValues);
 
+  std::vector<int> getIsolatedPoints(const std::vector<int> &iMaterials, int nx, int ny, int indVoidMaterial);
+  std::vector<int> getIsolatedPoints(const std::vector<int> &iMaterials, int nx, int ny, int nz, int indVoidMaterial);
+
   void initPardiso();
 
 private:
@@ -77,7 +80,7 @@ private:
   std::vector<MaterialQuad> m_baseMaterials3D;
   int m_nbBlockRep;
   int m_nbSubdiv;
-  MatrixXS m_K0[2];
+  std::vector<MatrixXS> m_K0;
   int m_dim;
 
   bool m_init;

@@ -112,6 +112,27 @@ std::vector<cfgScalar> ScoringFunction::computeScores(const std::vector<cfgScala
   {
     std::vector<cfgScalar> points = iPoints;
     std::vector<cfgScalar> lengths(m_dim, 1);
+    std::vector<int> dimToScale;
+    if (1)
+    {
+      if (m_dim==4)
+      {
+        dimToScale.push_back(1);
+      }
+      else if (m_dim==5)
+      {
+        dimToScale.push_back(1);
+        dimToScale.push_back(2);
+      }
+      else
+      {
+        dimToScale.push_back(1);
+        dimToScale.push_back(2);
+        dimToScale.push_back(3);
+      }
+    }
+    cfgScalar eps = 1.e-6;
+    convertToLogValues(points, m_dim, dimToScale, eps);
     rescaleData(points, m_dim, lengths);
     if (m_densityRadius==0)
     {
@@ -122,23 +143,28 @@ std::vector<cfgScalar> ScoringFunction::computeScores(const std::vector<cfgScala
     DistanceField distanceField(m_dim);
     scores = distanceField.computeDistances(iPoints);
 
-    std::cout << "computing densities..." << std::endl;
-    std::vector<cfgScalar> densities = computeDensities(points);
-    cfgScalar scoreMax = *std::max_element(scores.begin(), scores.end());
-    cfgScalar scoreMin = *std::min_element(scores.begin(), scores.end());
-
-    cfgScalar minProba = 0 ;//0.1;
-
-    if (scoreMax-scoreMin > 1.e-6)
+    bool useDensity = true;
+    std::vector<cfgScalar> densities;
+    if (useDensity)
     {
-      int ipoint, npoint=(int)scores.size();
-      for (ipoint=0; ipoint<npoint; ipoint++)
+      std::cout << "computing densities..." << std::endl;
+      densities = computeDensities(points);
+      cfgScalar scoreMax = *std::max_element(scores.begin(), scores.end());
+      cfgScalar scoreMin = *std::min_element(scores.begin(), scores.end());
+
+      cfgScalar minProba = 0 ;//0.1;
+
+      if (scoreMax-scoreMin > 1.e-6)
       {
-        scores[ipoint] = (scores[ipoint]-scoreMin)/(scoreMax-scoreMin);
-        scores[ipoint] /= (densities[ipoint]*densities[ipoint]);
-        //scores[ipoint] /= densities[ipoint];
-        scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
-        //scores[ipoint] *= scores[ipoint];
+        int ipoint, npoint=(int)scores.size();
+        for (ipoint=0; ipoint<npoint; ipoint++)
+        {
+          scores[ipoint] = (scores[ipoint]-scoreMin)/(scoreMax-scoreMin);
+          scores[ipoint] /= (densities[ipoint]*densities[ipoint]);
+          //scores[ipoint] /= densities[ipoint];
+          scores[ipoint] = (1-minProba)*scores[ipoint] + minProba;
+          //scores[ipoint] *= scores[ipoint];
+        }
       }
     }
   }

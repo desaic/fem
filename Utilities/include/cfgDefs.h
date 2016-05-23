@@ -1,7 +1,7 @@
 #ifndef exDefs_h
 #define exDefs_h
 
-#define cfgScalar float
+#define cfgScalar  float
 
 #include "Eigen/Sparse"
 typedef Eigen::Matrix<cfgScalar, 2, 1> Vector2S;

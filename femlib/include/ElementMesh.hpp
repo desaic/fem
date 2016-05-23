@@ -2,6 +2,7 @@
 #define ELEMENTMESH_HPP
 #include <vector>
 #include <Eigen/Sparse>
+#include "cfgDefs.h"
 
 class Element;
 class Material;
@@ -13,26 +14,26 @@ public:
   std::vector<Element*>e;
 
   ///@brief deformed positions in t-1. used by dynamics(unit m)
-//  std::vector<Vector3f>x0;
+//  std::vector<Vector3S>x0;
 
   ///@brief deformed positions (unit m)
-  std::vector<Eigen::Vector3f>x;
+  std::vector<Vector3S>x;
   
   ///@brief vertex positions at rest pose.
-  std::vector<Eigen::Vector3f>X;
+  std::vector<Vector3S>X;
 
   ///@brief velocity
-  std::vector<Eigen::Vector3f>v;
+  std::vector<Vector3S>v;
 
   ///@brief time step (unit s)
-  float dt;
+  cfgScalar dt;
   ///@brief gravitational constant
-  Eigen::Vector3f G;
+  Vector3S G;
   ///@TODO: change to per element density.
   ///@brief kg/m3
-  float density;
+  cfgScalar density;
   ///@brief lumped mass
-  std::vector<float>mass;
+  std::vector<cfgScalar>mass;
 
   std::vector<Material*>m;
   
@@ -40,7 +41,7 @@ public:
   std::vector<int>me;
   
   ///@brief external forces applied to each dof.
-  std::vector<Eigen::Vector3f>fe;
+  std::vector<Vector3S>fe;
   
   std::vector<int> fixed;
   
@@ -48,7 +49,7 @@ public:
   ElementMesh();
   
   ///@brief load a plain text hex fem mesh
-  void load(std::istream & in, float scale=1.0f);
+  void load(std::istream & in, cfgScalar scale=1.0f);
 
   ///@brief utility. call after initializing or changing X and e 
   ///X is copied to x;
@@ -60,20 +61,20 @@ public:
   ///@brief for debug, check the size of members.
   int check();
 
-  float getEnergy();
-  float getEnergy(int eIdx);
+  cfgScalar getEnergy();
+  cfgScalar getEnergy(int eIdx);
 
   ///@brief computes internal forces only
-  std::vector<Eigen::Vector3f> getForce(int eIdx);
-  std::vector<Eigen::Vector3f> getForce();
+  std::vector<Vector3S> getForce(int eIdx);
+  std::vector<Vector3S> getForce();
 
-  Eigen::MatrixXf getStiffness(int eIdx);
+  MatrixXS getStiffness(int eIdx);
 
   ///@param trig if true, return only the upper triangle of the symmetric matrix.
-  void getStiffnessSparse(std::vector<float> &val, bool trig = false, bool constrained=false, bool iFixedRigid=false);
-  void getStiffnessSparse(std::vector<float> &val, bool trig, bool constrained, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic);
+  void getStiffnessSparse(std::vector<cfgScalar> &val, bool trig = false, bool constrained=false, bool iFixedRigid=false);
+  void getStiffnessSparse(std::vector<cfgScalar> &val, bool trig, bool constrained, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic);
 
-  Eigen::SparseMatrix<float> getStiffnessSparse(bool trig = false, bool constrained=false, bool iFixedRigid=false);
+  Eigen::SparseMatrix<cfgScalar> getStiffnessSparse(bool trig = false, bool constrained=false, bool iFixedRigid=false);
 
   ///@brief precompute lumped maasses.
   void computeMass();
@@ -83,25 +84,25 @@ public:
   void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig = false, bool iFixedRigid=false);
   void stiffnessPattern(std::vector<int> & I, std::vector<int> & J, bool trig, bool iFixedTranslation, bool iFixedRotation, bool iPeriodic);
 
-  Eigen::MatrixXf getStiffness();
+  MatrixXS getStiffness();
   
-  float eleSize();
+  cfgScalar eleSize();
 
   virtual ~ElementMesh();
 
 
   //for rendering 
-  float forceDrawingScale;
+  cfgScalar forceDrawingScale;
 
 //private:
-  void fixTranslation(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
-  void fixRotation(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
-  void enforcePeriodicity(Eigen::SparseMatrix<float> & K, bool iTriangular, ElementMesh * mesh);
+  void fixTranslation(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh * mesh);
+  void fixRotation(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh * mesh);
+  void enforcePeriodicity(Eigen::SparseMatrix<cfgScalar> & K, bool iTriangular, ElementMesh * mesh);
 };
 
 
-void getEleX(int ii, const ElementMesh * m, std::vector<Eigen::Vector3f> &x);
+void getEleX(int ii, const ElementMesh * m, std::vector<Vector3S> &x);
 
-void setEleX(int ii, ElementMesh * m, const std::vector<Eigen::Vector3f> &x);
+void setEleX(int ii, ElementMesh * m, const std::vector<Vector3S> &x);
 
 #endif

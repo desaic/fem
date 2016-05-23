@@ -18,22 +18,22 @@ public:
 
 
   ///@brief natural coordinate for a point in reference space
-  Eigen::Vector3f natCoord(const Eigen::Vector3f & p, const std::vector<Eigen::Vector3f> & X);
+  Vector3S natCoord(const Vector3S & p, const std::vector<Vector3S> & X);
   
-  std::vector<float> shapeFun(const Eigen::Vector3f & p)const;
+  std::vector<cfgScalar> shapeFun(const Vector3S & p)const;
 
-  Eigen::Vector3f shapeFunGrad(int ii, const Eigen::Vector3f & xx,
-    const std::vector<Eigen::Vector3f> & X) const;
+  Vector3S shapeFunGrad(int ii, const Vector3S & xx,
+    const std::vector<Vector3S> & X) const;
 
   std::vector<std::array<int,2> > getEdges();
-  float getVol(const std::vector<Eigen::Vector3f> & X);
+  cfgScalar getVol(const std::vector<Vector3S> & X);
 
-  Eigen::Vector3f facePt(int fi, const Eigen::Vector3f & x);
+  Vector3S facePt(int fi, const Vector3S & x);
   ///@param fi face index.
-  Eigen::MatrixXf NMatrix(int fi);
+  MatrixXS NMatrix(int fi);
   ///@brief shape function matrix.
-  Eigen::MatrixXf HMatrix(const Eigen::Vector3f & xx);
+  MatrixXS HMatrix(const Vector3S & xx);
   //specific for linear strain (F+F^T).
-  Eigen::MatrixXf BMatrix(const Eigen::Vector3f & xx, const std::vector<Eigen::Vector3f>X);
+  MatrixXS BMatrix(const Vector3S & xx, const std::vector<Vector3S>X);
 };
 #endif

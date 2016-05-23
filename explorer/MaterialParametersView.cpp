@@ -32,9 +32,8 @@ using namespace cfgMaterialUtilities;
 using namespace cfgUtil;
 
 //#include "ScoringFunction.h"
-//#include "Resampler.h"
-
-//#include "DistanceField.h"
+#include "Resampler.h"
+#include "DistanceField.h"
 
 MaterialParametersView::MaterialParametersView()
   :QVTKWidget()
@@ -184,6 +183,20 @@ cfgScalar MaterialParametersView::getMaxValue(int iIndex, const std::vector<cfgS
   return maxValue;
 }
 
+void MaterialParametersView::convertToLogValues(int iIndex, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<cfgScalar> &oPoints, cfgScalar iEpsilon)
+{
+  assert(iPoints.size()%iDim==0);
+
+  oPoints = iPoints;
+  int ipoint=0, npoint=(int)iPoints.size()/iDim;
+  for (ipoint=0; ipoint<npoint; ipoint++)
+  {
+    int coord = iDim*ipoint + iIndex;
+    cfgScalar value = iPoints[coord];
+    oPoints[coord] = log(value+iEpsilon);
+  }
+}
+
 void MaterialParametersView::updatePlots()
 {
   Q_ASSERT(m_project);
@@ -225,6 +238,7 @@ void MaterialParametersView::updatePlots()
   materialParameterStrings[exProject::MuXZType] = "MuXZ";
   materialParameterStrings[exProject::MuYZType] = "MuYZ";
   materialParameterStrings[exProject::DensityType] = "Density";
+  materialParameterStrings[exProject::StrengthType] = "Strength";
 
   exProject::MicrostructureType type = m_project->getType();
   std::vector<std::string> labels;
@@ -236,6 +250,7 @@ void MaterialParametersView::updatePlots()
     validTypes.push_back(exProject::EXType);
     validTypes.push_back(exProject::NuXYType);
     validTypes.push_back(exProject::MuXYType);
+    validTypes.push_back(exProject::StrengthType);
   
     dimToRescale.push_back(1);
   }
@@ -249,6 +264,7 @@ void MaterialParametersView::updatePlots()
       validTypes.push_back(exProject::EYType);
       validTypes.push_back(exProject::NuXYType);
       validTypes.push_back(exProject::MuXYType);
+      validTypes.push_back(exProject::StrengthType);
  
       dimToRescale.push_back(1);
       dimToRescale.push_back(2);
@@ -266,6 +282,7 @@ void MaterialParametersView::updatePlots()
       validTypes.push_back(exProject::MuXYType);
       validTypes.push_back(exProject::MuXZType);
       validTypes.push_back(exProject::MuYZType);
+      validTypes.push_back(exProject::StrengthType);
 
       dimToRescale.push_back(1);
       dimToRescale.push_back(2);
@@ -282,14 +299,46 @@ void MaterialParametersView::updatePlots()
   std::set<exProject::MaterialParameterType> setValidTypes = toStdSet<exProject::MaterialParameterType>(validTypes);
 
   srand(0);
+
+  std::vector<cfgScalar> maxValues(paramdim, -FLT_MAX);
+  for (int idim=0; idim<paramdim; idim++)
+  {
+    for (ilevel=0; ilevel<nlevel; ilevel++)
+    {
+      cfgScalar maxValue = getMaxValue(idim, physicalParametersPerLevel[ilevel], paramdim);
+      if (maxValue > maxValues[idim])
+      {
+        maxValues[idim] = maxValue;
+      }
+    }
+  }
+
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
-    for (int idim=0; idim<dimToRescale.size(); idim++)
+    if (0)
     {
-      float maxE = getMaxValue(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim);
-      if (maxE > 2)
+      for (int idim=0; idim<paramdim; idim++)
       {
-        rescaleParameters(dimToRescale[idim], scalingFactor_E, physicalParametersPerLevel[ilevel], paramdim);
+      cfgScalar maxValue = maxValues[idim];
+
+      rescaleParameters(idim, 1./maxValue, physicalParametersPerLevel[ilevel], paramdim);
+      std::vector<cfgScalar> newPoints;
+      convertToLogValues(idim, physicalParametersPerLevel[ilevel], paramdim, newPoints, 1.e-6);
+      physicalParametersPerLevel[ilevel] = newPoints;
+      } 
+    }
+    else
+    {
+      for (int idim=0; idim<dimToRescale.size(); idim++)
+      {
+        std::vector<cfgScalar> newPoints;
+        //convertToLogValues(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim, newPoints);
+        //physicalParametersPerLevel[ilevel] = newPoints;
+        float maxE = getMaxValue(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim);
+        if (maxE > 2)
+        {
+          rescaleParameters(dimToRescale[idim], scalingFactor_E, physicalParametersPerLevel[ilevel], paramdim);
+        }
       }
     }
 
@@ -300,7 +349,33 @@ void MaterialParametersView::updatePlots()
     int npoints = (int)physicalParametersPerLevel[ilevel].size()/paramdim;
     std::cout << "npoints = " << npoints << std::endl;
     std::vector<int> levels(npoints, ilevel);
-    vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels);
+
+    std::vector<cfgScalar> newParameters;
+    int newParamDim = paramdim;
+    const std::vector<std::vector<cfgScalar> > & strengths = m_project->getUltimateStrengths();
+    if (strengths[ilevel].size()>0)
+    {
+      newParamDim ++;
+      for (int ipoint=0; ipoint<npoints; ipoint++)
+      {
+        for (int iparam=0; iparam<paramdim; iparam++)
+        {
+          newParameters.push_back(physicalParametersPerLevel[ilevel][paramdim*ipoint+iparam]);
+        }
+        cfgScalar strength = strengths[ilevel][ipoint];
+        if (strength > 1)
+        {
+          strength = 1;
+        }
+        newParameters.push_back(strength);
+      }
+    }
+    else
+    {
+      newParameters = physicalParametersPerLevel[ilevel];
+    }
+
+    vtkSmartPointer<vtkTable> table =  createTable(newParameters, levels, newParamDim, 1, labels);
 
     /*if (0)
     {
@@ -371,24 +446,33 @@ void MaterialParametersView::updatePlots()
       vtkSmartPointer<cfgPlotPoints3D> plot4 = createPointPlot3D(table4, "Y1", "Nu1", "Density", magenta, 10);
       //m_plotsPerLevel[ilevel].push_back(plot4); 
 
-    }
+    }*/ 
     if (0)
     {
       DistanceField distanceField(paramdim);
       std::vector<cfgScalar> derivatives;
       std::vector<cfgScalar> distances = distanceField.computeDistances(physicalParametersPerLevel[ilevel], &derivatives);
 
-      int nTargetParticules = 300;
+      int nTargetParticules = 1000;
       cfgScalar minRadius = 0.1;
       std::vector<int> newparticules;
       Resampler resampler;
       resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, newparticules);
+      cfgUtil::writeBinary<int>("boundaryPoints.bin", newparticules);
 
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
-      vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, "Y1", "Nu1", "Density", green, 15);
+
+      exProject::MaterialParameterType paramType1 = m_project->getParameterToVisualize(0);
+      exProject::MaterialParameterType paramType2 = m_project->getParameterToVisualize(1);
+      exProject::MaterialParameterType paramType3 = m_project->getParameterToVisualize(02);
+
+      std::string paramString1 = materialParameterStrings[(int)paramType1];
+      std::string paramString2 = materialParameterStrings[(int)paramType2];
+      std::string paramString3 = materialParameterStrings[(int)paramType3];
+      vtkSmartPointer<cfgPlotPoints3D> plot2 = createPointPlot3D(table2, paramString1, paramString2, paramString3, green, 15);
       m_plotsPerLevel[ilevel].push_back(plot2);
-    }
+    }/*
     if (0)
     {
       ScoringFunction scoringFunction(paramdim);
@@ -442,11 +526,10 @@ void MaterialParametersView::updatePlots()
 
     std::vector<vtkVector3i> colors;
     //const std::vector<std::vector<cfgScalar> > & thermalExpansionCoeffs = m_project->getThermalExpansionCoeffs();
-    const std::vector<std::vector<cfgScalar> > & thermalExpansionCoeffs = m_project->getUltimateStrengths();
-    if (0) //thermalExpansionCoeffs[ilevel].size()>0)
+    if (0) //strengths[ilevel].size()>0)
     {
-      cfgScalar coeffMin = *std::min_element(thermalExpansionCoeffs[ilevel].begin(), thermalExpansionCoeffs[ilevel].end());
-      cfgScalar coeffMax = *std::max_element(thermalExpansionCoeffs[ilevel].begin(), thermalExpansionCoeffs[ilevel].end());
+      cfgScalar coeffMin = *std::min_element(strengths[ilevel].begin(), strengths[ilevel].end());
+      cfgScalar coeffMax = *std::max_element(strengths[ilevel].begin(), strengths[ilevel].end());
       cfgScalar maxVal = 1; //20//50;
       cfgScalar minVal = 0;
       if (coeffMax>maxVal)
@@ -454,18 +537,18 @@ void MaterialParametersView::updatePlots()
       for (int ipoint=0; ipoint<npoints; ipoint++)
       {
         vtkVector3i matColor;
-        cfgScalar val = thermalExpansionCoeffs[ilevel][ipoint];
+        cfgScalar val = strengths[ilevel][ipoint];
 
         if (ipoint % 100==0)
           std::cout << "ipoint " << ipoint << std::endl;
         int n = m_project->getLevels()[ilevel];
-        std::vector<int> matAssignment = m_project->getMaterialAssignments()[ilevel][ipoint];
+        /*std::vector<int> matAssignment = m_project->getMaterialAssignments()[ilevel][ipoint];
         bool modified=false;
         bool resOk = filterOutNonConnectedComponents(n, n, n, matAssignment, modified);
         if (!resOk)
         {
           val = coeffMin;
-        }
+        }*/ 
 
         if (val > 1.01)
         {

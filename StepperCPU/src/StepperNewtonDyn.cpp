@@ -25,12 +25,12 @@ void StepperNewtonDyn::init(ElementMesh * _m)
 
 int StepperNewtonDyn::oneStep()
 {
-  std::vector<Vector3f> force = m->getForce();
+  std::vector<Vector3S> force = m->getForce();
 
-  float E = m->getEnergy();
+  cfgScalar E = m->getEnergy();
  
   int ndof = 3*(int)m->x.size();
-  std::vector<float> bb(ndof);
+  std::vector<cfgScalar> bb(ndof);
 
   for(unsigned int ii =0 ; ii<force.size(); ii++){
 //    add gravity
@@ -62,7 +62,7 @@ int StepperNewtonDyn::oneStep()
   //remove forces after 10 steps
   if(frameCnt*h>=0.1){
     for(unsigned int ii =0; ii<force.size(); ii++){
-      m->fe[ii] = Vector3f(0,0,0);
+      m->fe[ii] = Vector3S(0,0,0);
 //      m->fixed[ii] = false;
     }
   }
@@ -71,10 +71,10 @@ int StepperNewtonDyn::oneStep()
   return 0;
 }
 
-float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh,
-                                          const std::vector<Vector3f> &iForces,
+cfgScalar StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh,
+                                          const std::vector<Vector3S> &iForces,
                                           const std::vector<bool> & collide,
-                                          std::vector<float> &bb)
+                                          std::vector<cfgScalar> &bb)
 {
   bool triangular = true;
   if (!m_Init){
@@ -88,7 +88,7 @@ float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh,
   int ndof = (int)bb.size();
   assert(iMesh && 3*iMesh->x.size()==bb.size());
 
-  std::vector<float> Kvalues;
+  std::vector<cfgScalar> Kvalues;
   iMesh->getStiffnessSparse(Kvalues, triangular, true);
 
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
@@ -115,7 +115,7 @@ float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh,
     rhs[col] = bb[col];
     ia[col] = indVal;
 
-    //for (Eigen::SparseMatrix<float>::InnerIterator it(K, col); it; ++it){
+    //for (Eigen::SparseMatrix<cfgScalar>::InnerIterator it(K, col); it; ++it){
     //    int row = it.row();
     for (int i=m_I[col]; i<m_I[col+1]; i++){
       int row = m_J[indVal];
@@ -164,7 +164,7 @@ float StepperNewtonDyn::compute_dx_sparse(ElementMesh * iMesh,
   std::cout<< "sparse solve " << status << "\n";
 
   for(unsigned int ii = 0;ii<x.size();ii++){
-    bb[ii] = (float)x[ii];
+    bb[ii] = (cfgScalar)x[ii];
   }
 
   return 0;

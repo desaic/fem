@@ -27,7 +27,11 @@ QT4_WRAP_UI(QtUIs ${ui_sources})
 # utilities
 include_directories(${PROJECT_SOURCE_DIR}/../Utilities/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/Utilities)
-#link_directories($ENV{QHULL_BUILD_PATH})
+
+# SamplerUtilities
+include_directories(${PROJECT_SOURCE_DIR}/../SamplerUtilities/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/../SamplerUtilities ${CMAKE_CURRENT_BINARY_DIR}/SamplerUtilities)
+link_directories($ENV{QHULL_BUILD_PATH})
 
 # math
 #include_directories(${PROJECT_SOURCE_DIR}/../vecmath/include)
@@ -43,7 +47,7 @@ endif()
 
 add_executable (explorer ${src} ${QtMocs} ${QtUIs})
 
-target_link_libraries(explorer ${QT_QTGUI_LIBRARY} ${QT_QTCORE_LIBRARY} ${VTK_LIBRARIES} FEMLib ${Utilities_LIBS})
+target_link_libraries(explorer ${QT_QTGUI_LIBRARY} ${QT_QTCORE_LIBRARY} ${VTK_LIBRARIES} FEMLib ${Utilities_LIBS} ${SamplerUtilities_LIBS})
 
 # copy VTK dll to runtime directory
 option(COPY_DLL_TO_BUILD_DIR "copy dlls to build directory" ON)

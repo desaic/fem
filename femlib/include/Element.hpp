@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <Eigen/Dense>
+#include "cfgDefs.h"
 
 class Element
 {
@@ -28,30 +29,30 @@ public:
 
   ///@param X Reference vertex positions.
   ///@param x global array of Deformed vertex positions.
-  Eigen::Matrix3f defGrad(Eigen::Vector3f p,
-    const std::vector<Eigen::Vector3f> & X, const std::vector<Eigen::Vector3f> & x) const;
+  Matrix3S defGrad(Vector3S p,
+    const std::vector<Vector3S> & X, const std::vector<Vector3S> & x) const;
 
   ///@param p natural coordinates.
   ///@return interpolation weight for each dof.
-  virtual std::vector<float> shapeFun(const Eigen::Vector3f & p) const = 0;
+  virtual std::vector<cfgScalar> shapeFun(const Vector3S & p) const = 0;
 
   ///@param ii index of basis function.
   ///@param xx point in natural coordinates.
   ///@param X global array of rest positions.
-  virtual Eigen::Vector3f shapeFunGrad(int ii, const Eigen::Vector3f & xx,
-    const std::vector<Eigen::Vector3f> & X) const = 0;
+  virtual Vector3S shapeFunGrad(int ii, const Vector3S & xx,
+    const std::vector<Vector3S> & X) const = 0;
 
   virtual std::vector<std::array<int,2> > getEdges();
   
-  virtual float getVol(const std::vector<Eigen::Vector3f> & X);
+  virtual cfgScalar getVol(const std::vector<Vector3S> & X);
 
-  virtual Eigen::Vector3f getDisp(const Eigen::Vector3f & p, const std::vector<Eigen::Vector3f> & X,
-    const std::vector<Eigen::Vector3f>x);
+  virtual Vector3S getDisp(const Vector3S & p, const std::vector<Vector3S> & X,
+    const std::vector<Vector3S>x);
 
   const std::vector<int> & getNodeIndices()const{ return n; }
 
   //for rendering
-  Eigen::Vector3f color;
+  Vector3S color;
 private:
 
   ///@brief nodal indices

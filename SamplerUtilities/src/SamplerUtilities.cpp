@@ -10,9 +10,13 @@ using namespace orgQhull;
 
 #include "DistanceTool.h"
 
+#include "cfgMaterialUtilities.h"
+using namespace cfgMaterialUtilities;
 
+#include "cfgUtilities.h"
+using namespace cfgUtil; 
 
-void cfgMaterialUtilities::getKMeans(int iNbIterations, int iNbClusters, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<std::vector<int> > &oClusters, std::vector<int> *oCenters)
+void SamplerUtilities::getKMeans(int iNbIterations, int iNbClusters, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<std::vector<int> > &oClusters, std::vector<int> *oCenters)
 {
   oClusters.clear();
 
@@ -79,7 +83,7 @@ void cfgMaterialUtilities::getKMeans(int iNbIterations, int iNbClusters, const s
   }
 }
 
-void cfgMaterialUtilities::computeConvexHull(const std::vector<float> &iPoints, int iDim, std::vector<int> &oConvexHullVertices)
+void SamplerUtilities::computeConvexHull(const std::vector<float> &iPoints, int iDim, std::vector<int> &oConvexHullVertices)
 {
   assert(iPoints.size()%iDim==0);
 
@@ -129,7 +133,7 @@ void cfgMaterialUtilities::computeConvexHull(const std::vector<float> &iPoints, 
   std::cout << "\nVertices created by Qhull::runQhull()\n" << vertices; */ 
 }
 
-void cfgMaterialUtilities::computeDelaundayTriangulation(const std::vector<float> &iPoints, int iDim, std::vector<int> &oFaceVertices, std::vector<int> &oBoundaryVertices, std::vector<int> &oBoundaryFaces, std::vector<float> *oDistancesToBoundary)
+void SamplerUtilities::computeDelaundayTriangulation(const std::vector<float> &iPoints, int iDim, std::vector<int> &oFaceVertices, std::vector<int> &oBoundaryVertices, std::vector<int> &oBoundaryFaces, std::vector<float> *oDistancesToBoundary)
 {
   assert(iPoints.size()%iDim==0);
 
@@ -204,7 +208,7 @@ void cfgMaterialUtilities::computeDelaundayTriangulation(const std::vector<float
   }
 }
 
-void cfgMaterialUtilities::computeDistancesToPointCloud(const std::vector<float> &iPoints, const std::vector<float> &iPointCloud, std::vector<float> &oDistances)
+void SamplerUtilities::computeDistancesToPointCloud(const std::vector<float> &iPoints, const std::vector<float> &iPointCloud, std::vector<float> &oDistances)
 {
   oDistances.clear();
 
@@ -222,7 +226,7 @@ void cfgMaterialUtilities::computeDistancesToPointCloud(const std::vector<float>
   }
 }
 
-void cfgMaterialUtilities::getClosestPoints(const std::vector<float> &iPoints, int iDim, std::vector<int> &iRefPointIndices, float iRange, std::vector<int> &oPoints)
+void SamplerUtilities::getClosestPoints(const std::vector<float> &iPoints, int iDim, std::vector<int> &iRefPointIndices, float iRange, std::vector<int> &oPoints)
 {
   oPoints.clear();
   std::vector<float> pointCloud = getSubVector(iPoints, iDim, iRefPointIndices);
@@ -235,6 +239,248 @@ void cfgMaterialUtilities::getClosestPoints(const std::vector<float> &iPoints, i
     {
       oPoints.push_back(ipoint);
     }
+  }
+}
+
+
+void SamplerUtilities::samplePointsGreedyV2(int iOutputNbPoints, const std::vector<cfgScalar> &iPoints, int iDim, cfgScalar iMinRadius, std::vector<int> &oPointIndices)
+{
+  oPointIndices.clear();
+
+  cfgScalar minRadiusSquare = iMinRadius*iMinRadius;
+
+  std::set<int> points;
+  int ipoint, npoint=(int)iPoints.size()/iDim;
+  for (ipoint=1; ipoint<npoint; ipoint++)
+  {
+    points.insert(ipoint);
+  }
+  while (points.size()>0)
+  {
+    int indPoint = *points.begin();
+    oPointIndices.push_back(indPoint);
+
+    std::set<int>::iterator it, it_end=points.end();
+    std::vector<int> pointsToErase;
+    cfgScalar minDist = FLT_MAX;
+    for (it=points.begin(); it!=it_end; it++)
+    {
+      int indVertex = *it;
+      cfgScalar dist =0;
+      for (int icoord=0; icoord<iDim; icoord++)
+      {
+        cfgScalar a = iPoints[indPoint*iDim+icoord];
+        cfgScalar b = iPoints[indVertex*iDim+icoord];
+        dist += (a-b)*(a-b);
+      }
+
+      if (dist < minRadiusSquare)
+      {
+        pointsToErase.push_back(indVertex);
+      }
+      if (dist < minDist)
+      {
+        minDist = dist;
+      }
+    }
+    points.erase(indPoint);
+    std::cout << "nb erase points: " << pointsToErase.size() << " minDist = " << minDist << std::endl;
+    for (int ipoint=0; ipoint<pointsToErase.size(); ipoint++)
+    {
+      points.erase(pointsToErase[ipoint]);
+    }
+    std::cout << "npoints: " << points.size() << std::endl;
+  }
+
+
+  for (ipoint=1; ipoint<iOutputNbPoints && points.size()>0; ipoint++)
+  {
+    //if (ipoint % 100 == 1)
+    {
+      std::cout << "indPoint = " << ipoint << std::endl;
+    }
+    cfgScalar maxDist = 0;
+    int furthestPoint = *points.begin();
+    std::set<int>::iterator it, it_end=points.end();
+    for (it=points.begin(); it!=it_end; it++)
+    {
+      int indVertex = *it;
+
+      cfgScalar currentMinDist = FLT_MAX;
+      int jpoint, njpoint=(int)oPointIndices.size();
+      for (jpoint=0; jpoint<njpoint; jpoint++)
+      {
+        int indPoint2 = oPointIndices[jpoint];
+        cfgScalar dist=0;
+        for (int icoord=0; icoord<iDim; icoord++)
+        {
+          cfgScalar a = iPoints[indVertex*iDim+icoord];
+          cfgScalar b = iPoints[indPoint2*iDim+icoord];
+          dist += (a-b)*(a-b);
+        }
+        if (dist < currentMinDist)
+        {
+           currentMinDist = dist;
+        }
+      }
+      if (currentMinDist > maxDist)
+      {
+        maxDist = currentMinDist;
+        furthestPoint = indVertex;
+      }
+    }
+    oPointIndices.push_back(furthestPoint);
+    points.erase(furthestPoint);
+
+    std::vector<int> pointsToErase;
+    cfgScalar minDist = FLT_MAX;
+    for (it=points.begin(); it!=it_end; it++)
+    {
+      int indVertex = *it;
+      cfgScalar dist =0;
+      for (int icoord=0; icoord<iDim; icoord++)
+      {
+        cfgScalar a = iPoints[furthestPoint*iDim+icoord];
+        cfgScalar b = iPoints[indVertex*iDim+icoord];
+        dist += (a-b)*(a-b);
+      }
+
+      if (dist < minRadiusSquare)
+      {
+        pointsToErase.push_back(indVertex);
+      }
+      if (dist < minDist)
+      {
+        minDist = dist;
+      }
+    }
+    std::cout << "nb erase points: " << pointsToErase.size() << " minDist = " << minDist << std::endl;
+    for (int ipoint=0; ipoint<pointsToErase.size(); ipoint++)
+    {
+      points.erase(pointsToErase[ipoint]);
+    }
+    std::cout << "npoints: " << points.size() << std::endl;
+  }
+}
+
+void SamplerUtilities::samplePointsGreedy(int iOutputNbPoints, const std::vector<cfgScalar> &iPoints, int iDim, cfgScalar iMinRadius, std::vector<int> &oPointIndices)
+{
+  oPointIndices.clear();
+
+  cfgScalar minRadiusSquare = iMinRadius*iMinRadius;
+  std::set<int> points;
+  int ipoint, npoint=(int)iPoints.size()/iDim;
+  for (ipoint=1; ipoint<npoint; ipoint++)
+  {
+    points.insert(ipoint);
+  }
+  int pointIndex = 0;
+  oPointIndices.push_back(pointIndex);
+ 
+  for (ipoint=1; ipoint<iOutputNbPoints && points.size()>0; ipoint++)
+  {
+    //if (ipoint % 100 == 1)
+    {
+      std::cout << "indPoint = " << ipoint << std::endl;
+    }
+    cfgScalar maxDist = 0;
+    int furthestPoint = *points.begin();
+    std::set<int>::iterator it, it_end=points.end();
+    for (it=points.begin(); it!=it_end; it++)
+    {
+      int indVertex = *it;
+
+      cfgScalar currentMinDist = FLT_MAX;
+      int jpoint, njpoint=(int)oPointIndices.size();
+      for (jpoint=0; jpoint<njpoint; jpoint++)
+      {
+        int indPoint2 = oPointIndices[jpoint];
+        cfgScalar dist=0;
+        for (int icoord=0; icoord<iDim; icoord++)
+        {
+          cfgScalar a = iPoints[indVertex*iDim+icoord];
+          cfgScalar b = iPoints[indPoint2*iDim+icoord];
+          dist += (a-b)*(a-b);
+        }
+        if (dist < currentMinDist)
+        {
+           currentMinDist = dist;
+        }
+      }
+      if (currentMinDist > maxDist)
+      {
+        maxDist = currentMinDist;
+        furthestPoint = indVertex;
+      }
+    }
+    oPointIndices.push_back(furthestPoint);
+    points.erase(furthestPoint);
+
+    std::vector<int> pointsToErase;
+    cfgScalar minDist = FLT_MAX;
+    for (it=points.begin(); it!=it_end; it++)
+    {
+      int indVertex = *it;
+      cfgScalar dist =0;
+      for (int icoord=0; icoord<iDim; icoord++)
+      {
+        cfgScalar a = iPoints[furthestPoint*iDim+icoord];
+        cfgScalar b = iPoints[indVertex*iDim+icoord];
+        dist += (a-b)*(a-b);
+      }
+
+      if (dist < minRadiusSquare)
+      {
+        pointsToErase.push_back(indVertex);
+      }
+      if (dist < minDist)
+      {
+        minDist = dist;
+      }
+    }
+    std::cout << "nb erase points: " << pointsToErase.size() << " minDist = " << minDist << std::endl;
+    for (int ipoint=0; ipoint<pointsToErase.size(); ipoint++)
+    {
+      points.erase(pointsToErase[ipoint]);
+    }
+    std::cout << "npoints: " << points.size() << std::endl;
+  }
+}
+
+void SamplerUtilities::samplePointsRandom(int iOutputNbPoints, const std::vector<cfgScalar> &iPoints, int iDim, cfgScalar iMinRadius, std::vector<int> &oPointIndices)
+{
+  oPointIndices.clear();
+
+  int npoint=(int)iPoints.size()/iDim;
+  if (iOutputNbPoints < npoint)
+  {
+    cfgScalar minRadiusSquare = iMinRadius*iMinRadius;
+    std::set<int> points;
+    for (int ipoint=0; ipoint<npoint; ipoint++)
+    {
+      points.insert(ipoint);
+    }
+
+    for (int ipoint=0; ipoint<npoint-iOutputNbPoints; ipoint++)
+    {
+      if (points.size() % 10000 == 1)
+      {
+        std::cout << "npoints: " << points.size() << std::endl;
+      }
+      int indPoint = rand()%points.size();
+
+      std::set<int>::iterator it = points.begin();
+      for (int i=0; i<indPoint; i++)
+      {
+        it++;
+      }
+      points.erase(it);
+    }
+    oPointIndices = toStdVector(points);
+  }
+  else
+  {
+    oPointIndices = genIncrementalSequence(0, npoint-1);
   }
 }
 

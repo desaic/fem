@@ -19,6 +19,10 @@ include_directories(${PROJECT_SOURCE_DIR}/../Utilities/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/Utilities)
 link_directories($ENV{QHULL_BUILD_PATH})
 
+# sampler utilities
+include_directories(${PROJECT_SOURCE_DIR}/../SamplerUtilities/include)
+add_subdirectory(${PROJECT_SOURCE_DIR}/../SamplerUtilities ${CMAKE_CURRENT_BINARY_DIR}/SamplerUtilities)
+
 # math
 #include_directories(${PROJECT_SOURCE_DIR}/../vecmath/include)
 #if (NOT TARGET vecmath)
@@ -50,13 +54,13 @@ endif()
 
 add_executable (SamplesGenerator ${src})
 
-target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} FEMLib StepperCPU libopenblas ${Utilities_LIBS} MaterialOpt)
+target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} FEMLib StepperCPU libopenblas ${Utilities_LIBS} MaterialOpt ${SamplerUtilities_LIBS})
 if (IS_PARDISO_AVAILABLE)
 	target_link_libraries(SamplesGenerator libpardiso500-WIN-X86-64)
 endif()
 
 # copy dlls to build directory
-option(COPY_DLL_TO_BUILD_DIR "copy dlls to build directory" ON)
+option(COPY_DLL_TO_BUILD_DIR "copy dlls to build directory" OFF)
 if (COPY_DLL_TO_BUILD_DIR) 
 	add_custom_command(TARGET SamplesGenerator POST_BUILD
 					   COMMAND set "var=${PROJECT_SOURCE_DIR}"

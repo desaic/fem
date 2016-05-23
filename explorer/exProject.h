@@ -33,6 +33,7 @@ public:
     MuXZType,
     MuYZType,
     DensityType,
+    StrengthType,
     UndefinedType,
   };
 

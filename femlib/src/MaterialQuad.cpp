@@ -7,7 +7,7 @@
 #include <Eigen/Dense>
 using namespace Eigen;
 ///@brief helper for computing stiffness contribution of one quadrature point
-Eigen::MatrixXf stiffness(int qi, const MaterialQuad * mat, Element* ele, ElementMesh * mesh);
+MatrixXS stiffness(int qi, const MaterialQuad * mat, Element* ele, ElementMesh * mesh);
 
 MaterialQuad::MaterialQuad(StrainEne * ene, Quadrature * _q ):q(_q)
 {
@@ -37,26 +37,26 @@ void MaterialQuad::init(ElementMesh * m)
   }
 }
 
-float MaterialQuad::getEnergy(Element* ele, ElementMesh * mesh)
+cfgScalar MaterialQuad::getEnergy(Element* ele, ElementMesh * mesh)
 {
-  float energy = 0;
+  cfgScalar energy = 0;
   for(int ii = 0; ii<q->x.size();ii++){
-    Matrix3f F = ele->defGrad(q->x[ii], mesh->X, mesh->x);
+    Matrix3S F = ele->defGrad(q->x[ii], mesh->X, mesh->x);
     energy += q->w[ii] * e[ii]->getEnergy(F);
   }
   return ele->getVol(mesh->X) * energy;
 }
 
-std::vector<Vector3f> MaterialQuad::getForce(Element* ele, ElementMesh * mesh)
+std::vector<Vector3S> MaterialQuad::getForce(Element* ele, ElementMesh * mesh)
 {
-  std::vector<Vector3f> f(ele->nV(), Vector3f::Zero());
-  std::vector<Matrix3f> P(q->w.size());
+  std::vector<Vector3S> f(ele->nV(), Vector3S::Zero());
+  std::vector<Matrix3S> P(q->w.size());
   for(unsigned int ii = 0; ii<q->x.size(); ii++){
-    Matrix3f F = ele->defGrad(q->x[ii],mesh->X, mesh->x);
+    Matrix3S F = ele->defGrad(q->x[ii],mesh->X, mesh->x);
     P[ii] = e[ii]->getPK1(F);
   }
   
-  float vol = ele->getVol(mesh->X);
+  cfgScalar vol = ele->getVol(mesh->X);
   for(unsigned int jj = 0; jj<q->x.size(); jj++){
     for(int ii = 0; ii<ele->nV(); ii++){
       f[ii] -= vol * q->w[jj] * (P[jj]*gradN[ii][jj]);
@@ -65,35 +65,35 @@ std::vector<Vector3f> MaterialQuad::getForce(Element* ele, ElementMesh * mesh)
   return f;
 }
 
-MatrixXf MaterialQuad::getStiffness(Element* ele, ElementMesh * mesh)
+MatrixXS MaterialQuad::getStiffness(Element* ele, ElementMesh * mesh)
 {
   int ndof = 3* ele->nV();
-  Eigen::MatrixXf K = Eigen::MatrixXf::Zero(ndof, ndof);
+  MatrixXS K = MatrixXS::Zero(ndof, ndof);
 
   for(unsigned int ii = 0; ii<q->x.size();ii++){
     K += q->w[ii] * stiffness(ii, this, ele, mesh);
   }
-  float vol = ele->getVol(mesh->X);
+  cfgScalar vol = ele->getVol(mesh->X);
   K *= vol;
   return K;
 }
 
-Eigen::MatrixXf stiffness(int qi, const MaterialQuad * mat, Element* ele, ElementMesh * mesh)
+MatrixXS stiffness(int qi, const MaterialQuad * mat, Element* ele, ElementMesh * mesh)
 {
   int nquad = (int)mat->q->x.size();
   int ndof = 3*ele->nV();
-  Vector3f p = mat->q->x[qi];
+  Vector3S p = mat->q->x[qi];
 
-  Eigen::MatrixXf K = Eigen::MatrixXf::Zero(ndof, ndof);
-  Matrix3f F = ele->defGrad(p,mesh->X,mesh->x);
+  MatrixXS K = MatrixXS::Zero(ndof, ndof);
+  Matrix3S F = ele->defGrad(p,mesh->X,mesh->x);
   
   for(int ii = 0;ii<8;ii++){
     for(int jj = 0;jj<3;jj++){
-      Matrix3f dF=Matrix3f::Zero();
+      Matrix3S dF=Matrix3S::Zero();
       dF.row(jj)=mat->gradN[ii][qi];
-      Matrix3f dP = mat->e[ii]->getdPdx(F,dF);
+      Matrix3S dP = mat->e[ii]->getdPdx(F,dF);
       for(int vv = 0;vv<8;vv++){
-        Vector3f dfdxi = dP*mat->gradN[vv][qi];
+        Vector3S dfdxi = dP*mat->gradN[vv][qi];
         int col = 3*ii+jj;
         for(int kk = 0;kk<3;kk++){
           K(3*vv+kk, col) = dfdxi[kk];
@@ -104,25 +104,25 @@ Eigen::MatrixXf stiffness(int qi, const MaterialQuad * mat, Element* ele, Elemen
   return K;
 }
 
-std::vector<Eigen::MatrixXf> MaterialQuad::getElasticityTensors()
+std::vector<MatrixXS> MaterialQuad::getElasticityTensors()
 {
-  std::vector<Eigen::MatrixXf> elasticityTensors;
+  std::vector<MatrixXS> elasticityTensors;
   for(unsigned int ii = 0; ii<q->x.size(); ii++){
-    Eigen::MatrixXf elasticityTensor = e[ii]->EMatrix();
+    MatrixXS elasticityTensor = e[ii]->EMatrix();
     elasticityTensors.push_back(elasticityTensor);
   }
   return elasticityTensors;
 }
 
-std::vector<Matrix3f> MaterialQuad::getStrainTensors(Element* ele, ElementMesh * mesh, const std::vector<Vector3f> &ix)
+std::vector<Matrix3S> MaterialQuad::getStrainTensors(Element* ele, ElementMesh * mesh, const std::vector<Vector3S> &ix)
 {
   assert(ix.size()==mesh->x.size());
 
-  std::vector<Matrix3f> strainTensors;
+  std::vector<Matrix3S> strainTensors;
   for(unsigned int ii = 0; ii<q->x.size(); ii++)
   {
-    Matrix3f F = ele->defGrad(q->x[ii],mesh->X, ix);
-    Matrix3f strainTensor = e[ii]->getStrainTensor(F);
+    Matrix3S F = ele->defGrad(q->x[ii],mesh->X, ix);
+    Matrix3S strainTensor = e[ii]->getStrainTensor(F);
     strainTensors.push_back(strainTensor);
   }
   return strainTensors;

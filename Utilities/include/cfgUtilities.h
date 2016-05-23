@@ -69,6 +69,9 @@ namespace cfgUtil
   template<class T>
   std::vector<T> add(const std::vector<T> &iVec, const T &iValue); 
 
+  template<class T, int Dim>
+  std::vector<T> add(const std::vector<T> &iVec, const T iValue[Dim]); 
+
   // return iVec1+iVec2
   template<class T>
   std::vector<T> add(const std::vector<T> &iVec1, const std::vector<T> &iVec2); 
@@ -388,6 +391,24 @@ namespace cfgUtil
     for (ielem=0; ielem<nelem; ielem++)
     {
       vec[ielem] += iValue;
+    }
+    return vec;
+  }
+
+  template<class T, int Dim>
+  std::vector<T> add(const std::vector<T> &iVec, const T iValue[Dim])
+  {
+    assert(iVec.size()%Dim==0 && Dim>0);
+
+    std::vector<T> vec = iVec;
+    int ipoint, npoint=(int)iVec.size()/Dim;
+    int icoord;
+    for (icoord=0; icoord<Dim; icoord++)
+    {
+      for (ipoint=0; ipoint<npoint; ipoint++)
+      {
+        vec[Dim*ipoint+icoord] += iValue[Dim];
+      }
     }
     return vec;
   }
