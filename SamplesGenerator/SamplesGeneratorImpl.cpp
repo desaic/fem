@@ -82,6 +82,7 @@ SamplesGeneratorImpl::SamplesGeneratorImpl()
   m_orthotropicOnly = false;
   m_cubicOnly = false;
   m_filterOutDisconnetedStructures = true;
+  m_useLogScale = true;
 
   m_nmat = 2;
 
@@ -2835,11 +2836,11 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
   std::vector<float> physicalParameters = iPhysicalParameters;
   std::vector<float> tensors = iTensors;
 
-  int nTargetParticules = 1000;
+  int nTargetParticules = 3000;
   //int nTargetParticules = 1000;
   if (!m_cubicOnly)
   {
-    nTargetParticules = 1000;
+    nTargetParticules = 3000;
   }
   int dimparam = getNbParameters();
   int nInitParticules = (int)physicalParameters.size()/dimparam;
@@ -2853,6 +2854,8 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
   ScoringFunction scoringFunction(dimparam);
   scoringFunction.setUseDistanceField(useDistanceField);
   scoringFunction.setCacheDensities(cacheDensities);
+  scoringFunction.setUseLogScale(m_useLogScale);
+  scoringFunction.setParametersToUse(m_parametersToUse);
 
   float minRadius = 0.;
   //float minRadius = 0.05;
@@ -2863,7 +2866,7 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
   std::vector<float> allTensors;
   std::set<std::vector<int> > materialSet;
 
-  cfgScalar ratio = 0.;
+  cfgScalar ratio = 0;
 
   bool filterOutDisconnectedStructures = m_filterOutDisconnetedStructures;
   bool useBaseCells = false;
@@ -2903,8 +2906,20 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
           }
         }
       }
+      bool recomputeProperties = true;
+      if (recomputeProperties)
+      {
+        std::vector<cfgScalar> newParameters, newTensors;
+        std::cout << "recomputing properties..." << std::endl;
+        computeParametersAndTensorValues(n, allMaterialAssignments, newParameters, newTensors);
+        physicalParameters = newParameters;
+        writeFiles(iLevel, allMaterialAssignments, baseMaterialStructures, physicalParameters, tensors, "recomputed_properties");
+      }
+      else
+      {
+        physicalParameters = initParams;
+      }
       std::cout << "resampling particules..." << std::endl;
-      physicalParameters = initParams;
       scoringFunction.setNewPointIndexStart(0);
       scores = scoringFunction.computeScores(physicalParameters);
       resampler.resample(minRadius, dimparam, physicalParameters, scores, nTargetParticules, particules, ratio);
@@ -3054,7 +3069,7 @@ void SamplesGeneratorImpl::computeVariationsSMC(int iLevel,
             resOk = filterOutNonConnectedComponents(n[0], n[1], n[2], binaryMaterialAssignment, modified);
             //resOk = filterOutNonConnectedComponents(n[0], n[1], n[2], newMaterialAssignment, modified);
           }
-          if (modified /*&& materialSet.count(newMaterialAssignment)>0*/ )
+          if (modified && materialSet.count(newMaterialAssignment)>0 )
           {
             resOk = false;
           }
@@ -4163,11 +4178,11 @@ int SamplesGeneratorImpl::runExhaustiveGamutComputation(int iLevel)
   return 0;
 }
 
-int SamplesGeneratorImpl::runDiscreteOptimization(int iLevel, int iNbCycles, int iStartCycle)
+int SamplesGeneratorImpl::runDiscreteOptimization(int iLevel, int iNbCycles, int iStartCycle, bool iGrowStructure)
 {
   int level = iLevel;
   int prevLevel = level/2;
-  bool growStructure = iStartCycle==0;
+  bool growStructure = iGrowStructure;
   std::string stepperType = "newton";
 
   int icycle=0, ncycle=iNbCycles;
@@ -4175,7 +4190,11 @@ int SamplesGeneratorImpl::runDiscreteOptimization(int iLevel, int iNbCycles, int
   {
     std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
     std::vector<float> physicalParameters, tensors;
-    std::string fileName =  (growStructure? "": "SMC_" +std::to_string(icycle-1));
+    std::string fileName;
+    if (!growStructure && icycle>0)
+    {
+      fileName = "SMC_" +std::to_string(icycle-1);
+    }
     //std::string fileName = "";
     bool ResOk = readFiles((growStructure? prevLevel: level), materialAssignments, baseMaterialStructures, physicalParameters, tensors, fileName);
     if (ResOk)
@@ -4327,20 +4346,50 @@ int SamplesGeneratorImpl::runSubsamplingStage(int iLevel)
 {
   int level = iLevel;
   std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
-  std::vector<float> physicalParameters, tensors;
+  std::vector<float> physicalParameters, physicalParametersInit, tensors;
   std::string fileName = "";
   bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors, fileName);
   if (!ResOk)
     return 1;
 
-  int nTargetParticules = 10000;
+  physicalParametersInit = physicalParameters;
+
+  int paramdim = getNbParameters();
+  if (m_useLogScale)
+  {
+    std::vector<int> dimToScale;
+    if (1)
+    {
+      if (paramdim==4)
+      {
+        dimToScale.push_back(1);
+      }
+      else if (paramdim==5)
+      {
+        dimToScale.push_back(1);
+        dimToScale.push_back(2);
+      }
+      else
+      {
+        dimToScale.push_back(1);
+        dimToScale.push_back(2);
+        dimToScale.push_back(3);
+      }
+    }
+    std::vector<cfgScalar> lengths(paramdim, 1);
+    rescaleData(physicalParameters, paramdim, lengths);
+
+    cfgScalar eps = 1.e-6;
+    convertToLogValues(physicalParameters, paramdim, dimToScale, eps);
+  }
+
+  int nTargetParticules = 50000;
   //cfgScalar minRadius = 0.02;
   cfgScalar minRadius = 0.2;
 
-  int paramdim = getNbParameters();
   std::vector<int> particules;
 
-  bool greedy = true;
+  bool greedy = false;
   if (greedy)
   {
     //samplePointsRandom(nTargetParticules, physicalParameters, paramdim, minRadius, particules);
@@ -4362,21 +4411,31 @@ int SamplesGeneratorImpl::runSubsamplingStage(int iLevel)
     }
     else
     {
-      ScoringFunction scoringFunction(paramdim);
-      bool useDistanceField = true;
-      scoringFunction.setUseDistanceField(useDistanceField);
-      std::vector<cfgScalar> scores = scoringFunction.computeScores(physicalParameters);
+      if (0)
+      {
+        ScoringFunction scoringFunction(paramdim);
+        bool useDistanceField = true;
+        scoringFunction.setUseDistanceField(useDistanceField);
+        std::vector<cfgScalar> scores = scoringFunction.computeScores(physicalParameters);
 
-      float minRadius = 0.02;
-      Resampler resampler;
-      resampler.resample(minRadius, paramdim, physicalParameters, scores, nTargetParticules, particules);
+        Resampler resampler;
+        resampler.resample(minRadius, paramdim, physicalParameters, scores, nTargetParticules, particules);
+      }
+      else
+      {
+        DistanceField distanceField(paramdim);
+        std::vector<cfgScalar> distances = distanceField.computeDistances(physicalParameters);
+
+        Resampler resampler;
+        resampler.resampleUsingNormalDistribution(distances, nTargetParticules, particules);
+      }
     }
   }
   std::vector<cfgScalar> initParameters, initTensors;
-  physicalParameters = getSubVector(physicalParameters, paramdim, particules);
+  physicalParametersInit = getSubVector(physicalParametersInit, paramdim, particules);
   tensors = getSubVector(tensors,  (m_dim==2?6:21), particules);
   materialAssignments = getSubVector(materialAssignments, particules);
-  writeFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors, "subsampled");
+  writeFiles(level, materialAssignments, baseMaterialStructures, physicalParametersInit, tensors, "subsampled");
 
   return 0;
 }
@@ -4550,11 +4609,17 @@ void SamplesGeneratorImpl::init()
   fromLamesParametersToYoungModulusPoissonRatio(lambda[1], mu[1], E[1], nu[1]);
  
   E[0] = E[1]/1000;
-  //nu[0] = 0.1;
-  nu[0] = nu[1];
+  if (m_nmat==2)
+  {
+    nu[0] = 0.1;
+  }
+  else
+  {
+    nu[0] = nu[1];
+  }
   fromYoungModulusPoissonRatioToLamesParameters(E[0], nu[0], lambda[0], mu[0]);
 
-  bool updatePoissonRatio = true;
+  bool updatePoissonRatio = false;
   if (updatePoissonRatio)
   {
     nu[0] = 0.48;
@@ -4563,14 +4628,20 @@ void SamplesGeneratorImpl::init()
     fromYoungModulusPoissonRatioToLamesParameters(E[0], nu[0], lambda[0], mu[0]);
     fromYoungModulusPoissonRatioToLamesParameters(E[1], nu[1], lambda[1], mu[1]);
   }
-
-
-  mu[2] = 0;
-  lambda[2] = 0;
-
+  if (m_nmat>2)
+  {
+    mu[2] = 0;
+    lambda[2] = 0;
+  }
   m_baseMaterialDensities.clear();
   m_baseMaterialDensities.resize(m_nmat, 1);
   m_baseMaterialDensities[m_nmat-1] = 0;
+
+  if (m_nmat==2)
+  {
+    //ratio of rigid
+    std::swap(m_baseMaterialDensities[0], m_baseMaterialDensities[1]);
+  }
 
   m_ene.resize(m_nmat);
   m_ene2D.resize(m_nmat);
@@ -4603,6 +4674,44 @@ void SamplesGeneratorImpl::init()
       }
     }
   }
+
+  m_parametersToUse.clear();
+  bool useAllParameters = false;
+  if (useAllParameters)
+  {
+    int nparam = getNbParameters();
+    m_parametersToUse = genIncrementalSequence(0, nparam-1);
+  }
+  else
+  {
+    if (m_dim==2)
+    {
+      m_parametersToUse.push_back(0); // density
+      if (m_cubicOnly)
+      {
+        m_parametersToUse.push_back(1); // E
+        m_parametersToUse.push_back(2); //nu
+      }
+    }
+    else
+    {
+      if (m_cubicOnly)
+      {
+        m_parametersToUse.push_back(1); // E
+        m_parametersToUse.push_back(2); //nu
+      }
+      else if (m_orthotropicOnly)
+      {
+        m_parametersToUse.push_back(1); // Ex
+        m_parametersToUse.push_back(2); //Ey
+        m_parametersToUse.push_back(3); //Nu_xy
+      }
+      else
+      {
+        assert(0);
+      }
+    }
+  }
 }
 
 int SamplesGeneratorImpl::run()
@@ -4614,6 +4723,7 @@ int SamplesGeneratorImpl::run()
   //std::string stepperType = "newtonCuda";
   std::string stepperType = "newton";
   int startCycle = 0;
+  bool growStructure = false;
 
   std::string suffix = "";
 
@@ -4731,6 +4841,10 @@ int SamplesGeneratorImpl::run()
   if (conf.hasOpt("startCycle"))
   {
     startCycle = conf.getInt("startCycle");
+  }
+  if (conf.hasOpt("growStructure"))
+  {
+    growStructure = conf.getBool("growStructure");
   }
 
   init();
@@ -4867,7 +4981,7 @@ int SamplesGeneratorImpl::run()
   }
   else if (stage == DiscreteOptimizationStage) // SMC
   {
-    int status = runDiscreteOptimization(level, ncycle, startCycle);
+    int status = runDiscreteOptimization(level, ncycle, startCycle, growStructure);
     return status;
   }
   else if (stage == StrengthAnalysisStage)

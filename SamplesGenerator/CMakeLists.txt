@@ -4,6 +4,7 @@ project("SamplesGenerator")
 
 set(QHULL_SOURCE_DIR $ENV{QHULL_SRC_PATH})
 set(QHULL_BIN_DIR $ENV{QHULL_BUILD_PATH})
+link_directories($ENV{QHULL_BUILD_PATH})
 
 if(DEFINED ENV{PARDISO_LIB_PATH})
 	set(IS_PARDISO_AVAILABLE ON)
@@ -16,8 +17,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 # utilities
 include_directories(${PROJECT_SOURCE_DIR}/../Utilities/include)
+if (NOT TARGET Utilities)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/Utilities)
-link_directories($ENV{QHULL_BUILD_PATH})
+endif()
 
 # sampler utilities
 include_directories(${PROJECT_SOURCE_DIR}/../SamplerUtilities/include)

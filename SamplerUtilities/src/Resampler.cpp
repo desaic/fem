@@ -55,26 +55,26 @@ void Resampler::resample(cfgScalar iMinRadius, int iDim, const std::vector<cfgSc
   {
     pointIndices = genIncrementalSequence(0, (int)iScores.size()-1);
   }
-  std::vector<cfgScalar> scores = getSubVector(iScores, pointIndices);
-  normalize(scores);
+   // Systematic resampling;
+  std::vector<double> scores = convertVec<cfgScalar, double>(getSubVector(iScores, pointIndices));
 
-  // Systematic resampling;
-  std::vector<cfgScalar> partialSums(scores.size());
+  std::vector<double> partialSums(scores.size());
   std::partial_sum(scores.begin(), scores.end(), &partialSums[0]);
 
-  cfgScalar r0 = (cfgScalar)rand()/(cfgScalar)RAND_MAX;
-  cfgScalar step = (cfgScalar)1/(cfgScalar)(ntargetparticules);
+  partialSums = div<double>(partialSums, partialSums.back());
+
+  double r0 = (double)rand()/(cfgScalar)RAND_MAX;
   int indParticule = 0;
 
   for (int iparticule=0; iparticule<ntargetparticules; iparticule++)
   {
-    cfgScalar r = r0 + iparticule*step;
+    double r = (ntargetparticules*r0 + iparticule)/(double)(ntargetparticules);
     if (r>1)
     {
       r -= 1;
       indParticule = 0;
     }
-    cfgScalar upperBound = partialSums[indParticule];
+    double upperBound = partialSums[indParticule];
     while (r > upperBound)
     {
       indParticule++;
@@ -109,26 +109,26 @@ void Resampler::resample(const std::vector<cfgScalar> &iScores, int iNbTargetPar
   }
 
 
-  std::vector<cfgScalar> scores = iScores;
-  normalize(scores);
+  std::vector<double> scores = convertVec<float, double>(iScores);
 
   // Systematic resampling;
-  std::vector<cfgScalar> partialSums(scores.size());
+  std::vector<double> partialSums(scores.size());
   std::partial_sum(scores.begin(), scores.end(), &partialSums[0]);
 
-  cfgScalar r0 = (cfgScalar)rand()/(cfgScalar)RAND_MAX;
-  cfgScalar step = (cfgScalar)1/(cfgScalar)(ntargetparticules);
+  partialSums = div<double>(partialSums, partialSums.back());
+
+  double r0 = (double)rand()/(cfgScalar)RAND_MAX;
   int indParticule = 0;
 
   for (int iparticule=0; iparticule<ntargetparticules; iparticule++)
   {
-    cfgScalar r = r0 + iparticule*step;
+    double r = (ntargetparticules*r0 + iparticule)/(double)(ntargetparticules);
     if (r>1)
     {
       r -= 1;
       indParticule = 0;
     }
-    cfgScalar upperBound = partialSums[indParticule];
+    double upperBound = partialSums[indParticule];
     while (r > upperBound)
     {
       indParticule++;
@@ -232,6 +232,43 @@ void Resampler::resampleData(cfgScalar iMinRadius, int iDim, const std::vector<c
       oParticules.push_back(closestPoints[randomPoint]);
     }
   }
+}
+
+void Resampler::resampleUsingNormalDistribution(const std::vector<cfgScalar> &iDistances, int iNbTargetParticules, std::vector<int> &oParticules)
+{
+  oParticules.clear();
+
+  cfgScalar min = getNegativeMin<cfgScalar>(iDistances);
+
+  cfgScalar l = fabs(min);
+
+  std::vector<cfgScalar> x(iDistances.size());
+  int nval = (int)iDistances.size();
+  for (int ival=0; ival<nval; ival++)
+  {
+    cfgScalar dist = iDistances[ival];
+    if (dist>0)
+    {
+      x[ival] = 0;
+    }
+    else
+    {
+      x[ival] = fabs(dist);
+    }
+  }
+  std::cout << "max dist = " << l << std::endl;
+
+  std::vector<cfgScalar> scores(nval);
+  cfgScalar sigma = 0.05;
+  cfgScalar mu = 0;
+  for (int ival=0; ival<nval; ival++)
+  {
+    cfgScalar val = x[ival];
+    cfgScalar r = (val-mu)/sigma;
+    cfgScalar p = 1./(sigma*sqrt(2*M_PI)) * exp(-0.5*r*r);
+    scores[ival] = p;
+  }
+  resample(scores, iNbTargetParticules, oParticules);
 }
 
 

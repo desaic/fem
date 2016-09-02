@@ -134,7 +134,7 @@ private:
   bool readDisneyFiles(int iDim, bool iCubic, bool iOrthotropic, std::vector<cfgScalar> &oPhysicalParameters);
 
   int runExhaustiveGamutComputation(int iLevel);
-  int runDiscreteOptimization(int iLevel, int iNbCycles, int iStartCycle);
+  int runDiscreteOptimization(int iLevel, int iNbCycles, int iStartCycle, bool iGrowStructure);
   int runStrengthAnalysis(int iLevel);
   int runVariantsComputation(int iLevel);
 
@@ -165,6 +165,9 @@ private:
   std::vector<StrainLin> m_ene;
   std::vector<StrainLin2D> m_ene2D;
   std::vector<cfgScalar> m_baseMaterialDensities;
+
+  bool m_useLogScale;
+  std::vector<int> m_parametersToUse;
 };
 
 #endif

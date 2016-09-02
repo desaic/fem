@@ -144,6 +144,14 @@ void MainWindow::on_m_action2D_triggered()
   setDim();
 }
 
+void MainWindow::on_m_actionFamilyExtractor_triggered()
+{
+  if (m_project)
+  {
+    m_project->runFamilyExtractor();
+  }
+}
+
 void MainWindow::on_m_type_comboBox_currentIndexChanged()
 {
   setType();

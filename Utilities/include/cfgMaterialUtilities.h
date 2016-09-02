@@ -162,6 +162,8 @@ namespace cfgMaterialUtilities
   Vector2S getVector2S(int indVertex, const std::vector<cfgScalar> &iPoints);
   Vector3d getVector3d(int indVertex, const std::vector<double> &iPoints);
   Vector2d getVector2d(int indVertex, const std::vector<double> &iPoints);
+  void setVector3S(int indVertex, const Vector3S &iVec, std::vector<double> &ioPoints);
+  void appendVector3S(const Vector3S &iVec, std::vector<double> &ioPoints);
 
   std::vector<float> toVectorFloat(const std::vector<Eigen::Vector3f> &iPoints);
   std::vector<float> toVectorFloat(const std::vector<Eigen::Vector2f> &iPoints);

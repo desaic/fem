@@ -11,6 +11,9 @@ using namespace cfgUtil;
 
 #include <QStringList>
 
+#include "FamilyExtractor.h"
+#include "MicrostructureSet.h"
+
 exProject::exProject()
 {
   m_blockSize = 1;
@@ -429,6 +432,25 @@ bool exProject::getLevelVisibility(int ilevel)
   assert(ilevel>=0 && ilevel<m_levelVisibility.size());
   return m_levelVisibility[ilevel];
 }
+
+void exProject::runFamilyExtractor()
+{
+  FamilyExtractor * familyExtractor = FamilyExtractor::createOperator();
+
+  int ind=0;
+  int microstructureSize[3] = {m_levels[ind], m_levels[ind], m_levels[ind]};
+  int paramDim = (int)(m_physicalParametersPerLevel[ind].size()/m_materialAssignments[ind].size());
+
+  MicrostructureSet microstructures;
+  microstructures.setMicrostructures(&m_materialAssignments[ind], microstructureSize, &m_physicalParametersPerLevel[ind], paramDim);
+  familyExtractor->setMicrostructures(&microstructures);
+
+  familyExtractor->run();
+
+  SAFE_DELETE(familyExtractor);
+
+}
+
 
 
 

@@ -332,8 +332,8 @@ void MaterialParametersView::updatePlots()
       for (int idim=0; idim<dimToRescale.size(); idim++)
       {
         std::vector<cfgScalar> newPoints;
-        //convertToLogValues(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim, newPoints);
-        //physicalParametersPerLevel[ilevel] = newPoints;
+        convertToLogValues(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim, newPoints);
+        physicalParametersPerLevel[ilevel] = newPoints;
         float maxE = getMaxValue(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim);
         if (maxE > 2)
         {
@@ -377,14 +377,14 @@ void MaterialParametersView::updatePlots()
 
     vtkSmartPointer<vtkTable> table =  createTable(newParameters, levels, newParamDim, 1, labels);
 
-    /*if (0)
+    if (0)
     {
       DistanceField distanceField(paramdim);
       std::vector<cfgScalar> derivatives;
       std::vector<cfgScalar> distances = distanceField.computeDistances(physicalParametersPerLevel[ilevel], &derivatives);
 
       //derivatives = cfgUtil::mult<cfgScalar>(derivatives, 0.2);
-      std::vector<cfgScalar> newPoints = cfgUtil::add<cfgScalar>(physicalParametersPerLevel[ilevel], derivatives);
+      //std::vector<cfgScalar> newPoints = cfgUtil::add<cfgScalar>(physicalParametersPerLevel[ilevel], derivatives);
 
       cfgScalar minValue = FLT_MAX;
       cfgScalar maxValue = -FLT_MAX;
@@ -421,15 +421,30 @@ void MaterialParametersView::updatePlots()
       std::vector<int> newparticules;
       newparticules = genIncrementalSequence(0, npoints-1);
 
-      vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
-      vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table2, "Y1", "Nu1", "Density", colors, 10);
-      m_plotsPerLevel[ilevel].push_back(plot);
+      vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
+
+      exProject::MaterialParameterType paramType1 = m_project->getParameterToVisualize(0);
+      exProject::MaterialParameterType paramType2 = m_project->getParameterToVisualize(1);
+      exProject::MaterialParameterType paramType3 = m_project->getParameterToVisualize(02);
+
+      std::string paramString1 = materialParameterStrings[(int)paramType1];
+      std::string paramString2 = materialParameterStrings[(int)paramType2];
+      std::string paramString3 = materialParameterStrings[(int)paramType3];
+      if (setValidTypes.count(paramType1)>0 && setValidTypes.count(paramType2)>0 && setValidTypes.count(paramType3)>0)
+      {
+        vtkSmartPointer<cfgPlotPoints3D> plot = createPointPlot3D(table, paramString1, paramString2, paramString3, colors, 10);
+        m_plotsPerLevel[ilevel].push_back(plot);
+      }
+
 
       int nTargetParticules = 100;
       cfgScalar minRadius = 0.1;
       std::vector<int> newparticules3;
       Resampler resampler;
-      resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, newparticules3);
+      //resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, nTargetParticules);
+      
+      int nTargetParticules2 = 10000;
+      resampler.resampleUsingNormalDistribution(distances, nTargetParticules2, newparticules3);
       
       //std::vector<int> newparticules3tmp = newparticules3;
       //newparticules3.clear();
@@ -438,34 +453,34 @@ void MaterialParametersView::updatePlots()
 
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table3 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules3);
-      vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, "Y1", "Nu1", "Density", green, 15);
+      vtkSmartPointer<cfgPlotPoints3D> plot3 = createPointPlot3D(table3, paramString1, paramString2, paramString3, green, 15);
       //m_plotsPerLevel[ilevel].push_back(plot3);
 
-      vtkVector3i magenta(255, 0, 255);
+      /*vtkVector3i magenta(255, 0, 255);
       vtkSmartPointer<vtkTable> table4 =  createTable(newPoints, levels, paramdim, 1, labels, &newparticules3);
       vtkSmartPointer<cfgPlotPoints3D> plot4 = createPointPlot3D(table4, "Y1", "Nu1", "Density", magenta, 10);
-      //m_plotsPerLevel[ilevel].push_back(plot4); 
+      //m_plotsPerLevel[ilevel].push_back(plot4); */ 
 
-    }*/ 
+    }
     if (0)
     {
       DistanceField distanceField(paramdim);
       std::vector<cfgScalar> derivatives;
       std::vector<cfgScalar> distances = distanceField.computeDistances(physicalParametersPerLevel[ilevel], &derivatives);
 
-      int nTargetParticules = 1000;
+      int nTargetParticules = 100;
       cfgScalar minRadius = 0.1;
       std::vector<int> newparticules;
       Resampler resampler;
       resampler.resampleBoundary(minRadius, paramdim, physicalParametersPerLevel[ilevel], distances, nTargetParticules, newparticules);
-      cfgUtil::writeBinary<int>("boundaryPoints.bin", newparticules);
+      //cfgUtil::writeBinary<int>("boundaryPoints.bin", newparticules);
 
       vtkVector3i green(0, 255, 0);
       vtkSmartPointer<vtkTable> table2 =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels, &newparticules);
 
       exProject::MaterialParameterType paramType1 = m_project->getParameterToVisualize(0);
       exProject::MaterialParameterType paramType2 = m_project->getParameterToVisualize(1);
-      exProject::MaterialParameterType paramType3 = m_project->getParameterToVisualize(02);
+      exProject::MaterialParameterType paramType3 = m_project->getParameterToVisualize(2);
 
       std::string paramString1 = materialParameterStrings[(int)paramType1];
       std::string paramString2 = materialParameterStrings[(int)paramType2];

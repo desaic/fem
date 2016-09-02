@@ -2996,6 +2996,23 @@ Vector2d cfgMaterialUtilities::getVector2d(int indVertex, const std::vector<doub
   return Vector2d(iPoints[indPoint], iPoints[indPoint+1]);
 }
 
+void cfgMaterialUtilities::setVector3S(int indVertex, const Vector3S &iVec, std::vector<double> &ioPoints)
+{
+  assert(ioPoints.size()%3==0);
+  int indPoint = 3*indVertex;
+  ioPoints[indPoint] = iVec[0];
+  ioPoints[indPoint+1] = iVec[1];
+  ioPoints[indPoint+2] = iVec[2];
+}
+
+void cfgMaterialUtilities::appendVector3S(const Vector3S &iVec, std::vector<double> &ioPoints)
+{
+  for (int icoord=0; icoord<3; icoord++)
+  {
+    ioPoints.push_back(iVec[icoord]);
+  }
+}
+
 std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Eigen::Vector3f> &iPoints)
  {
    std::vector<float> vec;

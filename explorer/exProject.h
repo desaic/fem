@@ -76,6 +76,8 @@ public:
   MicrostructureType getType() {return m_type;}
   MaterialParameterType getParameterToVisualize(int indParam);
 
+  void runFamilyExtractor();
+
 signals:
   void pickedStructureModified();
   void levelVisibilityModified();
