@@ -123,6 +123,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="m_action2D"/>
+   <addaction name="m_actionFamilyExtractor"/>
   </widget>
   <action name="m_action2D">
    <property name="checkable">
@@ -133,6 +134,14 @@
    </property>
    <property name="toolTip">
     <string>2D</string>
+   </property>
+  </action>
+  <action name="m_actionFamilyExtractor">
+   <property name="text">
+    <string>familyExtractor</string>
+   </property>
+   <property name="toolTip">
+    <string>extracts microstructures families</string>
    </property>
   </action>
  </widget>

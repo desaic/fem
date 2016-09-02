@@ -46,9 +46,9 @@ ElementRegGrid::GetEleInd(int ii , int jj, int kk)const
 }
 
 int
-ElementRegGrid::GetEleInd(const Vector3f & p)
+ElementRegGrid::GetEleInd(const Vector3S & p)
 {
-  Vector3f lp = p - origin;
+  Vector3S lp = p - origin;
   int ii = (int)( lp[0]/dx);
   int jj = (int)( lp[1]/dx);
   int kk = (int)( lp[2]/dx);
@@ -59,9 +59,9 @@ ElementRegGrid::GetEleInd(const Vector3f & p)
 }
 
 int
-ElementRegGrid::GetEleInd_clamp(const Vector3f & p)
+ElementRegGrid::GetEleInd_clamp(const Vector3S & p)
 {
-  Vector3f lp = p - origin;
+  Vector3S lp = p - origin;
   int ii = (int)( lp[0]/dx);
   int jj = (int)( lp[1]/dx);
   int kk = (int)( lp[2]/dx);
@@ -76,7 +76,7 @@ ElementRegGrid::rmEmptyVert()
 {
   vertIdx.resize(X.size());
   std::fill(vertIdx.begin(), vertIdx.end(), -1);
-  std::vector<Vector3f> newNodes;
+  std::vector<Vector3S> newNodes;
   int vCnt =0;
   for(unsigned int ii = 0;ii<e.size(); ii++){
     Element * ele = e[ii];
@@ -120,7 +120,7 @@ void ElementRegGrid::allocate()
   for (int ii = 0; ii <= nx; ii++) {
     for (int jj = 0; jj <= ny; jj++) {
       for (int kk = 0; kk <= nz; kk++) {
-        X.push_back(dx * Vector3f((float)ii, (float)jj, (float)kk));
+        X.push_back(dx * Vector3S((cfgScalar)ii, (cfgScalar)jj, (cfgScalar)kk));
       }
     }
   }

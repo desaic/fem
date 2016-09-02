@@ -33,6 +33,7 @@ public:
     MuXZType,
     MuYZType,
     DensityType,
+    StrengthType,
     UndefinedType,
   };
 
@@ -74,6 +75,8 @@ public:
   int getDim() {return m_dim;}
   MicrostructureType getType() {return m_type;}
   MaterialParameterType getParameterToVisualize(int indParam);
+
+  void runFamilyExtractor();
 
 signals:
   void pickedStructureModified();

@@ -16,10 +16,12 @@ public:
   Resampler();
   ~Resampler();
 
-  void resample(const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules);
-  void resample(cfgScalar iMinRadius, int iDim, const std::vector<cfgScalar> &iPoints, const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules);
+  void resample(const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules, cfgScalar iRatio=0);
+  void resample(cfgScalar iMinRadius, int iDim, const std::vector<cfgScalar> &iPoints, const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules, cfgScalar iRatio=0);
   void resampleBoundary(cfgScalar iMinRadius, int iDim, const std::vector<cfgScalar> &iPoints, const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules);
   void resampleData(cfgScalar iMinRadius, int iDim, const std::vector<cfgScalar> &iPoints, const std::vector<cfgScalar> &iScores, std::vector<int> &oParticules);
+
+  void resampleUsingNormalDistribution(const std::vector<cfgScalar> &iDistances, int iNbTargetParticules, std::vector<int> &oParticules);
 
 private:
   void normalize(std::vector<cfgScalar> &ioValues);

@@ -69,6 +69,9 @@ namespace cfgUtil
   template<class T>
   std::vector<T> add(const std::vector<T> &iVec, const T &iValue); 
 
+  template<class T, int Dim>
+  std::vector<T> add(const std::vector<T> &iVec, const T iValue[Dim]); 
+
   // return iVec1+iVec2
   template<class T>
   std::vector<T> add(const std::vector<T> &iVec1, const std::vector<T> &iVec2); 
@@ -84,17 +87,29 @@ namespace cfgUtil
   template<class T>
   std::vector<T> mult(const std::vector<T> &iVec, const T &iValue); 
 
+  template<class T>
+  std::vector<T> div(const std::vector<T> &iVec, const T &iValue); 
+
   template<class T, int Dim>
   std::vector<T> mult(const std::vector<T> &iVec, const T iValue[Dim]); 
 
   template<class T>
-  std::vector<T> mult(const std::vector<T> &iVec1, std::vector<T> &iVec2); 
+  std::vector<T> mult(const std::vector<T> &iVec1, const std::vector<T> &iVec2); 
 
   template<class T>
   T innerProd(const std::vector<T> &iVec1, const std::vector<T> &iVec2);
 
   template<class T>
+  T norm(const std::vector<T> &iVec, int iOrder);
+
+  template<class T>
   void fitLinearFunction(const std::vector<T> &iX, const std::vector<T> &iY, T &oSlope);
+
+  template<class T>
+  T getPositiveMax(const std::vector<T> &iX);
+
+  template<class T>
+  T getNegativeMin(const std::vector<T> &iX);
 
   /*-------------------------------------------------------------------------------------*/
   // I/O operations
@@ -138,7 +153,25 @@ namespace cfgUtil
   bool writeBinary(const std::string &iFileName, const std::vector<std::vector<T> > &iVec);
 
   template<class T>
+  bool writeBinary(std::fstream &iofstream, const std::vector<std::vector<T> > &iVec);
+
+  template<class T>
+  bool writeBinary(std::fstream &iofstream, const T &iVal);
+
+  template<class T>
+  bool writeBinary(std::fstream &iofstream, const std::vector<T> &iVec);
+
+  template<class T>
   bool readBinary(const std::string &iFileName, std::vector<std::vector<T> > &oVec);
+
+  template<class T>
+  bool readBinary(std::ifstream &iofstream, std::vector<std::vector<T> > &oVec);
+
+  template<class T>
+  bool readBinary(std::ifstream &iofstream, std::vector<T> &oVec);
+
+  template<class T>
+  bool readBinary(std::ifstream &iofstream, T &oVal);
 
   /*=====================================================================================*/
   // Implementations
@@ -251,7 +284,7 @@ namespace cfgUtil
     {
       int ind = iIndices[ielem];
       assert(ind>=0 && ind<ioVec1.size());
-      ioVec1[ind] = iVec2[ind];
+      ioVec1[ind] = iVec2[ielem];
     }
   }
 
@@ -392,6 +425,24 @@ namespace cfgUtil
     return vec;
   }
 
+  template<class T, int Dim>
+  std::vector<T> add(const std::vector<T> &iVec, const T iValue[Dim])
+  {
+    assert(iVec.size()%Dim==0 && Dim>0);
+
+    std::vector<T> vec = iVec;
+    int ipoint, npoint=(int)iVec.size()/Dim;
+    int icoord;
+    for (icoord=0; icoord<Dim; icoord++)
+    {
+      for (ipoint=0; ipoint<npoint; ipoint++)
+      {
+        vec[Dim*ipoint+icoord] += iValue[Dim];
+      }
+    }
+    return vec;
+  }
+
   template<class T>
   std::vector<T> add(const std::vector<T> &iVec1, const std::vector<T> &iVec2)
   {
@@ -443,6 +494,18 @@ namespace cfgUtil
     return vec;
   }
 
+  template<class T>
+  std::vector<T> div(const std::vector<T> &iVec, const T &iValue)
+  {
+    std::vector<T> vec = iVec;
+    size_t ielem, nelem=iVec.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      vec[ielem] /= iValue;
+    }
+    return vec;
+  }
+
   template<class T, int Dim>
   std::vector<T> mult(const std::vector<T> &iVec, const T iValue[Dim])
   {
@@ -462,7 +525,7 @@ namespace cfgUtil
   }
 
   template<class T>
-  std::vector<T> mult(const std::vector<T> &iVec1, std::vector<T> &iVec2)
+  std::vector<T> mult(const std::vector<T> &iVec1, const std::vector<T> &iVec2)
   {
     assert(iVec1.size()==iVec2.size());
     std::vector<T> vec = iVec1;
@@ -482,6 +545,24 @@ namespace cfgUtil
   }
 
   template<class T>
+  T norm(const std::vector<T> &iVec, int iOrder)
+  {
+    T sum = (T)0;
+    size_t ielem, nelem=iVec.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      const T & val = iVec[ielem];
+      T product = val;
+      for (int i=1; i<iOrder; i++)
+      {
+        product *= val;
+      }
+      sum += product;
+    }
+    return sum;
+  }
+
+  template<class T>
   void fitLinearFunction(const std::vector<T> &iX, const std::vector<T> &iY, T &oSlope)
   {
     T avg_X = average<T>(iX);
@@ -490,6 +571,38 @@ namespace cfgUtil
     std::vector<T> Y_minus_Yavg = sub(iY, avg_Y);
 
     oSlope = innerProd<T>(X_minus_Xavg, Y_minus_Yavg) / innerProd<T>(X_minus_Xavg, X_minus_Xavg);
+  }
+
+  template<class T>
+  T getPositiveMax(const std::vector<T> &iX)
+  {
+    T max = (T)0;
+    size_t ielem, nelem=iX.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      const T & val = iX[ielem];
+      if (val > max)
+      {
+        max = val;
+      }
+    }
+    return max;
+  }
+
+  template<class T>
+  T getNegativeMin(const std::vector<T> &iX)
+  {
+    T min = (T)0;
+    size_t ielem, nelem=iX.size();
+    for (ielem=0; ielem<nelem; ielem++)
+    {
+      const T & val = iX[ielem];
+      if (val < min)
+      {
+        min = val;
+      }
+    }
+    return min;
   }
 
   template<class T>
@@ -541,7 +654,7 @@ namespace cfgUtil
     oStream << nelem << " " << std::endl;
     for (ielem=0; ielem<nelem; ielem++)
     {
-      serializeVec(oStream, iVec[ielem], "");
+      serialize(oStream, iVec[ielem], "");
     }
   }
 
@@ -632,9 +745,7 @@ namespace cfgUtil
   bool writeBinary(const std::string &iFileName, const std::vector<T> &iVec)
   {
     std::fstream file(iFileName, std::ios::out | std::ios::binary);
-    int nelem = (int)iVec.size();
-    file.write((char*)&nelem, sizeof(int));
-    file.write((char*)&iVec[0], nelem*sizeof(T));
+    writeBinary(file, iVec);
     file.close();
     return true;
   }
@@ -646,6 +757,17 @@ namespace cfgUtil
     if (!file.is_open())
       return false;
 
+    readBinary(file, oVec);
+
+    file.close();
+    return true;
+  }
+
+  template<class T>
+  bool readBinary(std::ifstream &iofstream, std::vector<T> &oVec)
+  {
+    std::ifstream & file = iofstream;
+
     int nelem;
     file.read((char*)&nelem, sizeof(int));
     oVec.resize(nelem);
@@ -653,14 +775,50 @@ namespace cfgUtil
     {
       file.read((char*)&oVec[0], nelem*sizeof(T));
     }
-    file.close();
     return true;
   }
+
+  template<class T>
+  bool readBinary(std::ifstream &iofstream, T &oVal)
+  {
+    iofstream.read((char*)&oVal, sizeof(T));
+    return true;
+  }
+
 
   template<class T>
   bool writeBinary(const std::string &iFileName, const std::vector<std::vector<T> > &iVec)
   {
     std::fstream file(iFileName, std::ios::out | std::ios::binary);
+    writeBinary(file, iVec);
+    file.close();
+    return true;
+  }
+
+  template<class T>
+  bool writeBinary(std::fstream &iofstream, const T &iVal)
+  {
+    iofstream.write((char*)&iVal, sizeof(T));
+    return true;
+  }
+
+  template<class T>
+  bool writeBinary(std::fstream &iofstream, const std::vector<T> &iVec)
+  {
+    std::fstream &file = iofstream;
+    int nelem = (int)iVec.size();
+    file.write((char*)&nelem, sizeof(int));
+    if (nelem>0)
+    {
+      file.write((char*)&iVec[0], nelem*sizeof(T));
+    }
+    return true;
+  }
+
+  template<class T>
+  bool writeBinary(std::fstream &iofstream, const std::vector<std::vector<T> > &iVec)
+  {
+    std::fstream &file = iofstream;
     int nvec = (int)iVec.size();
     file.write((char*)&nvec, sizeof(int));
     int ivec;
@@ -668,9 +826,11 @@ namespace cfgUtil
     {
       int nelem = (int)iVec[ivec].size();
       file.write((char*)&nelem, sizeof(int));
-      file.write((char*)&iVec[ivec][0], nelem*sizeof(T));
+      if (nelem>0)
+      {
+        file.write((char*)&iVec[ivec][0], nelem*sizeof(T));
+      }
     }
-    file.close();
     return true;
   }
 
@@ -681,6 +841,17 @@ namespace cfgUtil
     if (!file.is_open())
       return false;
 
+    readBinary(file, oVec);
+
+    file.close();
+    return true;
+  }
+
+  template<class T>
+  bool readBinary(std::ifstream &iofstream, std::vector<std::vector<T> > &oVec)
+  {
+    std::ifstream &file = iofstream;
+   
     int nvec;
     file.read((char*)&nvec, sizeof(int));
     oVec.resize(nvec);
@@ -690,10 +861,11 @@ namespace cfgUtil
       int nelem;
       file.read((char*)&nelem, sizeof(int));
       oVec[ivec].resize(nelem);
-      file.read((char*)&oVec[ivec][0], nelem*sizeof(T));
-      bool toto = true;
+      if (nelem>0)
+      {
+        file.read((char*)&oVec[ivec][0], nelem*sizeof(T));
+      }
     }
-    file.close();
     return true;
   }
 

@@ -21,7 +21,17 @@ DistanceField::~DistanceField()
 std::vector<cfgScalar> DistanceField::computeDistances(const std::vector<cfgScalar> &iPoints, std::vector<cfgScalar> *ioDerivatives)
 {
   std::vector<cfgScalar> distances;
-  if (m_dim==4)
+  if (m_dim == 2)
+  {
+    DistanceFieldImpl<2> distField(m_dim);
+    distances = distField.computeDistances(iPoints, ioDerivatives);
+  }
+  else if (m_dim == 3)
+  {
+    DistanceFieldImpl<3> distField(m_dim);
+    distances = distField.computeDistances(iPoints, ioDerivatives);
+  }
+  else if (m_dim==4)
   {
     DistanceFieldImpl<3> distField(m_dim);
     distances = distField.computeDistances(iPoints, ioDerivatives);

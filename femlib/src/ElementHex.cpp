@@ -51,18 +51,18 @@ const int facen[6][3]={
 	{ 0, 0, 1}
 };
 
-Vector3f ElementHex::natCoord(const Vector3f & p, const std::vector<Vector3f> & X)
+Vector3S ElementHex::natCoord(const Vector3S & p, const std::vector<Vector3S> & X)
 {
-  Vector3f n = p - X[at(0)];
-  float size = (X[at(7)][0] - X[at(0)][0]);
-  n = (2.0f / size) * n - Vector3f(1,1,1);
+  Vector3S n = p - X[at(0)];
+  cfgScalar size = (X[at(7)][0] - X[at(0)][0]);
+  n = (2.0f / size) * n - Vector3S(1,1,1);
   return n;
 }
 
-std::vector<float>
-ElementHex::shapeFun(const Vector3f & p)const
+std::vector<cfgScalar>
+ElementHex::shapeFun(const Vector3S & p)const
 {
-  std::vector<float> weights(8);
+  std::vector<cfgScalar> weights(8);
   for(int ii = 0;ii<nV();ii++){
     weights[ii] = (1.0f/8) * (1+sw[ii][0]*p[0])
       *(1+sw[ii][1]*p[1]) *(1+sw[ii][2]*p[2]) ;
@@ -70,14 +70,14 @@ ElementHex::shapeFun(const Vector3f & p)const
   return weights;
 }
 
-Vector3f
-ElementHex::shapeFunGrad(int ii, const Vector3f & xx,
-                                 const std::vector<Vector3f> & X) const
+Vector3S
+ElementHex::shapeFunGrad(int ii, const Vector3S & xx,
+                                 const std::vector<Vector3S> & X) const
 {
-  Vector3f size=4*(X[at(7)] - X[at(0)]);
+  Vector3S size=4*(X[at(7)] - X[at(0)]);
 //  std::cout<<size[0]<<"\n";
 
-  Vector3f grad;
+  Vector3S grad;
   size[0] = 1.0f/(size[0]);
   size[1] = 1.0f/(size[1]);
   size[2] = 1.0f/(size[2]);
@@ -100,9 +100,9 @@ ElementHex::getEdges()
   return edges;
 }
 
-Vector3f ElementHex::facePt(int fi, const Vector3f & x)
+Vector3S ElementHex::facePt(int fi, const Vector3S & x)
 {
-	Vector3f p;
+	Vector3S p;
 	switch (fi){
 	case 0:
 		p[0] = -1;
@@ -140,27 +140,27 @@ Vector3f ElementHex::facePt(int fi, const Vector3f & x)
 	return p;
 }
 
-Eigen::MatrixXf ElementHex::NMatrix(int fi)
+MatrixXS ElementHex::NMatrix(int fi)
 {
-	Eigen::MatrixXf N= Eigen::MatrixXf::Zero(3,6);
+	MatrixXS N= MatrixXS::Zero(3,6);
 	for (int ii = 0; ii < 3; ii++){
-		N(ii, ii) = (float)facen[fi][ii];
+		N(ii, ii) = (cfgScalar)facen[fi][ii];
 	}
-	N(0, 3) = (float)facen[fi][1];
-	N(0, 5) = (float)facen[fi][2];
+	N(0, 3) = (cfgScalar)facen[fi][1];
+	N(0, 5) = (cfgScalar)facen[fi][2];
 
-	N(1, 3) = (float)facen[fi][0];
-	N(1, 4) = (float)facen[fi][2];
+	N(1, 3) = (cfgScalar)facen[fi][0];
+	N(1, 4) = (cfgScalar)facen[fi][2];
 
-	N(2, 4) = (float)facen[fi][1];
-	N(2, 5) = (float)facen[fi][0];
+	N(2, 4) = (cfgScalar)facen[fi][1];
+	N(2, 5) = (cfgScalar)facen[fi][0];
 	return N;
 }
 
-Eigen::MatrixXf ElementHex::HMatrix(const Vector3f & xx)
+MatrixXS ElementHex::HMatrix(const Vector3S & xx)
 {
-	std::vector<float> w = shapeFun(xx);
-	Eigen::MatrixXf H = Eigen::MatrixXf::Zero(3,3*nV());
+	std::vector<cfgScalar> w = shapeFun(xx);
+	MatrixXS H = MatrixXS::Zero(3,3*nV());
 	for (int ii = 0; ii < nV(); ii++){
 		for (int jj = 0; jj < 3; jj++){
 			H(jj, 3 * ii + jj) = w[ii];
@@ -169,12 +169,12 @@ Eigen::MatrixXf ElementHex::HMatrix(const Vector3f & xx)
 	return H;
 }
 
-Eigen::MatrixXf ElementHex::BMatrix(const Vector3f & xx, const std::vector<Vector3f>X)
+MatrixXS ElementHex::BMatrix(const Vector3S & xx, const std::vector<Vector3S>X)
 {
-	Eigen::MatrixXf B = Eigen::MatrixXf::Zero(6, 3 * nV());
+	MatrixXS B = MatrixXS::Zero(6, 3 * nV());
 	for (int ii = 0; ii < nV(); ii++){
 		int col = 3 * ii;
-		Vector3f dN = shapeFunGrad(ii, xx, X);
+		Vector3S dN = shapeFunGrad(ii, xx, X);
 		B(0, col  ) = dN[0];
 		B(1, col+1) = dN[1];
 		B(2, col+2) = dN[2];
@@ -191,10 +191,10 @@ Eigen::MatrixXf ElementHex::BMatrix(const Vector3f & xx, const std::vector<Vecto
 	return B;
 }
 
-float ElementHex::getVol(const std::vector<Vector3f> & X)
+cfgScalar ElementHex::getVol(const std::vector<Vector3S> & X)
 {
-  Vector3f size = X[at(7)] - X[at(0)];
-  float vol = size[0] * size[1] * size[2];
+  Vector3S size = X[at(7)] - X[at(0)];
+  cfgScalar vol = size[0] * size[1] * size[2];
 //  std::cout<<vol<<"\n";
   return vol;
 }

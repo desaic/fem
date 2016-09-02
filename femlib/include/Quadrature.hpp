@@ -2,11 +2,12 @@
 #define QUADRATURE_HPP
 #include <vector>
 #include <Eigen/Dense>
+#include "cfgDefs.h"
 class Quadrature
 {
 public:
-  std::vector<Eigen::Vector3f> x;
-  std::vector<float> w;
+  std::vector<Vector3S> x;
+  std::vector<cfgScalar> w;
   Quadrature();
   
   static const Quadrature Gauss2_2D;

@@ -35,6 +35,8 @@ private:
 private slots:
   void levelCheckBoxModified();
   void on_m_action2D_triggered();
+  void on_m_actionFamilyExtractor_triggered();
+
   void on_m_type_comboBox_currentIndexChanged();
   void on_m_x_comboBox_currentIndexChanged();
   void on_m_y_comboBox_currentIndexChanged();

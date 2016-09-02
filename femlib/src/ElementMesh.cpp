@@ -6,7 +6,7 @@
 #include <iostream>
 using namespace Eigen;
 ///@TODO only loads hex mesh
-void ElementMesh::load(std::istream & in, float scale)
+void ElementMesh::load(std::istream & in, cfgScalar scale)
 {
   int nEle , nVert;
   std::string token;
@@ -17,7 +17,7 @@ void ElementMesh::load(std::istream & in, float scale)
   X.resize(nVert);
   e.resize(nEle);
   std::cout<<nVert<<" vertices\n"<<nEle<<" elements.\n";
-  Vector3f minPos(0,0,0);
+  Vector3S minPos(0,0,0);
   for(int ii =0 ; ii<nVert; ii++){
     in>>X[ii][0]>>X[ii][1]>>X[ii][2];
     X[ii] = scale * X[ii];
@@ -53,8 +53,8 @@ void ElementMesh::load(std::istream & in, float scale)
 void ElementMesh::initArrays()
 {
   x=X;
-  v.resize(X.size(), Vector3f(0,0,0));
-  fe.resize(X.size(), Vector3f(0,0,0));
+  v.resize(X.size(), Vector3S(0,0,0));
+  fe.resize(X.size(), Vector3S(0,0,0));
   fixed.resize(X.size(),false);
   me.resize(e.size(),0);
 }
@@ -90,9 +90,9 @@ int ElementMesh::check()
   return 0;
 }
 
-float ElementMesh::getEnergy()
+cfgScalar ElementMesh::getEnergy()
 {
-  float ene = 0;
+  cfgScalar ene = 0;
   for(unsigned int ii = 0;ii<e.size();ii++){
     ene += getEnergy(ii);
     if(fem_error){
@@ -106,21 +106,21 @@ float ElementMesh::getEnergy()
   return ene;
 }
 
-float ElementMesh::getEnergy(int eIdx)
+cfgScalar ElementMesh::getEnergy(int eIdx)
 {
   return m[me[eIdx]]->getEnergy(e[eIdx], this);
 }
 
-std::vector<Vector3f> ElementMesh::getForce(int eIdx)
+std::vector<Vector3S> ElementMesh::getForce(int eIdx)
 {
   return m[me[eIdx]]->getForce(e[eIdx], this);
 }
 
-std::vector<Vector3f> ElementMesh::getForce()
+std::vector<Vector3S> ElementMesh::getForce()
 {
-  std::vector<Vector3f> force(x.size(), Eigen::Vector3f::Zero());
+  std::vector<Vector3S> force(x.size(), Vector3S::Zero());
   for(unsigned int ii = 0;ii<e.size();ii++){
-    std::vector<Vector3f> fele = getForce(ii);
+    std::vector<Vector3S> fele = getForce(ii);
     for(int jj = 0; jj<e[ii]->nV(); jj++){
       force[ e[ii]->at(jj) ] += fele[jj];
     }
@@ -136,9 +136,9 @@ void ElementMesh::computeMass()
 {
   mass.resize(x.size(), 0);
   for(unsigned int ii =0 ; ii<e.size(); ii++){
-    float size = X[e[ii]->at(7)][0] - X[e[ii]->at(0)][0];
-    float vol = size*size*size;
-    float nodeMass = 0.125 * vol * density;
+    cfgScalar size = X[e[ii]->at(7)][0] - X[e[ii]->at(0)][0];
+    cfgScalar vol = size*size*size;
+    cfgScalar nodeMass = 0.125 * vol * density;
     for(int jj =0 ; jj<e[ii]->nV(); jj++){
       mass[e[ii]->at(jj)] += nodeMass;
 //      std::cout<<"m: "<<mass[e[ii]->at(jj)]<<"\n";
@@ -146,12 +146,12 @@ void ElementMesh::computeMass()
   }
 }
 
-float ElementMesh::eleSize()
+cfgScalar ElementMesh::eleSize()
 {
   return X[e[0]->at(7)][0] - X[e[0]->at(0)][0];
 }
 
-ElementMesh::ElementMesh():dt(0.01),G(Vector3f(0,-9.8,0)), density(1000),
+ElementMesh::ElementMesh():dt(0.01),G(Vector3S(0,-9.8,0)), density(1000),
 forceDrawingScale(1)
 {}
 

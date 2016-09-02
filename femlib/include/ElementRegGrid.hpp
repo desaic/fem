@@ -19,11 +19,11 @@ public:
   ///@brief remove unused vertices
   void rmEmptyVert();
   
-  int GetEleInd(const Eigen::Vector3f & p);
+  int GetEleInd(const Vector3S & p);
 
   ///@brief 
   int GetEleInd(int ii , int jj, int kk)const;
-  int GetEleInd_clamp(const Eigen::Vector3f & p);
+  int GetEleInd_clamp(const Vector3S & p);
   int GetVertInd(int ii , int jj, int kk);
   int toArrInd(int ii , int jj, int kk)const{return ii * ny * nz + jj * nz + kk;}
 
@@ -32,8 +32,8 @@ public:
   //map from  grid index to vertex index in array X and x.
   std::vector<int> vertIdx;
   int nx,ny,nz;
-  float dx;
+  cfgScalar dx;
 
-  Eigen::Vector3f origin;
+  Vector3S origin;
 };
 #endif /* ELEMENTREGGRID_HPP_ */

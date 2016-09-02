@@ -10,14 +10,14 @@ StepperGrad::StepperGrad():h(0.01f),force_L2tol(1e-4f) {}
 
 int StepperGrad::oneStep()
 {
-  std::vector<Vector3f> force = m->getForce();
+  std::vector<Vector3S> force = m->getForce();
   for(unsigned int ii = 0;ii<force.size();ii++){
     if(m->fixed[ii]){
-      force[ii] = Vector3f(0,0,0);
+      force[ii] = Vector3S(0,0,0);
     }
   }
-  float E = m->getEnergy();
-  float totalMag = 0;
+  cfgScalar E = m->getEnergy();
+  cfgScalar totalMag = 0;
   for(unsigned int ii = 0;ii<force.size();ii++){
     totalMag += force[ii].squaredNorm();  
   }
@@ -25,11 +25,11 @@ int StepperGrad::oneStep()
     return 0;
   }
 
-  std::vector<Vector3f> x0 = m->x;
+  std::vector<Vector3S> x0 = m->x;
   while(1){
     m->x=x0;
     addmul(m->x, h, force);
-    float E1 = m->getEnergy();
+    cfgScalar E1 = m->getEnergy();
 
     if(E1>E || fem_error){
       fem_error = 0;

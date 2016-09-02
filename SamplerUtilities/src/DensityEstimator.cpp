@@ -41,14 +41,17 @@ void DensityEstimator::init()
 
 cfgScalar DensityEstimator::estimateRadius()
 {
-  int nsubdiv = 10;
+  int nsubdiv = 20;
   std::vector<cfgScalar> box[2];
   getBoundingBox(m_x, m_dim, box);
   cfgScalar radius = FLT_MAX;
   for (int idim=0; idim<m_dim; idim++)
   {
     cfgScalar diff = box[1][idim]-box[0][idim];
-    radius = std::min(radius, diff/nsubdiv);
+    if (diff > 1.e-12)
+    {
+      radius = std::min(radius, diff/nsubdiv);
+    }
   }
   return radius;
 }
@@ -111,6 +114,7 @@ std::vector<cfgScalar> DensityEstimator::computeDensities()
 
 std::vector<cfgScalar> DensityEstimator::computeDensities(int iIndexStart, int iIndexEnd, std::vector<cfgScalar> &ioPreviousDensities)
 {
+  std::cout << "computeDensities " <<  iIndexEnd-iIndexStart << " instead of " << iIndexEnd << std::endl;
   std::set<int> touchedPoints;
   std::vector<cfgScalar> densities;
   for (int ipoint=iIndexStart; ipoint<iIndexEnd; ipoint++)

@@ -31,6 +31,7 @@ MainWindow::MainWindow()
   materialParameterStrings[exProject::MuXZType] = "MuXZ";
   materialParameterStrings[exProject::MuYZType] = "MuYZ";
   materialParameterStrings[exProject::DensityType] = "Density";
+  materialParameterStrings[exProject::StrengthType] = "Strength";
 
   addMaterialParameterOptions(*m_x_comboBox, materialParameterStrings);
   addMaterialParameterOptions(*m_y_comboBox, materialParameterStrings);
@@ -141,6 +142,14 @@ void MainWindow::addMaterialParameterOptions(QComboBox &iBox, const std::vector<
 void MainWindow::on_m_action2D_triggered()
 {
   setDim();
+}
+
+void MainWindow::on_m_actionFamilyExtractor_triggered()
+{
+  if (m_project)
+  {
+    m_project->runFamilyExtractor();
+  }
 }
 
 void MainWindow::on_m_type_comboBox_currentIndexChanged()

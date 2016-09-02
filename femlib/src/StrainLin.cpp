@@ -8,42 +8,45 @@ StrainLin::StrainLin()
 	param[1] = 10;
 }
 
-float StrainLin::getEnergy(const Matrix3f & F)
+cfgScalar StrainLin::getEnergy(const Matrix3S & F)
 {
-	Matrix3f I = Matrix3f::Identity();
-	Matrix3f eps = 0.5*(F + F.transpose()) - I;
-	float t = eps.trace();
-	float Psi = param[0]*eps.squaredNorm() + 0.5f*param[1] * t*t;
+	Matrix3S I = Matrix3S::Identity();
+	Matrix3S eps = 0.5*(F + F.transpose()) - I;
+	cfgScalar t = eps.trace();
+	cfgScalar Psi = param[0]*eps.squaredNorm() + 0.5f*param[1] * t*t;
 	return Psi;
 }
 
-Matrix3f StrainLin::getPK1(const Matrix3f & F)
+Matrix3S StrainLin::getPK1(const Matrix3S & F)
 {
-	float mu = param[0];
-	float lambda = param[1];
-	Matrix3f I = Matrix3f::Identity();
-	Matrix3f PP = mu*(F + F.transpose()-2*I) + lambda * (F.trace()-3) * I;
+	cfgScalar mu = param[0];
+	cfgScalar lambda = param[1];
+	Matrix3S I = Matrix3S::Identity();
+	Matrix3S PP = mu*(F + F.transpose()-2*I) + lambda * (F.trace()-3) * I;
 	return PP;
 }
 
-Matrix3f StrainLin::getdPdx(const Matrix3f & F, const Matrix3f & dF)
+Matrix3S StrainLin::getdPdx(const Matrix3S & F, const Matrix3S & dF)
 {
-	Matrix3f dP = Matrix3f();
-	float mu = param[0];
-	float lambda = param[1];
-	Matrix3f I = Matrix3f::Identity();
+	Matrix3S dP = Matrix3S();
+	cfgScalar mu = param[0];
+	cfgScalar lambda = param[1];
+	Matrix3S I = Matrix3S::Identity();
 	dP = mu * (dF + dF.transpose()) + lambda * dF.trace() * I;
 	return dP;
 }
 
-Eigen::MatrixXf StrainLin::EMatrix()
+MatrixXS StrainLin::EMatrix()
 {
-	Eigen::MatrixXf E=Eigen::MatrixXf::Zero(6,6);
-	float G = param[0];
-	float l = param[1];
-	float e = G*(3 * l + 2 * G) / (l + G);
-	float nu = l / (2 * (l + G));
-	float c = e / ((1 + nu)*(1 - 2 * nu));
+	MatrixXS E=MatrixXS::Zero(6,6);
+	cfgScalar G = param[0];
+  if (G==0)
+    return E;
+
+	cfgScalar l = param[1];
+	cfgScalar e = G*(3 * l + 2 * G) / (l + G);
+	cfgScalar nu = l / (2 * (l + G));
+	cfgScalar c = e / ((1 + nu)*(1 - 2 * nu));
 	for (int ii = 0; ii < 3; ii++){
 		for (int jj = 0; jj < 3; jj++){
 			E(ii, jj) = nu;
@@ -54,9 +57,9 @@ Eigen::MatrixXf StrainLin::EMatrix()
 	return c*E;
 }
 
-Matrix3f StrainLin::getStrainTensor(const Matrix3f & F)
+Matrix3S StrainLin::getStrainTensor(const Matrix3S & F)
 {
-  Matrix3f I = Matrix3f::Identity();
-	Matrix3f eps = 0.5*(F + F.transpose()) - I;
+  Matrix3S I = Matrix3S::Identity();
+	Matrix3S eps = 0.5*(F + F.transpose()) - I;
   return eps;
 }

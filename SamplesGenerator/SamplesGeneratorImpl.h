@@ -10,6 +10,8 @@ class ElementRegGrid;
 class ElementRegGrid2D;
 class Stepper;
 class Stepper2D;
+class StrainLin;
+class StrainLin2D;
 
 class SamplesGeneratorImpl
 {
@@ -23,6 +25,8 @@ public:
   int run();
 
 private:
+  void init();
+
   int computeMaterialParameters(std::string & iStepperType, int iLevel, int iNbCombPrevLevel, bool iReadSingleFile, bool iWriteSingleFile, bool iReadFullDeformation, bool iWriteFullDeformation);
   int computeMaterialParametersLevel1(std::string & iStepperType, bool iWriteSingleFile, bool iWriteFullDeformation);
   int computeMaterialParameters(std::string iStepperType,  const std::vector<std::vector<int> > &iMaterialAssignments, 
@@ -105,6 +109,9 @@ private:
   void concatenateFiles(int iLevel, int indexMin, int indexMax, const std::string iPostFix="", const std::string iNewPostFix="");
   void concatenateFiles(int iLevel, const std::string iPostFix1, const std::string iPostFix2, const std::string iNewPostFix="");
 
+  std::vector<std::vector<int> > getBaseMaterialStructures(int nmat, int icell=1);
+  std::vector<int> toBinaryDistribution(const std::vector<int> &iMatAssignment, int iVoidMatIndex);
+
   int getNbParameters();
   int getNbFreeCells(int n[3]);
   std::vector<int> getFreeCellsMaterialAssignment(int n[3], const std::vector<int> &iMatAssignments);
@@ -127,13 +134,25 @@ private:
   bool readDisneyFiles(int iDim, bool iCubic, bool iOrthotropic, std::vector<cfgScalar> &oPhysicalParameters);
 
   int runExhaustiveGamutComputation(int iLevel);
-  int runDiscreteOptimization(int iLevel, int iNbCycles);
+  int runDiscreteOptimization(int iLevel, int iNbCycles, int iStartCycle, bool iGrowStructure);
   int runStrengthAnalysis(int iLevel);
+  int runVariantsComputation(int iLevel);
+
+  int runFilesConcatenation();
+  int runIsotropicToOrthotropicConversion(int iLevel);
+  int runSubsamplingStage(int iLevel);
+  int runMirroring(int iLevel);
+  int run2Dto3DConversion(int iLevel);
+  int runFixDisconnectedMicrostructures(int iLevel);
+  int runMaterialPropertiesComputation(int iLevel);
+
+  int rewriteDisneyFiles();
 
 private:
   std::string m_OutputDirectory;
   bool m_UseLinearMaterial;
   int m_dim;
+  int m_nmat;
   int m_blockRep;
   int m_nbSubdivisions;
   std::vector<MaterialQuad> m_mat;
@@ -142,6 +161,13 @@ private:
   bool m_cubicOnly;
   bool m_continuousMatDist;
   bool m_filterOutDisconnetedStructures;
+
+  std::vector<StrainLin> m_ene;
+  std::vector<StrainLin2D> m_ene2D;
+  std::vector<cfgScalar> m_baseMaterialDensities;
+
+  bool m_useLogScale;
+  std::vector<int> m_parametersToUse;
 };
 
 #endif

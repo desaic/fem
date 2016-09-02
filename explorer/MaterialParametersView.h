@@ -48,6 +48,7 @@ private:
 
   void rescaleParameters(int iIndex, float iScalingFactor, std::vector<float> &ioPoints, int iDim);
   float getMaxValue(int iIndex, const std::vector<float> &iPoints, int iDim);
+  void convertToLogValues(int iIndex, const std::vector<float> &iPoints, int iDim, std::vector<float> &oPoints, float iEpsilon=0);
 
   private slots:
     void onLevelVisibilityModified();

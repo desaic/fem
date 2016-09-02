@@ -45,8 +45,8 @@ int StepperNewton::oneStep()
 
   fem_error = FEM_OK;
 
-  std::vector<Vector3f> force = m->getForce();
-  float E = m->getEnergy();
+  std::vector<Vector3S> force = m->getForce();
+  cfgScalar E = m->getEnergy();
 
   int ndof = 3*(int)m->x.size();
   int nconstraint = 0;
@@ -65,7 +65,7 @@ int StepperNewton::oneStep()
     int nz = ((ElementRegGrid*)m)->nz+1;
     nconstraint += 3*(ny*nz-1 + (nx-1)*nz-1 + (nx-1)*(ny-1)-1);
   }
-  std::vector<float> bb(ndof+nconstraint);
+  std::vector<cfgScalar> bb(ndof+nconstraint);
 
   bool rmRigid = m_noTranslation && m_noRotation;
 
@@ -94,12 +94,12 @@ int StepperNewton::oneStep()
 
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
     for(int jj = 0;jj<3;jj++){
-      force[ii][jj] = (float)bb[3*ii+jj];
+      force[ii][jj] = (cfgScalar)bb[3*ii+jj];
     }
   }
   //line search
-  std::vector<Vector3f> x0 = m->x;
-  float E1=E;
+  std::vector<Vector3S> x0 = m->x;
+  cfgScalar E1=E;
   while(1){
     if(totalMag * h<dx_tol){
       break;
@@ -127,7 +127,7 @@ int StepperNewton::oneStep()
 
 ///@brief add rows to K and b to constrain 6 degrees of freedom.
 ///@param K size is #DOF + 6
-void fixRigid(MatrixXf & K, float * b,
+void fixRigid(MatrixXf & K, cfgScalar * b,
         ElementMesh * mesh)
 {
   int row = K.rows()-6;
@@ -135,18 +135,18 @@ void fixRigid(MatrixXf & K, float * b,
     b[row + ii] = 0;
   }
 
-  Vector3f center(0,0,0);
+  Vector3S center(0,0,0);
   for(int ii = 0;ii<mesh->x.size();ii++){
     center += mesh->x[ii];
   }
-  center /= (float)mesh->x.size();
-  float cscale = 1000;
+  center /= (cfgScalar)mesh->x.size();
+  cfgScalar cscale = 1000;
   for(int ii = 0;ii<mesh->x.size();ii++){
     int col = 3*ii;
     //relative position to center
-    Vector3f rel = mesh->x[ii] - center;
+    Vector3S rel = mesh->x[ii] - center;
     //cross product matrix
-    Eigen::Matrix3f c;
+    Matrix3S c;
     c<<0, -rel[2], rel[1],
              rel[2],       0, -rel[0],
             -rel[1],  rel[0],       0;
@@ -166,12 +166,12 @@ void fixRigid(MatrixXf & K, float * b,
   }
 }
 
-int StepperNewton::compute_dx_dense(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
+int StepperNewton::compute_dx_dense(ElementMesh * iMesh, const std::vector<Vector3S> &iForces, bool iRmRigid, std::vector<cfgScalar> &bb)
 {
   return 0;
 }
 
-int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRmRigid, std::vector<float> &bb)
+int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3S> &iForces, bool iRmRigid, std::vector<cfgScalar> &bb)
 {
   bool triangular = true;
 
@@ -187,7 +187,7 @@ int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vect
   int ndof = bb.size();
   assert(iMesh && 3*iMesh->x.size()==bb.size());
 
-  std::vector<float> Kvalues;
+  std::vector<cfgScalar> Kvalues;
   iMesh->getStiffnessSparse(Kvalues, triangular, true, iRmRigid);
    
   for(unsigned int ii = 0;ii<m->x.size(); ii++){
@@ -214,7 +214,7 @@ int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vect
     rhs[col] = bb[col];
     ia[col] = indVal;
 
-    //for (Eigen::SparseMatrix<float>::InnerIterator it(K, col); it; ++it){
+    //for (Eigen::SparseMatrix<cfgScalar>::InnerIterator it(K, col); it; ++it){
     //    int row = it.row();
     for (int i=m_I[col]; i<m_I[col+1]; i++)
     {
@@ -241,7 +241,7 @@ int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vect
   return 0;
 }
 
-int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3f> &iForces, bool iRemoveTranslation, bool iRemoveRotation, bool iPeriodic, std::vector<float> &bb)
+int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vector3S> &iForces, bool iRemoveTranslation, bool iRemoveRotation, bool iPeriodic, std::vector<cfgScalar> &bb)
 {
   bool triangular = true;
 
@@ -257,7 +257,7 @@ int StepperNewton::compute_dx_sparse(ElementMesh * iMesh, const std::vector<Vect
   assert(iMesh);
   int ndof = (int)(3*iMesh->x.size());
  
-  std::vector<float> Kvalues;
+  std::vector<cfgScalar> Kvalues;
   iMesh->getStiffnessSparse(Kvalues, triangular, true, iRemoveTranslation, iRemoveRotation, iPeriodic);
    
   for(unsigned int ii = 0;ii<m->x.size(); ii++){

@@ -1168,6 +1168,30 @@ void cfgMaterialUtilities::updateMaterialSubstructure(std::vector<int> &ioMateri
   }
 }
 
+bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, int nX, int nY, int nZ, int nmat)
+{
+  bool isManifold = true;
+  int nvoxel = (int)iMaterials.size();
+  std::vector<int> binaryMaterials(nvoxel);
+  for (int imat=0; imat<nmat && isManifold; imat++)
+  {
+    for (int ivoxel=0; ivoxel<nvoxel; ivoxel++)
+    {
+      int mat = iMaterials[ivoxel];
+      if (mat==imat)
+      {
+        binaryMaterials[ivoxel] = 0;
+      }
+      else
+      {
+        binaryMaterials[ivoxel] = 1;
+      }
+    }
+    isManifold = isManifold && isStructureManifold(nx, ny, nz, binaryMaterials, isStructuredMirrored, nX, nY, nZ);
+  }
+  return isManifold;
+}
+
 bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, int nz, const std::vector<int> &iMaterials, bool isStructuredMirrored, int nX, int nY, int nZ)
 {
   bool isManifold = true;
@@ -1460,7 +1484,8 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector
             int mat21 = iMaterials[indMat21];
             int mat22 = iMaterials[indMat22];
 
-            isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+            isManifold = (mat11!=mat22 || mat11==mat12 || mat11==mat21) && (mat12!=mat21 ||  mat12==mat22 || mat12==mat11);
+            //isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
           }
         }
       }
@@ -1484,7 +1509,8 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector
             int mat21 = iMaterials[indMat21];
             int mat22 = iMaterials[indMat22];
 
-            isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+            isManifold = (mat11!=mat22 || mat11==mat12 || mat11==mat21) && (mat12!=mat21 ||  mat12==mat22 || mat12==mat11);
+            //isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
           }
         }
       }
@@ -1512,7 +1538,8 @@ bool cfgMaterialUtilities::isStructureManifold(int nx, int ny, const std::vector
       int mat21 = iMaterials[indMat21];
       int mat22 = iMaterials[indMat22];
 
-      isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+      //isManifold = mat11!=mat22 || mat12!=mat21 || mat12==mat11;
+      isManifold = (mat11!=mat22 || mat11==mat12 || mat11==mat21) && (mat12!=mat21 ||  mat12==mat22 || mat12==mat11);
     }
   } 
   return isManifold;
@@ -2144,6 +2171,45 @@ void cfgMaterialUtilities::getTetrahedralElements(int Nx, int Ny, int Nz, const 
   }
 }
 
+void cfgMaterialUtilities::translateStructure(int Nx, int Ny, const std::vector<int> &iStructureElements, int Tx, int Ty, std::vector<int> &oTranslatedStructure)
+{
+  oTranslatedStructure.clear();
+  oTranslatedStructure.resize(iStructureElements.size());
+
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<Ny; j++)
+    {
+      int indVoxel = getGridToVectorIndex(i, j, Nx, Ny);
+      int mat = iStructureElements[indVoxel];
+
+      int indNewVoxel = getGridToVectorIndex((i+Tx)%Nx, (j+Ty)%Ny, Nx, Ny);
+      oTranslatedStructure[indNewVoxel] = mat;
+    }
+  }
+}
+
+void cfgMaterialUtilities::translateStructure(int Nx, int Ny, int Nz, const std::vector<int> &iStructureElements, int Tx, int Ty, int Tz, std::vector<int> &oTranslatedStructure)
+{
+  oTranslatedStructure.clear();
+  oTranslatedStructure.resize(iStructureElements.size());
+
+  for (int i=0; i<Nx; i++)
+  {
+    for (int j=0; j<Ny; j++)
+    {
+      for (int k=0; k<Nz; k++)
+      {
+        int indVoxel = getGridToVectorIndex(i, j, k, Nx, Ny, Nz);
+        int mat = iStructureElements[indVoxel];
+
+        int indNewVoxel = getGridToVectorIndex((i+Tx)%Nx, (j+Ty)%Ny, (k+Tz)%Nz, Nx, Ny, Nz);
+        oTranslatedStructure[indNewVoxel] = mat;
+      }
+    }
+  }
+}
+
 void cfgMaterialUtilities::dumpStructure(int Nx, int Ny, const std::vector<int> &iMatAssignment)
 {
   Eigen::MatrixXd mat(Nx,Ny);
@@ -2614,6 +2680,24 @@ void cfgMaterialUtilities::getBoundingBox(const std::vector<cfgScalar> &iPoints,
   }
 }
 
+void cfgMaterialUtilities::convertToLogValues(std::vector<cfgScalar> &ioPoints, int iDim, const std::vector<int> &iDimToScale, cfgScalar iEpsilon)
+{
+  assert(ioPoints.size()%iDim==0);
+
+  int ndim = (int)iDimToScale.size();
+  for (int idim=0; idim<ndim; idim++)
+  {
+    int icoord = iDimToScale[idim];
+    int ipoint=0, npoint=(int)ioPoints.size()/iDim;
+    for (ipoint=0; ipoint<npoint; ipoint++)
+    {
+      int coord = iDim*ipoint + icoord;
+      cfgScalar value = ioPoints[coord];
+      ioPoints[coord] = log(value+iEpsilon);
+    }
+  }
+}
+
 bool cfgMaterialUtilities::rescaleData(std::vector<cfgScalar> &ioPoints, int iDim,  const std::vector<cfgScalar> &iTargetBoxLengths, std::vector<cfgScalar> *ioScalingFactors)
 {
   assert(iTargetBoxLengths.size()==iDim);
@@ -2910,6 +2994,23 @@ Vector2d cfgMaterialUtilities::getVector2d(int indVertex, const std::vector<doub
   assert(iPoints.size()%2==0);
   int indPoint = 2*indVertex;
   return Vector2d(iPoints[indPoint], iPoints[indPoint+1]);
+}
+
+void cfgMaterialUtilities::setVector3S(int indVertex, const Vector3S &iVec, std::vector<double> &ioPoints)
+{
+  assert(ioPoints.size()%3==0);
+  int indPoint = 3*indVertex;
+  ioPoints[indPoint] = iVec[0];
+  ioPoints[indPoint+1] = iVec[1];
+  ioPoints[indPoint+2] = iVec[2];
+}
+
+void cfgMaterialUtilities::appendVector3S(const Vector3S &iVec, std::vector<double> &ioPoints)
+{
+  for (int icoord=0; icoord<3; icoord++)
+  {
+    ioPoints.push_back(iVec[icoord]);
+  }
 }
 
 std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Eigen::Vector3f> &iPoints)
