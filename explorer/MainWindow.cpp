@@ -8,6 +8,7 @@
 using namespace cfgMaterialUtilities;
 
 #include "MaterialParametersView.h"
+#include "ReducedCoordinatesView.h"
 
 #include "exProject.h"
 
@@ -17,6 +18,15 @@ MainWindow::MainWindow()
 
   m_matParametersView = new MaterialParametersView();
   setCentralWidget(m_matParametersView);
+
+  m_reducedCoordinatesView = new ReducedCoordinatesView();
+  QDockWidget *dockWidget = new QDockWidget(this);
+  dockWidget->setWidget(m_reducedCoordinatesView);
+  //dockWidget->setFeatures( QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetClosable);
+  dockWidget->setObjectName(QString::fromUtf8("family plot"));
+  dockWidget->setVisible(true);
+  addDockWidget(static_cast<Qt::DockWidgetArea>(2), dockWidget);
+  dockWidget->setFloating(true);
 
   setAcceptDrops(true);
 
@@ -63,6 +73,7 @@ MainWindow::MainWindow()
 
   m_matParametersView->setProject(m_project);
   m_materialStructureView->setProject(m_project);
+  m_reducedCoordinatesView->setProject(m_project);
 }
 
 MainWindow::~MainWindow()
@@ -150,6 +161,8 @@ void MainWindow::on_m_actionFamilyExtractor_triggered()
   {
     m_project->runFamilyExtractor();
   }
+  std::vector<cfgScalar> &reducedCoords = m_project->getMicrostructuresReducedCoordinates();
+  m_reducedCoordinatesView->updateReducedCoordinates(reducedCoords, 2);
 }
 
 void MainWindow::on_m_type_comboBox_currentIndexChanged()

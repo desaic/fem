@@ -28,7 +28,7 @@ using namespace ExplorerUtilities;
 #include "cfgMaterialUtilities.h"
 using namespace cfgMaterialUtilities;
 
-#include "cfgUtilities.h";
+#include "cfgUtilities.h"
 
 MaterialStructureView::MaterialStructureView()
   :QVTKWidget()

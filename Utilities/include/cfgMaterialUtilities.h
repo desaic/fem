@@ -172,6 +172,8 @@ namespace cfgMaterialUtilities
   std::vector<cfgScalar> toVectorScalar(const std::vector<Vector3S> &iPoints);
   std::vector<cfgScalar> toVectorScalar(const std::vector<Vector2S> &iPoints);
 
+  std::vector<cfgScalar> from2DTo3D(const std::vector<cfgScalar> &iPoints2D);
+
   std::vector<Eigen::Vector2f> toVector2f(const std::vector<float> &iPoints);
   std::vector<Vector2S> toVector2S(const std::vector<cfgScalar> &iPoints);
   std::vector<Eigen::Vector3f> toVector3f(const std::vector<float> &iPoints);

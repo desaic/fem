@@ -58,6 +58,8 @@ public:
   QSharedPointer<ElementMesh> computeElementMesh(int iCombIndex, int iLevel);
   QSharedPointer<ElementMesh> computeElementMeshIncr(int iCombIndex, int iLevel);
 
+  void setPickedReducedPoint(int iPointIndex);
+
   void setPickedStructure(int iStructureIndex, int iStructureLevel);
   int getPickedStructureIndex() const {return m_pickedStructureIndex;}
   int getPickedStructureLevel() const {return m_pickedStructureLevel;}
@@ -77,6 +79,8 @@ public:
   MaterialParameterType getParameterToVisualize(int indParam);
 
   void runFamilyExtractor();
+  std::vector<cfgScalar> & getMicrostructuresReducedCoordinates() {return m_microstructuresReducedCoords;}
+  std::vector<int> & getMicrostructuresIndices() {return m_microstructuresIndices;}
 
 signals:
   void pickedStructureModified();
@@ -116,6 +120,10 @@ private:
   std::vector<std::vector<cfgScalar> > m_ultimateStrengths;
 
   std::vector<int> m_levels;
+
+  int m_familyOriginalPlotIndex;
+  std::vector<int> m_microstructuresIndices;
+  std::vector<cfgScalar> m_microstructuresReducedCoords;
 };
 
 #endif

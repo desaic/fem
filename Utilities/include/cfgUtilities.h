@@ -117,7 +117,10 @@ namespace cfgUtil
 
   // matlab
   template<class T>
-  void writeVector2File(const std::vector<int> &iVector, const std::string &iFileName);
+  void writeVector2File(const std::vector<T> &iVector, const std::string &iFileName);
+
+  template<class T>
+  void readVectorFromFile(const std::string &iFileName, int iNbElements, std::vector<T> &oVector);
 
   template<class T>
   void serialize(std::ostream &ioStream, const std::vector<T> &iVec, const std::string &iString="");
@@ -617,6 +620,24 @@ namespace cfgUtil
       stream << iVector[ielem] << " ";
     }
     stream << std::endl;
+  }
+
+  template<class T>
+  void readVectorFromFile(const std::string &iFileName, std::vector<T> &oVector)
+  {
+    oVector.clear();
+
+    std::ifstream stream(iFileName);
+    assert(stream.is_open());
+
+    std::istream_iterator<T> it(stream), eos;
+
+    while (it!=eos)
+    {
+      T value = *it;
+      oVector.push_back(value);
+      it++;
+    }
   }
 
   template<class T>

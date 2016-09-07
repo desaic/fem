@@ -9,6 +9,7 @@
 class QCheckBox;
 
 class MaterialParametersView;
+class ReducedCoordinatesView;
 class exProject;
 
 class MainWindow: public QMainWindow, public Ui_MainWindow
@@ -45,6 +46,7 @@ private slots:
 
 private:
   MaterialParametersView * m_matParametersView;
+  ReducedCoordinatesView * m_reducedCoordinatesView;
 
   QPointer<exProject> m_project;
 

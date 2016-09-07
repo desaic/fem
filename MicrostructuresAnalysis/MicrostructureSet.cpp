@@ -57,7 +57,7 @@ MicrostructureSet::~MicrostructureSet()
  {
    if (m_matAssignments)
    {
-     assert(iIndex>=0 && iIndex<m_matAssignments.size());
+     assert(iIndex>=0 && iIndex<m_matAssignments->size());
      return (*m_matAssignments)[iIndex];
    }
    else

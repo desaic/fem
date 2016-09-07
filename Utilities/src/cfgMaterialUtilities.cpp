@@ -3081,6 +3081,23 @@ std::vector<float> cfgMaterialUtilities::toVectorFloat(const std::vector<Eigen::
    return vec;
  }
 
+ std::vector<cfgScalar> cfgMaterialUtilities::from2DTo3D(const std::vector<cfgScalar> &iPoints2D)
+ {
+   std::vector<cfgScalar> points3D;
+   assert(iPoints2D.size()%2==0);
+
+   int ipoint=0, npoint=(int)iPoints2D.size()/2;
+   for (int ipoint=0; ipoint<npoint; ipoint++)
+   {
+     for (int icoord=0; icoord<2; icoord++)
+     {
+      points3D.push_back(iPoints2D[2*ipoint+icoord]);
+     }
+     points3D.push_back(0);
+   }
+   return points3D;
+ }
+
  MatrixXS cfgMaterialUtilities::toMatrixXS(const std::vector<cfgScalar> &iValues)
  {
    MatrixXS mat = MatrixXS::Zero(iValues.size(), 1);

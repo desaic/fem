@@ -25,6 +25,8 @@ exProject::exProject()
   m_paramsToVisualize.push_back(NuXYType);
   m_paramsToVisualize.push_back(DensityType);
   m_paramsToVisualize.push_back(MuXYType);
+
+  m_familyOriginalPlotIndex = -1;
 }
 
 exProject::~exProject()
@@ -53,6 +55,18 @@ exProject::MaterialParameterType exProject::getParameterToVisualize(int indParam
 {
   assert(indParam>=0 && indParam < 4);
   return m_paramsToVisualize[indParam];
+}
+
+void exProject::setPickedReducedPoint(int iPointIndex) 
+{
+  assert(iPointIndex>=0 && iPointIndex<m_microstructuresIndices.size());
+  if (iPointIndex>=0 && iPointIndex<m_microstructuresIndices.size())
+  {
+    m_pickedStructureIndex = m_microstructuresIndices[iPointIndex];
+    m_pickedStructureLevel = m_familyOriginalPlotIndex;
+
+    emit pickedStructureModified();
+  }
 }
 
 void exProject::setPickedStructure(int iStructureIndex, int iStructureLevel) 
@@ -435,20 +449,26 @@ bool exProject::getLevelVisibility(int ilevel)
 
 void exProject::runFamilyExtractor()
 {
-  FamilyExtractor * familyExtractor = FamilyExtractor::createOperator();
+  int ind=(int)m_materialAssignments.size()-1;
+  if (ind>=0)
+  {
+    FamilyExtractor * familyExtractor = FamilyExtractor::createOperator();
 
-  int ind=0;
-  int microstructureSize[3] = {m_levels[ind], m_levels[ind], m_levels[ind]};
-  int paramDim = (int)(m_physicalParametersPerLevel[ind].size()/m_materialAssignments[ind].size());
+    int microstructureSize[3] = {m_levels[ind], m_levels[ind], m_levels[ind]};
+    int paramDim = (int)(m_physicalParametersPerLevel[ind].size()/m_materialAssignments[ind].size());
 
-  MicrostructureSet microstructures;
-  microstructures.setMicrostructures(&m_materialAssignments[ind], microstructureSize, &m_physicalParametersPerLevel[ind], paramDim);
-  familyExtractor->setMicrostructures(&microstructures);
+    MicrostructureSet microstructures;
+    microstructures.setMicrostructures(&m_materialAssignments[ind], microstructureSize, &m_physicalParametersPerLevel[ind], paramDim);
+    familyExtractor->setMicrostructures(&microstructures);
 
-  familyExtractor->run();
+    familyExtractor->run();
 
-  SAFE_DELETE(familyExtractor);
+    m_microstructuresReducedCoords = familyExtractor->getReducedCoordinates();
+    m_microstructuresIndices = familyExtractor->getMicrostructureIndices();
+    m_familyOriginalPlotIndex = ind;
 
+    SAFE_DELETE(familyExtractor);
+  }
 }
 
 
