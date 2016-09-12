@@ -17,10 +17,149 @@ using namespace cfgMaterialUtilities;
 
 Resampler::Resampler()
 {
+  m_scores = NULL;
+  m_points = NULL;
+  m_dim = 0;
+
+  m_distanceTool = NULL;
 }
 
 Resampler::~Resampler()
 {
+  SAFE_DELETE(m_distanceTool);
+  SAFE_DELETE(m_points);
+}
+
+void Resampler::setPoints(const std::vector<cfgScalar> * iPoints, int iDim)
+{
+  assert(!iPoints || iPoints->size()%iDim==0);
+  m_initPoints = iPoints;
+  m_dim = iDim;
+}
+
+void Resampler::setScores(const std::vector<cfgScalar> * iScores)
+{
+  m_scores = iScores;
+}
+
+void Resampler::init()
+{ 
+  if (m_initPoints)
+  {
+    std::vector<cfgScalar> initPoints = *m_initPoints;
+    std::vector<cfgScalar> lengths(m_dim, 1);
+    bool resOk = rescaleData(initPoints, m_dim, lengths);
+    SAFE_DELETE(m_points);
+    m_points = new std::vector<double>();
+    *m_points = convertVec<cfgScalar, double>(initPoints);
+
+    SAFE_DELETE(m_distanceTool);
+    m_distanceTool = new DistanceTool(*m_points, m_dim);
+  }
+}
+
+void Resampler::resampleBoundary(int iSeedIndex, cfgScalar iMinRadius, cfgScalar iMaxRadius, cfgScalar iRatioDist, std::vector<int> &oParticules)
+{
+  assert(m_points && m_scores && m_dim>0 && m_distanceTool);
+
+  oParticules.clear();
+
+  std::set<int> pointsToDiscard;
+
+  cfgScalar maxScoreInit = *std::max_element(m_scores->begin(), m_scores->end());
+  cfgScalar minScoreInit = *std::min_element(m_scores->begin(), m_scores->end());
+  std::cout <<"resampleBoundary: max score init = " << maxScoreInit << " min score init = " << minScoreInit << std::endl;
+
+  std::vector<int> pointIndices;
+  m_distanceTool->getClosestPointIndices(&(*m_points)[m_dim*iSeedIndex], iMaxRadius, pointsToDiscard, pointIndices);
+  pointIndices.push_back(iSeedIndex);
+
+  std::vector<int> orderedPointIndices;
+  std::vector<cfgScalar> scores;
+  int npoint = (int)pointIndices.size();
+  for (int ipoint=0; ipoint<npoint; ipoint++)
+  {
+    int indPoint = pointIndices[ipoint];
+    scores.push_back((*m_scores)[indPoint]);
+  }
+  sortValues(scores, orderedPointIndices);
+
+  cfgScalar maxScore = *std::max_element(scores.begin(), scores.end());
+  cfgScalar minScore = *std::min_element(scores.begin(), scores.end());
+
+  cfgScalar minValue = (1-iRatioDist)*maxScore + iRatioDist*minScore;
+
+  std::cout <<"resampleBoundary: max score = " << maxScore << " min score = " << minScore << " maxValue = " << minValue << " selectedPoint value = " << (*m_scores)[iSeedIndex] << std::endl;
+
+  for (int ipoint=0; ipoint<npoint; ipoint++)
+  {
+    int pointIndex = orderedPointIndices[npoint-1-ipoint];
+    int indPoint = pointIndices[ipoint];   
+    cfgScalar val = scores[pointIndex];
+    if (val >= minValue)
+    {
+      if (pointsToDiscard.count(indPoint)==0)
+      {
+        oParticules.push_back(indPoint);
+        if (iMinRadius>0)
+        {
+          std::vector<int> closestPoints;
+          m_distanceTool->getClosestPointIndices(&(*m_points)[m_dim*indPoint], iMinRadius, pointsToDiscard, closestPoints);
+          for (int iclosestPoint=0; iclosestPoint<(int)closestPoints.size(); iclosestPoint++)
+          {
+            pointsToDiscard.insert(closestPoints[iclosestPoint]);
+          }
+        }
+      }
+    }
+    else
+    {
+      break;
+    }
+  }
+}
+
+void Resampler::resampleBoundary(int iSeedIndex, cfgScalar iMinRadius, cfgScalar iMaxRadius, int iNbTargetParticules, std::vector<int> &oParticules)
+{
+  assert(m_points && m_scores && m_dim>0 && m_distanceTool);
+
+  oParticules.clear();
+
+  std::set<int> pointsToDiscard;
+
+  int ntargetParticules = (iNbTargetParticules>0? iNbTargetParticules: (int)m_points->size()/m_dim);
+  
+  std::vector<int> pointIndices;
+  m_distanceTool->getClosestPointIndices(&(*m_points)[m_dim*iSeedIndex], iMaxRadius, pointsToDiscard, pointIndices);
+
+  std::vector<int> orderedPointIndices;
+  std::vector<cfgScalar> scores;
+  int npoint = (int)pointIndices.size();
+  for (int ipoint=0; ipoint<npoint; ipoint++)
+  {
+    int indPoint = pointIndices[ipoint];
+    scores.push_back((*m_scores)[indPoint]);
+  }
+  sortValues(scores, orderedPointIndices);
+
+  for (int ipoint=0; ipoint<npoint && oParticules.size()<ntargetParticules; ipoint++)
+  {
+    int pointIndex = orderedPointIndices[npoint-1-ipoint];
+    int indPoint = pointIndices[ipoint];   
+    if (pointsToDiscard.count(indPoint)==0)
+    {
+      oParticules.push_back(indPoint);
+      if (iMinRadius>0)
+      {
+        std::vector<int> closestPoints;
+        m_distanceTool->getClosestPointIndices(&(*m_points)[m_dim*indPoint], iMinRadius, pointsToDiscard, closestPoints);
+        for (int iclosestPoint=0; iclosestPoint<(int)closestPoints.size(); iclosestPoint++)
+        {
+          pointsToDiscard.insert(closestPoints[iclosestPoint]);
+        }
+      }
+    }
+  }
 }
 
 void Resampler::resample(cfgScalar iMinRadius, int iDim, const std::vector<cfgScalar> &iPoints, const std::vector<cfgScalar> &iScores, int iNbTargetParticules, std::vector<int> &oParticules, cfgScalar iRatio)

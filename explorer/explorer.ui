@@ -123,7 +123,10 @@
     <bool>false</bool>
    </attribute>
    <addaction name="m_action2D"/>
+   <addaction name="separator"/>
+   <addaction name="m_actionRegionSelection"/>
    <addaction name="m_actionFamilyExtractor"/>
+   <addaction name="m_actionFamilyVisualization"/>
   </widget>
   <action name="m_action2D">
    <property name="checkable">
@@ -137,11 +140,33 @@
    </property>
   </action>
   <action name="m_actionFamilyExtractor">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>familyExtractor</string>
    </property>
    <property name="toolTip">
-    <string>extracts microstructures families</string>
+    <string>extract microstructures families</string>
+   </property>
+  </action>
+  <action name="m_actionRegionSelection">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>regionSelection</string>
+   </property>
+   <property name="toolTip">
+    <string>select subset of microstructures on the gamut boundary</string>
+   </property>
+  </action>
+  <action name="m_actionFamilyVisualization">
+   <property name="text">
+    <string>familyVisualization</string>
+   </property>
+   <property name="toolTip">
+    <string>visualize families of microstructures</string>
    </property>
   </action>
  </widget>

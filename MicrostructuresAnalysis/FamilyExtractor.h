@@ -11,7 +11,8 @@ public:
   static FamilyExtractor * createOperator();
   virtual ~FamilyExtractor(){};
 
-  virtual void setMicrostructures(MicrostructureSet *iMicrostructures) {};
+  virtual void setOption(int iOption){};
+  virtual void setMicrostructures(MicrostructureSet *iMicrostructures, const std::vector<int> *iIndices=NULL) {};
 
   virtual bool step() = 0;
   virtual bool run() = 0;

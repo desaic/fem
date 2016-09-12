@@ -12,7 +12,8 @@ public:
   FamilyExtractorImpl();
   virtual ~FamilyExtractorImpl();
 
-  virtual void setMicrostructures(MicrostructureSet *iMicrostructures) {m_microstructures = iMicrostructures;}
+  virtual void setOption(int iOption){m_option = iOption;};
+  virtual void setMicrostructures(MicrostructureSet *iMicrostructures, const std::vector<int> *iIndices=NULL) {m_microstructures = iMicrostructures; m_indices = *iIndices;}
 
   virtual bool step();
   virtual bool run();
@@ -46,10 +47,13 @@ private:
   Stage m_stage;
 
   MicrostructureSet * m_microstructures;
+  std::vector<int> m_indices;
 
   std::vector<int> m_microstructureIndices;
   std::vector<cfgScalar> m_reducedCoordinates;
   int m_reducedDim;
+
+  int m_option;
 };
 
 #endif

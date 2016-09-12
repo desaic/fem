@@ -10,6 +10,8 @@
 
 #include "QVTKWidgetUtilities.h"
 #include "cfgMaterialUtilities.h"
+#include "cfgUtilities.h"
+#include "ExplorerUtilities.h"
 
 #include "exProject.h"
 
@@ -63,13 +65,31 @@ void ReducedCoordinatesView::updateReducedCoordinates(const std::vector<cfgScala
   labels.push_back("");
 
   std::vector<cfgScalar> points = (iDim==3? iPoints: cfgMaterialUtilities::from2DTo3D(iPoints));
-  points[2] += 0.001;
+  int npoint = (int)points.size()/3;
 
-  vtkSmartPointer<vtkTable> table =  QVTKWidgetUtilities::createTable(points, 3, labels, NULL);
-  vtkSmartPointer<cfgPlotPoints3D> plot = QVTKWidgetUtilities::createPointPlot3D(table, labels[0], labels[1], labels[2], vtkVector3i(0,0,255), 10);
-  m_plot = plot;
+  if (npoint>0)
+  {
+    std::vector<int> & indices = m_project->getMicrostructuresIndices();
+    const std::vector<std::vector<cfgScalar> > & distances = m_project->getDistancesToBoundary();
 
-  updateChart();
+    int indLevel = m_project->getSelectedGamutIndex();
+    std::vector<vtkVector3i> allColors;
+    ExplorerUtilities::getColorsForDistanceVisualization(distances[indLevel], allColors);
+
+    std::vector<vtkVector3i> colors = cfgUtil::getSubVector(allColors, indices);
+    if (colors.size()==0)
+    {
+      colors.resize(npoint, vtkVector3i(0, 0, 255));
+    }
+    points[2] += 0.001; // vtk doesn't display anything if there is no variation in one dimension
+
+    vtkSmartPointer<vtkTable> table =  QVTKWidgetUtilities::createTable(points, 3, labels, NULL);
+    vtkSmartPointer<cfgPlotPoints3D> plot = QVTKWidgetUtilities::createPointPlot3D(table, labels[0], labels[1], labels[2], colors, 10);
+    m_plot = plot;
+    updateChart();
+  }
+
+  //std::vector<int> & getMicrostructuresIndices() {return m_microstructuresIndices;}
 }
 
 void ReducedCoordinatesView::updateChart()

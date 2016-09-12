@@ -8,10 +8,19 @@ vtkStandardNewMacro(cfgPlotPoints3D)
 cfgPlotPoints3D::cfgPlotPoints3D()
   :vtkPlotPoints3D()
 {
+  m_table = NULL;
 }
 
 cfgPlotPoints3D::~cfgPlotPoints3D()
 {
+}
+
+void cfgPlotPoints3D::SetInputData(vtkTable *input, const vtkStdString &xName,
+                                   const vtkStdString &yName,
+                                   const vtkStdString &zName)
+{
+  vtkPlotPoints3D::SetInputData(input, xName, yName, zName);
+  m_table = input;
 }
 
 void cfgPlotPoints3D::setColor(int ipoint, vtkVector3i iColor)
@@ -19,8 +28,9 @@ void cfgPlotPoints3D::setColor(int ipoint, vtkVector3i iColor)
   const unsigned char constRGB[3] = { iColor[0], iColor[1], iColor[2] };
   for (int ic=0; ic<3; ic++)
   {
-    //this->Colors->SetTupleValue(3*ipoint+ic, &constRGB[ic]);
+    this->Colors->SetTupleValue(3*ipoint+ic, &constRGB[ic]);
   }
+  this->Modified();
 }
 
 vtkVector3i cfgPlotPoints3D::getColor(int ipoint)

@@ -26,6 +26,8 @@ typedef Eigen::Matrix<cfgScalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXS;
     (x)=NULL; }\
   }
 
+#define SAFE_DELETE_VEC(p) { for (int i=0; i<p.size(); i++) {if(p[i] != NULL) {delete (p[i]); (p[i])=NULL; p.clear();}} }
+
 #endif 
 
 

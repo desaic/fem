@@ -3,6 +3,8 @@
 #include <QCheckBox.h>
 #include <QDropEvent>
 #include <QUrl>
+#include <QDoubleSpinBox>
+#include <QPushButton>
 
 #include "cfgMaterialUtilities.h"
 using namespace cfgMaterialUtilities;
@@ -15,6 +17,29 @@ using namespace cfgMaterialUtilities;
 MainWindow::MainWindow()
 {
   setupUi(this);
+
+  // add window for tool parameters
+  QDockWidget *dockWidget_toolParams = new QDockWidget(this);
+  dockWidget_toolParams->setWindowTitle("Parameters");
+  QWidget *dockWidgetContent_toolParams = new QWidget();
+  dockWidget_toolParams->setWidget(dockWidgetContent_toolParams);
+
+  QGridLayout * gridLayout_toolParams = new QGridLayout(dockWidgetContent_toolParams);
+
+  int indRow=1;
+  QDoubleSpinBox * radiusSpinBox = addDoubleParameter("radius",  dockWidgetContent_toolParams, gridLayout_toolParams, indRow);
+  QSpinBox * nbPointsSpinBox = addIntParameter("nb points",  dockWidgetContent_toolParams, gridLayout_toolParams, indRow);
+  
+  QSpacerItem * verticalSpacer = new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding);
+  //QPushButton * pushButton_ok = new QPushButton("OK", dockWidgetContent_toolParams);
+  
+  int indCol=0, rowSpan=1, colSpan=1;
+  //gridLayout_toolParams->addWidget(pushButton_ok,indRow, indCol, rowSpan, 2);
+  //indRow++;
+  gridLayout_toolParams->addItem(verticalSpacer, indRow, indCol, rowSpan, colSpan);
+
+  addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget_toolParams);
+  //QMainWindow::splitDockWidget(dockWidget_toolParams, layersWidget, static_cast<Qt::Orientation>(2));
 
   m_matParametersView = new MaterialParametersView();
   setCentralWidget(m_matParametersView);
@@ -49,6 +74,7 @@ MainWindow::MainWindow()
   addMaterialParameterOptions(*m_col_comboBox, materialParameterStrings);
 
   m_action2D->setChecked(true);
+  m_actionRegionSelection->setChecked(true);
 
   std::vector<QString> typeStrings;
   typeStrings.push_back("Cubic");
@@ -74,11 +100,42 @@ MainWindow::MainWindow()
   m_matParametersView->setProject(m_project);
   m_materialStructureView->setProject(m_project);
   m_reducedCoordinatesView->setProject(m_project);
+
+  connect(radiusSpinBox, SIGNAL(valueChanged(double)), m_matParametersView, SLOT(onRadiusValueChanged(double)));
+  connect(nbPointsSpinBox, SIGNAL(valueChanged(int)), m_matParametersView, SLOT(onNbPointsValueChanged(int)));
 }
 
 MainWindow::~MainWindow()
 {
   delete m_project;
+}
+
+QDoubleSpinBox * MainWindow::addDoubleParameter(const std::string &iLabelText,  QWidget *ioParent, QGridLayout *ioGridLayout, int &ioRowIndex)
+{
+  QLabel * label = new QLabel(QString::fromStdString(iLabelText), ioParent);
+  QDoubleSpinBox * spinBox = new QDoubleSpinBox(ioParent);
+  spinBox->setMaximum(DBL_MAX);
+    
+  int indCol=0, rowSpan=1, colSpan=1;
+  ioGridLayout->addWidget(label, ioRowIndex, indCol, rowSpan, colSpan);
+  ioGridLayout->addWidget(spinBox, ioRowIndex, indCol+1, rowSpan, colSpan);
+  ioRowIndex++;
+
+  return spinBox;
+}
+
+QSpinBox * MainWindow::addIntParameter(const std::string &iLabelText,  QWidget *ioParent, QGridLayout *ioGridLayout, int &ioRowIndex)
+{
+  QLabel * label = new QLabel(QString::fromStdString(iLabelText), ioParent);
+  QSpinBox * spinBox = new QSpinBox(ioParent);
+  spinBox->setMaximum(INT_MAX);
+    
+  int indCol=0, rowSpan=1, colSpan=1;
+  ioGridLayout->addWidget(label, ioRowIndex, indCol, rowSpan, colSpan);
+  ioGridLayout->addWidget(spinBox, ioRowIndex, indCol+1, rowSpan, colSpan);
+  ioRowIndex++;
+
+  return spinBox;
 }
 
 void MainWindow::addLevelCheckBox(QWidget * iParent, int iLevel, QString iLabel)
@@ -159,7 +216,17 @@ void MainWindow::on_m_actionFamilyExtractor_triggered()
 {
   if (m_project)
   {
-    m_project->runFamilyExtractor();
+    m_project->runFamilyExtractor(0);
+  }
+  std::vector<cfgScalar> &reducedCoords = m_project->getMicrostructuresReducedCoordinates();
+  //m_reducedCoordinatesView->updateReducedCoordinates(reducedCoords, 2);
+}
+
+void MainWindow::on_m_actionFamilyVisualization_triggered()
+{
+  if (m_project)
+  {
+    m_project->runFamilyExtractor(1);
   }
   std::vector<cfgScalar> &reducedCoords = m_project->getMicrostructuresReducedCoordinates();
   m_reducedCoordinatesView->updateReducedCoordinates(reducedCoords, 2);

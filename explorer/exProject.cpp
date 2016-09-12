@@ -26,7 +26,9 @@ exProject::exProject()
   m_paramsToVisualize.push_back(DensityType);
   m_paramsToVisualize.push_back(MuXYType);
 
-  m_familyOriginalPlotIndex = -1;
+  m_activeTool = ex::RegionSelectionToolType;
+
+  m_selectedGamutIndex = -1;
 }
 
 exProject::~exProject()
@@ -63,9 +65,10 @@ void exProject::setPickedReducedPoint(int iPointIndex)
   if (iPointIndex>=0 && iPointIndex<m_microstructuresIndices.size())
   {
     m_pickedStructureIndex = m_microstructuresIndices[iPointIndex];
-    m_pickedStructureLevel = m_familyOriginalPlotIndex;
+    m_pickedStructureLevel = 0;
 
     emit pickedStructureModified();
+    emit pickedReducedPointModified();
   }
 }
 
@@ -447,27 +450,42 @@ bool exProject::getLevelVisibility(int ilevel)
   return m_levelVisibility[ilevel];
 }
 
-void exProject::runFamilyExtractor()
+void exProject::runFamilyExtractor(int iOption)
 {
-  int ind=(int)m_materialAssignments.size()-1;
-  if (ind>=0)
+  if (iOption==1)
   {
     FamilyExtractor * familyExtractor = FamilyExtractor::createOperator();
-
-    int microstructureSize[3] = {m_levels[ind], m_levels[ind], m_levels[ind]};
-    int paramDim = (int)(m_physicalParametersPerLevel[ind].size()/m_materialAssignments[ind].size());
-
-    MicrostructureSet microstructures;
-    microstructures.setMicrostructures(&m_materialAssignments[ind], microstructureSize, &m_physicalParametersPerLevel[ind], paramDim);
-    familyExtractor->setMicrostructures(&microstructures);
-
+    familyExtractor->setOption(iOption);
     familyExtractor->run();
-
     m_microstructuresReducedCoords = familyExtractor->getReducedCoordinates();
     m_microstructuresIndices = familyExtractor->getMicrostructureIndices();
-    m_familyOriginalPlotIndex = ind;
-
+    m_selectedGamutIndex = 0;
     SAFE_DELETE(familyExtractor);
+  }
+  else
+  {
+    int ind = m_selectedGamutIndex;
+    if (ind>=0)
+    {
+      FamilyExtractor * familyExtractor = FamilyExtractor::createOperator();
+
+      int microstructureSize[3] = {m_levels[ind], m_levels[ind], m_levels[ind]};
+      int paramDim = (int)(m_physicalParametersPerLevel[ind].size()/m_materialAssignments[ind].size());
+
+      MicrostructureSet microstructures;
+      microstructures.setMicrostructures(&m_materialAssignments[ind], microstructureSize, &m_physicalParametersPerLevel[ind], paramDim);
+
+      familyExtractor->setMicrostructures(&microstructures, &m_selectedPointIndices);
+
+      familyExtractor->setOption(iOption);
+
+      familyExtractor->run();
+
+      m_microstructuresReducedCoords = familyExtractor->getReducedCoordinates();
+      m_microstructuresIndices = familyExtractor->getMicrostructureIndices();
+
+      SAFE_DELETE(familyExtractor);
+    }
   }
 }
 

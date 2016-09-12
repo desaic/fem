@@ -7,6 +7,8 @@
 #include "ui_explorer.h"
 
 class QCheckBox;
+class QSpinBox;
+class QDoubleSpinBox;
 
 class MaterialParametersView;
 class ReducedCoordinatesView;
@@ -28,6 +30,9 @@ private:
   void addLevelCheckBox(QWidget * iParent, int iLevel, QString iLabel="");
   void addMaterialParameterOptions(QComboBox &iBox, const std::vector<QString> &iStrings);
 
+  QSpinBox * addIntParameter(const std::string &iLabelText,  QWidget *ioParent, QGridLayout *ioGridLayout, int &ioRowIndex);
+  QDoubleSpinBox * addDoubleParameter(const std::string &iLabelText,  QWidget *ioParent, QGridLayout *ioGridLayout, int &ioRowIndex);
+
   void setType();
   void setDim();
   void setParamToVisualize(int indParam, int ParamType);
@@ -37,6 +42,7 @@ private slots:
   void levelCheckBoxModified();
   void on_m_action2D_triggered();
   void on_m_actionFamilyExtractor_triggered();
+  void on_m_actionFamilyVisualization_triggered();
 
   void on_m_type_comboBox_currentIndexChanged();
   void on_m_x_comboBox_currentIndexChanged();

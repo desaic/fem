@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QSharedPointer>
+#include "ExplorerDefs.h"
 
 class ElementMesh;
 
@@ -60,12 +61,19 @@ public:
 
   void setPickedReducedPoint(int iPointIndex);
 
+  void clearSelectedPoints() {m_selectedPointIndices.clear(); m_selectedGamutIndex=-1;}
+  void setSelectedPoints(const std::vector<int> &iPointIndices, int iGamutIndex) {m_selectedPointIndices = iPointIndices; m_selectedGamutIndex = iGamutIndex;}
+  int getSelectedGamutIndex() {return m_selectedGamutIndex;}
+
   void setPickedStructure(int iStructureIndex, int iStructureLevel);
   int getPickedStructureIndex() const {return m_pickedStructureIndex;}
   int getPickedStructureLevel() const {return m_pickedStructureLevel;}
 
   void setLevelVisibility(int ilevel, bool isVisible);
   bool getLevelVisibility(int ilevel);
+
+  void setDistancesToBoundary(const std::vector<std::vector<float> > &iDistances) { m_distancesToBoundary = iDistances;};
+  const std::vector<std::vector<float> > & getDistancesToBoundary() {return m_distancesToBoundary;}
 
   const std::vector<std::vector<cfgScalar> > & getPhysicalParameters() {return m_physicalParametersPerLevel;}
   const std::vector<std::vector<cfgScalar> > & getElasticityTensors() {return m_elasticityTensors;}
@@ -78,12 +86,15 @@ public:
   MicrostructureType getType() {return m_type;}
   MaterialParameterType getParameterToVisualize(int indParam);
 
-  void runFamilyExtractor();
+  void runFamilyExtractor(int iOption);
   std::vector<cfgScalar> & getMicrostructuresReducedCoordinates() {return m_microstructuresReducedCoords;}
   std::vector<int> & getMicrostructuresIndices() {return m_microstructuresIndices;}
 
+  ex::ToolType getActiveTool() {return m_activeTool;}
+
 signals:
   void pickedStructureModified();
+  void pickedReducedPointModified();
   void levelVisibilityModified();
   void levelsModified();
   void paramsToVisualizeModified();
@@ -121,9 +132,14 @@ private:
 
   std::vector<int> m_levels;
 
-  int m_familyOriginalPlotIndex;
+  std::vector<std::vector<float> > m_distancesToBoundary;
   std::vector<int> m_microstructuresIndices;
   std::vector<cfgScalar> m_microstructuresReducedCoords;
+
+  ex::ToolType m_activeTool;
+
+  std::vector<int> m_selectedPointIndices;
+  int m_selectedGamutIndex;
 };
 
 #endif

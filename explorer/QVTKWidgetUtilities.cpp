@@ -35,6 +35,32 @@ vtkSmartPointer<vtkTable> QVTKWidgetUtilities::createTable(const std::vector<flo
   return table;
 }
 
+vtkSmartPointer<vtkTable> QVTKWidgetUtilities::createTable(vtkTable *iTable, const std::vector<int> &iRowIndices)
+{
+  assert(iTable);
+
+  vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+   
+  int ncol = iTable->GetNumberOfColumns();
+  for (int icol=0; icol<ncol; icol++)
+  {
+    table->AddColumn(vtkSmartPointer<vtkFloatArray>::New());
+    table->GetColumn(icol)->SetName(iTable->GetColumnName(icol));
+  }
+  int nrow = iRowIndices.size();
+  table->SetNumberOfRows(nrow);
+
+  for (int irow=0; irow<nrow; irow++)
+  {
+    int indRow = iRowIndices[irow];
+    for (int icol=0; icol<ncol; icol++)
+    {
+      table->SetValue(irow, icol,  iTable->GetValue(indRow, icol));
+    }
+  }
+  return table;
+}
+
 vtkSmartPointer<vtkTable> QVTKWidgetUtilities::createTable(const std::vector<float> &iValues1, const std::vector<int> &iValues2, int idim1, int idim2, const std::vector<std::string> &iLabels, const std::vector<int> *iPointIndices)
 {
   vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
@@ -79,7 +105,7 @@ vtkSmartPointer<cfgPlotPoints3D> QVTKWidgetUtilities::createPointPlot3D(vtkSmart
   return plot;
 }
 
-vtkSmartPointer<cfgPlotPoints3D> QVTKWidgetUtilities::createPointPlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, vtkVector3i &iColor, float iWidth)
+vtkSmartPointer<cfgPlotPoints3D> QVTKWidgetUtilities::createPointPlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, const vtkVector3i &iColor, float iWidth)
 {
   vtkSmartPointer<cfgPlotPoints3D> plot = vtkSmartPointer<cfgPlotPoints3D>::New();
   plot->SetInputData(iTable, iLabel1, iLabel2, iLabel3);
@@ -88,7 +114,7 @@ vtkSmartPointer<cfgPlotPoints3D> QVTKWidgetUtilities::createPointPlot3D(vtkSmart
   return plot;
 }
 
-vtkSmartPointer<cfgPlotLine3D> QVTKWidgetUtilities::createLinePlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, vtkVector3i &iColor, float iWidth)
+vtkSmartPointer<cfgPlotLine3D> QVTKWidgetUtilities::createLinePlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, const vtkVector3i &iColor, float iWidth)
 {
   vtkSmartPointer<cfgPlotLine3D> plot = vtkSmartPointer<cfgPlotLine3D>::New();
   plot->SetInputData(iTable, iLabel1, iLabel2, iLabel3);
@@ -97,7 +123,7 @@ vtkSmartPointer<cfgPlotLine3D> QVTKWidgetUtilities::createLinePlot3D(vtkSmartPoi
   return plot;
 }
 
-vtkSmartPointer<cfgPlotSurface> QVTKWidgetUtilities::createSurfacePlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, vtkVector3i &iColor, int iAlpha)
+vtkSmartPointer<cfgPlotSurface> QVTKWidgetUtilities::createSurfacePlot3D(vtkSmartPointer<vtkTable> &iTable, const std::string &iLabel1, const std::string &iLabel2, const std::string &iLabel3, const vtkVector3i &iColor, int iAlpha)
 {
   vtkSmartPointer<cfgPlotSurface> plot = vtkSmartPointer<cfgPlotSurface>::New();
   plot->SetInputData(iTable, iLabel1, iLabel2, iLabel3);

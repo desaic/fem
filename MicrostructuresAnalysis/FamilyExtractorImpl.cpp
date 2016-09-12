@@ -5,10 +5,9 @@
 #include <fstream>
 #include <iostream>
 
-#include "DistanceField.h"
 #include "MicrostructureSet.h"
-#include "Resampler.h"
 #include "cfgUtilities.h"
+#include "cfgMaterialUtilities.h"
 
 FamilyExtractorImpl::FamilyExtractorImpl()
 {
@@ -16,8 +15,8 @@ FamilyExtractorImpl::FamilyExtractorImpl()
 
   m_reducedDim = 2;
 
-  //m_stage = InitStage;
-  m_stage = MLSComputationStage;
+  m_stage = InitStage;
+  //m_stage = MLSComputationStage;
 }
 
 FamilyExtractorImpl::~FamilyExtractorImpl()
@@ -26,6 +25,11 @@ FamilyExtractorImpl::~FamilyExtractorImpl()
 
 void FamilyExtractorImpl::init()
 {
+  if (m_microstructures && m_indices.size()==0) 
+  {
+    int nstructure = m_microstructures->getNumStructures();
+    m_indices = cfgMaterialUtilities::genIncrementalSequence(0, nstructure-1, 1);
+  }
 }
 
 bool FamilyExtractorImpl::step()
@@ -35,12 +39,19 @@ bool FamilyExtractorImpl::step()
   if (m_stage == InitStage)
   {
     init();
-    m_stage = PairwiseDistancesComputationStage;
+    if (m_option==0)
+    {
+      m_stage = PairwiseDistancesComputationStage;
+    }
+    else
+    {
+      m_stage = MLSComputationStage;
+    }
   }
   else if (m_stage == PairwiseDistancesComputationStage)
   {
     runPairwiseDistancesComputation();
-    m_stage = MLSComputationStage;
+    m_stage = EndStage;
   }
   else if (m_stage == MLSComputationStage)
   {
@@ -103,25 +114,17 @@ void FamilyExtractorImpl::runPairwiseDistancesComputation()
   const std::vector<cfgScalar> & parameters = m_microstructures->getAllMatParameters();
   int paramdim = m_microstructures->getParameterDim();
 
-  DistanceField distanceField(paramdim);
-  std::vector<cfgScalar> distances = distanceField.computeDistances(parameters);
-
-  int nTargetParticules = 1000;
-  cfgScalar minRadius = 0.1;
-  std::vector<int> newparticules;
-  Resampler resampler;
-  resampler.resampleBoundary(minRadius, paramdim, parameters, distances, nTargetParticules, newparticules);
-  m_microstructureIndices = newparticules;
-
   // evaluate pairwise distances
   std::vector<cfgScalar> pairwiseDistances;
-  computePairwiseDistances(*m_microstructures, newparticules, pairwiseDistances);
+  computePairwiseDistances(*m_microstructures, m_indices, pairwiseDistances);
 
   std::string fileName = "..//..//Output//distances.txt";
   cfgUtil::writeVector2File<cfgScalar>(pairwiseDistances, fileName); 
 
   std::string fileNameIndices = "..//..//Output//microstructureIndices.txt";
-  cfgUtil::writeVector2File<int>(m_microstructureIndices, fileNameIndices); 
+  cfgUtil::writeVector2File<int>(m_indices, fileNameIndices); 
+
+  m_microstructureIndices = m_indices;
 }
 
 void FamilyExtractorImpl::runMLSComputationStage()

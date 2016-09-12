@@ -32,20 +32,25 @@ bool cfgChartXYZ::MouseButtonReleaseEvent(const vtkContextMouseEvent &mouse)
 {
   if (m_pickingMode)
   {    
-     if (m_pickedPoint>=0 && m_pickedPlot>=0)
+     /*if (m_pickedPoint>=0 && m_pickedPlot>=0)
      {
        cfgPlotPoints3D * plot = (cfgPlotPoints3D*)Plots[m_pickedPlot];
        plot->setColor(m_pickedPoint, m_savedColor);
-     }
-     m_pickedPoint = pickPoint(mouse, m_pickedPlot);
-    if (m_pickedPoint>=0 && m_pickedPlot>=0)
+     }*/ 
+    m_pickedPoint = pickPoint(mouse, m_pickedPlot);
+    /*if (m_pickedPoint>=0 && m_pickedPlot>=0)
     {
       cfgPlotPoints3D * plot = (cfgPlotPoints3D*)Plots[m_pickedPlot];
-      //m_savedColor = plot->getColor(m_pickedPoint);
-      //plot->setColor(m_pickedPoint, vtkVector3i(0, 255, 0));
-    } 
+      m_savedColor = plot->getColor(m_pickedPoint);
+      plot->setColor(m_pickedPoint, vtkVector3i(0, 255, 0));
+    } */ 
     this->Scene->SetDirty(true);
     this->InvokeEvent(vtkCommand::InteractionEvent);
+  }
+  else
+  {
+    m_pickedPoint = -1;
+    m_pickedPlot = -1;
   }
   return vtkChartXYZ::MouseButtonReleaseEvent(mouse);
 }

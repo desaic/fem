@@ -6,6 +6,8 @@
 #include <QPointer>
 #include <map>
 
+#include "exProject.h"
+
 class vtkRenderer;
 class vtkRenderView;
 class vtkContextView;
@@ -16,8 +18,9 @@ class vtkVector3i;
 class cfgPlotLine3D;
 class cfgPlotSurface;
 class vtkPlot3D;
+class cfgPlotPoints3D;
 
-class exProject;
+class Resampler;
 
 class MaterialParametersView: public QVTKWidget
 {
@@ -35,31 +38,44 @@ private:
   void highlighPoints(const std::vector<int> &iPointIndices);
 
   int getParameterIndex(int iStructureIndex, int iLevel);
+  int getParameterDim();
 
   void updateChart();
   void updatePlots();
+
+  void computeDistancesToBoundary(const std::vector<std::vector<cfgScalar> > &iParameters, int iParamDim);
 
   void rescaleParameters(int iIndex, float iScalingFactor, std::vector<float> &ioPoints, int iDim);
   float getMaxValue(int iIndex, const std::vector<float> &iPoints, int iDim);
   void convertToLogValues(int iIndex, const std::vector<float> &iPoints, int iDim, std::vector<float> &oPoints, float iEpsilon=0);
 
+  void getValidParameterTypes(exProject::MicrostructureType iMicrostructureType, int iMicrostructureDimension, std::vector<exProject::MaterialParameterType> &oValidParameterTypes, std::vector<int> &oDimToRescale);
+  std::string parameterTypeToString(const exProject::MaterialParameterType &iType);
+
+  void displayPoint(int iPointIndex, int iLevel, const vtkVector3i &iColor);
+
   private slots:
     void onLevelVisibilityModified();
     void onLevelsModified();
     void onParamsToVisualizeModified();
+    void onReducedPointModified();
+
+    void onRadiusValueChanged(double);
+    void onNbPointsValueChanged(int);
 
 private:
   vtkContextView * m_vtkView;
 
   vtkSmartPointer<cfgChartXYZ> m_chart;
-  vtkSmartPointer<vtkTable> m_tablePoint3D;
+  std::vector<vtkSmartPointer<vtkTable> > m_tables;
   std::vector<std::vector<vtkSmartPointer<vtkPlot3D> > > m_plotsPerLevel;
+  vtkSmartPointer<cfgPlotPoints3D> m_auxiliaryPlot;
 
   std::vector<int> m_lastPointIndices;
   std::vector<int> m_plots2Levels;
   std::vector<int> m_plots2PlotIndex;
   std::vector<std::vector<std::vector<int> > > m_plotPointIndices;
-  
+
   QPointer<exProject> m_project;
 
   /*std::vector<std::vector<std::vector<int> > > m_baseMaterials;
@@ -71,6 +87,19 @@ private:
 
   vtkSmartPointer<vtkTable> m_tableHighLightedPoints;
   vtkSmartPointer<cfgPlotPoints3D> m_plotHighLightedPoints;
+
+  std::vector<std::vector<float> > m_physicalParametersPerLevel;
+  std::vector<std::vector<float> > m_distancesToBoundary;
+  std::vector<Resampler *> m_resamplers;
+  double m_samplerRadius;
+  int m_samplerNbPoints;
+
+  std::vector<int> m_savedPointIndices;
+  std::vector<vtkVector3i> m_savedColors;
+  cfgPlotPoints3D * m_savedPlot;
+
+  int m_smallDotSize;
+  int m_largeDotSize;
 };
 
 #endif 

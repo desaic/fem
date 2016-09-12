@@ -30,7 +30,9 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/../MicrostructuresAnalysis ${CMAKE_CURREN
 
 # utilities
 include_directories(${PROJECT_SOURCE_DIR}/../Utilities/include)
+if (NOT TARGET Utilities)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/Utilities)
+endif()
 
 # SamplerUtilities
 include_directories(${PROJECT_SOURCE_DIR}/../SamplerUtilities/include)
