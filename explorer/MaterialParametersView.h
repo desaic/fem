@@ -34,6 +34,9 @@ public:
   void setProject(QPointer<exProject> iProject);
   int getStructureIndex(int iPointIndex);
 
+  void changePointsColor(const std::vector<int> &iPointIndices, int iIndPlot, const vtkVector3i &iColor);
+  void changePointsColor(const std::vector<int> &iPointIndices, int iIndPlot, const std::vector<vtkVector3i> &iColors);
+
 private:
   void highlighPoints(const std::vector<int> &iPointIndices);
 

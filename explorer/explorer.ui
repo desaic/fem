@@ -127,6 +127,7 @@
    <addaction name="m_actionRegionSelection"/>
    <addaction name="m_actionFamilyExtractor"/>
    <addaction name="m_actionFamilyVisualization"/>
+   <addaction name="m_actionGenerateFamily"/>
   </widget>
   <action name="m_action2D">
    <property name="checkable">
@@ -167,6 +168,14 @@
    </property>
    <property name="toolTip">
     <string>visualize families of microstructures</string>
+   </property>
+  </action>
+  <action name="m_actionGenerateFamily">
+   <property name="text">
+    <string>generateFamily</string>
+   </property>
+   <property name="toolTip">
+    <string>generate analytical family of microstructures</string>
    </property>
   </action>
  </widget>

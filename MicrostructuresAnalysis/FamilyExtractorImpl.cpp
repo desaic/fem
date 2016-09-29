@@ -25,10 +25,10 @@ FamilyExtractorImpl::~FamilyExtractorImpl()
 
 void FamilyExtractorImpl::init()
 {
-  if (m_microstructures && m_indices.size()==0) 
+  if (m_microstructures && m_microstructureIndices.size()==0) 
   {
     int nstructure = m_microstructures->getNumStructures();
-    m_indices = cfgMaterialUtilities::genIncrementalSequence(0, nstructure-1, 1);
+    m_microstructureIndices = cfgMaterialUtilities::genIncrementalSequence(0, nstructure-1, 1);
   }
 }
 
@@ -72,6 +72,42 @@ bool FamilyExtractorImpl::run()
   return resOk;
 }
 
+cfgScalar FamilyExtractorImpl::computePairwiseDistance(int indStructure1, int indStructure2, const MicrostructureSet &iMicrostructures, const std::vector<int> *iTranslatedMicrostructures)
+{
+  cfgScalar dist = 0;
+
+  const std::vector<int> &matAssignment1 = iMicrostructures.getMatAssignment(indStructure1);
+  const std::vector<int> &matAssignment2 = iMicrostructures.getMatAssignment(indStructure2);
+  cfgScalar distGeom = computePairwiseDistance(matAssignment1, matAssignment2);
+
+  if (iTranslatedMicrostructures)
+  {
+    cfgScalar distGeomTranslated = computePairwiseDistance(matAssignment1, *iTranslatedMicrostructures);
+    distGeom = std::min(distGeom, distGeomTranslated);
+  }
+
+  cfgScalar distParam = 0;
+  const std::vector<cfgScalar> & parameters = iMicrostructures.getAllMatParameters();
+  int paramDim = iMicrostructures.getParameterDim();
+  for (int i=0; i<3; i++)
+  {
+    cfgScalar diffParam = parameters[paramDim*indStructure1+i]-parameters[paramDim*indStructure2+i];
+    distParam += diffParam*diffParam;
+    /*if (diffParam>distParam)
+    {
+      distParam = diffParam;
+    }*/ 
+  }
+  distParam = sqrt(distParam);
+
+  cfgScalar coeff = 100;
+  dist = distGeom  +  coeff*distParam ;
+  //std::cout << distGeom << " " << distParam << std::endl;
+
+  return dist;
+}
+
+
 cfgScalar FamilyExtractorImpl::computePairwiseDistance(const std::vector<int> &iMatAssignment1, const std::vector<int> &iMatAssignment2)
 {
   cfgScalar dist = 0;
@@ -91,6 +127,19 @@ void FamilyExtractorImpl::computePairwiseDistances(const MicrostructureSet &iMic
   oDistances.clear();
 
   int npoint = (int)iPointIndices.size();
+
+  int n[3];
+  iMicrostructures.getMicrostructureSize(n[0], n[1], n[2]);
+  int t[3] = {n[0]/2, n[1]/2, n[2]/2};
+
+  std::vector<std::vector<int> > translatedMicrostructures(npoint);
+  for (int ipoint=0; ipoint<npoint; ipoint++)
+  {
+    int indMicrostructure1 = iPointIndices[ipoint];
+    const std::vector<int> &matAssignment1 = iMicrostructures.getMatAssignment(indMicrostructure1);
+    cfgMaterialUtilities::translateStructure(n[0], n[1], matAssignment1, t[0], t[1], translatedMicrostructures[ipoint]);
+  }
+
   for (int ipoint=0; ipoint<npoint; ipoint++)
   {
     int indMicrostructure1 = iPointIndices[ipoint];
@@ -99,8 +148,19 @@ void FamilyExtractorImpl::computePairwiseDistances(const MicrostructureSet &iMic
     {
       int indMicrostructure2 = iPointIndices[jpoint];
       const std::vector<int> &matAssignment2 = iMicrostructures.getMatAssignment(indMicrostructure2);
+      const std::vector<int> &matAssignment2Translated =  translatedMicrostructures[jpoint];
 
-      cfgScalar dist = computePairwiseDistance(matAssignment1, matAssignment2);
+      //cfgScalar dist = computePairwiseDistance(indMicrostructure1, indMicrostructure2, iMicrostructures, &matAssignment2Translated);
+      cfgScalar dist = computePairwiseDistance(indMicrostructure1, indMicrostructure2, iMicrostructures);
+
+      //cfgScalar dist = computePairwiseDistance(matAssignment1, matAssignment2);
+      //cfgScalar dist2 = computePairwiseDistance(matAssignment1, matAssignment2Translated);
+      //dist = std::min(dist, dist2);
+      if (dist<0.001)
+      {
+        std::cout << "dist = " << dist << " " << ipoint << " " << jpoint << std::endl;
+      }
+
       oDistances.push_back(dist);
     }
   }
@@ -116,15 +176,10 @@ void FamilyExtractorImpl::runPairwiseDistancesComputation()
 
   // evaluate pairwise distances
   std::vector<cfgScalar> pairwiseDistances;
-  computePairwiseDistances(*m_microstructures, m_indices, pairwiseDistances);
+  computePairwiseDistances(*m_microstructures, m_microstructureIndices, pairwiseDistances);
 
   std::string fileName = "..//..//Output//distances.txt";
   cfgUtil::writeVector2File<cfgScalar>(pairwiseDistances, fileName); 
-
-  std::string fileNameIndices = "..//..//Output//microstructureIndices.txt";
-  cfgUtil::writeVector2File<int>(m_indices, fileNameIndices); 
-
-  m_microstructureIndices = m_indices;
 }
 
 void FamilyExtractorImpl::runMLSComputationStage()

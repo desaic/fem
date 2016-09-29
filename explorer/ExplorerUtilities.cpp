@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iostream>
 #include "cfgDefs.h"
+#include <cfgMaterialUtilities.h>
+#include <cfgUtilities.h>
 
 bool ExplorerUtilities::saveMicrostructure(const std::string &iFileName, int nx, int ny, const std::vector<int> &iMaterialAssignments)
 {
@@ -30,6 +32,23 @@ bool ExplorerUtilities::saveMicrostructure(const std::string &iFileName, int nx,
   return true;
 }
 
+void ExplorerUtilities::getColorsForReducedCoordinatesVisualization(const std::vector<cfgScalar> &iPoints, int iDim, std::vector<vtkVector3i> &oColors)
+{
+  oColors.clear();
+
+  assert(iDim==3);
+  std::vector<cfgScalar> points = iPoints;
+
+  std::vector<cfgScalar> lengths(iDim, 1);
+  bool resOk = cfgMaterialUtilities::rescaleData(points, iDim, lengths);
+  int npoint = (int)points.size()/iDim;
+  for (int ipoint=0; ipoint<npoint; ipoint++)
+  {
+    vtkVector3i color(points[3*ipoint]*255, points[3*ipoint+1]*255, points[3*ipoint+2]*255);
+    oColors.push_back(color);
+  }
+}
+
 void ExplorerUtilities::getColorsForDistanceVisualization(const std::vector<cfgScalar> &iDistances, std::vector<vtkVector3i> &oColors)
 {
   oColors.clear();
@@ -48,7 +67,16 @@ void ExplorerUtilities::getColorsForDistanceVisualization(const std::vector<cfgS
   }
   std::cout << "min dist = " << minValue << ", max dist = " << maxValue << std::endl;
 
-  vtkVector3i black(0,0,0);
+  vtkVector3i colMin(0, 0, 255);
+  vtkVector3i colMax(255, 0, 0);
+
+  vtkVector3i black(0, 0, 0);
+  vtkVector3i colZero(255,255,255);
+
+  colMin = black;
+  colMax = vtkVector3i(220, 220, 220);
+  colZero = colMax;
+
   cfgScalar coeff = 0.1;
   std::vector<vtkVector3i> colors;
   for (int ipoint=0; ipoint<npoint; ipoint++)
@@ -57,12 +85,13 @@ void ExplorerUtilities::getColorsForDistanceVisualization(const std::vector<cfgS
     if (iDistances[ipoint] < 0)
     {
       cfgScalar w = iDistances[ipoint]/minValue;
-      matColor = vtkVector3i((1-w)*255, (1-w)*255, w*255 + (1-w)*255);
+      matColor = vtkVector3i( w*colMin[0] + (1-w)*colZero[0], w*colMin[1] + (1-w)*colZero[1], w*colMin[2] + (1-w)*colZero[2]);
     }
     else if (iDistances[ipoint] > 0)
     {
       cfgScalar w = iDistances[ipoint]/maxValue;
       matColor = vtkVector3i(w*255 + (1-w)*255, (1-w)*255, (1-w)*255);
+      matColor = vtkVector3i( w*colMax[0] + (1-w)*colZero[0], w*colMax[1] + (1-w)*colZero[1], w*colMax[2] + (1-w)*colZero[2]);
     }
     else
     {
@@ -73,4 +102,15 @@ void ExplorerUtilities::getColorsForDistanceVisualization(const std::vector<cfgS
   }
 }
 
+void ExplorerUtilities::writeMicrostructures(const std::string &iOutputDirectory, int iSize, const std::vector<std::vector<int> > &iMaterialAssignments, const std::vector<cfgScalar> &iParameters, const std::string iSuffix)
+{
+  std::string fileRootName = iOutputDirectory + "level" + std::to_string(iSize) + "_";
+  if (iSuffix!="")
+  {
+    fileRootName += iSuffix + "_";
+  }
+  std::string fileExtension = ".bin";
+  cfgUtil::writeBinary<float>(fileRootName + "params" + fileExtension, iParameters);
+  cfgUtil::writeBinary<int>(fileRootName + "matAssignments" + fileExtension, iMaterialAssignments);
+}
 

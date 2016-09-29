@@ -13,7 +13,7 @@ public:
   virtual ~FamilyExtractorImpl();
 
   virtual void setOption(int iOption){m_option = iOption;};
-  virtual void setMicrostructures(MicrostructureSet *iMicrostructures, const std::vector<int> *iIndices=NULL) {m_microstructures = iMicrostructures; m_indices = *iIndices;}
+  virtual void setMicrostructures(MicrostructureSet *iMicrostructures, const std::vector<int> *iIndices=NULL) {m_microstructures = iMicrostructures; m_microstructureIndices = *iIndices;}
 
   virtual bool step();
   virtual bool run();
@@ -37,6 +37,7 @@ private:
   void runPairwiseDistancesComputation();
   void runMLSComputationStage();
 
+  cfgScalar computePairwiseDistance(int indStructure1, int indStructure2, const MicrostructureSet &iMicrostructures, const std::vector<int> *iTranslatedMicrostructures=NULL);
   cfgScalar computePairwiseDistance(const std::vector<int> &iMatAssignment1, const std::vector<int> &iMatAssignment2);
   void computePairwiseDistances(const MicrostructureSet &iMicrostructures, const std::vector<int> &iPointIndices, std::vector<cfgScalar> &oDistances);
 
@@ -47,7 +48,6 @@ private:
   Stage m_stage;
 
   MicrostructureSet * m_microstructures;
-  std::vector<int> m_indices;
 
   std::vector<int> m_microstructureIndices;
   std::vector<cfgScalar> m_reducedCoordinates;

@@ -11,6 +11,8 @@ using namespace cfgMaterialUtilities;
 
 #include "MaterialParametersView.h"
 #include "ReducedCoordinatesView.h"
+#include <vtkVector.h>
+#include "ExplorerUtilities.h"
 
 #include "exProject.h"
 
@@ -52,6 +54,7 @@ MainWindow::MainWindow()
   dockWidget->setVisible(true);
   addDockWidget(static_cast<Qt::DockWidgetArea>(2), dockWidget);
   dockWidget->setFloating(true);
+  dockWidget->setAllowedAreas(Qt::NoDockWidgetArea);
 
   setAcceptDrops(true);
 
@@ -74,7 +77,7 @@ MainWindow::MainWindow()
   addMaterialParameterOptions(*m_col_comboBox, materialParameterStrings);
 
   m_action2D->setChecked(true);
-  m_actionRegionSelection->setChecked(true);
+  m_actionRegionSelection->setChecked(false);
 
   std::vector<QString> typeStrings;
   typeStrings.push_back("Cubic");
@@ -229,7 +232,38 @@ void MainWindow::on_m_actionFamilyVisualization_triggered()
     m_project->runFamilyExtractor(1);
   }
   std::vector<cfgScalar> &reducedCoords = m_project->getMicrostructuresReducedCoordinates();
-  m_reducedCoordinatesView->updateReducedCoordinates(reducedCoords, 2);
+  int dim = 3;
+  m_reducedCoordinatesView->updateReducedCoordinates(reducedCoords, dim);
+
+  const std::vector<int> &indices = m_project->getMicrostructuresIndices();
+
+  std::vector<vtkVector3i> colors;
+  ExplorerUtilities::getColorsForReducedCoordinatesVisualization(reducedCoords, 3, colors);
+  m_matParametersView->changePointsColor(indices, 0, colors);
+
+  //m_matParametersView->changePointsColor(indices, 0, vtkVector3i(0, 255, 0));
+}
+
+void MainWindow::on_m_actionRegionSelection_triggered()
+{
+  assert(m_project);
+  bool checked = m_actionRegionSelection->isChecked();
+  if (checked)
+  {
+    m_project->setActiveTool(ex::RegionSelectionToolType);
+  }
+  else
+  {
+    m_project->setActiveTool(ex::None);
+  }
+}
+
+void MainWindow::on_m_actionGenerateFamily_triggered()
+{
+  if (m_project)
+  {
+    m_project->runFamilyGenerator();
+  }
 }
 
 void MainWindow::on_m_type_comboBox_currentIndexChanged()

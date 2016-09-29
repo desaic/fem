@@ -48,6 +48,9 @@ namespace cfgUtil
   std::set<T> toStdSet(const std::vector<T> &iVec);
 
   template<class T>
+  std::vector<T> toStdVector(const std::vector<std::vector<T> > &iVec);
+
+  template<class T>
   std::map<std::vector<T>, int> computeVector2IndexMap(const std::vector<std::vector<T> > &iVec);
 
   template<class T>
@@ -330,6 +333,18 @@ namespace cfgUtil
       Set.insert(*it);
     }
     return Set;
+  }
+
+  template<class T>
+  std::vector<T> toStdVector(const std::vector<std::vector<T> > &iVec)
+  {
+    std::vector<T> vec;
+    typename std::vector<std::vector<T> >::const_iterator it, it_end=iVec.end();
+    for (it=iVec.begin(); it!=it_end; it++)
+    {
+      vec.insert(vec.end(), it->begin(), it->end());
+    }
+    return vec;
   }
 
   template<class T>

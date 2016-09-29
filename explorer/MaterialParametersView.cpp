@@ -22,6 +22,7 @@
 
 #include <vtkContext2D.h>
 #include <vtkContext3D.h>
+#include <vtkAxis.h>
 
 #include "exProject.h"
 
@@ -47,8 +48,8 @@ MaterialParametersView::MaterialParametersView()
   m_samplerRadius = 0;
   m_samplerNbPoints = 0;
 
-  m_smallDotSize = 5;
-  m_largeDotSize = 10;
+  m_smallDotSize = 7; //5;
+  m_largeDotSize = 15; //10;
 }
 
 MaterialParametersView::~MaterialParametersView()
@@ -362,6 +363,13 @@ void MaterialParametersView::updatePlots()
     m_project->setDistancesToBoundary(m_distancesToBoundary);
   }
 
+  std::vector<cfgScalar> lengths(paramdim, 1);
+  for (ilevel=0; ilevel<nlevel; ilevel++)
+  {
+    bool resOk = rescaleData(physicalParametersPerLevel[ilevel], paramdim, lengths);
+  }
+  m_project->setPhysicalParameters(physicalParametersPerLevel);
+
   // Plot gamuts
   // -----------
   std::vector<std::string> labels;
@@ -544,6 +552,14 @@ void MaterialParametersView::updatePlots()
       }
     }*/ 
   }
+
+  /*std::vector<cfgScalar> lengths(paramdim, 1);
+  for (ilevel=0; ilevel<nlevel; ilevel++)
+  {
+    bool resOk = rescaleData(physicalParametersPerLevel[ilevel], paramdim, lengths);
+  }
+  m_project->setPhysicalParameters(physicalParametersPerLevel);*/ 
+
   updateChart();
 }
 
@@ -574,6 +590,11 @@ void MaterialParametersView::setProject(QPointer<exProject> iProject)
 
   vtkSmartPointer<cfgChartXYZ> chart = vtkSmartPointer<cfgChartXYZ>::New();
   chart->SetGeometry(vtkRectf(x, y, size, size));
+  for (int i=0; i<3; i++)
+  {
+    chart->GetAxis(i)->SetPrecision(4);
+  }
+
   m_vtkView->GetScene()->AddItem(chart.GetPointer()); 
   m_chart = chart;
   updateChart();
@@ -656,6 +677,64 @@ void MaterialParametersView::displayPoint(int iPointIndex, int iLevel, const vtk
   update();
 }
 
+void MaterialParametersView::changePointsColor(const std::vector<int> &iPointIndices, int iIndPlot, const vtkVector3i &iColor)
+{
+  int npreviousPoints = (int)m_savedPointIndices.size();
+  for (int ipoint=0; ipoint<npreviousPoints; ipoint++)
+  {
+    assert(m_savedPlot);
+    m_savedPlot->setColor(m_savedPointIndices[ipoint], m_savedColors[ipoint]);
+  }
+  m_savedPointIndices.clear();
+  m_savedColors.clear();
+  m_savedPlot = NULL;
+
+  int indPlot = m_plots2PlotIndex[iIndPlot];
+  int indLevel = m_plots2Levels[iIndPlot];
+  cfgPlotPoints3D * plot = (cfgPlotPoints3D*)(m_plotsPerLevel[indLevel][indPlot].Get());
+  m_savedPlot = plot;
+
+  int npoint=(int)iPointIndices.size();
+  for (int ipoint=0; ipoint<npoint; ipoint++)
+  {
+    int indPoint = iPointIndices[ipoint];
+    m_savedPointIndices.push_back(indPoint);
+    m_savedColors.push_back(plot->getColor(indPoint));
+    plot->setColor(indPoint, iColor);
+  }
+  m_chart->Update();
+  update();
+}
+
+void MaterialParametersView::changePointsColor(const std::vector<int> &iPointIndices, int iIndPlot, const std::vector<vtkVector3i> &iColors)
+{
+  int npreviousPoints = (int)m_savedPointIndices.size();
+  for (int ipoint=0; ipoint<npreviousPoints; ipoint++)
+  {
+    assert(m_savedPlot);
+    m_savedPlot->setColor(m_savedPointIndices[ipoint], m_savedColors[ipoint]);
+  }
+  m_savedPointIndices.clear();
+  m_savedColors.clear();
+  m_savedPlot = NULL;
+
+  int indPlot = m_plots2PlotIndex[iIndPlot];
+  int indLevel = m_plots2Levels[iIndPlot];
+  cfgPlotPoints3D * plot = (cfgPlotPoints3D*)(m_plotsPerLevel[indLevel][indPlot].Get());
+  m_savedPlot = plot;
+
+  int npoint=(int)iPointIndices.size();
+  for (int ipoint=0; ipoint<npoint; ipoint++)
+  {
+    int indPoint = iPointIndices[ipoint];
+    m_savedPointIndices.push_back(indPoint);
+    m_savedColors.push_back(plot->getColor(indPoint));
+    plot->setColor(indPoint, iColors[ipoint]);
+  }
+  m_chart->Update();
+  update();
+}
+
 void MaterialParametersView::mouseReleaseEvent(QMouseEvent * iMouseEvent)
 {  
   QVTKWidget::mouseReleaseEvent(iMouseEvent);
@@ -665,6 +744,8 @@ void MaterialParametersView::mouseReleaseEvent(QMouseEvent * iMouseEvent)
   {
     int indLevel = m_plots2Levels[pickedPlotIndex];
     m_project->setPickedStructure(pickedPointIndex, indLevel);
+
+    std::cout << "ActiveTool = " << m_project->getActiveTool() << std::endl;
 
     if (m_project->getActiveTool()==ex::RegionSelectionToolType)
     {
@@ -677,32 +758,23 @@ void MaterialParametersView::mouseReleaseEvent(QMouseEvent * iMouseEvent)
       //m_resamplers[pickedPlotIndex]->resampleBoundary(pickedPointIndex, 0, maxRadius, ratioDist, pointIndices);
       m_project->setSelectedPoints(pointIndices, pickedPlotIndex);
 
-      int npreviousPoints = (int)m_savedPointIndices.size();
-      for (int ipoint=0; ipoint<npreviousPoints; ipoint++)
+      if (pointIndices.size()>0)
       {
-        assert(m_savedPlot);
-        m_savedPlot->setColor(m_savedPointIndices[ipoint], m_savedColors[ipoint]);
+        std::string fileNameIndices = "..//..//Output//microstructureIndices.txt";
+        cfgUtil::writeVector2File<int>(pointIndices, fileNameIndices); 
+
+        const std::vector<std::vector<cfgScalar> > & parameters = m_project->getPhysicalParameters();
+        std::vector<cfgScalar> selectedMicrostructuresParameters = getSubVector(parameters[indLevel], paramDim, pointIndices);
+        std::string fileNameParameters = "..//..//Output//microstructureParameters.txt";
+        cfgUtil::writeVector2File<cfgScalar>(selectedMicrostructuresParameters, fileNameParameters); 
+
+        const std::vector<std::vector<std::vector<int> > > & matAssignments = m_project->getMaterialAssignments();
+        std::vector<int> selectedMicrostructuresMatAssignments = toStdVector(getSubVector(matAssignments[indLevel], pointIndices));
+        std::string fileNameMaterials = "..//..//Output//microstructureMaterials.txt";
+        cfgUtil::writeVector2File<int>(selectedMicrostructuresMatAssignments, fileNameMaterials); 
       }
-      m_savedPointIndices.clear();
-      m_savedColors.clear();
-      m_savedPlot = NULL;
-
-      int indPlot = m_plots2PlotIndex[pickedPlotIndex];
-      int indLevel = m_plots2Levels[pickedPlotIndex];
-      cfgPlotPoints3D * plot = (cfgPlotPoints3D*)(m_plotsPerLevel[indLevel][indPlot].Get());
-      m_savedPlot = plot;
-
       vtkVector3i color(0, 255, 0);
-      int npoint=(int)pointIndices.size();
-      for (int ipoint=0; ipoint<npoint; ipoint++)
-      {
-        int indPoint = pointIndices[ipoint];
-        m_savedPointIndices.push_back(indPoint);
-        m_savedColors.push_back(plot->getColor(indPoint));
-        plot->setColor(indPoint, color);
-      }
-      m_chart->Update();
-      update();
+      changePointsColor(pointIndices,pickedPlotIndex, color);
     }
     const std::vector<std::vector<cfgScalar> > & tensors = m_project->getElasticityTensors();
     if (tensors.size()>0 && tensors[indLevel].size()>0)
@@ -775,8 +847,6 @@ void MaterialParametersView::highlighPoints(const std::vector<int> &iPointIndice
 
 void MaterialParametersView::onReducedPointModified()
 {
-  std::cout << "onHighlightedPointModified" << std::endl;
-
   int indPoint = m_project->getPickedStructureIndex();
   if (indPoint>=0)
   {

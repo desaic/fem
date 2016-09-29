@@ -5,6 +5,7 @@ namespace ex
 {
   enum ToolType
   {
+    None,
     FamilyExtractionToolType,
     RegionSelectionToolType,
   };

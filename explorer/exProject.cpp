@@ -11,8 +11,10 @@ using namespace cfgUtil;
 
 #include <QStringList>
 
+#include "ExplorerUtilities.h"
 #include "FamilyExtractor.h"
 #include "MicrostructureSet.h"
+#include "FamilyGenerator.h"
 
 exProject::exProject()
 {
@@ -26,7 +28,7 @@ exProject::exProject()
   m_paramsToVisualize.push_back(DensityType);
   m_paramsToVisualize.push_back(MuXYType);
 
-  m_activeTool = ex::RegionSelectionToolType;
+  m_activeTool = ex::None;
 
   m_selectedGamutIndex = -1;
 }
@@ -61,6 +63,7 @@ exProject::MaterialParameterType exProject::getParameterToVisualize(int indParam
 
 void exProject::setPickedReducedPoint(int iPointIndex) 
 {
+  std::cout << "exProject::setPickedReducedPoint, iPointIndex = " << iPointIndex << " npoint =  "<< m_microstructuresIndices.size() << std::endl;
   assert(iPointIndex>=0 && iPointIndex<m_microstructuresIndices.size());
   if (iPointIndex>=0 && iPointIndex<m_microstructuresIndices.size())
   {
@@ -450,6 +453,20 @@ bool exProject::getLevelVisibility(int ilevel)
   return m_levelVisibility[ilevel];
 }
 
+void exProject::runFamilyGenerator()
+{
+  int n[3] = {16, 16, m_dim==2?1: 16};
+  FamilyGenerator * familyGenerator = FamilyGenerator::createOperator();
+  familyGenerator->setMicrostructureSize(m_dim, n);
+  familyGenerator->run();
+  const std::vector<std::vector<int> > & matAssignments = familyGenerator->getMicrostructures();
+  const std::vector<cfgScalar> & parameters = familyGenerator->getParameters();
+  familyGenerator->getSize(n);
+  ExplorerUtilities::writeMicrostructures("..//..//Output//", n[0], matAssignments, parameters, "family");
+
+  SAFE_DELETE(familyGenerator);
+}
+
 void exProject::runFamilyExtractor(int iOption)
 {
   if (iOption==1)
@@ -465,6 +482,13 @@ void exProject::runFamilyExtractor(int iOption)
   else
   {
     int ind = m_selectedGamutIndex;
+    if (ind<0)
+    {
+      m_selectedGamutIndex = 0;
+      std::string fileNameIndices = "..//..//Output//microstructureIndices.txt";
+      cfgUtil::readVectorFromFile<int>(fileNameIndices, m_selectedPointIndices); 
+      ind = m_selectedGamutIndex;
+    }
     if (ind>=0)
     {
       FamilyExtractor * familyExtractor = FamilyExtractor::createOperator();

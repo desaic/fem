@@ -75,6 +75,7 @@ public:
   void setDistancesToBoundary(const std::vector<std::vector<float> > &iDistances) { m_distancesToBoundary = iDistances;};
   const std::vector<std::vector<float> > & getDistancesToBoundary() {return m_distancesToBoundary;}
 
+  void setPhysicalParameters(const std::vector<std::vector<cfgScalar> > &iParams) {m_physicalParametersPerLevel = iParams;}
   const std::vector<std::vector<cfgScalar> > & getPhysicalParameters() {return m_physicalParametersPerLevel;}
   const std::vector<std::vector<cfgScalar> > & getElasticityTensors() {return m_elasticityTensors;}
   const std::vector<std::vector<cfgScalar> > & getThermalExpansionCoeffs() {return m_thermalExpansionCoeffs;}
@@ -86,10 +87,12 @@ public:
   MicrostructureType getType() {return m_type;}
   MaterialParameterType getParameterToVisualize(int indParam);
 
+  void runFamilyGenerator();
   void runFamilyExtractor(int iOption);
   std::vector<cfgScalar> & getMicrostructuresReducedCoordinates() {return m_microstructuresReducedCoords;}
   std::vector<int> & getMicrostructuresIndices() {return m_microstructuresIndices;}
 
+  void setActiveTool(ex::ToolType iType) {m_activeTool = iType;}
   ex::ToolType getActiveTool() {return m_activeTool;}
 
 signals:

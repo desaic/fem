@@ -13,6 +13,7 @@ public:
 
   int getParameterDim() const {return m_parameterDim;}
   int getNumStructures() const; 
+  void getMicrostructureSize(int &oNx, int &oNy, int &oNz) const {oNx=m_microstructureSize[0]; oNy=m_microstructureSize[1]; oNz=m_microstructureSize[2];} 
 
   const std::vector<cfgScalar> & getAllMatParameters() const;
   const std::vector<int> & getMatAssignment(int iIndex) const;

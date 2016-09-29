@@ -3925,6 +3925,42 @@ bool SamplesGeneratorImpl::readFiles(int iLevel, std::vector<std::vector<int> > 
   oBaseMaterialStructures.clear();
   oParameters.clear();
 
+  bool readTextFiles = true;
+  if (readTextFiles)
+  {
+    std::string fileRootName = m_OutputDirectory + "level" + std::to_string(iLevel) + "_";
+    std::string fileExtension = ".txt";
+    std::string fileName = fileRootName + "matAssignments" + fileExtension;
+    std::ifstream stream(fileName);
+    bool resOk = stream.is_open();
+    if (resOk)
+    {
+      int nstruct = 1000;
+      int n = 10000*16*16;
+      std::vector<int> mat;
+      deSerialize<int>(stream, 1, &n, &mat[0]);
+
+      oMaterialAssignments.resize(nstruct);
+      for (int istruct=0; istruct<nstruct; istruct++)
+      {
+        oMaterialAssignments[istruct]
+      }
+    }
+
+    int nbStruct = 0;
+    deSerialize<int>(stream, 1, &nbStruct);
+
+    int dimparam = 0;
+    if (iCubic)
+      dimparam = 4;
+    else if (iOrthotropic && iDim==2)
+      dimparam = 5;
+
+    int nvalues = nbStruct*dimparam;
+    std::vector<float> values(nvalues);
+    deSerialize<float>(stream, nvalues, &values[0]);
+  }
+
   int version = 1;
   bool ResOk = true;
   if (version==0)
@@ -4762,6 +4798,11 @@ int SamplesGeneratorImpl::run()
     {
       assert(0);
     }
+  }
+  if (conf.hasOpt("outputDir"))
+  {
+    std::string outputDir = conf.getString("outputDir");
+    setOutputDirectory(outputDir);
   }
   if (conf.hasOpt("nmat"))
   {

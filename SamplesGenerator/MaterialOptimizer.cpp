@@ -363,7 +363,8 @@ bool MaterialOptimizer::run3D(int N[3], const std::vector<MaterialQuad> &iBaseMa
     constantfield->allocate(nx/2, ny/2, nz/2);
     field = constantfield;
   }
-  fem->field = field;
+  assert(0);
+  ////////fem->field = field;
   fem->lowerBounds = 1e-3 * Eigen::VectorXd::Ones(field->param.size());
   fem->upperBounds = Eigen::VectorXd::Ones(field->param.size());
 
@@ -526,7 +527,8 @@ void MaterialOptimizer::gradientDescent(FEM2DFun * fun, Eigen::VectorXd & x0, in
 void MaterialOptimizer::gradientDescent(FEM3DFun * fun, Eigen::VectorXd & x0, int nSteps, std::vector<Eigen::VectorXd> &oParameters)
 {
   //oParameters.push_back(x0);
-  oParameters.push_back(fun->distribution);
+  assert(0);
+  ///////oParameters.push_back(fun->distribution);
   //maximum movement in any parameter.
   double maxStep = 0.5;
   Eigen::VectorXd x = x0;
@@ -555,7 +557,8 @@ void MaterialOptimizer::gradientDescent(FEM3DFun * fun, Eigen::VectorXd & x0, in
     }
     x0 = x;
     //oParameters.push_back(x0);
-    oParameters.push_back(fun->distribution);
+    assert(0);
+    ////////////////oParameters.push_back(fun->distribution);
   }
 }
 

@@ -43,6 +43,8 @@ private slots:
   void on_m_action2D_triggered();
   void on_m_actionFamilyExtractor_triggered();
   void on_m_actionFamilyVisualization_triggered();
+  void on_m_actionRegionSelection_triggered();
+  void on_m_actionGenerateFamily_triggered();
 
   void on_m_type_comboBox_currentIndexChanged();
   void on_m_x_comboBox_currentIndexChanged();
