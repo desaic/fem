@@ -35,6 +35,8 @@ using namespace cfgMaterialUtilities;
 #include "SamplerUtilities.h"
 using namespace SamplerUtilities;
 
+#include "FamilyGenerator.h"
+
 #include "ScoringFunction.h"
 #include "Resampler.h"
 #include "NumericalCoarsening.h"
@@ -69,6 +71,7 @@ enum Stage
   UpscaleMicrostructureStage,
   FixDisconnectedMicrostructureStage,
   MaterialPropertiesComputationStage,
+  FamilyGenerationStage
 };
 
 SamplesGeneratorImpl::SamplesGeneratorImpl()
@@ -3935,30 +3938,33 @@ bool SamplesGeneratorImpl::readFiles(int iLevel, std::vector<std::vector<int> > 
     bool resOk = stream.is_open();
     if (resOk)
     {
-      int nstruct = 1000;
-      int n = 10000*16*16;
-      std::vector<int> mat;
-      deSerialize<int>(stream, 1, &n, &mat[0]);
+      int nstruct = 13587;
+      //int nstruct = 13689;
+      int nvoxel = 32*32;
+      int nvalues = nvoxel*nstruct;
+      std::vector<int> mat(nvalues);
+      deSerialize<int>(stream, nvalues, &mat[0]);
 
-      oMaterialAssignments.resize(nstruct);
+      int ind=0;
+      oMaterialAssignments.reserve(nstruct);
       for (int istruct=0; istruct<nstruct; istruct++)
       {
-        oMaterialAssignments[istruct]
+        int sumMat = 0;
+        std::vector<int> matAssignment;
+        for (int ivoxel=0; ivoxel<nvoxel; ivoxel++)
+        {
+          int matIndex = mat[ind++];
+          sumMat += matIndex;
+          matAssignment.push_back(matIndex);
+        }
+        //if (sumMat>0)
+        {
+          oMaterialAssignments.push_back(matAssignment);
+        }
       }
+      std::cout << "nb valid structures = " << oMaterialAssignments.size() << std::endl;
     }
-
-    int nbStruct = 0;
-    deSerialize<int>(stream, 1, &nbStruct);
-
-    int dimparam = 0;
-    if (iCubic)
-      dimparam = 4;
-    else if (iOrthotropic && iDim==2)
-      dimparam = 5;
-
-    int nvalues = nbStruct*dimparam;
-    std::vector<float> values(nvalues);
-    deSerialize<float>(stream, nvalues, &values[0]);
+    return resOk;
   }
 
   int version = 1;
@@ -4543,6 +4549,27 @@ int SamplesGeneratorImpl::runMaterialPropertiesComputation(int iLevel)
   return 0;
 }
 
+int SamplesGeneratorImpl::runFamilyGenerationStage(int iLevel)
+{
+  int level = iLevel;
+  int n[3] = {level, level, level};
+
+  FamilyGenerator * generator = FamilyGenerator::createOperator();
+  generator->setMicrostructureSize(m_dim, n);
+  generator->run();
+  const std::vector<std::vector<int> > & matAssignments = generator->getMicrostructures();
+
+  std::vector<float> physicalParameters;
+  std::string suffix = "newFamily";
+  std::vector<float> tensors;
+  computeParametersAndTensorValues(n, matAssignments, physicalParameters, tensors);
+  writeFiles(level, matAssignments, getBaseMaterialStructures(m_nmat), physicalParameters, tensors, suffix);
+
+  delete generator;
+
+  return 0;
+}
+
 int SamplesGeneratorImpl::runFixDisconnectedMicrostructures(int iLevel)
 {
   int level = iLevel;
@@ -4863,6 +4890,10 @@ int SamplesGeneratorImpl::run()
     {
       stage = MaterialPropertiesComputationStage;
     }
+    else if (str == "FamilyGeneration")
+    {
+      stage = FamilyGenerationStage;
+    }
     //else if (str == "UpdateMicrostructures")
     //{
     //}
@@ -5068,6 +5099,10 @@ int SamplesGeneratorImpl::run()
   else if (stage == MaterialPropertiesComputationStage)
   {
     int status = runMaterialPropertiesComputation(level);
+  }
+  else if (stage == FamilyGenerationStage)
+  {
+    int status = runFamilyGenerationStage(level);
   }
  
   // thermal properties

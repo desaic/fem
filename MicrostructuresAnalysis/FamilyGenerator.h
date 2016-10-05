@@ -15,7 +15,6 @@ public:
   virtual bool run() = 0;
 
   virtual const std::vector<std::vector<int> > & getMicrostructures() = 0;
-  virtual const std::vector<cfgScalar> & getParameters() = 0;
   virtual void getSize(int oN[3]) = 0;
 };
 

@@ -1,6 +1,8 @@
 #include "MicrostructureParam2D.hpp"
 
-template <> void drawRectangle(const Rectangle2D & r, std::vector<double> & arr,
+#include <fstream>
+
+/*template <> void drawRectangle(const Rectangle2D & r, std::vector<double> & arr,
   const std::vector<int> & arrSize, double val);
 
 template <int> void drawRectangle(const Rectangle2D & r, std::vector<int> & arr,
@@ -18,7 +20,7 @@ template <>
 void make2DCubic(std::vector<double> & arr, const std::vector<int> & arrSize);
 
 template <>
-void make2DCubic(std::vector<int> & arr, const std::vector<int> & arrSize);
+void make2DCubic(std::vector<int> & arr, const std::vector<int> & arrSize);*/ 
 
 std::vector<int> linearToGridIdx(int linearIdx, const std::vector<int> & arrSize)
 {

@@ -25,6 +25,10 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/../SamplerUtilities/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../SamplerUtilities ${CMAKE_CURRENT_BINARY_DIR}/SamplerUtilities)
 
+# microstructure family generation
+include_directories(${PROJECT_SOURCE_DIR}/../MicrostructuresAnalysis)
+add_subdirectory(${PROJECT_SOURCE_DIR}/../MicrostructuresAnalysis ${CMAKE_CURRENT_BINARY_DIR}/MicrostructuresAnalysis)
+
 # math
 #include_directories(${PROJECT_SOURCE_DIR}/../vecmath/include)
 #if (NOT TARGET vecmath)
@@ -56,7 +60,7 @@ endif()
 
 add_executable (SamplesGenerator ${src})
 
-target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} FEMLib StepperCPU libopenblas ${Utilities_LIBS} MaterialOpt ${SamplerUtilities_LIBS})
+target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} FEMLib StepperCPU libopenblas ${Utilities_LIBS} MaterialOpt ${SamplerUtilities_LIBS} ${MicrostructuresAnalysis_LIBS})
 if (IS_PARDISO_AVAILABLE)
 	target_link_libraries(SamplesGenerator libpardiso500-WIN-X86-64)
 endif()

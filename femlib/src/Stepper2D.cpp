@@ -27,7 +27,7 @@ void runSim(ElementMesh2D * m, Stepper2D * Stepper2D)
     int ret = Stepper2D->oneStep();
     t.end();
     float duration = t.getSeconds();
-    std::cout << "time: " << duration << "\n";
+    //std::cout << "time: " << duration << "\n";
     if (ret < 0){
       break;
     }

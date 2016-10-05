@@ -460,7 +460,8 @@ void exProject::runFamilyGenerator()
   familyGenerator->setMicrostructureSize(m_dim, n);
   familyGenerator->run();
   const std::vector<std::vector<int> > & matAssignments = familyGenerator->getMicrostructures();
-  const std::vector<cfgScalar> & parameters = familyGenerator->getParameters();
+  std::vector<cfgScalar> parameters;
+  //const std::vector<cfgScalar> & parameters = familyGenerator->getParameters();
   familyGenerator->getSize(n);
   ExplorerUtilities::writeMicrostructures("..//..//Output//", n[0], matAssignments, parameters, "family");
 

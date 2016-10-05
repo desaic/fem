@@ -7,7 +7,9 @@ INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/../include")
 
 # utilities
 include_directories(${PROJECT_SOURCE_DIR}/../Utilities/include)
+if (NOT TARGET Utilities)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../Utilities ${CMAKE_CURRENT_BINARY_DIR}/Utilities)
+endif()
 
 # femlib (for Eigen)
 include_directories(${PROJECT_SOURCE_DIR}/../femlib/include)
@@ -17,7 +19,9 @@ endif()
 
 # sampler utilities
 include_directories(${PROJECT_SOURCE_DIR}/../SamplerUtilities/include)
+if (NOT TARGET SamplerUtilities)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../SamplerUtilities ${CMAKE_CURRENT_BINARY_DIR}/SamplerUtilities)
+endif()
 
 add_library(MicrostructuresAnalysis ${LIB_SRC})
 

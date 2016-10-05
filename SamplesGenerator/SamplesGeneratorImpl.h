@@ -145,6 +145,7 @@ private:
   int run2Dto3DConversion(int iLevel);
   int runFixDisconnectedMicrostructures(int iLevel);
   int runMaterialPropertiesComputation(int iLevel);
+  int runFamilyGenerationStage(int iLevel);
 
   int rewriteDisneyFiles();
 

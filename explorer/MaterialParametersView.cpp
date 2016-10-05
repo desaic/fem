@@ -363,12 +363,12 @@ void MaterialParametersView::updatePlots()
     m_project->setDistancesToBoundary(m_distancesToBoundary);
   }
 
-  std::vector<cfgScalar> lengths(paramdim, 1);
+  /*std::vector<cfgScalar> lengths(paramdim, 1);
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
     bool resOk = rescaleData(physicalParametersPerLevel[ilevel], paramdim, lengths);
   }
-  m_project->setPhysicalParameters(physicalParametersPerLevel);
+  m_project->setPhysicalParameters(physicalParametersPerLevel);*/ 
 
   // Plot gamuts
   // -----------
@@ -406,7 +406,7 @@ void MaterialParametersView::updatePlots()
 
     if (computeDistances)
     {
-      getColorsForDistanceVisualization(m_distancesToBoundary[ilevel], colors);
+      //getColorsForDistanceVisualization(m_distancesToBoundary[ilevel], colors);
     }
     vtkSmartPointer<vtkTable> table =  createTable(physicalParametersPerLevel[ilevel], levels, paramdim, 1, labels);
     m_tables.push_back(table);
