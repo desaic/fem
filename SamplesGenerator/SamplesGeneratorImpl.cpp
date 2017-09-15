@@ -40,6 +40,7 @@ using namespace SamplerUtilities;
 #include "ScoringFunction.h"
 #include "Resampler.h"
 #include "NumericalCoarsening.h"
+#include "NumericalCoarseningUsingMultigrid.h"
 #include "MaterialOptimizer.h"
 #include "DistanceField.h"
 
@@ -86,6 +87,8 @@ SamplesGeneratorImpl::SamplesGeneratorImpl()
   m_cubicOnly = false;
   m_filterOutDisconnetedStructures = true;
   m_useLogScale = true;
+
+  m_useVariableDensity = true;
 
   m_nmat = 2;
 
@@ -3775,10 +3778,10 @@ void SamplesGeneratorImpl::computeParametersAndTensorValues(int n[3], const std:
 
   if (1)
   {
-    NumericalCoarsening::StructureType type = (m_cubicOnly? NumericalCoarsening::Cubic: NumericalCoarsening::General);
-    NumericalCoarsening numCoarsening;
     if (m_dim==2)
     {
+      NumericalCoarsening::StructureType type = (m_cubicOnly? NumericalCoarsening::Cubic: NumericalCoarsening::General);
+      NumericalCoarsening numCoarsening;
       numCoarsening.init(n, m_blockRep, m_nbSubdivisions, m_mat2D);
       int imat, nmat=(int)iMatAssignments.size();
       for (imat=0; imat<nmat; imat++)
@@ -3790,17 +3793,74 @@ void SamplesGeneratorImpl::computeParametersAndTensorValues(int n[3], const std:
     }
     else
     {
-      numCoarsening.init(n, m_blockRep, m_nbSubdivisions, m_mat);
-      int imat, nmat=(int)iMatAssignments.size();
-      for (imat=0; imat<nmat; imat++)
+      bool useMultigridSolver = true;
+      
+      if (useMultigridSolver)
       {
-        std::cout << "************ imat = " << imat << std::endl;
-        numCoarsening.computeCoarsenedElasticityTensorAndParameters3D(iMatAssignments[imat], n, m_baseMaterialDensities, type, oTensorValues, oParameters);
+        if (1)
+        {
+          NumericalCoarseningUsingMultigrid::StructureType type = (m_cubicOnly? NumericalCoarseningUsingMultigrid::Cubic: NumericalCoarseningUsingMultigrid::General);
+          NumericalCoarseningUsingMultigrid numCoarsening[8];
+          for (int i=0; i<8; i++)
+          {
+            numCoarsening[i].setUseVariableDensity(m_useVariableDensity);
+            numCoarsening[i].init(n, m_blockRep, m_nbSubdivisions, m_mat, type);
+          }
+          int paramdim = getNbParameters();
+          int imat, nmat=(int)iMatAssignments.size();
+          oParameters.resize(nmat*paramdim);
+          for (imat=0; imat<nmat; imat+=8)
+          {
+#pragma omp parallel for
+            for (int i=0; i<8; i++)
+            {
+              int indMat = imat+i;
+              if (indMat < nmat)
+              {
+                //std::cout << "************ imat = " << indMat << " max param = " << (oParameters.size()>0? *std::max_element(oParameters.begin(), oParameters.end()): 0) << " min param = "<< (oParameters.size()>0? *std::min_element(oParameters.begin(), oParameters.end()): 0) << std::endl;
+                std::cout << "************ imat = " << indMat << std::endl;
+                std::vector<cfgScalar> parameters;
+                numCoarsening[i].computeCoarsenedElasticityTensorAndParameters3D(iMatAssignments[indMat], n, m_baseMaterialDensities, type, oTensorValues, parameters);
+                for (int iparam=0; iparam<paramdim; iparam++)
+                {
+                  std::cout << parameters[iparam] << " ";
+                  oParameters[indMat*paramdim + iparam] = parameters[iparam];
+                } 
+                std::cout << std::endl;
+              }
+            }
+          }
+        }
+        else
+        {
+          NumericalCoarseningUsingMultigrid::StructureType type = (m_cubicOnly? NumericalCoarseningUsingMultigrid::Cubic: NumericalCoarseningUsingMultigrid::General);
+          NumericalCoarseningUsingMultigrid numCoarsening;
+          numCoarsening.setUseVariableDensity(m_useVariableDensity);
+          numCoarsening.init(n, m_blockRep, m_nbSubdivisions, m_mat, type);
+          int imat, nmat=(int)iMatAssignments.size();
+          for (imat=0; imat<nmat; imat++)
+          {
+            std::cout << "************ imat = " << imat << " max param = " << (oParameters.size()>0? *std::max_element(oParameters.begin(), oParameters.end()): 0) << " min param = "<< (oParameters.size()>0? *std::min_element(oParameters.begin(), oParameters.end()): 0) << std::endl;
+            numCoarsening.computeCoarsenedElasticityTensorAndParameters3D(iMatAssignments[imat], n, m_baseMaterialDensities, type, oTensorValues, oParameters);
+          }
+        }
+      }
+      else
+      {
+        NumericalCoarsening::StructureType type = (m_cubicOnly? NumericalCoarsening::Cubic: NumericalCoarsening::General);
+        NumericalCoarsening numCoarsening;
+        numCoarsening.init(n, m_blockRep, m_nbSubdivisions, m_mat);
+        int imat, nmat=(int)iMatAssignments.size();
+        for (imat=0; imat<nmat; imat++)
+        {
+          std::cout << "************ imat = " << imat << std::endl;
+          numCoarsening.computeCoarsenedElasticityTensorAndParameters3D(iMatAssignments[imat], n, m_baseMaterialDensities, type, oTensorValues, oParameters);
+        }
       }
     }
   }
   else
-  {
+  { 
     int imat, nmat=(int)iMatAssignments.size();
     for (imat=0; imat<nmat; imat++)
     {
@@ -4010,11 +4070,11 @@ bool SamplesGeneratorImpl::readFiles(int iLevel, std::vector<std::vector<int> > 
   }
   std::string fileExtension = ".bin";
 
-  ResOk = cfgUtil::readBinary<float>(fileRootName + "params" + fileExtension, oParameters);
+  ResOk = cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, oMaterialAssignments);
   if (ResOk)
     ResOk = cfgUtil::readBinary<int>(fileRootName + "baseMat" + fileExtension, oBaseMaterialStructures);
   if (ResOk)
-    ResOk = cfgUtil::readBinary<int>(fileRootName + "matAssignments" + fileExtension, oMaterialAssignments);
+    ResOk = cfgUtil::readBinary<float>(fileRootName + "params" + fileExtension, oParameters);
   if (ResOk)
     ResOk = cfgUtil::readBinary<float>(fileRootName + "elasticityTensors" + fileExtension, oTensors);
 
@@ -4186,6 +4246,61 @@ bool SamplesGeneratorImpl::readDisneyFiles(const std::string &iFileName, int iDi
     // not implemented
     assert(0);
   }
+  return true;
+}
+
+bool SamplesGeneratorImpl::readPanettaFiles(int iDim, std::vector<cfgScalar> &oPhysicalParameters)
+{
+  bool resOk = true;
+
+  if (iDim==2)
+  {
+    resOk = readPanettaFiles("moduli_2d", iDim, oPhysicalParameters);
+  }
+  else if (iDim==3)
+  {
+    resOk = readPanettaFiles("moduli_3d", iDim, oPhysicalParameters);
+  }
+  return resOk;
+}
+
+bool SamplesGeneratorImpl::readPanettaFiles(const std::string &iFileName, int iDim, std::vector<cfgScalar> &ioPhysicalParameters)
+{
+  std::string fileName = m_OutputDirectory + iFileName + ".txt";
+
+  std::ifstream stream(fileName);
+  if (!stream.is_open())
+  {
+    return false;
+  }
+
+  int nbStruct = 0;
+  deSerialize<int>(stream, 1, &nbStruct);
+
+  int dimparam = 3;
+
+  int nvalues = nbStruct*dimparam;
+  std::vector<float> values(nvalues);
+  deSerialize<float>(stream, nvalues, &values[0]);
+
+  cfgScalar scalingFactor = 290.91/200;
+
+  //Relative Young's modulus,	Poisson's ratio,	Relative shear modulus,	Density
+  assert(values.size()%dimparam==0);
+  int ival, nval=(int)values.size();
+  for (ival=0; ival<nval; ival+=dimparam)
+  {
+    cfgScalar E= scalingFactor*values[ival+1];
+    cfgScalar nu = values[ival+2];
+    cfgScalar mu = E/(2*(1+nu));
+    cfgScalar density = 1.;
+
+    ioPhysicalParameters.push_back(density);
+    ioPhysicalParameters.push_back(E);
+    ioPhysicalParameters.push_back(nu);
+    ioPhysicalParameters.push_back(mu);
+  }
+
   return true;
 }
 
@@ -4384,12 +4499,12 @@ int SamplesGeneratorImpl::runIsotropicToOrthotropicConversion(int iLevel)
   return 0;
 }
 
-int SamplesGeneratorImpl::runSubsamplingStage(int iLevel)
+int SamplesGeneratorImpl::runSubsamplingStage(int iLevel, const std::string &iSuffix)
 {
   int level = iLevel;
   std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
   std::vector<float> physicalParameters, physicalParametersInit, tensors;
-  std::string fileName = "";
+  std::string fileName = iSuffix;
   bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors, fileName);
   if (!ResOk)
     return 1;
@@ -4477,7 +4592,7 @@ int SamplesGeneratorImpl::runSubsamplingStage(int iLevel)
   physicalParametersInit = getSubVector(physicalParametersInit, paramdim, particules);
   tensors = getSubVector(tensors,  (m_dim==2?6:21), particules);
   materialAssignments = getSubVector(materialAssignments, particules);
-  writeFiles(level, materialAssignments, baseMaterialStructures, physicalParametersInit, tensors, "subsampled");
+  writeFiles(level, materialAssignments, baseMaterialStructures, physicalParametersInit, tensors, iSuffix+"_subsampled");
 
   return 0;
 }
@@ -4532,17 +4647,16 @@ int SamplesGeneratorImpl::run2Dto3DConversion(int iLevel)
   return 0;
 }
 
-int SamplesGeneratorImpl::runMaterialPropertiesComputation(int iLevel)
+int SamplesGeneratorImpl::runMaterialPropertiesComputation(int iLevel, const std::string &iSuffix)
 {
   int level = iLevel;
   int n[3] = {level, level, level};
 
   std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
-  std::vector<float> physicalParameters;
-  bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters);
+  std::vector<float> physicalParameters, tensors;
+  bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors, iSuffix);
 
-  std::string suffix = "updated";
-  std::vector<float> tensors;
+  std::string suffix = iSuffix+"_updated";
   computeParametersAndTensorValues(n, materialAssignments, physicalParameters, tensors);
   writeFiles(level, materialAssignments, getBaseMaterialStructures(m_nmat), physicalParameters, tensors, suffix);
 
@@ -4570,7 +4684,7 @@ int SamplesGeneratorImpl::runFamilyGenerationStage(int iLevel)
   return 0;
 }
 
-int SamplesGeneratorImpl::runFixDisconnectedMicrostructures(int iLevel)
+int SamplesGeneratorImpl::runFixDisconnectedMicrostructures(int iLevel, const std::string &iSuffix)
 {
   int level = iLevel;
   int n[3] = {level, level, level};
@@ -4578,14 +4692,36 @@ int SamplesGeneratorImpl::runFixDisconnectedMicrostructures(int iLevel)
   std::vector<std::vector<int> > materialAssignments, baseMaterialStructures;
   std::vector<float> physicalParameters, tensors;
 
-  std::string suffix = "SMC_5";
-  bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors, suffix);
+  bool ResOk = readFiles(level, materialAssignments, baseMaterialStructures, physicalParameters, tensors, iSuffix);
+  if (tensors.size()==0)
+  {
+    int nmat=(int)materialAssignments.size();
+    int tensorDim = (m_dim==2?6:21);
+    tensors.resize(tensorDim*nmat);
+  }
+
   if (ResOk)
   {
     std::vector<int> disconnectedStructures;
     int imat, nmat=(int)materialAssignments.size();
+    std::cout << "nmat init = " << nmat << std::endl;
     for (imat=0; imat<nmat; imat++)
     {
+      if (m_dim==2)
+      {
+        if (imat % 10000 == 1)
+        {
+          std::cout << "imat = " << imat << std::endl;
+        }
+      }
+      else
+      {
+        if (imat % 1000 == 1)
+        {
+          std::cout << "imat = " << imat << std::endl;
+        }
+      }
+
       bool modified = false;
       bool resOk = true;
       if (m_dim==2)
@@ -4600,7 +4736,7 @@ int SamplesGeneratorImpl::runFixDisconnectedMicrostructures(int iLevel)
       {
         if (modified)
         {
-          //fixedStructures.push_back(imat);
+          fixedStructures.push_back(imat);
         }
         else
         {
@@ -4616,25 +4752,31 @@ int SamplesGeneratorImpl::runFixDisconnectedMicrostructures(int iLevel)
     std::vector<float> fixedPhysicalParameters = getSubVector(physicalParameters, getNbParameters(), fixedStructures);
     std::vector<float> fixedTensors = getSubVector(tensors, (m_dim==2?6:21), fixedStructures);
     if (fixedMaterialAssignments.size()>0)
+    {
+      std::cout << "nb fixed_structures = " << fixedMaterialAssignments.size() << std::endl;
       writeFiles(level, fixedMaterialAssignments, baseMaterialStructures, fixedPhysicalParameters, fixedTensors, "fixed_structures");
-
+    }
     std::vector<std::vector<int> > invalidMaterialAssignments = getSubVector(materialAssignments, invalidStructures);
     std::vector<float> invalidPhysicalParameters = getSubVector(physicalParameters, getNbParameters(), invalidStructures);
     std::vector<float> invalidTensors = getSubVector(tensors, (m_dim==2?6:21), invalidStructures);
     if (invalidMaterialAssignments.size()>0)
+    {
+      std::cout << "nb invalid_structures = " << invalidMaterialAssignments.size() << std::endl;
       writeFiles(level, invalidMaterialAssignments, baseMaterialStructures, invalidPhysicalParameters, invalidTensors, "invalid_structures");
-
+    }
     std::vector<std::vector<int> > validMaterialAssignments = getSubVector(materialAssignments, connectedStructures);
     std::vector<float> validPhysicalParameters = getSubVector(physicalParameters, getNbParameters(), connectedStructures);
     std::vector<float> validTensors = getSubVector(tensors, (m_dim==2?6:21), connectedStructures);
     if (validMaterialAssignments.size()>0)
+    {
+      std::cout << "nb connected_structures = " << validMaterialAssignments.size() << std::endl;
       writeFiles(level, validMaterialAssignments, baseMaterialStructures, validPhysicalParameters, validTensors, "connected_structures");
-
+    }
     std::vector<float> newtensors;
     std::vector<float> newphysicalParameters;
+    std::cout << "fixed mat = " << fixedMaterialAssignments.size() << std::endl;
     if (fixedMaterialAssignments.size()>0)
     {
-
       computeParametersAndTensorValues(n, fixedMaterialAssignments, newphysicalParameters, newtensors);
 
       validMaterialAssignments.insert(validMaterialAssignments.end(), fixedMaterialAssignments.begin(), fixedMaterialAssignments.end());
@@ -4663,33 +4805,62 @@ int SamplesGeneratorImpl::rewriteDisneyFiles()
   return 0;
 }
 
+int SamplesGeneratorImpl::rewritePanettaFiles()
+{
+  int dim = 3;
+  std::vector<cfgScalar> physicalParameters;
+  bool resOk = readPanettaFiles(dim, physicalParameters);
+  if (resOk)
+  {
+    std::string fileRootName = m_OutputDirectory + "level" + std::to_string(0) + "_" + "Panetta_3D_cubic_with_rescaled_E_";
+    std::string fileExtension = ".bin";
+    cfgUtil::writeBinary<float>(fileRootName + "params" + fileExtension, physicalParameters);
+  }
+  return 0;
+}
+
 void SamplesGeneratorImpl::init()
 {
   std::vector<float> E(m_nmat), nu(m_nmat), lambda(m_nmat), mu(m_nmat);
 
-  mu[1] = 100;
-  lambda[1] = 1000;
-  fromLamesParametersToYoungModulusPoissonRatio(lambda[1], mu[1], E[1], nu[1]);
- 
-  E[0] = E[1]/1000;
-  if (m_nmat==2)
-  {
-    nu[0] = 0.1;
-  }
-  else
-  {
-    nu[0] = nu[1];
-  }
-  fromYoungModulusPoissonRatioToLamesParameters(E[0], nu[0], lambda[0], mu[0]);
+  bool setBaseStiffness = false;
+  bool updatePoissonRatio = true;
 
-  bool updatePoissonRatio = false;
-  if (updatePoissonRatio)
+  if (setBaseStiffness)
   {
-    nu[0] = 0.48;
-    nu[1] = 0.48;
+    E[1] = 200;
+    E[0] = E[1]/1000;
+
+    nu[1] = 0.35;
+    nu[0] = 0.35;
 
     fromYoungModulusPoissonRatioToLamesParameters(E[0], nu[0], lambda[0], mu[0]);
     fromYoungModulusPoissonRatioToLamesParameters(E[1], nu[1], lambda[1], mu[1]);
+  }
+  else
+  {
+    mu[1] = 100;
+    lambda[1] = 1000;
+    fromLamesParametersToYoungModulusPoissonRatio(lambda[1], mu[1], E[1], nu[1]);
+
+    E[0] = E[1]/1000;
+    if (m_nmat==2)
+    {
+      nu[0] = 0.1;
+    }
+    else
+    {
+      nu[0] = nu[1];
+    }
+    fromYoungModulusPoissonRatioToLamesParameters(E[0], nu[0], lambda[0], mu[0]);
+    if (updatePoissonRatio)
+    {
+      nu[0] = 0.48;
+      nu[1] = nu[0];
+
+      fromYoungModulusPoissonRatioToLamesParameters(E[0], nu[0], lambda[0], mu[0]);
+      fromYoungModulusPoissonRatioToLamesParameters(E[1], nu[1], lambda[1], mu[1]);
+    }
   }
   if (m_nmat>2)
   {
@@ -4755,6 +4926,16 @@ void SamplesGeneratorImpl::init()
         m_parametersToUse.push_back(1); // E
         m_parametersToUse.push_back(2); //nu
       }
+      else if (m_orthotropicOnly)
+      {
+        m_parametersToUse.push_back(1); // Ex
+        m_parametersToUse.push_back(2); //Ey
+        m_parametersToUse.push_back(3); //Nu_xy
+      }
+      else
+      {
+        assert(0);
+      }
     }
     else
     {
@@ -4762,12 +4943,6 @@ void SamplesGeneratorImpl::init()
       {
         m_parametersToUse.push_back(1); // E
         m_parametersToUse.push_back(2); //nu
-      }
-      else if (m_orthotropicOnly)
-      {
-        m_parametersToUse.push_back(1); // Ex
-        m_parametersToUse.push_back(2); //Ey
-        m_parametersToUse.push_back(3); //Nu_xy
       }
       else
       {
@@ -4796,7 +4971,7 @@ int SamplesGeneratorImpl::run()
 
   if (conf.hasOpt("suffix"))
   {
-    std::string str = conf.getString("type");
+    std::string str = conf.getString("suffix");
     suffix = str;
   }
   if (conf.hasOpt("type"))
@@ -4899,6 +5074,7 @@ int SamplesGeneratorImpl::run()
     //}
     else
     {
+      std::cout << "invalid stage!" << std::endl;
       assert(0);
     }
   }
@@ -4918,6 +5094,15 @@ int SamplesGeneratorImpl::run()
   {
     growStructure = conf.getBool("growStructure");
   }
+  if (conf.hasOpt("filterOutDisconnetedStructures"))
+  {
+    m_filterOutDisconnetedStructures = conf.getBool("filterOutDisconnetedStructures");
+  }
+  if (conf.hasOpt("useLogScale"))
+  {
+    m_useLogScale = conf.getBool("useLogScale");
+  }
+
 
   init();
 
@@ -4925,6 +5110,10 @@ int SamplesGeneratorImpl::run()
 
   srand(0);
 
+  //setOutputDirectory("..//..//Output_Panetta//");
+  //rewritePanettaFiles();
+
+  //setOutputDirectory("..//..//Output_Disney//");
   //rewriteDisneyFiles();
 
   // Upscale structures
@@ -5078,7 +5267,7 @@ int SamplesGeneratorImpl::run()
   }
   else if (stage == SubsamplingStage)
   {
-    int status = runSubsamplingStage(level);
+    int status = runSubsamplingStage(level, suffix);
     return status;
   }
   else if (stage == MirrorStructureStage)
@@ -5093,12 +5282,12 @@ int SamplesGeneratorImpl::run()
   }
   else if (stage == FixDisconnectedMicrostructureStage)
   {
-    int status = runFixDisconnectedMicrostructures(level);
+    int status = runFixDisconnectedMicrostructures(level, suffix);
     return status;
   }
   else if (stage == MaterialPropertiesComputationStage)
   {
-    int status = runMaterialPropertiesComputation(level);
+    int status = runMaterialPropertiesComputation(level, suffix);
   }
   else if (stage == FamilyGenerationStage)
   {

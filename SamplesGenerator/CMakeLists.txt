@@ -50,6 +50,14 @@ include_directories(${PROJECT_SOURCE_DIR}/../StepperCPU/include)
 add_subdirectory(${PROJECT_SOURCE_DIR}/../StepperCPU ${CMAKE_CURRENT_BINARY_DIR}/StepperCPU)
 link_directories(${PROJECT_SOURCE_DIR}/../lib)  #for blas
 
+# multigrid solver
+SET(USE_AMGCL ON)
+SET(USE_CUDA ON)
+SET(USE_NLOPT ON)
+add_subdirectory(${PROJECT_SOURCE_DIR}/../topoOptLib ${CMAKE_CURRENT_BINARY_DIR}/topoOptLib)
+include_directories(${topoOptLib_INCLUDE_DIR}) 
+#add_definitions(${topoOptLib_DEFS})
+
 if (IS_PARDISO_AVAILABLE)
 	link_directories($ENV{PARDISO_LIB_PATH})
 endif()
@@ -60,7 +68,7 @@ endif()
 
 add_executable (SamplesGenerator ${src})
 
-target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} FEMLib StepperCPU libopenblas ${Utilities_LIBS} MaterialOpt ${SamplerUtilities_LIBS} ${MicrostructuresAnalysis_LIBS})
+target_link_libraries(SamplesGenerator ${VTK_LIBRARIES} FEMLib StepperCPU libopenblas ${Utilities_LIBS} MaterialOpt ${SamplerUtilities_LIBS} ${MicrostructuresAnalysis_LIBS} ${topoOptLib_LIBS})
 if (IS_PARDISO_AVAILABLE)
 	target_link_libraries(SamplesGenerator libpardiso500-WIN-X86-64)
 endif()

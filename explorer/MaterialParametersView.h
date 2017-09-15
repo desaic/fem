@@ -50,6 +50,7 @@ private:
 
   void rescaleParameters(int iIndex, float iScalingFactor, std::vector<float> &ioPoints, int iDim);
   float getMaxValue(int iIndex, const std::vector<float> &iPoints, int iDim);
+  float getMinValue(int iIndex, const std::vector<cfgScalar> &iPoints, int iDim);
   void convertToLogValues(int iIndex, const std::vector<float> &iPoints, int iDim, std::vector<float> &oPoints, float iEpsilon=0);
 
   void getValidParameterTypes(exProject::MicrostructureType iMicrostructureType, int iMicrostructureDimension, std::vector<exProject::MaterialParameterType> &oValidParameterTypes, std::vector<int> &oDimToRescale);

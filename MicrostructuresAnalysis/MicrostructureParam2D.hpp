@@ -7,8 +7,6 @@
 #include <math.h>
 #include <Eigen/Dense>
 
-void test2DParam();
-
 struct Rectangle2D
 {
   Rectangle2D() :rot(0){
@@ -37,6 +35,8 @@ struct Ellipse2D
 
 
 std::vector<int> linearToGridIdx(int linearIdx, const std::vector<int> & arrSize);
+
+int linearIdx(int x, int y, const std::vector<int> & arrSize);
 
 int gridToLinearIdx(const std::vector<int> & coord, const std::vector<int> & arrSize);
 
@@ -203,4 +203,22 @@ void loadStructure2D(std::vector<T> & arr,
   }
 }
 
+template <typename T>
+void resize2D(const std::vector<T> & s, const std::vector<int> & size0,
+  std::vector<T> & s1, const std::vector<int> & size1)
+{
+  int nEle = size1[0] * size1[1];
+  s1.resize(nEle);
+  for (int i = 0; i < size1[0]; i++){
+    for (int j = 0; j < size1[1]; j++){
+      int i0 = (int)((i + 0.5) / size1[0] * size0[0]);
+      int j0 = (int)((j + 0.5) / size1[1] * size0[1]);
+      int l0 = linearIdx(i0, j0, size0);
+      int l1 = linearIdx(i, j, size1);
+      s1[l1] = s[l0];
+    }
+  }
+}
+
+void test2DParam();
 #endif

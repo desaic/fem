@@ -65,4 +65,3 @@ MicrostructureSet::~MicrostructureSet()
      m_voidVectorInt;
    }
  }
-

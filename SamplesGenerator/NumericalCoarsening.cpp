@@ -13,6 +13,8 @@
 #include "StepperNewton.hpp"
 #include "pardiso_sym.hpp"
 #include "Timer.hpp"
+#include "StrainEne2D.h"
+#include "StrainEne.hpp"
 
 #include "MeshUtilities.h"
 using namespace meshUtil;
@@ -270,7 +272,7 @@ void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters3D(const 
   ElementRegGrid * physicalSystem = createPhysicalSystem(n, m_baseMaterials3D, cellMaterials);
 
   int indVoidMaterial = std::min_element(iBaseMaterialDensities.begin(), iBaseMaterialDensities.end()) - iBaseMaterialDensities.begin();
-  if (iBaseMaterialDensities[indVoidMaterial]==0)
+  if (iBaseMaterialDensities[indVoidMaterial]==0 && m_baseMaterials3D[indVoidMaterial].e[0]->param[0]==0)
   {
     std::vector<int> isolatedPoints = getIsolatedPoints(cellMaterials, n[0], n[1], n[2], indVoidMaterial);
     setSubVector<int>(physicalSystem->fixed, 1, isolatedPoints);
@@ -426,7 +428,7 @@ void NumericalCoarsening::computeCoarsenedElasticityTensorAndParameters2D(const 
   ElementRegGrid2D * physicalSystem = createPhysicalSystem(n, m_baseMaterials2D, cellMaterials);
 
   int indVoidMaterial = std::min_element(iBaseMaterialDensities.begin(), iBaseMaterialDensities.end()) - iBaseMaterialDensities.begin();
-  if (iBaseMaterialDensities[indVoidMaterial]==0)
+  if (iBaseMaterialDensities[indVoidMaterial]==0 && m_baseMaterials2D[indVoidMaterial].e[0]->param[0]==0)
   {
     std::vector<int> isolatedPoints = getIsolatedPoints(cellMaterials, n[0], n[1], indVoidMaterial);
     setSubVector<int>(physicalSystem->fixed, 1, isolatedPoints);

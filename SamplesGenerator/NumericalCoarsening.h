@@ -8,7 +8,6 @@ class MaterialQuad2D;
 class MaterialQuad;
 class Stepper2D;
 class Stepper;
-class Vector3f;
 class PardisoState;
 
 class NumericalCoarsening

@@ -89,12 +89,29 @@ cfgScalar MaterialParametersView::getMaxValue(int iIndex, const std::vector<cfgS
   int ipoint=0, npoint=(int)iPoints.size()/iDim;
   for (ipoint=0; ipoint<npoint; ipoint++)
   {
+    //std::cout << ipoint << " : " << iPoints[iDim*ipoint + iIndex] << std::endl;
     if (iPoints[iDim*ipoint + iIndex]>maxValue)
     {
       maxValue = iPoints[iDim*ipoint + iIndex];
     }
   }
   return maxValue;
+}
+
+cfgScalar MaterialParametersView::getMinValue(int iIndex, const std::vector<cfgScalar> &iPoints, int iDim)
+{
+  cfgScalar minValue = FLT_MAX;
+
+  assert(iPoints.size()%iDim==0);
+  int ipoint=0, npoint=(int)iPoints.size()/iDim;
+  for (ipoint=0; ipoint<npoint; ipoint++)
+  {
+    if (iPoints[iDim*ipoint + iIndex]<minValue)
+    {
+      minValue = iPoints[iDim*ipoint + iIndex];
+    }
+  }
+  return minValue;
 }
 
 void MaterialParametersView::convertToLogValues(int iIndex, const std::vector<cfgScalar> &iPoints, int iDim, std::vector<cfgScalar> &oPoints, cfgScalar iEpsilon)
@@ -107,6 +124,8 @@ void MaterialParametersView::convertToLogValues(int iIndex, const std::vector<cf
   {
     int coord = iDim*ipoint + iIndex;
     cfgScalar value = iPoints[coord];
+    if (value < 1.e-6)
+      value += 1.e-6;
     oPoints[coord] = log(value+iEpsilon);
   }
 }
@@ -310,17 +329,22 @@ void MaterialParametersView::updatePlots()
   std::vector<cfgScalar> maxValues(paramdim, -FLT_MAX);
   for (int idim=0; idim<paramdim; idim++)
   {
+    std::cout << "dim = " << idim << std::endl;
     for (int ilevel=0; ilevel<nlevel; ilevel++)
     {
       cfgScalar maxValue = getMaxValue(idim, physicalParametersPerLevel[ilevel], paramdim);
+      std::cout << "max value = " << maxValue << std::endl;
       if (maxValue > maxValues[idim])
       {
         maxValues[idim] = maxValue;
       }
+      cfgScalar minValue = getMinValue(idim, physicalParametersPerLevel[ilevel], paramdim);
+      std::cout << "min value = " << minValue << std::endl;
     }
   }
   int ilevel=0;
   bool useLogScale = true;
+  bool rescaleYoungsModulus = true;
   for (ilevel=0; ilevel<nlevel; ilevel++)
   {
     if (useLogScale)
@@ -338,7 +362,7 @@ void MaterialParametersView::updatePlots()
       }
       else
       {
-        cfgScalar scalingFactor_E = 1.f/290.91;
+        /*cfgScalar scalingFactor_E = 1.f/290.91;
         for (int idim=0; idim<dimToRescale.size(); idim++)
         {
           std::vector<cfgScalar> newPoints;
@@ -349,14 +373,56 @@ void MaterialParametersView::updatePlots()
           {
             rescaleParameters(dimToRescale[idim], scalingFactor_E, physicalParametersPerLevel[ilevel], paramdim);
           }
+        }*/ 
+        cfgScalar scalingFactor_E = 1.f/290.91;
+        for (int idim=0; idim<dimToRescale.size(); idim++)
+        {
+          if (rescaleYoungsModulus)
+          {
+            float maxE = getMaxValue(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim);
+            if (maxE > 1.1)
+            {
+              rescaleParameters(dimToRescale[idim], scalingFactor_E, physicalParametersPerLevel[ilevel], paramdim);
+            }
+          }
+          std::vector<cfgScalar> newPoints;
+          convertToLogValues(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim, newPoints);
+          physicalParametersPerLevel[ilevel] = newPoints;
+        }
+      }
+    }
+    else if (rescaleYoungsModulus)
+    {
+      cfgScalar scalingFactor_E = 1.f/290.91;
+      for (int idim=0; idim<dimToRescale.size(); idim++)
+      {
+        float maxE = getMaxValue(dimToRescale[idim], physicalParametersPerLevel[ilevel], paramdim);
+        if (maxE > 1.1)
+        {
+          rescaleParameters(dimToRescale[idim], scalingFactor_E, physicalParametersPerLevel[ilevel], paramdim);
         }
       }
     }
   }
 
+  for (int idim=0; idim<paramdim; idim++)
+  {
+    for (int ilevel=0; ilevel<nlevel; ilevel++)
+    {
+      cfgScalar maxValue = getMaxValue(idim, physicalParametersPerLevel[ilevel], paramdim);
+      cfgScalar minValue = getMinValue(idim, physicalParametersPerLevel[ilevel], paramdim);
+      std::cout << "min value = " << minValue << " max value = " << maxValue << std::endl;
+      if (maxValue-minValue < 1.e-3)
+      {
+        physicalParametersPerLevel[ilevel][idim] += 1.e-3;
+      }
+    }
+  }
+
+
   // Compute distances to boundary
   // -----------------------------
-  bool computeDistances = true;
+  bool computeDistances = false;
   if (computeDistances)
   {
     computeDistancesToBoundary(physicalParametersPerLevel, paramdim);

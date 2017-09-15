@@ -132,6 +132,8 @@ private:
 
   bool readDisneyFiles(const std::string &iFileName, int iDim, bool iCubic, bool iOrthotropic, std::vector<cfgScalar> &ioPhysicalParameters);
   bool readDisneyFiles(int iDim, bool iCubic, bool iOrthotropic, std::vector<cfgScalar> &oPhysicalParameters);
+  bool readPanettaFiles(const std::string &iFileName, int iDim, std::vector<cfgScalar> &ioPhysicalParameters);
+  bool readPanettaFiles(int iDim, std::vector<cfgScalar> &oPhysicalParameters);
 
   int runExhaustiveGamutComputation(int iLevel);
   int runDiscreteOptimization(int iLevel, int iNbCycles, int iStartCycle, bool iGrowStructure);
@@ -140,14 +142,15 @@ private:
 
   int runFilesConcatenation();
   int runIsotropicToOrthotropicConversion(int iLevel);
-  int runSubsamplingStage(int iLevel);
+  int runSubsamplingStage(int iLevel, const std::string &iSuffix);
   int runMirroring(int iLevel);
   int run2Dto3DConversion(int iLevel);
-  int runFixDisconnectedMicrostructures(int iLevel);
-  int runMaterialPropertiesComputation(int iLevel);
+  int runFixDisconnectedMicrostructures(int iLevel, const std::string &iSuffix);
+  int runMaterialPropertiesComputation(int iLevel, const std::string &iSuffix);
   int runFamilyGenerationStage(int iLevel);
 
   int rewriteDisneyFiles();
+  int rewritePanettaFiles();
 
 private:
   std::string m_OutputDirectory;
@@ -162,6 +165,8 @@ private:
   bool m_cubicOnly;
   bool m_continuousMatDist;
   bool m_filterOutDisconnetedStructures;
+  
+  bool m_useVariableDensity;
 
   std::vector<StrainLin> m_ene;
   std::vector<StrainLin2D> m_ene2D;
