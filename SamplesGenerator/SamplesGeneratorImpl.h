@@ -33,7 +33,6 @@ private:
                                 const std::vector<std::vector<int> > &iBaseMaterialStructures, int iBaseMatStructureSize[3], int iLevel, int iBlockRep, bool iWriteSingleFile, bool iWriteFullDeformation);
 
   void vectorMat2MatrixMat(const std::vector<int> &iVecMaterials, int oMatrixMaterials[2][2][2]);
-  void assignMaterials(ElementRegGrid * iElementGrid, int iMacroStructureMaterials[2][2][2]);
 
   void int2CombRandom(std::vector<int> &oMaterials, int nMat, int nVox);
   void int2Comb_biMaterialStructures(std::vector<int> &oMaterials, int idx, int nMat, int iN[3]);
@@ -47,7 +46,6 @@ private:
   bool sampleDeformation(int iN[2], std::vector<MaterialQuad2D> &iMaterial, const std::string iStepperType, float iMaxForce, int iForceAxis, int iNumberOfSample, const std::vector<int> & iMaterials,
                          std::vector<float> &oStresses, std::vector<std::vector<float> > &oDeformations);
 
-  void sampleMaterialSpace();
   int checkBorderSimilarity(const std::vector<int> &iMaterialAssignment, int N[3], const std::vector<std::vector<int> > &iBaseMaterialStructures);
 
   bool computeForceDeformationSample(ElementRegGrid * iElementGrid, std::string iStepperType, int iNumberOfSteps, bool &oConverged);
@@ -136,7 +134,10 @@ private:
   bool readPanettaFiles(int iDim, std::vector<cfgScalar> &oPhysicalParameters);
 
   int runExhaustiveGamutComputation(int iLevel);
+  int runDiscreteAndContinuousOptimization(int iLevel, int iNbCycles, int iStartCycle, bool iGrowStructure);
   int runDiscreteOptimization(int iLevel, int iNbCycles, int iStartCycle, bool iGrowStructure);
+  int runContinuousOptimization(int iLevel, int iStartCycle, const std::string &iSuffix);
+
   int runStrengthAnalysis(int iLevel);
   int runVariantsComputation(int iLevel);
 
@@ -145,9 +146,14 @@ private:
   int runSubsamplingStage(int iLevel, const std::string &iSuffix);
   int runMirroring(int iLevel);
   int run2Dto3DConversion(int iLevel);
+  int runUpscaleStructure(int iLevel);
+
   int runFixDisconnectedMicrostructures(int iLevel, const std::string &iSuffix);
+  int runFixNonManifoldMicrostructure(int iLevel);
   int runMaterialPropertiesComputation(int iLevel, const std::string &iSuffix);
-  int runFamilyGenerationStage(int iLevel);
+  int runTensorHomogenization(int iLevel);
+  int runFamilyGeneration(int iLevel);
+  int runThermalAnalysis(int iLevel);
 
   int rewriteDisneyFiles();
   int rewritePanettaFiles();
